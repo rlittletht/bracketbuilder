@@ -112,21 +112,21 @@ Function GetGameInfoFromString(cellName As String, ByRef template As String, ByR
 
     GetGameInfoFromString = True
 End Function
+' Given a range whose .Cell(1,1) is the top cell of a game, fill in the template/gamenum/homeAway values
+Function GetGameInfoValuesFromRangeCellName(rg As Range, ByRef template As String, ByRef gameNum As String, ByRef homeAway As String) As Boolean
+    GetGameInfoValuesFromRangeCellName = False
 
-Function GetGameInfo(rg As Range, ByRef template As String, ByRef gameNum As String, ByRef homeAway As String) As Boolean
-    GetGameInfo = False
-        
     On Error GoTo LError
-    
+
     Dim cellName As String
-    
+
     cellName = rg.Name.Name
-        
-    GetGameInfo = GetGameInfoFromString(cellName, template, gameNum, homeAway)
+
+    GetGameInfoValuesFromRangeCellName = GetGameInfoFromString(cellName, template, gameNum, homeAway)
 LError:
     On Error GoTo 0
 End Function
-
+' Is this a GameNumCell?
 Function IsGameNumCell(rg As Range) As Boolean
     IsGameNumCell = False
     
@@ -137,7 +137,11 @@ Function IsGameNumCell(rg As Range) As Boolean
     
     IsGameNumCell = True
 End Function
-
+' There are 4 rows and 2 columns that make up the "Game Info" for a game
+' (the Field #, the Time, the Advance To text, and the tiny underline
+' row.  Given the top cell for a game, this will locate the Game Number
+' cell (which is in the 2nd column), then return the range for the entire
+' game information
 Function GetGameInfoRangeForTopCell(rgTopTeam As Range) As Range
     Set GetGameInfoRangeForTopCell = Nothing
     
@@ -149,7 +153,7 @@ Function GetGameInfoRangeForTopCell(rgTopTeam As Range) As Range
     Set rg = rgTopTeam.Worksheet.Range(rgTopTeam.Cells(1, 1), rgTopTeam.Cells(1, 2))
     
     cChecked = 0
-    If (Not GetGameInfo(rg.Cells(1, 1), template, gameNum, homeAway)) Then Exit Function
+    If (Not GetGameInfoValuesFromRangeCellName(rg.Cells(1, 1), template, gameNum, homeAway)) Then Exit Function
     If homeAway <> "1" Then Exit Function
     
     Set rg = rg.Offset(1, 0) ' skip the top team row
@@ -157,7 +161,7 @@ Function GetGameInfoRangeForTopCell(rgTopTeam As Range) As Range
     ' now search for the game number cell -- it will be in the 2nd column
     While True
         ' abort when we get to the matching game bottom
-        If (GetGameInfo(rg.Cells(1, 1), template, gameNum, homeAway)) Then Exit Function
+        If (GetGameInfoValuesFromRangeCellName(rg.Cells(1, 1), template, gameNum, homeAway)) Then Exit Function
         If (cChecked > 10000) Then Stop
         
         If IsGameNumCell(rg.Cells(1, 2)) Then
@@ -167,7 +171,6 @@ Function GetGameInfoRangeForTopCell(rgTopTeam As Range) As Range
         Set rg = rg.Offset(1, 0)
     Wend
 End Function
-
 ' the top and bottom cells cannot be line rows, and the selection
 ' should be only 1 column wide
 Function CleanupRange(rg As Range) As Range
@@ -204,8 +207,8 @@ Function FillGameDefintionFromCell(rg As Range, ByRef gd As GameDefinition) As B
     
     Dim bracket As String, gameNum As String, homeAway As String
     Dim fBottom As Boolean
-        
-    If (GetGameInfo(rg, bracket, gameNum, homeAway)) Then
+
+    If (GetGameInfoValuesFromRangeCellName(rg, bracket, gameNum, homeAway)) Then
         gd.gameNum = Int(Mid$(gameNum, 2))
         fBottom = False
         If (homeAway = "2") Then
@@ -245,10 +248,10 @@ Function IsCellForGame(rg As Range) As Boolean
     If Not (CellHasName(rg)) Then Exit Function
     
     Dim template As String, gameNum As String, homeAway As String
-    
-    If Not GetGameInfo(rg, template, gameNum, homeAway) Then Exit Function
-'    Debug.Print "GameInfo: Template(" + template + "), GameNum(" + gameNum + "), homeAway(" + homeAway + ")"
-    
+
+    If Not GetGameInfoValuesFromRangeCellName(rg, template, gameNum, homeAway) Then Exit Function
+    '    Debug.Print "GameInfo: Template(" + template + "), GameNum(" + gameNum + "), homeAway(" + homeAway + ")"
+
     IsCellForGame = True
 End Function
 
@@ -257,9 +260,9 @@ Function GetMatchingGameLine(rg As Range) As Range
     
     Dim template As String, gameNum As String, homeAway As String
     Dim templateCheck As String, gameNumCheck As String, homeAwayCheck As String
-    
-    If Not GetGameInfo(rg, template, gameNum, homeAway) Then Exit Function
-    
+
+    If Not GetGameInfoValuesFromRangeCellName(rg, template, gameNum, homeAway) Then Exit Function
+
     Dim iDirection As Integer
     
     If homeAway = "1" Then
@@ -275,7 +278,7 @@ Function GetMatchingGameLine(rg As Range) As Range
     cSearchLeft = 50
     
     While (rgCheck.row > 1 And cSearchLeft > 0)
-        If (GetGameInfo(rgCheck, templateCheck, gameNumCheck, homeAwayCheck)) Then
+        If (GetGameInfoValuesFromRangeCellName(rgCheck, templateCheck, gameNumCheck, homeAwayCheck)) Then
             If (templateCheck = template And gameNumCheck = gameNum) Then
                 If (homeAway = "1" And homeAwayCheck = "2") Then
                     Set GetMatchingGameLine = rgCheck
@@ -320,8 +323,8 @@ End Function
 
 Sub PrintGameInfo()
     Dim template As String, gameNum As String, homeAway As String
-    
-    Debug.Print GetGameInfo(Selection, template, gameNum, homeAway)
+
+    Debug.Print GetGameInfoValuesFromRangeCellName(Selection, template, gameNum, homeAway)
     Debug.Print "GameInfo: Template(" + template + "), GameNum(" + gameNum + "), homeAway(" + homeAway + ")"
 End Sub
 
