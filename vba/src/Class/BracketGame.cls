@@ -62,12 +62,48 @@ Function IsRangeValidForGameInsert(rgInsert as Range) As Boolean
   IsRangeValidForGameInsert = true
 End Function
 
+' Insert this game as a Champion placeholder
+Function InsertChampionPlaceholderAtRange(rgInsert As Range) As Boolean
+  dim rgChampion as Range
+  dim rgGameInfo as Range
+
+  if (Not m_gameDef.isChampion) then stop
+
+  set rgChampion = rgInsert.Cells(1,1)
+  set rgGameInfo = rgChampion.Offset(2,0)
+
+  InsertChampionPlaceholderAtRange = False
+
+  if (Not IsCellSuitableForTopGame(rgChampion)) Then Exit Function
+
+  ' ===== First Row - Top Team Name and Score
+  InsertFormulaForCell rgChampion, m_gameDef.bracket, "W" + Mid$(Str$(m_gameDef.gameNum - 1), 2)
+  FormatGameCell_TopBottomTeam rgChampion
+    
+  ' ===== Horizontal Line Row
+  FormatGameCell_LineCell Application.Range(rgChampion.Offset(1,0), rgChampion.Offset(1,2))
+
+  ' ===== Game Info
+  FormatGameCell_BodyTextCell rgGameInfo
+  rgGameInfo.Value = "Champion"
+
+  set m_gameDef.rgTop = rgChampion
+  set m_gameDef.rgGameInfo = rgGameInfo
+  m_isAttached = true
+  InsertChampionPlaceholderAtRange = True
+End Function
+
 Function InsertAtRange(rgInsert as range) As Boolean
   InsertAtRange = False
 
   ' sanitize the range so its just one column
   set rgInsert = Application.Range(rgInsert.Cells(1,1), rgInsert.Cells(rgInsert.Rows.Count, 1))
 
+  if (m_gameDef.isChampion) Then
+    InsertAtRange = InsertChampionPlaceholderAtRange(rgInsert)
+    exit function
+  end if
+  
   If (Not IsRangeValidForGameInsert(rgInsert)) Then Exit Function
   
   Dim rgTopGame as Range
@@ -126,7 +162,7 @@ Function InsertAtRange(rgInsert as range) As Boolean
   set m_gameDef.rgBottom = rgBottomGame
   set m_gameDef.rgGameInfo = rgGameInfo
   m_isAttached = true
-  
+
   InsertAtRange = True
 End Function
 
@@ -137,68 +173,12 @@ Function InsertAtCell(rgInsert as Range) As Boolean
   InsertAtRange Application.Range(rgInsert.Cells(1,1), rgInsert.Cells(1,1).Offset(10,0))
 End Function
 
-Function InsertAtCellOld(rgInsert as Range) As Boolean
-  set rgInsert = rgInsert.Cells(1,1)
-  Dim rgCurGameRow As Range
-    
-  Set rgCurGameRow = Application.Range(rgInsert.Cells(1, 1), rgInsert.Cells(1, 1).Offset(0, 2))
-  ' ===== First Row - Top Team Name and Score
-  If (m_gameDef.isTopFirstGame) Then
-      rgCurGameRow.Cells(1, 1).Value = m_gameDef.topSource
-  Else
-      InsertFormulaForCell rgCurGameRow.Cells(1, 1), m_gameDef.bracket, m_gameDef.topSource
-  End If
-  
-  NameCellForInsertGame rgCurGameRow.Cells(1, 1), GetCellNameForGameTop(m_gameDef.bracket, m_gameDef.gameNum)
-  
-  FormatGameCell_TopBottomTeam rgCurGameRow.Cells(1, 1)
-  FormatGameCell_TopBottomTeam rgCurGameRow.Cells(1, 2)
-  
-  Set rgCurGameRow = rgCurGameRow.Offset(1, 0)
-  
-  ' ===== Line Row
-  FormatGameCell_LineCell rgCurGameRow
-  
-  ' ===== Line for the right side of the game (top to bottom)
-  FormatGameCell_LineCell Application.Range(rgCurGameRow.Cells(1, 3), rgCurGameRow.Cells(1, 3).Offset(7))
-  
-  Set rgCurGameRow = rgCurGameRow.Offset(3, 0) ' skip the blank line in the description and its underline
-  
-  ' ===== First body text for game description
-  Dim loserToGameText As String
-  
-  loserToGameText = ""
-  If (m_gameDef.loserToGame <> 0) Then
-      loserToGameText = "(Loser to" + Str$(m_gameDef.loserToGame) + ")"
-  End If
-  
-  InsertGameInfoCells rgCurGameRow.Cells(1, 1), m_gameDef.bracket, m_gameDef.fieldText, m_gameDef.gameTime, loserToGameText, m_gameDef.gameNum
-  
-  Set rgCurGameRow = rgCurGameRow.Offset(5, 0) ' skip the underline
-  
-  ' ===== Line Row
-  FormatGameCell_LineCell rgCurGameRow
-  Set rgCurGameRow = rgCurGameRow.Offset(1, 0)
-  
-  ' ===== Last Row - Bottom Team name and Score
-  If (m_gameDef.isBottomFirstGame) Then
-      rgCurGameRow.Cells(1, 1).Value = m_gameDef.bottomSource
-  Else
-      InsertFormulaForCell rgCurGameRow.Cells(1, 1), m_gameDef.bracket, m_gameDef.bottomSource
-  End If
-  NameCellForInsertGame rgCurGameRow.Cells(1, 1), GetCellNameForGameBottom(m_gameDef.bracket, m_gameDef.gameNum)
-  
-  FormatGameCell_TopBottomTeam rgCurGameRow.Cells(1, 1)
-  FormatGameCell_TopBottomTeam rgCurGameRow.Cells(1, 2)
-  
-  set m_gameDef.rgTop = rgInsert.Cells(1,1)
-  set m_gameDef.rgBottom = rgCurGameRow.Cells(1,1)
-  m_isAttached = true
-  InsertAtCell = True
-end function
-
 function GetBottomGameRange() as Range
   if (not m_isAttached) then stop
 
-  set GetBottomGameRange = m_gameDef.rgBottom
+  if (m_gameDef.isChampion) Then
+    set GetBottomGameRange = m_gameDef.rgGameInfo
+  else
+    set GetBottomGameRange = m_gameDef.rgBottom
+  end if
 end function

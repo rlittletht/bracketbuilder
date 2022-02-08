@@ -4,9 +4,12 @@ Option Explicit
 'all the possible info for a game. almost never completely filled out, but a good
 ' holder for information.
 ' gameNum = 0 will always denote an invalid GameDefinition
+' if isChampino is true, then gameNum will be the last valid game + 1
 Type GameDefinition
     gameNum As Integer
     bracket As String
+    isChampion As Boolean ' True if this is a placeholder for the bracket champion
+    
     isTopFirstGame As Boolean
     isBottomFirstGame As Boolean
     
@@ -24,38 +27,47 @@ Type GameDefinition
     rgGameInfo As Range
 End Type
 
-Function GetGameDefinitionFromBracketGame(bracket As String, Game As Integer) As GameDefinition
-    Dim gd As GameDefinition
-    
-    gd.bracket = bracket
-    gd.fieldText = "Field #1"
-    gd.gameTime = 0.5
-    
-    ' find the table for this bracket
+Function GetListBracketTable(bracket as string) as ListObject
     Dim tableName As String
     tableName = bracket + "Bracket"
     
     Dim listBracket As ListObject
     
-    Set listBracket = ActiveWorkbook.Worksheets("BracketStructure").ListObjects(tableName)
-    
-    Dim row As Integer
-    
-    row = Application.Evaluate("IFERROR(INDEX(" + listBracket + "[Game],MATCH(" + Str$(Game) + ", " + listBracket + "[Game], 0)),-1)")
+    Set GetListBracketTable = ActiveWorkbook.Worksheets("BracketStructure").ListObjects(tableName)
+End Function
+
+Function GetGameDefinitionFromBracketGame(bracket As String, Game As Integer) As GameDefinition
+    Dim gd As GameDefinition
     Dim listRow As listRow
+    Dim listBracket As ListObject
+
+    GetGameDefinitionFromBracketGame.gameNum = 0 ' initialize to error state
+
+    gd.bracket = bracket
+    gd.fieldText = "Field #1"
+    gd.gameTime = 0.5
     
-    If (row = -1) Then
-        gd.gameNum = 0
+    set listBracket = GetListBracketTable(bracket)
+    Dim row As Integer
+
+    if (listBracket.DataBodyRange.Rows.Count = Game - 1) Then
+        ' this is a champion placeholder
+        gd.isChampion = True
+        gd.gameNum = game
         GetGameDefinitionFromBracketGame = gd
-        
+        exit function
+    end if
+
+    row = Application.Evaluate("IFERROR(INDEX(" + listBracket + "[Game],MATCH(" + Str$(Game) + ", " + listBracket + "[Game], 0)),-1)")
+
+    If (row = -1) Then
         Exit Function
     End If
     
     Set listRow = listBracket.ListRows(row)
     
     gd.gameNum = Game
-    
-    
+        
     gd.topSource = listRow.Range.Cells(1, 4)
     gd.bottomSource = listRow.Range.Cells(1, 5)
     
@@ -357,10 +369,8 @@ Sub InsertGamesForBracket(bracket As String)
     
     While True
         If Not (InsertGameAtCell(Selection, bracket, gameNum)) Then
-            InsertBracketChampion Selection, bracket, gameNum - 1
+'            InsertBracketChampion Selection, bracket, gameNum - 1
             Exit Sub
-            
-            Stop
         End If
         
         gameNum = gameNum + 1
