@@ -191,7 +191,7 @@ Sub NameCellForInsertGame(rg As Range, cellName As String)
     
     Set wkb = rg.Worksheet.Parent
     
-    fExists = NameExists(cellName)
+    fExists = IsCellNameDefinedGlobalWorkbook(cellName)
     
     If CellHasName(rg) Then
         If (rg.Name.Name = cellName) Then Exit Sub ' nothing to do, already named the right name

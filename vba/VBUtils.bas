@@ -12,8 +12,10 @@ Sub ExportAllModules()
             Exit Sub
         End If
     Else
+        On Error Resume Next
         MkDir s
     End If
+    On Error GoTo 0
     
     For i = 1 To Application.VBE.ActiveVBProject.VBComponents.Count
         If (Application.VBE.ActiveVBProject.VBComponents(i).Type = 1) Then
@@ -38,6 +40,13 @@ Sub ImportAllModules()
                 Application.VBE.ActiveVBProject.VBComponents(i).Name = sT + "_OLD"
                 Application.VBE.ActiveVBProject.VBComponents.Import s + sT + ".bas"
             End If
+        ElseIf (Application.VBE.ActiveVBProject.VBComponents(i).Type = 2) Then
+            If (Application.VBE.ActiveVBProject.VBComponents(i).Name <> "VBUtils") Then
+                sT = Application.VBE.ActiveVBProject.VBComponents(i).Name
+                Application.VBE.ActiveVBProject.VBComponents(i).Name = sT + "_OLD"
+                Application.VBE.ActiveVBProject.VBComponents.Import s + sT + ".cls"
+            End If
+
         End If
     Next
     

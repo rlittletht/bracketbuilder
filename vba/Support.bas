@@ -1,19 +1,19 @@
 Attribute VB_Name = "Support"
 Option Explicit
 ' Does this name exist in the workbook (as a global name)
-Function NameExists(cellName As String) As Boolean
+Function IsCellNameDefinedGlobalWorkbook(cellName As String) As Boolean
 
     On Error GoTo NoName
     Dim nm As Name
     
     Set nm = ActiveWorkbook.Names(cellName)
-    NameExists = True
+    IsCellNameDefinedGlobalWorkbook = True
     
     On Error GoTo 0
     Exit Function
     
 NoName:
-    NameExists = False
+    IsCellNameDefinedGlobalWorkbook = False
     On Error GoTo 0
     
 End Function

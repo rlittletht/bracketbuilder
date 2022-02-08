@@ -99,7 +99,7 @@ Sub ConvertToGlobal(newTValue As String)
             
             newCellName = newTValue + Mid$(cellName, InStr(cellName, "_"))
             
-            If NameExists(newCellName) Then Stop ' can't already exist
+            If IsCellNameDefinedGlobalWorkbook(newCellName) Then Stop ' can't already exist
             
             ActiveCell.Name.Delete
             ActiveWorkbook.Names.Add newCellName, refersTo
