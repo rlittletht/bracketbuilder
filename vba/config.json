@@ -1,0 +1,14 @@
+{
+    "app_name": "BracketBuilder",
+    "description": "",
+    "author": "",
+    "email": "",
+    "create_ate": "Sun Feb 06 2022 10:44:28 GMT-0800 (Pacific Standard Time)",
+    "excel_file": "BracketBuilder.xlsm",
+    "vba_folder": "src",
+    "ribbon_file": "customUI14",
+    "ribbon_folder": "ribbons",
+    "logs": "on",
+    "xvba_packages": {},
+    "xvba_dev_packages": {}
+}
