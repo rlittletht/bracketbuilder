@@ -21,7 +21,7 @@ Sub ConvertStaticResultToFormulaCell(rg As Range)
     If Not CellHasName(rg) Then Stop
     Dim template As String, gameNum As String, homeAway As String
     
-    If Not GetGameInfo(rg, template, gameNum, homeAway) Then Stop
+    If Not GetGameInfoValuesFromRangeCellName(rg, template, gameNum, homeAway) Then Stop
     
     If (Mid$(rg.Text, 1, 1) <> "L" And Mid$(rg.Text, 1, 1) <> "W") Then Exit Sub
     

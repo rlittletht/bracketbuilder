@@ -83,12 +83,12 @@ Attribute StretchOrShrinkGame.VB_ProcData.VB_Invoke_Func = "S\n14"
     
     Dim bracket As String, gameNum As String, homeAway As String
     
-    If (Not GetGameInfo(rgGameStart, bracket, gameNum, homeAway)) Then Exit Sub
+    If (Not GetGameInfoValuesFromRangeCellName(rgGameStart, bracket, gameNum, homeAway)) Then Exit Sub
     If (homeAway = "2") Then
         Set rgGameStart = FindPreviousGameOrCurrent(rgGameStart.Offset(-1, 0))
         
         If rgGameStart Is Nothing Then Exit Sub
-        If (Not GetGameInfo(rgGameStart, bracket, gameNum, homeAway)) Then Exit Sub
+        If (Not GetGameInfoValuesFromRangeCellName(rgGameStart, bracket, gameNum, homeAway)) Then Exit Sub
         
         If (homeAway <> "1") Then Exit Sub
     End If
