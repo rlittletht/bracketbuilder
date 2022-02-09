@@ -36,16 +36,60 @@ Sub PopFromGameWell(well as GameWell)
 End Sub
 
 ' ============================================================================
+' LoadChampionshipPlaceholderIfPresent
+'
+' There are only 3 rows in a championship placeholder. Check for a formula
+' in either non-underline cell and see if its a championship placeholder.
+'
+' if it is, load it and return true. else false
+' ============================================================================
+Function LoadChampionshipPlaceholderIfPresent(rgIn As Range) As Boolean
+    dim c As Integer
+    Dim bracket as String, gameName as String, staticResult As String
+    Dim rg as Range
+    
+    set rg = rgIn.Cells(1,1)
+    ' walk up at most 2 cells
+    c = 3
+    while (c > 0)
+        if (Len(rg.Formula) > 0 And Left$(rg.Formula,1) = "=") Then
+            if GetGameInfoFromFormula(rg.Formula, bracket, gameName, staticResult) Then
+                if (Not CellHasName(rg)) Then
+                    m_gameDef.gameNum = Int(Mid$(gameName, 2))
+                    m_gameDef = GetGameDefinitionFromBracketGame(bracket, m_gameDef.gameNum + 1)
+                    set m_gameDef.rgTop = rg.Cells(1,1)
+                    set m_gameDef.rgGameInfo = m_gameDef.rgTop.Offset(2,0)
+                    LoadChampionshipPlaceholderIfPresent = True
+                    m_isAttached = True
+                    Exit Function
+                End If
+            End If
+        End If
+        set rg = rg.Offset(-1,0)
+        c = c - 1
+    wend
+End Function
+
+' ============================================================================
 ' LoadFromRange
 ' ============================================================================
-Function LoadFromRange(rg As Range) As Boolean
+Function LoadFromRange(rgLoad As Range) As Boolean
     Dim rgFullGame as Range
     Dim rgTopGame as Range
     Dim rgBottomGame as Range
     Dim rgGameInfo as Range
+    Dim rg As Range
+
+    set rg = rgLoad
 
     LoadFromRange = False
-    
+
+    ' First, Check for championship placeholder
+    if (LoadChampionshipPlaceholderIfPresent(rg)) Then 
+        LoadFromRange = True
+        Exit Function
+    End If
+
     Set rgFullGame = GetFullGameRangeFromCellWithinGameFirstColumn(rg)
 
     If (Not FillGameRangesFromFullGameRange(rgFullGame, rgTopGame, rgBottomGame, rgGameInfo)) Then Exit Function
@@ -101,9 +145,12 @@ End Function
 ' * There must be at least 5 rows between the underline rows (or 9 between
 '   top and bottom game)
 ' ============================================================================
-Function IsRangeValidForGameInsert(rgInsert as Range) As Boolean
+Function IsRangeValidForGameInsert(rg as Range) As Boolean
   Dim rgTopGame as Range
   Dim rgBottomGame as Range
+  Dim rgInsert as Range
+
+  set rgInsert = rg
 
   set rgTopGame = rgInsert.Cells(1,1)
   set rgBottomGame = rgInsert.Cells(rgInsert.Rows.Count,1)
@@ -122,9 +169,12 @@ End Function
 '
 ' Insert this game as a Champion placeholder
 ' ============================================================================
-Function InsertChampionPlaceholderAtRange(rgInsert As Range) As Boolean
+Function InsertChampionPlaceholderAtRange(rg As Range) As Boolean
   dim rgChampion as Range
   dim rgGameInfo as Range
+  dim rgInsert as Range
+
+  set rgInsert = rg
 
   if (Not m_gameDef.isChampion) then stop
 
@@ -152,9 +202,15 @@ Function InsertChampionPlaceholderAtRange(rgInsert As Range) As Boolean
   InsertChampionPlaceholderAtRange = True
 End Function
 
-Function InsertAtRange(rgInsert as range) As Boolean
+' ============================================================================
+' InsertAtRange
+' ============================================================================
+Function InsertAtRange(rg as range) As Boolean
   InsertAtRange = False
+  Dim rgInsert as Range
 
+  set rgInsert = rg
+  
   ' sanitize the range so its just one column
   set rgInsert = Application.Range(rgInsert.Cells(1,1), rgInsert.Cells(rgInsert.Rows.Count, 1))
 
@@ -251,6 +307,14 @@ end function
 sub DeleteFromAttachedRange()
     if not m_isAttached then exit sub
     
+    if m_gameDef.isChampion Then
+        ' there are no cell names to delete, just content
+        Application.Range(m_gameDef.rgTop.Cells(1,1), m_gameDef.rgGameInfo.Cells(1,3)).Clear
+        FormatGameCell_NoLineCell Application.Range(m_gameDef.rgTop.Cells(1,1), m_gameDef.rgGameInfo.Cells(1,3))
+        m_isAttached = False
+        Exit Sub
+    End If
+
     RemoveGameInfoCellsRange m_gameDef.rgGameInfo
     m_gameDef.rgTop.Name.Delete
     m_gameDef.rgBottom.Name.Delete
