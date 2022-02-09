@@ -1,6 +1,6 @@
 Attribute VB_Name = "FormulaBuilder"
 Option Explicit
-' My Test Comment
+' My Test Comment 2
 Function ScoreRef(teamRef As String)
     ScoreRef = "OFFSET(" + teamRef + ",0,1)"
 End Function

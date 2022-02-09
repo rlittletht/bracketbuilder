@@ -1,2 +1,4 @@
 {
+    "editor.defaultFormatter": "local-smart.excel-live-server",
+    "editor.detectIndentation": false
 }

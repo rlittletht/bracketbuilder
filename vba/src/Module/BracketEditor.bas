@@ -1,13 +1,17 @@
 Attribute VB_Name = "BracketEditor"
 Option Explicit
 
-Sub RemoveGameInfoCells(gd As GameDefinition)
+Sub RemoveGameInfoCellsRange(rgGameInfo as Range)
     ' first, remove the name
-    If (Not CellHasName(gd.rgGameInfo.Cells(1, 2))) Then Stop
+    If (Not CellHasName(rgGameInfo.Cells(1, 2))) Then Stop
         
-    gd.rgGameInfo.Cells(1, 2).Name.Delete
-    gd.rgGameInfo.Cells(1, 2).UnMerge
-    gd.rgGameInfo.Clear
+    rgGameInfo.Cells(1, 2).Name.Delete
+    rgGameInfo.Cells(1, 2).UnMerge
+    rgGameInfo.Clear
+End Sub
+
+Sub RemoveGameInfoCells(gd As GameDefinition)
+    RemoveGameInfoCellsRange gd.rgGameInfo
 End Sub
 
 Sub SwapHomeAway()
@@ -59,22 +63,32 @@ Function CalculateGameInfoRangeForTopAndBottomGames(rgTopGame as Range, rgBottom
     
     set rgTarget = Application.Range(rgTopGame.Cells(1,1), rgBottomGame.Cells(1,1))
 
-    if (rgTarget.Rows.Count < 11) Then Stop
+    if (rgTarget.Rows.Count < 9) Then Stop
 
     ' now figure out where the body text goes    
     cBodyTextRows = Int((rgTarget.Rows.Count - 3 + 0.5) / 2)
     iTopBodyText = Int(((cBodyTextRows - 2) / 2) + 0.5)
 
+    if (rgTarget.Rows.Count < 11) then
+        iTopBodyText = 0
+    End If
+    
     set CalculateGameInfoRangeForTopAndBottomGames = rgTarget.Cells(1, 1).Offset(2 + (iTopBodyText * 2), 0)
 End Function
 
 Sub StretchOrShrinkGame()
-Attribute StretchOrShrinkGame.VB_ProcData.VB_Invoke_Func = "S\n14"
+    Attribute StretchOrShrinkGame.VB_ProcData.VB_Invoke_Func = "S\n14"
+
+    if (not CutAndPushToWell()) Then Exit Sub
+    PopFromWellAndInsert
+End Sub
+
+Sub StretchOrShrinkGameOld()
     Dim rgTarget As Range
     
     ' cleanup the selection
     
-    Set rgTarget = CleanupRange(Selection)
+    Set rgTarget = EnsureRangeIsOnlyGameAndSingleColumn(Selection)
     If rgTarget Is Nothing Then Exit Sub
     Dim iRowTopOriginal As Integer, iRowBottomOriginal As Integer
     

@@ -11,7 +11,7 @@ Option Explicit
 
 Private m_gameDef As GameDefinition
 Private m_isAttached As Boolean
-
+' CONSIDER using https://github.com/rubberduck-vba/Rubberduck to edit in VBE
 ' Return whether or not this Game object is attached to a range in the worksheet
 Function IsAttached() As Boolean
     IsAttached = m_fIsAttached
@@ -27,25 +27,80 @@ Function LoadFromGameBracket(bracket As String, Game As Integer) As Boolean
   End If
 End Function
 
+Sub PushToGameWell(well as GameWell)
+    well.PushGame m_gameDef
+End Sub
+
+Sub PopFromGameWell(well as GameWell)
+    m_gameDef = well.PopGame()
+End Sub
+
+' ============================================================================
+' LoadFromRange
+' ============================================================================
 Function LoadFromRange(rg As Range) As Boolean
-    Dim rgStart As Range
-    Dim rgEnd As Range
-    
+    Dim rgFullGame as Range
+    Dim rgTopGame as Range
+    Dim rgBottomGame as Range
+    Dim rgGameInfo as Range
+
     LoadFromRange = False
     
-    Set rgStart = FindPreviousGameOrCurrent(rg.Cells(1, 1))
-    Set rgEnd = GetMatchingGameLine(rgStart)
+    Set rgFullGame = GetFullGameRangeFromCellWithinGameFirstColumn(rg)
+
+    If (Not FillGameRangesFromFullGameRange(rgFullGame, rgTopGame, rgBottomGame, rgGameInfo)) Then Exit Function
+
+    ' now that we have all the ranges, fill in all the details
+    Dim bracket as String, gameName as String, homeAway As String, staticResult as String
+    Dim gd as GameDefinition
+
+    if (Not GetGameInfoValuesFromRangeCellName(rgTopGame, bracket, gameName, homeAway)) Then Exit Function
+    gd.gameNum = Int(Mid$(gameName, 2)) ' doesn't have to be filled out early, just convenient storage space
+
+    ' First, initialize with the static bracket definition for the game (this will fill in things
+    ' like loserToGame and winnerToGame, which aren't easily extracted from the inserted game)
+    gd = GetGameDefinitionFromBracketGame(bracket, gd.gameNum)
+    gd.bracket = bracket
+    gd.swapHomeAway = (homeAway <> "1")
     
-    Set rg = Range(rgStart, rgEnd.Offset(0, 2)).Select
+    if (Not GetGameInfoFromFormula(rgTopGame.Formula, bracket, gameName, staticResult)) Then Exit Function
+    gd.topSource = staticResult
+    if (bracket = "") Then gd.isTopFirstGame = True
     
-    ' now we have the whole game range
+    ' Do some sanity checks to make sure the games are consistent
+    if (Not GetGameInfoValuesFromRangeCellName(rgBottomGame, bracket, gameName, homeAway)) Then Exit Function
+
+    if (gd.bracket <> bracket) Then Stop
+    if (gd.gameNum <> Int(Mid$(gameName, 2))) Then Stop
+    if (gd.swapHomeAway <> (homeAway <> "2")) Then Stop
+
+    if (Not GetGameInfoFromFormula(rgBottomGame.Formula, bracket, gameName, staticResult)) Then Exit Function
+    gd.bottomSource = staticResult
+    if (bracket = "") Then gd.isBottomFirstGame = True
+        
+    gd.fieldText = rgGameInfo.Cells(1, 1).Value
+    gd.gameTime = rgGameInfo.Cells(3, 1).Value
+    gd.loserToGameText = rgGameInfo.Cells(5, 1).Value
+
+    Set gd.rgGameInfo = rgGameInfo
+    Set gd.rgTop = rgTopGame
+    set gd.rgBottom = rgBottomGame
+
+    m_gameDef = gd
+    m_isAttached = True
+    LoadFromRange = True
 End Function
 
+' ============================================================================
+' IsRangeValidForGameInsert
+'
 ' We have a specific range we are being asked to insert in. It must meet
 ' the criteria for a game:
 ' * The first cell MUST be followed below by an underline row
 ' * The last cell MUST be preceded above by an underline row
-' * There must be at least 5 rows between the underline rows (or 7 between top and bottom game)
+' * There must be at least 5 rows between the underline rows (or 9 between
+'   top and bottom game)
+' ============================================================================
 Function IsRangeValidForGameInsert(rgInsert as Range) As Boolean
   Dim rgTopGame as Range
   Dim rgBottomGame as Range
@@ -62,7 +117,11 @@ Function IsRangeValidForGameInsert(rgInsert as Range) As Boolean
   IsRangeValidForGameInsert = true
 End Function
 
+' ============================================================================
+' InsertChampionPlaceholderAtRange
+'
 ' Insert this game as a Champion placeholder
+' ============================================================================
 Function InsertChampionPlaceholderAtRange(rgInsert As Range) As Boolean
   dim rgChampion as Range
   dim rgGameInfo as Range
@@ -155,7 +214,7 @@ Function InsertAtRange(rgInsert as range) As Boolean
   NameCellForInsertGame rgBottomGame, GetCellNameForGameBottom(m_gameDef.bracket, m_gameDef.gameNum)
   
   FormatGameCell_TopBottomTeam rgBottomGame
-  FormatGameCell_TopBottomTeam rgBottomGame.Offset(1,0)
+  FormatGameCell_TopBottomTeam rgBottomGame.Offset(0,1)
 
   ' Now record where we put things
   set m_gameDef.rgTop = rgTopGame
@@ -166,9 +225,12 @@ Function InsertAtRange(rgInsert as range) As Boolean
   InsertAtRange = True
 End Function
 
-
+' ============================================================================
+' InsertAtCell
+'
 ' Insert this game at the given cell. since the cell is supposed to be a single cell,
 ' just take Cell(1,1)
+' ============================================================================
 Function InsertAtCell(rgInsert as Range) As Boolean
   InsertAtRange Application.Range(rgInsert.Cells(1,1), rgInsert.Cells(1,1).Offset(10,0))
 End Function
@@ -182,3 +244,17 @@ function GetBottomGameRange() as Range
     set GetBottomGameRange = m_gameDef.rgBottom
   end if
 end function
+
+' ============================================================================
+' DeleteFromAttachedRange
+' ============================================================================
+sub DeleteFromAttachedRange()
+    if not m_isAttached then exit sub
+    
+    RemoveGameInfoCellsRange m_gameDef.rgGameInfo
+    m_gameDef.rgTop.Name.Delete
+    m_gameDef.rgBottom.Name.Delete
+    Application.Range(m_gameDef.rgTop.Cells(1,1), m_gameDef.rgBottom.Cells(1,3)).Clear
+    FormatGameCell_NoLineCell Application.Range(m_gameDef.rgTop.Cells(1,1), m_gameDef.rgBottom.Cells(1,3))
+    m_isAttached = False
+end sub

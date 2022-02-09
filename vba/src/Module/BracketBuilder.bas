@@ -22,7 +22,11 @@ Type GameDefinition
     gameTime As Date
     loserToGameText As String
     
-    rgTop As Range
+    ' If true, this means that the bracket definitions "top" (or home) game
+    ' will be at rgBottom, and vice versa
+    swapHomeAway as String
+
+    rgTop As Range ' range for the visual top game (not necessarily Home/Away)
     rgBottom As Range
     rgGameInfo As Range
 End Type
@@ -387,4 +391,11 @@ Sub BuildBracketAtCell()
     stop
     InsertGamesForBracket "T" + num
     
+End Sub
+
+Sub TestLoadClass
+    Dim game as New BracketGame
+
+    Debug.Print game.LoadFromRange(selection)
+    stop
 End Sub

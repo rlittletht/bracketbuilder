@@ -96,7 +96,7 @@ Function GetGameInfoFromFormula(fmla As String, ByRef template As String, ByRef 
     GetGameInfoFromFormula = True
 End Function
 
-Function GetGameInfoFromString(cellName As String, ByRef template As String, ByRef gameNum As String, ByRef homeAway As String) As Boolean
+Function GetGameInfoFromString(cellName As String, ByRef template As String, ByRef gameName As String, ByRef homeAway As String) As Boolean
     Dim iSep1 As Integer
     Dim iSep2 As Integer
     
@@ -107,13 +107,13 @@ Function GetGameInfoFromString(cellName As String, ByRef template As String, ByR
     If (iSep2 <= 0) Then Exit Function
     
     template = Mid$(cellName, 1, iSep1 - 1)
-    gameNum = Mid$(cellName, iSep1 + 1, iSep2 - iSep1 - 1)
+    gameName = Mid$(cellName, iSep1 + 1, iSep2 - iSep1 - 1)
     homeAway = Mid$(cellName, iSep2 + 1)
 
     GetGameInfoFromString = True
 End Function
 ' Given a range whose .Cell(1,1) is the top cell of a game, fill in the template/gamenum/homeAway values
-Function GetGameInfoValuesFromRangeCellName(rg As Range, ByRef template As String, ByRef gameNum As String, ByRef homeAway As String) As Boolean
+Function GetGameInfoValuesFromRangeCellName(rg As Range, ByRef template As String, ByRef gameName As String, ByRef homeAway As String) As Boolean
     GetGameInfoValuesFromRangeCellName = False
 
     On Error GoTo LError
@@ -122,20 +122,20 @@ Function GetGameInfoValuesFromRangeCellName(rg As Range, ByRef template As Strin
 
     cellName = rg.Name.Name
 
-    GetGameInfoValuesFromRangeCellName = GetGameInfoFromString(cellName, template, gameNum, homeAway)
+    GetGameInfoValuesFromRangeCellName = GetGameInfoFromString(cellName, template, gameName, homeAway)
 LError:
     On Error GoTo 0
 End Function
 ' Is this a GameNumCell?
-Function IsGameNumCell(rg As Range) As Boolean
-    IsGameNumCell = False
+Function IsGameInfoGameNumCell(rg As Range) As Boolean
+    IsGameInfoGameNumCell = False
     
     If Not CellHasName(rg.Cells(1, 1)) Then Exit Function
     If Not rg.MergeCells Then Exit Function
     
     If InStr(rg.Cells(1, 1).Name.Name, "Game") <= InStr(rg.Cells(1, 1).Name.Name, "_") Then Exit Function
     
-    IsGameNumCell = True
+    IsGameInfoGameNumCell = True
 End Function
 ' There are 4 rows and 2 columns that make up the "Game Info" for a game
 ' (the Field #, the Time, the Advance To text, and the tiny underline
@@ -164,7 +164,7 @@ Function GetGameInfoRangeForTopCell(rgTopTeam As Range) As Range
         If (GetGameInfoValuesFromRangeCellName(rg.Cells(1, 1), template, gameNum, homeAway)) Then Exit Function
         If (cChecked > 10000) Then Stop
         
-        If IsGameNumCell(rg.Cells(1, 2)) Then
+        If IsGameInfoGameNumCell(rg.Cells(1, 2)) Then
             Set GetGameInfoRangeForTopCell = rg.Worksheet.Range(rg.Cells(1, 1), rg.Cells(5, 2))
             Exit Function
         End If
@@ -173,7 +173,7 @@ Function GetGameInfoRangeForTopCell(rgTopTeam As Range) As Range
 End Function
 ' the top and bottom cells cannot be line rows, and the selection
 ' should be only 1 column wide
-Function CleanupRange(rg As Range) As Range
+Function EnsureRangeIsOnlyGameAndSingleColumn(rg As Range) As Range
     Dim iRowStart As Integer
     Dim iRowEnd As Integer
     Dim iCol As Integer
@@ -196,20 +196,20 @@ Function CleanupRange(rg As Range) As Range
     
     ' now, there have to be enough rows
     
-    If iRowEnd - iRowStart < 10 Then Exit Function
+    If iRowEnd - iRowStart < 9 Then Exit Function
     
-    Set CleanupRange = rg.Worksheet.Range(rg.Worksheet.Cells(iRowStart, iCol), rg.Worksheet.Cells(iRowEnd, iCol))
+    Set EnsureRangeIsOnlyGameAndSingleColumn = rg.Worksheet.Range(rg.Worksheet.Cells(iRowStart, iCol), rg.Worksheet.Cells(iRowEnd, iCol))
 End Function
 
 ' get all the game information we can about a game
 Function FillGameDefintionFromCell(rg As Range, ByRef gd As GameDefinition) As Boolean
     FillGameDefintionFromCell = False
     
-    Dim bracket As String, gameNum As String, homeAway As String
+    Dim bracket As String, gameName As String, homeAway As String
     Dim fBottom As Boolean
 
-    If (GetGameInfoValuesFromRangeCellName(rg, bracket, gameNum, homeAway)) Then
-        gd.gameNum = Int(Mid$(gameNum, 2))
+    If (GetGameInfoValuesFromRangeCellName(rg, bracket, gameName, homeAway)) Then
+        gd.gameNum = Int(Mid$(gameName, 2))
         fBottom = False
         If (homeAway = "2") Then
             fBottom = True
@@ -328,4 +328,57 @@ Sub PrintGameInfo()
     Debug.Print "GameInfo: Template(" + template + "), GameNum(" + gameNum + "), homeAway(" + homeAway + ")"
 End Sub
 
+Function CutAndPushToWell() As Boolean
+    Dim well as New GameWell
+    Dim game as New BracketGame
 
+    CutAndPushToWell = False
+    if (Not game.LoadFromRange(selection)) Then
+        MsgBox "Can't push game to well"
+        Exit Function
+    End If
+
+    game.PushToGameWell well
+    game.DeleteFromAttachedRange
+    CutAndPushToWell = True
+End Function
+
+Sub PopFromWellAndInsert()
+    Dim well as New GameWell
+    Dim game as New BracketGame
+    Dim rgInsert as Range
+
+    if (Selection.Rows.Count = 1 And Selection.Columns.Count = 1) Then
+        set rgInsert = Application.Range(selection.Cells(1,1),selection.Cells(1,1).Offset(10,0))
+    else
+        set rgInsert = Selection
+    end if
+
+    If (Not game.IsRangeValidForGameInsert(rgInsert)) Then 
+        MsgBox "Selection isn't valid for game insert"
+        Exit Sub
+    End If
+
+    game.PopFromGameWell well
+    game.InsertAtRange rgInsert
+End Sub
+
+Sub TestDelete()
+    Dim game as New BracketGame
+    game.LoadFromRange selection
+    game.DeleteFromAttachedRange
+End Sub
+
+Sub TestWell()
+    Dim well as New GameWell
+    Dim game as New BracketGame
+
+    game.LoadFromRange selection
+
+    stop
+    game.PushToGameWell well
+    stop
+    set game = new BracketGame
+    game.PopFromGameWell well
+    game.InsertAtCell Selection
+End Sub
