@@ -382,3 +382,11 @@ Sub TestWell()
     game.PopFromGameWell well
     game.InsertAtCell Selection
 End Sub
+
+Sub TestExtend(n as integer)
+    Dim rg as Range
+    set rg = Selection
+
+    Debug.Print ExtendConnectingLineRangeForGame(rg, n)
+    stop
+End Sub

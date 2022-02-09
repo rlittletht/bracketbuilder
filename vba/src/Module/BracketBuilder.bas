@@ -29,6 +29,8 @@ Type GameDefinition
     rgTop As Range ' range for the visual top game (not necessarily Home/Away)
     rgBottom As Range
     rgGameInfo As Range
+    rgTopConnectingLine As Range
+    rgBottomConnectingLine As Range
 End Type
 
 Function GetListBracketTable(bracket as string) as ListObject

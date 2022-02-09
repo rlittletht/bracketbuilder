@@ -43,6 +43,10 @@ Attribute SelectGame.VB_ProcData.VB_Invoke_Func = "A\n14"
     Range(rg1, rg2.Offset(0, 2)).Select
 End Sub
 
+Function IsCellFilledForLine(rg as Range) As Boolean
+    IsCellFilledForLine = rg.Interior.Pattern = xlPatternSolid
+End Function
+
 Sub ToggleUnderline()
 Attribute ToggleUnderline.VB_ProcData.VB_Invoke_Func = "L\n14"
     Dim rg As Range
@@ -72,7 +76,7 @@ Function CalculateGameInfoRangeForTopAndBottomGames(rgTopGame as Range, rgBottom
     if (rgTarget.Rows.Count < 11) then
         iTopBodyText = 0
     End If
-    
+
     set CalculateGameInfoRangeForTopAndBottomGames = rgTarget.Cells(1, 1).Offset(2 + (iTopBodyText * 2), 0)
 End Function
 
