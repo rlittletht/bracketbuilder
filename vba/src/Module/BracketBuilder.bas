@@ -31,6 +31,7 @@ Type GameDefinition
     rgGameInfo As Range
     rgTopConnectingLine As Range
     rgBottomConnectingLine As Range
+    rgWinnerConnectingLine as Range
 End Type
 
 Function GetListBracketTable(bracket as string) as ListObject

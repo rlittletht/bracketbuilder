@@ -387,6 +387,6 @@ Sub TestExtend(n as integer)
     Dim rg as Range
     set rg = Selection
 
-    Debug.Print ExtendConnectingLineRangeForGame(rg, n)
+    Debug.Print ExtendWinnerConnectingLineRangeForGame(rg, n, False)
     stop
 End Sub

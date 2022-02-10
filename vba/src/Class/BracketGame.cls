@@ -148,6 +148,11 @@ Function LoadFromRange(rgLoad As Range) As Boolean
           set gd.rgBottomConnectingLine = rgConnectingLine
         end if
     end if
+    ' and get the winner connecting line
+    set rgConnectingLine = rgGameInfo.Cells(1,1).Offset(1,2)
+    if (ExtendWinnerConnectingLineRangeForGame(rgConnectingLine, gd.gameNum, True)) Then
+        set gd.rgWinnerConnectingLine = rgConnectingLine
+    end if
 
     Set gd.rgGameInfo = rgGameInfo
     Set gd.rgTop = rgTopGame
@@ -318,6 +323,13 @@ Function InsertAtRange(rg as range) As Boolean
   FormatGameCell_TopBottomTeam rgBottomGame
   FormatGameCell_TopBottomTeam rgBottomGame.Offset(0,1)
 
+  ' ===== Horizontal line out of winner to next game
+  set rgConnectingLine = rgGameInfo.Offset(1,2)
+  if (ExtendWinnerConnectingLineRangeForGame(rgConnectingLine, m_gameDef.gameNum, False)) Then
+    FormatGameCell_LineCell rgConnectingLine
+    set m_gameDef.rgWinnerConnectingLine = rgConnectingLine
+  end if
+
   ' Now record where we put things
   set m_gameDef.rgTop = rgTopGame
   set m_gameDef.rgBottom = rgBottomGame
@@ -369,11 +381,18 @@ sub DeleteFromAttachedRange()
     m_gameDef.rgBottom.Name.Delete
     Application.Range(m_gameDef.rgTop.Cells(1,1), m_gameDef.rgBottom.Cells(1,3)).Clear
     FormatGameCell_NoLineCell Application.Range(m_gameDef.rgTop.Cells(1,1), m_gameDef.rgBottom.Cells(1,3))
+
     if (Not(m_gameDef.rgTopConnectingLine is Nothing)) Then
         FormatGameCell_NoLineCell m_gameDef.rgTopConnectingLine
     end if
+
     if (Not(m_gameDef.rgBottomConnectingLine is Nothing)) Then
         FormatGameCell_NoLineCell m_gameDef.rgBottomConnectingLine
     end if    
+
+    if (Not(m_gameDef.rgWinnerConnectingLine is Nothing)) Then
+        FormatGameCell_NoLineCell m_gameDef.rgWinnerConnectingLine
+    end if    
+    
     m_isAttached = False
 end sub
