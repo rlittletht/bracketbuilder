@@ -391,7 +391,6 @@ Sub BuildBracketAtCell()
     num = InputBox("Number of Teams:", "Bracket Builder")
     
     If (num = "" Or num = "0") Then Exit Sub
-    stop
     InsertGamesForBracket "T" + num
     
 End Sub
