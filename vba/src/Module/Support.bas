@@ -343,6 +343,10 @@ Function CutAndPushToWell() As Boolean
     CutAndPushToWell = True
 End Function
 
+Sub DoCutAndPushToWell()
+    CutAndPushToWell
+End Sub
+
 Sub PopFromWellAndInsert()
     Dim well as New GameWell
     Dim game as New BracketGame
