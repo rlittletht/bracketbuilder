@@ -1,11 +1,15 @@
 import * as React from "react";
 import { DefaultButton } from "@fluentui/react";
+import { ComboBox } from "@fluentui/react";
+
 import Header from "./Header";
 import HeroList, { HeroListItem} from "./HeroList";
 import Progress from "./Progress";
 import { SetupState } from "../../setup";
 import { SetupBook } from "../../setup";
 import { IAppContext, AppContext } from "../../AppContext";
+import BracketChooser, { UpdateBracketChoiceDelegate } from "./BracketChooser";
+import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
 
 /* global console, Excel, require  */
 
@@ -18,8 +22,10 @@ export interface AppProps
 export interface AppState
 {
     listItems: HeroListItem[];
-//    setupState: SetupState;
+    setupState: SetupState;
     errorMessage: string;
+    selectedBracket: string;
+    bracketOptions: BracketOption[];
 }
 
 export default class App extends React.Component<AppProps, AppState>
@@ -32,35 +38,80 @@ export default class App extends React.Component<AppProps, AppState>
         this.state =
         {
             listItems: [],
-//            setupState: SetupState.NoBracketData,
+            setupState: SetupState.NoBracketData,
             errorMessage: "",
+            selectedBracket: "",
+            bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
         };
 
         this.m_appContext = new AppContext();
         this.m_appContext.setDelegates(
             this.addLogMessage.bind(this),
-            this.invalidateHeroList.bind(this));
+            this.invalidateHeroList.bind(this),
+            this.getSelectedBracket.bind(this));
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: App.addLogMessage
+
+        Add a log message to the UI
+    ----------------------------------------------------------------------------*/
     addLogMessage(message: string)
     {
         this.setState({ errorMessage: message });
     }
     
+    /*----------------------------------------------------------------------------
+        %%Function: App.invalidateHeroList
+
+        Invalidate the top level hero list (and maybe supporting parameters
+        below in the UI)
+    ----------------------------------------------------------------------------*/
     async invalidateHeroList(ctx: any)
     {
-        this.setState({ listItems: await this.buildHeroList(ctx) });
+        let setupState: SetupState = await(this.getSetupState(ctx));
+
+        this.setState({
+            listItems: this.buildHeroList(setupState),
+            setupState: setupState
+        });
     }
 
-    async buildHeroList(ctx: any): Promise<HeroListItem[]>
+    /*----------------------------------------------------------------------------
+        %%Function: App.getSetupState
+
+        Get the setup state of the workbook
+    ----------------------------------------------------------------------------*/
+    async getSetupState(ctx: any): Promise<SetupState>
     {
-        let listItems: HeroListItem[] = [];
         let setupState: SetupState;
 
         if (ctx != null)
             setupState = await SetupBook.getWorkbookSetupState(ctx);
         else
             setupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
+
+        return setupState;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: App.getSelectedBracket
+
+        Get the bracket the user has selected
+    ----------------------------------------------------------------------------*/
+    getSelectedBracket(): string
+    {
+        return this.state.selectedBracket;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: App.buildHeroList
+
+        Build the hero list of commands
+    ----------------------------------------------------------------------------*/
+    buildHeroList(setupState: SetupState): HeroListItem[]
+    {
+        let listItems: HeroListItem[] = [];
 
         if (setupState == SetupState.NoBracketData)
         {
@@ -69,7 +120,18 @@ export default class App extends React.Component<AppProps, AppState>
                     icon: "Ribbon",
                     primaryText: "Initialize Brackets",
                     cursor: "cursorPointer",
-                    delegate: SetupBook.buildBracketWorkbook,
+                    delegate: SetupBook.buildBracketStructureWorksheet,
+                });
+        }
+
+        if (setupState == SetupState.NoBracketChoice || setupState == SetupState.NoBracketData)
+        {
+            listItems.push(
+                {
+                    icon: "Ribbon",
+                    primaryText: "Build a bracket",
+                    cursor: "cursorPointer",
+                    delegate: SetupBook.buildSpecificBracket,
                 });
         }
 
@@ -78,30 +140,14 @@ export default class App extends React.Component<AppProps, AppState>
 
     async componentDidMount()
     {
+        let setupState: SetupState = await (this.getSetupState(null));
+
         // figure out our top level menu.... Setup, or bracket editing
         this.setState(
             {
-                listItems: await this.buildHeroList(null),
-                 /*
-listItems: [
-                                    {
-                                        icon: "Ribbon",
-                                        primaryText: "Achieve more with Office integration",
-                                        delegate: null
-                                    },
-                                    {
-                                        icon: "Unlock",
-                                        primaryText: "Unlock features and functionality",
-                                        delegate: null
-                                    },
-                                    {
-                                        icon: "Design",
-                                        primaryText: "Create and visualize like a pro",
-                                        delegate: null
-                                    },
-                                ],
-                            */
-//                setupState: setupState,
+                listItems: await this.buildHeroList(setupState),
+                selectedBracket: "",
+                setupState: setupState,
             });
     }
 
@@ -135,6 +181,19 @@ listItems: [
         }
     };
 
+    /*----------------------------------------------------------------------------
+        %%Function: App.updateSelectedBracketChoice
+
+        delegate to update our top level state on the selected choice
+        (this is passed to the bracket chooser component)
+    ----------------------------------------------------------------------------*/
+    updateSelectedBracketChoice(selectedBracket: string)
+    {
+        this.setState({
+            selectedBracket: selectedBracket
+        });
+    }
+
     render()
     {
         const { title, isOfficeInitialized } = this.props;
@@ -149,6 +208,22 @@ listItems: [
             );
         }
 
+        let insertBracketChooserMaybe = () =>
+        {
+            if (this.state.setupState == SetupState.NoBracketChoice ||
+                this.state.setupState == SetupState.NoBracketData)
+            {
+                return (
+                    <BracketChooser
+                        updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
+                        bracketOptions={this.state.bracketOptions}
+                    />
+                );
+            }
+            else
+                return (<span/>);
+        }
+
         return (
             <div className="ms-welcome">
                 <Header logo={require("./../../../assets/logo-filled.png")} title={this.props.title} message="Hiya"/>
@@ -160,6 +235,7 @@ listItems: [
 this.click}>
                         Run
                     </DefaultButton>
+                    {insertBracketChooserMaybe()}
                 </HeroList>
                 <div>
                     {this.state.errorMessage}

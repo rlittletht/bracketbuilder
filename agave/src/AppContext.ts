@@ -3,6 +3,7 @@ export interface IAppContext
 {
     log(message: string);
     invalidateHeroList(ctx: any);
+    getSelectedBracket();
 }
 
 export interface AddLogMessageDelegate
@@ -15,10 +16,16 @@ export interface InvalidateHeroListDelegate
     (ctx: any): void;
 }
 
+export interface GetSelectedBracketDelegate
+{
+    (): string;
+}
+
 export class AppContext implements IAppContext
 {
     m_addLogMessageDelegate: AddLogMessageDelegate;
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
+    m_getSelectedBracket: GetSelectedBracketDelegate;
 
     log(message: string)
     {
@@ -32,11 +39,22 @@ export class AppContext implements IAppContext
             this.m_invalidateHeroListDelegate(ctx);
     }
 
+    getSelectedBracket(): string
+    {
+        if (this.m_getSelectedBracket)
+            return this.m_getSelectedBracket();
+
+        return "";
+    }
+
     setDelegates(
         addMessageDelegate: AddLogMessageDelegate,
-        invalidateHeroList: InvalidateHeroListDelegate)
+        invalidateHeroList: InvalidateHeroListDelegate,
+        getSelectedBracket: GetSelectedBracketDelegate
+        )
     {
         this.m_addLogMessageDelegate = addMessageDelegate;
         this.m_invalidateHeroListDelegate = invalidateHeroList;
+        this.m_getSelectedBracket = getSelectedBracket;
     }
 }

@@ -6,6 +6,12 @@ import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
 import { IAppContext } from "../AppContext";
 
+export interface BracketOption
+{
+    key: string;
+    name: string;
+}
+
 export class BracketStructureBuilder
 {
     /*----------------------------------------------------------------------------
@@ -23,6 +29,28 @@ export class BracketStructureBuilder
             });
 
         return values;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.getStaticAvailableBrackets
+
+        return an array of bracket options for the static brackets we can create
+    ----------------------------------------------------------------------------*/
+    static getStaticAvailableBrackets(): BracketOption[]
+    {
+        let brackets: BracketOption[] = [];
+
+        s_brackets.forEach(
+            (bracket: BracketDefinition) =>
+            {
+                brackets.push(
+                    {
+                        key: bracket.tableName.substr(0, bracket.tableName.length - 7),
+                        name: bracket.name
+                    });
+            });
+
+        return brackets;
     }
 
     /*----------------------------------------------------------------------------
