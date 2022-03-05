@@ -64,10 +64,18 @@
  .ms-welcome__action.ms-Button--hero {
      margin-top: 30px;
  }
- 
+
 .ms-Button.ms-Button--hero .ms-Button-label {
   color: #0078d7;
 }
+
+ .cursorPointer {
+     cursor: pointer;
+ }
+
+ .cursorDefault {
+     cursor: default;
+ }
 
 .ms-Button.ms-Button--hero:hover .ms-Button-label,
 .ms-Button.ms-Button--hero:focus .ms-Button-label{
