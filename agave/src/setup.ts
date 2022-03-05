@@ -6,6 +6,7 @@ import { IAppContext } from "./AppContext";
 export enum SetupState
 {
     Broken,
+    NoBracketStructure,
     NoBracketData,
     NoBracketChoice,
     Ready
@@ -30,6 +31,20 @@ export class SetupBook
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: SetupBook.getBracketsDataSheetOrNull
+    ----------------------------------------------------------------------------*/
+    static async getBracketsDataSheetOrNull(ctx: any): Promise<Excel.Worksheet>
+    {
+        const bracketDataSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketData");
+        await ctx.sync();
+
+        if (bracketDataSheet.isNullObject)
+            return null;
+
+        return bracketDataSheet;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: SetupBook.getBracketChoiceOrNull
 
         see if there's a bracket choice cell. it will be named "BracketChoice"
@@ -37,22 +52,29 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getBracketChoiceOrNull(ctx: any): Promise<string>
     {
-        const bracketChoiceNameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject("BracketChoice");
-        await ctx.sync();
+        try
+        {
+            const bracketChoiceNameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject("BracketChoice");
+            await ctx.sync();
 
-        if (bracketChoiceNameObject.isNullObject)
+            if (bracketChoiceNameObject.isNullObject)
+                return null;
+
+            bracketChoiceNameObject.load();
+            await ctx.sync();
+            const bracketChoiceRange: Excel.Range = bracketChoiceNameObject.getRange();
+            await ctx.sync();
+            bracketChoiceRange.load();
+            await ctx.sync();
+            const bracketChoice: string = bracketChoiceRange.values[0][0];
+            await ctx.sync();
+
+            return bracketChoice;
+        }
+        catch (_error)
+        {
             return null;
-
-        bracketChoiceNameObject.load();
-        await ctx.sync();
-        const bracketChoiceRange: Excel.Range = bracketChoiceNameObject.getRange();
-        await ctx.sync();
-        bracketChoiceRange.load();
-        await ctx.sync();
-        const bracketChoice: string = bracketChoiceRange.values[0][0];
-        await ctx.sync();
-
-        return bracketChoice;
+        }
     }
 
     /*----------------------------------------------------------------------------
@@ -116,7 +138,7 @@ export class SetupBook
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(ctx);
 
         if (bracketStructureSheet ==  null)
-            return SetupState.NoBracketData;
+            return SetupState.NoBracketStructure;
 
         const bracketChoice: string = await this.getBracketChoiceOrNull(ctx);
 
@@ -127,7 +149,10 @@ export class SetupBook
             await ctx.sync();
 
             if (bracketTable.isNullObject)
-                return SetupState.Broken;
+                return SetupState.NoBracketData;
+
+            if (await this.getBracketsDataSheetOrNull(ctx) == null)
+                return SetupState.NoBracketData;
 
             return SetupState.Ready;
         }
@@ -143,7 +168,7 @@ export class SetupBook
         if (brackets.length > 0)
             return SetupState.NoBracketChoice;
 
-        return SetupState.NoBracketData;
+        return SetupState.NoBracketStructure;
     }
 
     /*----------------------------------------------------------------------------
@@ -180,7 +205,7 @@ export class SetupBook
         {
             await Excel.run(async (context) =>
             {
-                await BracketStructureBuilder.buildSpecificBracketCore(context, appContext);
+                await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
             });
         }
         catch (error)

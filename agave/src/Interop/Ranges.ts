@@ -24,9 +24,22 @@ export class Ranges
         return addrFinal;
     }
 
+
     static addressFromCoordinates(addrFrom: [number, number], addrTo: [number, number]): string
     {
         return this.addressFromCoordinates_1Based([addrFrom[0] + 1, addrFrom[1] + 1], addrTo == null ? null : [addrTo[0] + 1, addrTo[1] + 1]);
     }
 
+
+    static async ensureGlobalNameDeleted(ctx: any, name: string)
+    {
+        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
+        await ctx.sync();
+
+        if (nameObject.isNullObject)
+            return;
+
+        nameObject.delete();
+        await ctx.sync();
+    }
 }

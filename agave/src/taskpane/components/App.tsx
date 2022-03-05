@@ -38,7 +38,7 @@ export default class App extends React.Component<AppProps, AppState>
         this.state =
         {
             listItems: [],
-            setupState: SetupState.NoBracketData,
+            setupState: SetupState.NoBracketStructure,
             errorMessage: "",
             selectedBracket: "",
             bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
@@ -113,7 +113,7 @@ export default class App extends React.Component<AppProps, AppState>
     {
         let listItems: HeroListItem[] = [];
 
-        if (setupState == SetupState.NoBracketData)
+        if (setupState == SetupState.NoBracketStructure)
         {
             listItems.push(
                 {
@@ -124,7 +124,9 @@ export default class App extends React.Component<AppProps, AppState>
                 });
         }
 
-        if (setupState == SetupState.NoBracketChoice || setupState == SetupState.NoBracketData)
+        if (setupState == SetupState.NoBracketChoice
+            || setupState == SetupState.NoBracketStructure
+            || setupState == SetupState.NoBracketData)
         {
             listItems.push(
                 {
@@ -211,7 +213,7 @@ export default class App extends React.Component<AppProps, AppState>
         let insertBracketChooserMaybe = () =>
         {
             if (this.state.setupState == SetupState.NoBracketChoice ||
-                this.state.setupState == SetupState.NoBracketData)
+                this.state.setupState == SetupState.NoBracketStructure)
             {
                 return (
                     <BracketChooser

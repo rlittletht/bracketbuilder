@@ -6,6 +6,7 @@ import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
 import { IAppContext } from "../AppContext";
 import { SetupBook } from "../Setup";
+import { BracketDataBuilder } from "./BracketDataBuilder";
 
 export interface BracketOption
 {
@@ -53,6 +54,25 @@ export class BracketStructureBuilder
 
         return brackets;
     }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.getBracketDefinition
+    ----------------------------------------------------------------------------*/
+    static getBracketDefinition(bracketTableName: string): BracketDefinition
+    {
+        let returnVal: BracketDefinition = null;
+
+        s_brackets.forEach(
+            (bracket: BracketDefinition) =>
+            {
+                if (bracket.tableName === bracketTableName)
+                    returnVal = bracket;
+            });
+
+        return returnVal;
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: BracketStructureBuilder.insertBracketDefinitionAtRow
@@ -160,7 +180,7 @@ export class BracketStructureBuilder
     }
 
 
-    static async buildSpecificBracketCore(ctx: any, appContext: IAppContext)
+    static async buildSpecificBracketCore(ctx: any, appContext: IAppContext, fastTables: IFastTables)
     {
         const bracketChoice: string = appContext.getSelectedBracket();
         const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketStructure");
@@ -168,12 +188,22 @@ export class BracketStructureBuilder
         let bracketTable: Excel.Table =
             await SetupBook.getBracketTableOrNull(ctx, bracketsSheet, bracketChoice);
 
+        const bracketDefinition: BracketDefinition = this.getBracketDefinition(`${bracketChoice}Bracket`);
+
         if (bracketTable == null)
         {
+            if (bracketDefinition == null)
+            {
+                appContext.log(`Don't know how to build bracket for choice: '${bracketChoice}'`);
+                return;
+            }
+
             const rowFirst: number = await Sheets.findFirstEmptyRowAfterAllData(ctx, bracketsSheet, 35);
 
-            appContext.log(`first row: ${rowFirst}`);
-            // we need to insert this bracket into the sheet
+            await this.insertBracketDefinitionAtRow(ctx, bracketsSheet, fastTables, rowFirst + 2, bracketDefinition);
         }
+
+        await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
     }
+
 }
