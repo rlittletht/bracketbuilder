@@ -1,8 +1,6 @@
 
 import { Sheets } from "../Interop/Sheets";
-import { BracketDefinition } from "./bracketDefinitions";
-import { GameDefinition } from "./bracketDefinitions";
-import { s_brackets } from "./bracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets } from "./bracketDefinitions";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
@@ -10,12 +8,15 @@ import { IAppContext } from "../AppContext";
 
 export class BracketStructureBuilder
 {
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.getArrayValuesFromBracketDefinition
+    ----------------------------------------------------------------------------*/
     static getArrayValuesFromBracketDefinition(
-        game: BracketDefinition): any[][]
+        bracketDefinition: BracketDefinition): any[][]
     {
         let values: any[][] = [];
 
-        game.definitions.forEach(
+        bracketDefinition.games.forEach(
             (gameDef: GameDefinition, gameNum: number) =>
             {
                 values.push([gameNum + 1, gameDef.winner, gameDef.loser, gameDef.topSource, gameDef.bottomSource]);
@@ -24,20 +25,26 @@ export class BracketStructureBuilder
         return values;
     }
 
-    static async buildBracketTableAtRow(
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.insertBracketDefinitionAtRow
+
+        insert the bracket definition into the given sheet at the given row.
+        this will insert the validation formulas as well
+    ----------------------------------------------------------------------------*/
+    static async insertBracketDefinitionAtRow(
         ctx: any,
         sheet: Excel.Worksheet,
         fastTables: IFastTables,
         row: number,
-        game: BracketDefinition): Promise<number>
+        bracketDefinition: BracketDefinition): Promise<number>
     {
         const rowFirstTable: number = row + 1;
         const rowFirstTableData: number = rowFirstTable + 1;
-        const rowLastTableData: number = rowFirstTableData + game.definitions.length - 1;
+        const rowLastTableData: number = rowFirstTableData + bracketDefinition.games.length - 1;
         const rowCheckLines: number = rowLastTableData + 2;
 
         let rng: Excel.Range = sheet.getCell(row, 1);
-        rng.values = [[game.name]];
+        rng.values = [[bracketDefinition.name]];
         await ctx.sync();
 
         // create an empty table for the bracket
@@ -45,14 +52,14 @@ export class BracketStructureBuilder
             ctx,
             sheet,
             fastTables,
-            game.tableName,
+            bracketDefinition.tableName,
             Ranges.addressFromCoordinates([rowFirstTable, 1], [rowFirstTable, 7]),
             ["Game", "Winner", "Loser", "Top", "Bottom", "CountTopCheck", "CountBottomCheck"]);
 
         await Tables.appendArrayToTable(
             fastTables,
-            game.tableName,
-            this.getArrayValuesFromBracketDefinition(game),
+            bracketDefinition.tableName,
+            this.getArrayValuesFromBracketDefinition(bracketDefinition),
             ["Game", "Winner", "Loser", "Top", "Bottom"]);
 
         rng = sheet.getRangeByIndexes(rowFirstTableData, 6, 1, 2);
@@ -60,8 +67,8 @@ export class BracketStructureBuilder
             <any[][]>
             [
                 [
-                    `=COUNTIF(${game.tableName}[[Winner]:[Loser]], "T" & [@Game])`,
-                    `=COUNTIF(${game.tableName}[[Winner]:[Loser]], "B" & [@Game])`
+                    `=COUNTIF(${bracketDefinition.tableName}[[Winner]:[Loser]], "T" & [@Game])`,
+                    `=COUNTIF(${bracketDefinition.tableName}[[Winner]:[Loser]], "B" & [@Game])`
                 ]
             ];
         await ctx.sync();
@@ -82,15 +89,15 @@ export class BracketStructureBuilder
             ],
             [
                 `=(${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2`,
-                `=COUNTIF(${game.tableName}[[Top]:[Bottom]],"Team*")`
+                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"Team*")`
             ],
             [
                 `=${Ranges.addressFromCoordinates([rowCheckLines + 1, 1], null)}`,
-                `=COUNTIF(${game.tableName}[[Top]:[Bottom]],"L*")`
+                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"L*")`
             ],
             [
                 `=${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} - 1`,
-                `=COUNTIF(${game.tableName}[[Top]:[Bottom]],"W*")`
+                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"W*")`
             ]
             ];
         await ctx.sync();
@@ -98,6 +105,12 @@ export class BracketStructureBuilder
         return rowCheckLines + 6;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.buildBracketsSheet
+
+        build the brackets structure sheet, populating with all of the brackets
+        we know about
+    ----------------------------------------------------------------------------*/
     static async buildBracketsSheet(ctx: any, fastTables: IFastTables, appContext: IAppContext)
     {
         try
@@ -107,7 +120,7 @@ export class BracketStructureBuilder
 
             for (const bracketNum in s_brackets)
             {
-                row = await this.buildBracketTableAtRow(ctx, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
+                row = await this.insertBracketDefinitionAtRow(ctx, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
             }
             appContext.invalidateHeroList(ctx);
         }

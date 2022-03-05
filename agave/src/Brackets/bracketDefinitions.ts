@@ -11,7 +11,7 @@ export interface BracketDefinition
 {
     name: string,
     tableName: string,
-    definitions: GameDefinition[];
+    games: GameDefinition[];
 }
 
 export const s_brackets: BracketDefinition[] =
@@ -19,7 +19,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "2 Team",
         tableName: "T2Bracket",
-        definitions:
+        games:
         [
             { winner: "T2", loser: "B2", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T3", loser: "B3", topSource: "W1", bottomSource: "L1" },
@@ -29,7 +29,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "3 Team",
         tableName: "T3Bracket",
-        definitions:
+        games:
         [
             { winner: "T2", loser: "T3", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T4", loser: "B3", topSource: "W1", bottomSource: "Team 3" },
@@ -41,7 +41,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "4 Team",
         tableName: "T4Bracket",
-        definitions:
+        games:
         [
             { winner: "T3", loser: "T4", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "B3", loser: "B4", topSource: "Team 3", bottomSource: "Team 4" },
@@ -55,7 +55,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "5 Team",
         tableName: "T5Bracket",
-        definitions:
+        games:
         [
             { winner: "T3", loser: "B4", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T5", loser: "T4", topSource: "Team 3", bottomSource: "Team 4" },
@@ -71,7 +71,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "6 Team",
         tableName: "T6Bracket",
-        definitions:
+        games:
         [
             { winner: "B3", loser: "T5", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T4", loser: "T6", topSource: "Team 3", bottomSource: "Team 4" },
@@ -89,7 +89,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "7 Team",
         tableName: "T7Bracket",
-        definitions:
+        games:
         [
             { winner: "B4", loser: "T7", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T5", loser: "T6", topSource: "Team 3", bottomSource: "Team 4" },
@@ -109,7 +109,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "8 Team",
         tableName: "T8Bracket",
-        definitions:
+        games:
         [
             { winner: "T5", loser: "T7", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "B5", loser: "B7", topSource: "Team 3", bottomSource: "Team 4" },
@@ -131,7 +131,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "9 Team",
         tableName: "T9Bracket",
-        definitions:
+        games:
         [
             { winner: "B5", loser: "B6", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T9", loser: "T6", topSource: "Team 3", bottomSource: "Team 4" },
@@ -155,7 +155,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "10 Team",
         tableName: "T10Bracket",
-        definitions:
+        games:
         [
             { winner: "T5", loser: "T8", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "B6", loser: "B7", topSource: "Team 3", bottomSource: "Team 4" },
@@ -181,7 +181,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "11 Team",
         tableName: "T11Bracket",
-        definitions:
+        games:
         [
             { winner: "T5", loser: "T10", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "B6", loser: "B8", topSource: "Team 3", bottomSource: "Team 4" },
@@ -209,7 +209,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "12 Team",
         tableName: "T12Bracket",
-        definitions:
+        games:
         [
             { winner: "B5", loser: "T11", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T6", loser: "T12", topSource: "Team 3", bottomSource: "Team 4" },
@@ -239,7 +239,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "13 Team",
         tableName: "T13Bracket",
-        definitions:
+        games:
         [
             { winner: "B6", loser: "T12", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T7", loser: "T13", topSource: "Team 3", bottomSource: "Team 4" },
@@ -271,7 +271,7 @@ export const s_brackets: BracketDefinition[] =
     {
         name: "14 Team",
         tableName: "T14Bracket",
-        definitions:
+        games:
         [
             { winner: "B7", loser: "T14", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T8", loser: "T12", topSource: "Team 3", bottomSource: "Team 4" },
