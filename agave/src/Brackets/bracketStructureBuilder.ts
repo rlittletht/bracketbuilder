@@ -1,10 +1,11 @@
 
 import { Sheets } from "../Interop/Sheets";
-import { BracketDefinition, GameDefinition, s_brackets } from "./bracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets } from "./BracketDefinitions";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
 import { IAppContext } from "../AppContext";
+import { SetupBook } from "../Setup";
 
 export interface BracketOption
 {
@@ -155,6 +156,24 @@ export class BracketStructureBuilder
         catch (error)
         {
             appContext.log("ERROR: ".concat(error.message));
+        }
+    }
+
+
+    static async buildSpecificBracketCore(ctx: any, appContext: IAppContext)
+    {
+        const bracketChoice: string = appContext.getSelectedBracket();
+        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketStructure");
+
+        let bracketTable: Excel.Table =
+            await SetupBook.getBracketTableOrNull(ctx, bracketsSheet, bracketChoice);
+
+        if (bracketTable == null)
+        {
+            const rowFirst: number = await Sheets.findFirstEmptyRowAfterAllData(ctx, bracketsSheet, 35);
+
+            appContext.log(`first row: ${rowFirst}`);
+            // we need to insert this bracket into the sheet
         }
     }
 }

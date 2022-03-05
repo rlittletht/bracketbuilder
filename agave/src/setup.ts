@@ -160,7 +160,7 @@ export class SetupBook
         }
         catch (error)
         {
-            return false;
+            appContext.log(`Exception caught: ${error.message}`);
         }
 
         return true;
@@ -176,7 +176,18 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async buildSpecificBracket(appContext: IAppContext): Promise<boolean>
     {
-        appContext.log(`selectedBracket: ${appContext.getSelectedBracket()}`);
+        try
+        {
+            await Excel.run(async (context) =>
+            {
+                await BracketStructureBuilder.buildSpecificBracketCore(context, appContext);
+            });
+        }
+        catch (error)
+        {
+            appContext.log(`Exception caught: ${error.message}`);
+        }
+
         return false;
     }
 }
