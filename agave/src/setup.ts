@@ -1,7 +1,7 @@
 
 import { BracketStructureBuilder } from "./Brackets/bracketStructureBuilder";
 import { FastTables } from "./Interop/FastTables";
-import { ILogging } from "./Logging";
+import { IAppContext } from "./AppContext";
 
 export enum SetupState
 {
@@ -56,12 +56,12 @@ export class SetupBook
         }
 
         // we don't have a bracket choice. figure out what brackets we have data for
-        var brackets: string[];
+        var brackets: string[] = [];
+        bracketStructureSheet.tables.load("items");
+        await ctx.sync();
 
         for (let bracketTable of bracketStructureSheet.tables.items)
-        {
             brackets.push(bracketTable.name);
-        }
 
         if (brackets.length > 0)
             return SetupState.NoBracketChoice;
@@ -69,13 +69,13 @@ export class SetupBook
         return SetupState.NoBracketData;
     }
 
-    static async buildBracketWorkbook(logging: ILogging): Promise<boolean>
+    static async buildBracketWorkbook(appContext: IAppContext): Promise<boolean>
     {
         try
         {
             await Excel.run(async (context) =>
             {
-                return await BracketStructureBuilder.buildBracketsSheet(context, fastTables, logging);
+                return await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
             });
         }
         catch (error)

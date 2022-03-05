@@ -5,7 +5,7 @@ import HeroList, { HeroListItem} from "./HeroList";
 import Progress from "./Progress";
 import { SetupState } from "../../setup";
 import { SetupBook } from "../../setup";
-import { ILogging, Logging } from "../../Logging";
+import { IAppContext, AppContext } from "../../AppContext";
 
 /* global console, Excel, require  */
 
@@ -18,13 +18,13 @@ export interface AppProps
 export interface AppState
 {
     listItems: HeroListItem[];
-    setupState: SetupState;
+//    setupState: SetupState;
     errorMessage: string;
 }
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    m_logging: Logging;
+    m_appContext: AppContext;
 
     constructor(props, context)
     {
@@ -32,24 +32,35 @@ export default class App extends React.Component<AppProps, AppState>
         this.state =
         {
             listItems: [],
-            setupState: SetupState.NoBracketData,
+//            setupState: SetupState.NoBracketData,
             errorMessage: "",
         };
 
-        this.m_logging = new Logging();
-        this.m_logging.setDelegate(this.addLogMessage.bind(this));
+        this.m_appContext = new AppContext();
+        this.m_appContext.setDelegates(
+            this.addLogMessage.bind(this),
+            this.invalidateHeroList.bind(this));
     }
 
     addLogMessage(message: string)
     {
         this.setState({ errorMessage: message });
     }
+    
+    async invalidateHeroList(ctx: any)
+    {
+        this.setState({ listItems: await this.buildHeroList(ctx) });
+    }
 
-    async componentDidMount()
+    async buildHeroList(ctx: any): Promise<HeroListItem[]>
     {
         let listItems: HeroListItem[] = [];
+        let setupState: SetupState;
 
-        let setupState: SetupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
+        if (ctx != null)
+            setupState = await SetupBook.getWorkbookSetupState(ctx);
+        else
+            setupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
 
         if (setupState == SetupState.NoBracketData)
         {
@@ -62,10 +73,15 @@ export default class App extends React.Component<AppProps, AppState>
                 });
         }
 
+        return listItems;
+    }
+
+    async componentDidMount()
+    {
         // figure out our top level menu.... Setup, or bracket editing
         this.setState(
             {
-                listItems: listItems,
+                listItems: await this.buildHeroList(null),
                  /*
 listItems: [
                                     {
@@ -85,7 +101,7 @@ listItems: [
                                     },
                                 ],
                             */
-                setupState: setupState,
+//                setupState: setupState,
             });
     }
 
@@ -136,7 +152,7 @@ listItems: [
         return (
             <div className="ms-welcome">
                 <Header logo={require("./../../../assets/logo-filled.png")} title={this.props.title} message="Hiya"/>
-                <HeroList message="Setup a new bracket workbook!" items={this.state.listItems} logging={this.m_logging}>
+                <HeroList message="Setup a new bracket workbook!" items={this.state.listItems} appContext={this.m_appContext}>
                     <p className="ms-font-l">
                         Modify the source files, then click <b>Run</b>.
                     </p>

@@ -6,7 +6,7 @@ import { s_brackets } from "./bracketDefinitions";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
-import { ILogging } from "../Logging";
+import { IAppContext } from "../AppContext";
 
 export class BracketStructureBuilder
 {
@@ -98,7 +98,7 @@ export class BracketStructureBuilder
         return rowCheckLines + 6;
     }
 
-    static async buildBracketsSheet(ctx: any, fastTables: IFastTables, logging: ILogging)
+    static async buildBracketsSheet(ctx: any, fastTables: IFastTables, appContext: IAppContext)
     {
         try
         {
@@ -109,10 +109,11 @@ export class BracketStructureBuilder
             {
                 row = await this.buildBracketTableAtRow(ctx, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
             }
+            appContext.invalidateHeroList(ctx);
         }
         catch (error)
         {
-            logging.log("ERROR: ".concat(error.message));
+            appContext.log("ERROR: ".concat(error.message));
         }
     }
 }

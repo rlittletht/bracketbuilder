@@ -233,7 +233,7 @@ export class Tables
 
         await ctx.sync();
 
-        let sAddress: string = Ranges.addressFromCoordinates([range.rowIndex + 1, range.columnIndex + 1],
+        let sAddress: string = Ranges.addressFromCoordinates_1Based([range.rowIndex + 1, range.columnIndex + 1],
             [range.rowIndex + dataToInsert.length, range.columnIndex + dataToInsert[0].length]);
 
         range = sheet.getRange(sAddress);

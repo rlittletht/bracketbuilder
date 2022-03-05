@@ -1,19 +1,19 @@
 import * as React from "react";
-import { ILogging } from "../../Logging";
+import { IAppContext } from "../../AppContext";
 
 export interface HeroListItem
 {
     icon: string;
     primaryText: string;
     cursor: string;
-    delegate: (logging: ILogging) => Promise<boolean>;
+    delegate: (appContext: IAppContext) => Promise<boolean>;
 }
 
 export interface HeroListProps
 {
     message: string;
     items: HeroListItem[];
-    logging: ILogging;
+    appContext: IAppContext;
 }
 
 export default class HeroList extends React.Component<HeroListProps>
@@ -24,7 +24,7 @@ export default class HeroList extends React.Component<HeroListProps>
         const listItems = items.map((item, index) => (
             <li className={`ms-ListItem ${item.cursor}`} key={index} onClick={() =>
                 {
-                    item.delegate(this.props.logging)
+                    item.delegate(this.props.appContext)
                 }}>
                 <i className={`ms-Icon ms-Icon--${item.icon}`}></i>
                 <span className="ms-font-m ms-fontColor-neutralPrimary">{item.primaryText}</span>
