@@ -8,6 +8,7 @@ import { IAppContext } from "../AppContext";
 import { SetupBook } from "../Setup";
 import { BracketDataBuilder } from "./BracketDataBuilder";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
+import { GridBuilder } from "./GridBuilder";
 
 export interface BracketOption
 {
@@ -206,6 +207,7 @@ export class BracketStructureBuilder
 
         await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
         await GlobalDataBuilder.buildGlobalDataSheet(ctx);
+        await GridBuilder.buildGridSheet(ctx);
     }
 
 }
