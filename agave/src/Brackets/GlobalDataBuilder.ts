@@ -16,7 +16,7 @@ export class GlobalDataBuilder
             ["Location:", "Field of Dreams Park"],
             ["Address:", "123 Strikes Out Place, Williamsport"],
             ["Hosted:", "Hosted by Jackie Robinson"],
-            ["Last Update:", OADate.ToOADate(new Date(Date.parse("8/21/2021"))) - (7 / 24)]
+            ["Last Update:", OADate.ToOADate(new Date(Date.parse("8/21/2021"))) - (7 / 24)] // adjust for UTC
             ];
 
         await ctx.sync();
@@ -27,5 +27,9 @@ export class GlobalDataBuilder
         await Ranges.createOrReplaceNamedRangeByIndex(ctx, sheet, "TournamentAddress", [3, 1]);
         await Ranges.createOrReplaceNamedRangeByIndex(ctx, sheet, "TournamentHost", [4, 1]);
         await Ranges.createOrReplaceNamedRangeByIndex(ctx, sheet, "LastUpdate", [5, 1]);
+
+        rng = sheet.getRangeByIndexes(5, 1, 1, 1);
+        rng.numberFormat = [["m/d/yy HH:mm"]];
+        await ctx.sync();
     }
 }
