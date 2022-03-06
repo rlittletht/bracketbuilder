@@ -20,10 +20,7 @@ export class BracketDataBuilder
         rng.values = [[bracketChoice]];
         await ctx.sync();
 
-        await Ranges.ensureGlobalNameDeleted(ctx, "BracketChoice");
-
-        ctx.workbook.names.add("BracketChoice", rng);
-        await ctx.sync();
+        await Ranges.createOrReplaceNamedRange(ctx, "BracketChoice", rng);
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading

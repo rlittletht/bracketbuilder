@@ -42,4 +42,27 @@ export class Ranges
         nameObject.delete();
         await ctx.sync();
     }
+
+
+    static async createOrReplaceNamedRange(ctx: any, name: string, rng: Excel.Range)
+    {
+        await Ranges.ensureGlobalNameDeleted(ctx, name);
+        ctx.workbook.names.add(name, rng);
+        await ctx.sync();
+    }
+
+
+    static async createOrReplaceNamedRangeByIndex(
+        ctx: any,
+        sheet: Excel.Worksheet,
+        name: string,
+        from: [number, number],
+        to?: [number, number])
+    {
+        const rows: number = to ? to[0] - from[0] + 1 : 1;
+        const cols: number = to ? to[1] - from[1] + 1 : 1;
+
+        let rng: Excel.Range = sheet.getRangeByIndexes(from[0], from[1], rows, cols);
+        await this.createOrReplaceNamedRange(ctx, name, rng);
+    }
 }

@@ -7,6 +7,7 @@ import { Ranges } from "../Interop/Ranges";
 import { IAppContext } from "../AppContext";
 import { SetupBook } from "../Setup";
 import { BracketDataBuilder } from "./BracketDataBuilder";
+import { GlobalDataBuilder } from "./GlobalDataBuilder";
 
 export interface BracketOption
 {
@@ -204,6 +205,7 @@ export class BracketStructureBuilder
         }
 
         await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
+        await GlobalDataBuilder.buildGlobalDataSheet(ctx);
     }
 
 }
