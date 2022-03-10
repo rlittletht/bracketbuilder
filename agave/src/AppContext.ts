@@ -2,7 +2,7 @@
 export interface IAppContext
 {
     log(message: string);
-    invalidateHeroList(ctx: any);
+    /*async*/ invalidateHeroList(ctx: any);
     getSelectedBracket();
 }
 
@@ -33,10 +33,10 @@ export class AppContext implements IAppContext
             this.m_addLogMessageDelegate(message);
     }
 
-    invalidateHeroList(ctx: any)
+    async invalidateHeroList(ctx: any)
     {
         if (this.m_invalidateHeroListDelegate)
-            this.m_invalidateHeroListDelegate(ctx);
+            await this.m_invalidateHeroListDelegate(ctx);
     }
 
     getSelectedBracket(): string

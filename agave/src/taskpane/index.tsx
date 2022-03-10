@@ -12,7 +12,7 @@ initializeIcons();
 let isOfficeInitialized = false;
 
 const title = "Contoso Task Pane Add-in";
-//OfficeExtension.config.extendedErrorLogging = true;
+OfficeExtension.config.extendedErrorLogging = true;
 
 const render =
     (Component) =>

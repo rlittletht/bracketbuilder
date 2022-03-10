@@ -2,9 +2,11 @@
 import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
 import { FastTables } from "./Interop/FastTables";
 import { IAppContext } from "./AppContext";
+import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
 
 export enum SetupState
 {
+    Unknown,
     Broken,
     NoBracketStructure,
     NoBracketData,
@@ -62,6 +64,9 @@ export class SetupBook
 
             bracketChoiceNameObject.load();
             await ctx.sync();
+            if (bracketChoiceNameObject.type == "Error")
+                return null;
+
             const bracketChoiceRange: Excel.Range = bracketChoiceNameObject.getRange();
             await ctx.sync();
             bracketChoiceRange.load();
@@ -180,7 +185,8 @@ export class SetupBook
         {
             await Excel.run(async (context) =>
             {
-                return await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
+                await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
+                await appContext.invalidateHeroList(context);
             });
         }
         catch (error)
@@ -206,6 +212,7 @@ export class SetupBook
             await Excel.run(async (context) =>
             {
                 await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
+                await appContext.invalidateHeroList(context);
             });
         }
         catch (error)

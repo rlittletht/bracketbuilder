@@ -13,6 +13,7 @@ export class BracketDataBuilder
     ----------------------------------------------------------------------------*/
     static async buildBracketDataSheet(ctx: any, bracketChoice: string, bracketDefinition: BracketDefinition)
     {
+        bracketDefinition;
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketData");
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
         await ctx.sync();
@@ -21,6 +22,7 @@ export class BracketDataBuilder
         await ctx.sync();
 
         await Ranges.createOrReplaceNamedRange(ctx, "BracketChoice", rng);
+        await ctx.sync();
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading

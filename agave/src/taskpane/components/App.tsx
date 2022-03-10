@@ -10,6 +10,8 @@ import { SetupBook } from "../../Setup";
 import { IAppContext, AppContext } from "../../AppContext";
 import BracketChooser, { UpdateBracketChoiceDelegate } from "./BracketChooser";
 import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
+import GameItem from "./GameItem";
+import Games from "./Games";
 
 /* global console, Excel, require  */
 
@@ -220,11 +222,15 @@ export default class App extends React.Component<AppProps, AppState>
                         updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
                         bracketOptions={this.state.bracketOptions}
                     />
-                );
+                ); 
             }
             else
                 return (<span/>);
         }
+
+        const games = this.state.setupState == SetupState.Ready
+                          ? (<Games bracketName="T9"/>)
+                          : "";
 
         return (
             <div className="ms-welcome">
@@ -239,6 +245,7 @@ this.click}>
                     </DefaultButton>
                     {insertBracketChooserMaybe()}
                 </HeroList>
+                {games}
                 <div>
                     {this.state.errorMessage}
                 </div>

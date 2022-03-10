@@ -173,7 +173,6 @@ export class BracketStructureBuilder
             {
                 row = await this.insertBracketDefinitionAtRow(ctx, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
             }
-            appContext.invalidateHeroList(ctx);
         }
         catch (error)
         {
