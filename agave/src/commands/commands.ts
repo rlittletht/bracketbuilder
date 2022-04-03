@@ -16,8 +16,6 @@ Office.onReady(() =>
  */
 function action(event: Office.AddinCommands.Event)
 {
-    debugger;
-
     const message: Office.NotificationMessageDetails = {
         type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
         message: "Performed action.",
@@ -25,58 +23,10 @@ function action(event: Office.AddinCommands.Event)
         persistent: true,
     };
 
-    console.log("Got in actions");
-
     // Show a notification message
     Office.context.mailbox.item.notificationMessages.replaceAsync("action", message);
 
     // Be sure to indicate when the add-in command function is complete
-    event.completed();
-}
-
-async function SetupWorkbook(event: Office.AddinCommands.Event)
-{
-    Office.context.document.setSelectedDataAsync(
-        "ExecuteFunction works. Button ID=" + event.source.id,
-        function(asyncResult)
-            {
-                var error = asyncResult.error;
-                if (asyncResult.status === Office.AsyncResultStatus.Failed)
-                {
-                    // Show error message.
-                }
-                else
-                {
-                    // Show success message.
-                }
-            });
-    try
-    {
-        console.log("testing");
-        await Excel.run(async (context) =>
-        {
-            /**
-             * Insert your Excel code here
-             */
-            const range = context.workbook.getSelectedRange();
-
-            // Read the range address
-            range.load("address");
-
-            // Update the fill color
-            range.format.fill.color = "blue";
-
-            await context.sync();
-            console.log(`The range address was ${range.address}.`);
-        });
-    }
-    catch (error)
-    {
-        console.error(error);
-    }
-
-    action(event);
-    console.log("Got in setup");
     event.completed();
 }
 
@@ -95,4 +45,3 @@ const g = getGlobal() as any;
 
 // The add-in command functions need to be available in global scope
 g.action = action;
-g.SetupWorkbook = SetupWorkbook;

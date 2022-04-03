@@ -6,34 +6,32 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 /* global document, Office, module, require */
-
 initializeIcons();
 
 let isOfficeInitialized = false;
 
 const title = "Contoso Task Pane Add-in";
-OfficeExtension.config.extendedErrorLogging = true;
+// OfficeExtension.config.extendedErrorLogging = true;
 
-const render =
-    (Component) =>
-    {
-        ReactDOM.render(
-            <AppContainer>
-                <ThemeProvider>
-                    <Component title={title} isOfficeInitialized={isOfficeInitialized}/>
-                </ThemeProvider>
-            </AppContainer>,
-            document.getElementById("container")
-        );
-    };
+const render = (Component) =>
+{
+    ReactDOM.render(
+        <AppContainer>
+            <ThemeProvider>
+                <Component title={title} isOfficeInitialized={isOfficeInitialized}/>
+                <p className={`foo totallyUniqueTestName`}> Tes2t3</p>
+            </ThemeProvider>
+        </AppContainer>,
+        document.getElementById("container")
+    );
+};
 
 /* Render application after Office initializes */
-Office.onReady(
-    () =>
-    {
-        isOfficeInitialized = true;
-        render(App);
-    });
+Office.onReady(() =>
+{
+    isOfficeInitialized = true;
+    render(App);
+});
 
 if ((module as any).hot)
 {

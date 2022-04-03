@@ -7,6 +7,8 @@ import { GameItemProps, GameItemState } from "./GameItem"
 import GameItem from "./GameItem"
 import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 
+// import styles from '../taskpane.css';
+
 export interface GamesProps {
     bracketName: string;
 }
@@ -33,17 +35,19 @@ export default class Games extends React.Component<GamesProps, GamesState>
 
         const games = bracket.games.map((_item, index) =>
             (
-            <GameItem bracketName={this.props.bracketName} gameNum={index}/>
+            <GameItem bracketName={this.props.bracketName} gameNum={index} key={index}/>
             ));
 
         return (
             <div className="games">
                 <table className="games">
-                    <tr>
-                        <td className="games">
-                            {games}
-                        </td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <td className="games">
+                                {games}
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         );

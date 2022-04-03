@@ -181,6 +181,12 @@ export class BracketStructureBuilder
     }
 
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.buildSpecificBracketCore
+
+        Build a specific bracket, including making the bracket grid, data sheet,
+        etc.
+    ----------------------------------------------------------------------------*/
     static async buildSpecificBracketCore(ctx: any, appContext: IAppContext, fastTables: IFastTables)
     {
         const bracketChoice: string = appContext.getSelectedBracket();

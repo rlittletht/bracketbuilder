@@ -38,7 +38,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
         return (
             <div className="singleGameItem">
                 Game {this.state.bracketGame.GameNum + 1} <br/>
-                {this.state.bracketGame.TopTeamName} v. {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
+                {this.state.bracketGame.TopTeamName} vs {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
             </div>
         );
     }

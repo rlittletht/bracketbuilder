@@ -3,7 +3,7 @@ import { DefaultButton } from "@fluentui/react";
 import { ComboBox } from "@fluentui/react";
 
 import Header from "./Header";
-import HeroList, { HeroListItem} from "./HeroList";
+import HeroList, { HeroListItem } from "./HeroList";
 import Progress from "./Progress";
 import { SetupState } from "../../Setup";
 import { SetupBook } from "../../Setup";
@@ -62,7 +62,7 @@ export default class App extends React.Component<AppProps, AppState>
     {
         this.setState({ errorMessage: message });
     }
-    
+
     /*----------------------------------------------------------------------------
         %%Function: App.invalidateHeroList
 
@@ -126,9 +126,9 @@ export default class App extends React.Component<AppProps, AppState>
                 });
         }
 
-        if (setupState == SetupState.NoBracketChoice
-            || setupState == SetupState.NoBracketStructure
-            || setupState == SetupState.NoBracketData)
+        if (setupState == SetupState.NoBracketChoice ||
+            setupState == SetupState.NoBracketStructure ||
+            setupState == SetupState.NoBracketData)
         {
             listItems.push(
                 {
@@ -156,16 +156,16 @@ export default class App extends React.Component<AppProps, AppState>
     }
 
     click = async () =>
-                    {
-                        try
-                        {
-                            console.log("testing");
-                            await Excel.run(async (context) =>
-                            {
-                                console.log("state: " + await(SetupBook.getWorkbookSetupState(context)));
-                                /**
-                                 * Insert your Excel code here
-                                 */
+    {
+        try
+        {
+            console.log("testing");
+            await Excel.run(async (context) =>
+            {
+                console.log("state: " + await(SetupBook.getWorkbookSetupState(context)));
+                /**
+                 * Insert your Excel code here
+                 */
                 const range = context.workbook.getSelectedRange();
 
                 // Read the range address
@@ -177,7 +177,6 @@ export default class App extends React.Component<AppProps, AppState>
                 await context.sync();
                 console.log(`The range address was ${range.address}.`);
             });
-            
         }
         catch (error)
         {
@@ -220,9 +219,8 @@ export default class App extends React.Component<AppProps, AppState>
                 return (
                     <BracketChooser
                         updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
-                        bracketOptions={this.state.bracketOptions}
-                    />
-                ); 
+                        bracketOptions={this.state.bracketOptions}/>
+                );
             }
             else
                 return (<span/>);
@@ -235,7 +233,8 @@ export default class App extends React.Component<AppProps, AppState>
         return (
             <div className="ms-welcome">
                 <Header logo={require("./../../../assets/logo-filled.png")} title={this.props.title} message="Hiya"/>
-                <HeroList message="Setup a new bracket workbook!" items={this.state.listItems} appContext={this.m_appContext}>
+                <HeroList message="Setup a new bracket workbook!" items={this.state.listItems} appContext={this
+                    .m_appContext}>
                     <p className="ms-font-l">
                         Modify the source files, then click <b>Run</b>.
                     </p>
