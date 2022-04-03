@@ -3,6 +3,8 @@ import { IAppContext } from "../../AppContext";
 import { ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
 import { BracketOption } from "../../Brackets/BracketStructureBuilder";
 import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
+import { Stack } from "@fluentui/react";
+import InsertButton from "./InsertButton";
 
 export interface GameItemProps
 {
@@ -37,8 +39,21 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
 
         return (
             <div className="singleGameItem">
-                Game {this.state.bracketGame.GameNum + 1} <br/>
-                {this.state.bracketGame.TopTeamName} vs {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
+                <Stack>
+                    <Stack.Item>
+                        <Stack horizontal>
+                            <Stack.Item grow align="center">
+                                Game {this.state.bracketGame.GameNum + 1}
+                            </Stack.Item>
+                            <Stack.Item grow={0}>
+                                <InsertButton bracketName="T1" gameNum={1}/>
+                            </Stack.Item>
+                        </Stack>
+                    </Stack.Item>
+                    <Stack.Item>
+                        {this.state.bracketGame.TopTeamName} vs {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
+                    </Stack.Item>
+                </Stack>
             </div>
         );
     }
