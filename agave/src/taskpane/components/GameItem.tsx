@@ -57,6 +57,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                             <Stack.Item grow={0}>
                                 <ActionButton
                                     appContext={this.props.appContext}
+                                    tooltip="Insert Game"
                                     bracketGame={this.state.bracketGame}
                                     delegate={this.DoInsertGame.bind(this)}
                                     icon="Add"/>

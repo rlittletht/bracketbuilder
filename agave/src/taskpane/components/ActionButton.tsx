@@ -3,12 +3,14 @@ import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
 import { StructureEditor } from "../../BracketEditor/StructureEditor";
 import { IAppContext } from "../../AppContext";
+// import { useId } from 'react';
 
 export interface ActionButtonProps
 {
     bracketGame: IBracketGame;
     appContext: IAppContext;
     icon: string;
+    tooltip: string;
     delegate: (appContext: IAppContext, game: IBracketGame) => Promise<boolean>;
 }
 
@@ -31,7 +33,12 @@ export default class ActionButton extends React.Component<ActionButtonProps, Act
 
     render()
     {
+        //const tooltipId = useId('tooltip');
+
         return (
+//            <TooltipHost
+                //content={this.props.tooltip}
+                //callout
             <IconButton
                 iconProps={{ iconName: this.props.icon }}
                 onClick={() => this.props.delegate(this.props.appContext, this.state.bracketGame)}
