@@ -12,6 +12,7 @@ import BracketChooser, { UpdateBracketChoiceDelegate } from "./BracketChooser";
 import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
 import GameItem from "./GameItem";
 import Games from "./Games";
+import { StructureEditor } from "../../BracketEditor/StructureEditor";
 
 /* global console, Excel, require  */
 
@@ -155,7 +156,7 @@ export default class App extends React.Component<AppProps, AppState>
             });
     }
 
-    click = async () =>
+    async click()
     {
         try
         {
@@ -170,9 +171,14 @@ export default class App extends React.Component<AppProps, AppState>
 
                 // Read the range address
                 range.load("address");
+                range.format.fill.load("color");
+                await context.sync();
+                console.log(`The color is ${range.format.fill.color}.`);
+
 
                 // Update the fill color
-                range.format.fill.color = "blue";
+//                range.format.fill.color = "blue";
+                StructureEditor.formatConnectingLineRange(context, range);
 
                 await context.sync();
                 console.log(`The range address was ${range.address}.`);
@@ -227,14 +233,16 @@ export default class App extends React.Component<AppProps, AppState>
         }
 
         const games = this.state.setupState == SetupState.Ready
-                          ? (<Games bracketName="T9"/>)
+                          ? (<Games appContext={this.m_appContext} bracketName="T9"/>)
                           : "";
 
         return (
             <div className="ms-welcome">
                 <Header logo={require("./../../../assets/logo-filled.png")} title={this.props.title} message="Hiya"/>
-                <HeroList message="Setup a new bracket workbook!" items={this.state.listItems} appContext={this
-                    .m_appContext}>
+                <div>
+                    {this.state.errorMessage}
+                </div>
+                <HeroList message="Setup a new bracket workbook!" items={this.state.listItems} appContext={this.m_appContext}>
                     <p className="ms-font-l">
                         Modify the source files, then click <b>Run</b>.
                     </p>
@@ -245,9 +253,6 @@ this.click}>
                     {insertBracketChooserMaybe()}
                 </HeroList>
                 {games}
-                <div>
-                    {this.state.errorMessage}
-                </div>
             </div>
         );
     }

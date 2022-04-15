@@ -10,6 +10,7 @@ export interface GameItemProps
 {
     gameNum: number;
     bracketName: string;
+    appContext: IAppContext;
 }
 
 export interface GameItemState
@@ -43,10 +44,10 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                     <Stack.Item>
                         <Stack horizontal>
                             <Stack.Item grow align="center">
-                                Game {this.state.bracketGame.GameNum + 1}
+                                Game {this.state.bracketGame.GameNum}
                             </Stack.Item>
                             <Stack.Item grow={0}>
-                                <InsertButton bracketName="T1" gameNum={1}/>
+                                <InsertButton appContext={this.props.appContext} bracketGame={this.state.bracketGame}/>
                             </Stack.Item>
                         </Stack>
                     </Stack.Item>

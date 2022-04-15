@@ -1,4 +1,26 @@
 
+export class RangeInfo
+{
+    m_rowStart: number;
+    m_rowCount: number;
+    m_columnStart: number;
+    m_columnCount: number;
+
+    get FirstRow(): number { return this.m_rowStart; }
+    get RowCount(): number { return this.m_rowCount; }
+    get FirstColumn(): number { return this.m_columnStart; }
+    get ColumnCount(): number { return this.m_columnCount; }
+    get LastRow(): number { return this.m_rowStart + this.m_rowCount - 1; }
+    get LastColumn(): number { return this.m_columnStart + this.m_columnCount - 1; }
+
+    constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
+    {
+        this.m_rowStart = rowStart;
+        this.m_rowCount = rowCount;
+        this.m_columnStart = columnStart;
+        this.m_columnCount = columnCount;
+    }
+}
 
 export class Ranges
 {

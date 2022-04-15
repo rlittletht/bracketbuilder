@@ -1,6 +1,7 @@
 
 import { BracketDefinition, GameDefinition, s_brackets } from "../Brackets/BracketDefinitions";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
+import { RangeInfo } from "../Interop/Ranges";
 
 export interface IBracketGame
 {
@@ -28,8 +29,16 @@ export interface IBracketGame
     get StartTime(): number; // this is the number of minutes since the start of the day
     FormatTime(): string;
     FormatLoser(): string;
+    Bind(ctx: any): Promise<IBracketGame>;
+
     get Field(): string;
+
+    get TopTeamCellName(): string;
+    get BottomTeamCellName(): string;
+    get GameNumberCellName(): string;
+    get IsLinkedToBracket(): boolean;
 }
+
 
 export class BracketGame implements IBracketGame
 {
@@ -41,20 +50,37 @@ export class BracketGame implements IBracketGame
     m_teamNameBottom: string = null;
     m_startTime: number = 18 * 60; // 6pm
     m_field: string = "Field #1";
+    m_topTeamLocation: RangeInfo;
+    m_bottomTeamLocation: RangeInfo;
+    m_gameNumberLocation: RangeInfo;
 
     // getters
     get BracketGameDefinition(): GameDefinition { return this.m_bracketGameDefinition; }
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
     get BracketName(): string { return this.m_bracketName;  }
-    get GameNum(): number { return this.m_gameNum; }
+    get GameNum(): number { return this.m_gameNum + 1; }
+
+    static IsTeamSourceStatic(source: string): boolean
+    {
+        if (source.length > 3 || source.length == 1)
+            return true;
+
+        if (source[0] === "W" || source[0] === "L")
+            return isNaN(+source.substring(1, source.length - 1));
+
+        return false;
+    }
+
     get TopTeamName(): string
     {
-        return this.m_teamNameTop == null ? this.BracketGameDefinition.topSource : this.m_teamNameTop;
+        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.topSource) || this.m_teamNameTop == null) ? this.BracketGameDefinition.topSource : this.m_teamNameTop;
     }
+
     get BottomTeamName(): string
     {
-        return this.m_teamNameBottom == null ? this.BracketGameDefinition.bottomSource : this.m_teamNameBottom;
+        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.bottomSource) || this.m_teamNameBottom == null) ? this.BracketGameDefinition.bottomSource : this.m_teamNameBottom;
     }
+
     get StartTime(): number { return this.m_startTime; }
 
     FormatTime(): string
@@ -77,6 +103,35 @@ export class BracketGame implements IBracketGame
     }
 
     get Field(): string { return this.m_field; }
+
+    static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
+    {
+        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
+        await ctx.sync();
+
+        if (nameObject.isNullObject)
+            return null;
+
+        const range: Excel.Range = nameObject.getRange();
+        range.load("rowIndex");
+        range.load("rowCount");
+        range.load("columnIndex");
+        range.load("columnCount");
+
+        await ctx.sync();
+
+        return new RangeInfo(range.rowIndex, range.columnIndex, range.rowCount, range.columnCount);
+    }
+
+    async Bind(ctx: any): Promise<IBracketGame>
+    {
+        this.m_topTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
+        this.m_bottomTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
+        this.m_gameNumberLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
+
+        return this;
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.Load
@@ -102,6 +157,29 @@ export class BracketGame implements IBracketGame
         if (ctx == null)
             return this;
 
-        return this;
+        // ok, try to load the linkage. do this by finding the named ranges
+        // for the parts of this game
+
+        return await this.Bind(ctx);
+    }
+
+    get IsLinkedToBracket(): boolean
+    {
+        return this.m_topTeamLocation != null && this.m_bottomTeamLocation != null && this.m_gameNumberLocation != null;
+    }
+
+    get TopTeamCellName(): string
+    {
+        return `${this.m_bracketName}_G${this.GameNum}_1`;
+    }
+
+    get BottomTeamCellName(): string
+    {
+        return `${this.m_bracketName}_G${this.GameNum}_2`;
+    }
+
+    get GameNumberCellName(): string
+    {
+        return `${this.m_bracketName}_Game${this.GameNum}`;
     }
 }

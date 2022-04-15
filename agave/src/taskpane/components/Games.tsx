@@ -11,6 +11,7 @@ import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 
 export interface GamesProps {
     bracketName: string;
+    appContext: IAppContext;
 }
 
 export interface GamesState {
@@ -35,7 +36,7 @@ export default class Games extends React.Component<GamesProps, GamesState>
 
         const games = bracket.games.map((_item, index) =>
             (
-            <GameItem bracketName={this.props.bracketName} gameNum={index} key={index}/>
+            <GameItem appContext={this.props.appContext} bracketName={this.props.bracketName} gameNum={index} key={index}/>
             ));
 
         return (
