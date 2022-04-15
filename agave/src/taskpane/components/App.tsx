@@ -26,6 +26,7 @@ export interface AppState
 {
     heroList: HeroListItem[];
     heroListFormat: HeroListFormat;
+    heroTitle: string;
 
     setupState: SetupState;
     errorMessage: string;
@@ -44,6 +45,7 @@ export default class App extends React.Component<AppProps, AppState>
         {
             heroList: [],
             heroListFormat: HeroListFormat.Vertical,
+            heroTitle: "Setup a new bracket workbook!",
             setupState: SetupState.NoBracketStructure,
             errorMessage: "",
             selectedBracket: "",
@@ -78,12 +80,14 @@ export default class App extends React.Component<AppProps, AppState>
         let setupState: SetupState = await(this.getSetupState(ctx));
         let format: HeroListFormat;
         let list: HeroListItem[];
+        let title: string;
 
-        [format, list] = await this.buildHeroList(setupState);
+        [format, title, list] = await this.buildHeroList(setupState);
 
         this.setState({
             heroList: list,
-            heroListFormat: format, 
+            heroListFormat: format,
+            heroTitle: title,
             setupState: setupState
         });
     }
@@ -120,7 +124,7 @@ export default class App extends React.Component<AppProps, AppState>
 
         Build the hero list of commands
     ----------------------------------------------------------------------------*/
-    buildHeroList(setupState: SetupState): [HeroListFormat, HeroListItem[]]
+    buildHeroList(setupState: SetupState): [HeroListFormat, string, HeroListItem[]]
     {
         let listItems: HeroListItem[] = [];
 
@@ -129,12 +133,26 @@ export default class App extends React.Component<AppProps, AppState>
             listItems.push(
                 {
                     icon: "Sync",
-                    primaryText: "Swap Top/Bottom",
+                    primaryText: "Swap top/bottom teams",
+                    cursor: "cursorPointer",
+                    delegate: null
+                });
+            listItems.push(
+                {
+                    icon: "Spacer",
+                    primaryText: "Stretch or shrink game",
+                    cursor: "cursorPointer",
+                    delegate: null
+                });
+            listItems.push(
+                {
+                    icon: "RemoveEvent",
+                    primaryText: "Remove Game from bracket",
                     cursor: "cursorPointer",
                     delegate: null
                 });
 
-            return [HeroListFormat.HorizontalRibbon, listItems];
+            return [HeroListFormat.HorizontalRibbon, "Build your bracket!", listItems];
         }
 
         if (setupState == SetupState.NoBracketStructure)
@@ -161,7 +179,7 @@ export default class App extends React.Component<AppProps, AppState>
                 });
         }
 
-        return [HeroListFormat.Vertical, listItems];
+        return [HeroListFormat.Vertical, "Setup your bracket workbook!", listItems];
     }
 
     async componentDidMount()
@@ -169,13 +187,15 @@ export default class App extends React.Component<AppProps, AppState>
         let setupState: SetupState = await (this.getSetupState(null));
         let format: HeroListFormat;
         let list: HeroListItem[];
+        let title: string;
 
-        [format, list] = await this.buildHeroList(setupState);
+        [format, title, list] = await this.buildHeroList(setupState);
         // figure out our top level menu.... Setup, or bracket editing
         this.setState(
             {
                 heroListFormat: format,
                 heroList: list,
+                heroTitle: title,
                 selectedBracket: "",
                 setupState: setupState,
             });
@@ -267,17 +287,17 @@ export default class App extends React.Component<AppProps, AppState>
                 <div>
                     {this.state.errorMessage}
                 </div>
-                <HeroList message="Setup a new bracket workbook!" items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
-                    <p className="ms-font-l">
-                        Modify the source files, then click <b>Run</b>.
-                    </p>
-                    <DefaultButton className="ms-welcome__action" iconProps={{ iconName: "ChevronRight" }} onClick={
-this.click}>
-                        Run
-                    </DefaultButton>
+                <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
                     {insertBracketChooserMaybe()}
                 </HeroList>
                 {games}
+                <p className="ms-font-l">
+                    Modify the source files, then click <b>Run</b>.
+                </p>
+                <DefaultButton className="ms-welcome__action" iconProps={{ iconName: "ChevronRight" }} onClick={
+                    this.click}>
+                    Run
+                </DefaultButton>
             </div>
         );
     }

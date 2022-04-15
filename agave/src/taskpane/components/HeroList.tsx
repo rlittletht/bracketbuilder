@@ -55,11 +55,14 @@ export default class HeroList extends React.Component<HeroListProps>
     buildRibbonList()
     {
         const { children, items, message } = this.props;
+        let i: number = 0;
+
         const ribbonItems = items.map((item, index) => (
             <Stack.Item grow align="center" key={index} >
                 <ActionButton
                     icon={item.icon}
                     tooltip={item.primaryText}
+                    tooltipId={`rid-${i++}`}
                     appContext={this.props.appContext}
                     bracketGame={null} delegate={() => item.delegate(this.props.appContext)} />
             </Stack.Item>
@@ -74,7 +77,7 @@ export default class HeroList extends React.Component<HeroListProps>
                         {ribbonItems}
                     </Stack>
                     {children}
-                    </div>
+                </div>
             </main>
         );
     }
