@@ -5,6 +5,8 @@ import { BracketOption } from "../../Brackets/BracketStructureBuilder";
 import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
 import { Stack } from "@fluentui/react";
 import InsertButton from "./InsertButton";
+import ActionButton from "./ActionButton";
+import { StructureEditor } from "../../BracketEditor/StructureEditor";
 
 export interface GameItemProps
 {
@@ -31,6 +33,12 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
         };
     }
 
+    async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        await StructureEditor.insertGameAtSelectionClick(appContext, bracketGame);
+        return true; // we don't get an error back...
+    }
+
     render() {
 
 //        this.props.bracketOptions.forEach(
@@ -47,7 +55,11 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                                 Game {this.state.bracketGame.GameNum}
                             </Stack.Item>
                             <Stack.Item grow={0}>
-                                <InsertButton appContext={this.props.appContext} bracketGame={this.state.bracketGame}/>
+                                <ActionButton
+                                    appContext={this.props.appContext}
+                                    bracketGame={this.state.bracketGame}
+                                    delegate={this.DoInsertGame.bind(this)}
+                                    icon="Add"/>
                             </Stack.Item>
                         </Stack>
                     </Stack.Item>
