@@ -10,6 +10,7 @@ export interface GameDefinition
 export interface BracketDefinition
 {
     name: string,
+    teamCount: number,
     tableName: string,
     games: GameDefinition[];
 }
@@ -18,6 +19,7 @@ export const s_brackets: BracketDefinition[] =
 [
     {
         name: "2 Team",
+        teamCount: 2,
         tableName: "T2Bracket",
         games:
         [
@@ -28,6 +30,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "3 Team",
+        teamCount: 3,
         tableName: "T3Bracket",
         games:
         [
@@ -40,6 +43,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "4 Team",
+        teamCount: 4,
         tableName: "T4Bracket",
         games:
         [
@@ -54,6 +58,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "5 Team",
+        teamCount: 5,
         tableName: "T5Bracket",
         games:
         [
@@ -70,6 +75,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "6 Team",
+        teamCount: 6,
         tableName: "T6Bracket",
         games:
         [
@@ -88,6 +94,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "7 Team",
+        teamCount: 7,
         tableName: "T7Bracket",
         games:
         [
@@ -108,6 +115,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "8 Team",
+        teamCount: 8,
         tableName: "T8Bracket",
         games:
         [
@@ -130,6 +138,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "9 Team",
+        teamCount: 9,
         tableName: "T9Bracket",
         games:
         [
@@ -154,6 +163,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "10 Team",
+        teamCount: 10,
         tableName: "T10Bracket",
         games:
         [
@@ -180,6 +190,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "11 Team",
+        teamCount: 11,
         tableName: "T11Bracket",
         games:
         [
@@ -208,6 +219,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "12 Team",
+        teamCount: 12,
         tableName: "T12Bracket",
         games:
         [
@@ -238,6 +250,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "13 Team",
+        teamCount: 13,
         tableName: "T13Bracket",
         games:
         [
@@ -270,6 +283,7 @@ export const s_brackets: BracketDefinition[] =
     },
     {
         name: "14 Team",
+        teamCount: 14,
         tableName: "T14Bracket",
         games:
         [

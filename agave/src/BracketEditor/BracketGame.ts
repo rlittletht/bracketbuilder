@@ -60,6 +60,9 @@ export class BracketGame implements IBracketGame
     get BracketName(): string { return this.m_bracketName;  }
     get GameNum(): number { return this.m_gameNum + 1; }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.IsTeamSourceStatic
+    ----------------------------------------------------------------------------*/
     static IsTeamSourceStatic(source: string): boolean
     {
         if (source.length > 3 || source.length == 1)
@@ -71,18 +74,51 @@ export class BracketGame implements IBracketGame
         return false;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.TopTeamNameInvariant
+    ----------------------------------------------------------------------------*/
+    get TopTeamNameInvariant(): string
+    {
+        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.topSource) || this.m_teamNameTop == null)
+                   ? this.BracketGameDefinition.topSource
+                   : this.m_teamNameTop;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.TopTeamName
+    ----------------------------------------------------------------------------*/
     get TopTeamName(): string
     {
-        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.topSource) || this.m_teamNameTop == null) ? this.BracketGameDefinition.topSource : this.m_teamNameTop;
+        return this.m_swapTopBottom ? this.BottomTeamNameInvariant : this.TopTeamNameInvariant;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.BottomTeamNameInvariant
+    ----------------------------------------------------------------------------*/
+    get BottomTeamNameInvariant(): string
+    {
+        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.bottomSource)
+                       || this.m_teamNameBottom == null)
+                   ? this.BracketGameDefinition.bottomSource
+                   : this.m_teamNameBottom;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.BottomTeamName
+    ----------------------------------------------------------------------------*/
     get BottomTeamName(): string
     {
-        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.bottomSource) || this.m_teamNameBottom == null) ? this.BracketGameDefinition.bottomSource : this.m_teamNameBottom;
+        return this.m_swapTopBottom ? this.TopTeamNameInvariant : this.BottomTeamNameInvariant;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.StartTime
+    ----------------------------------------------------------------------------*/
     get StartTime(): number { return this.m_startTime; }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.FormatTime
+    ----------------------------------------------------------------------------*/
     FormatTime(): string
     {
         let hours: number = Math.floor(this.m_startTime / 60);
@@ -94,6 +130,9 @@ export class BracketGame implements IBracketGame
         return `${hours}:${mins < 10 ? "0" : ""}${mins} ${ampm}`;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.FormatLoser
+    ----------------------------------------------------------------------------*/
     FormatLoser(): string
     {
         if (this.m_bracketGameDefinition.loser == "")
@@ -102,8 +141,14 @@ export class BracketGame implements IBracketGame
             return `Loser to ${this.m_bracketGameDefinition.loser}`;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.Field
+    ----------------------------------------------------------------------------*/
     get Field(): string { return this.m_field; }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.getRangeInfoForNamedCell
+    ----------------------------------------------------------------------------*/
     static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
     {
         const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
@@ -123,11 +168,52 @@ export class BracketGame implements IBracketGame
         return new RangeInfo(range.rowIndex, range.columnIndex, range.rowCount, range.columnCount);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.Bind
+    ----------------------------------------------------------------------------*/
     async Bind(ctx: any): Promise<IBracketGame>
     {
         this.m_topTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
         this.m_bottomTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
         this.m_gameNumberLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
+
+        if (this.m_topTeamLocation != null && this.m_bottomTeamLocation != null)
+        {
+            // we can determine top/bottom swap state by the ranges we are bound to
+            this.m_swapTopBottom = this.m_topTeamLocation.FirstRow > this.m_bottomTeamLocation.FirstRow;
+        }
+        else
+        {
+            // we didn't bind to a game in the bracket. get the swap state from the source data
+            // table
+
+            const sheet: Excel.Worksheet = ctx.workbook.worksheet.getItemOrNullObject("BracketSources");
+            await ctx.sync();
+
+            if (!sheet.isNullObject)
+            {
+                const table: Excel.Table = sheet.tables.getItemOrNullObject("BracketSourceData");
+                await ctx.sync();
+
+                if (!table.isNullObject)
+                {
+                    const range: Excel.Range = table.getDataBodyRange();
+                    range.load("values");
+                    await ctx.sync();
+
+                    const data: any[][] = range.values;
+
+                    // sadly we have to go searching for this on our own...
+                    for (let i: number = 0; i < data.length; i++)
+                    {
+                        if (data[i][0] == this.m_gameNum)
+                        {
+                            this.m_swapTopBottom = data[i][3];
+                        }
+                    }
+                }
+            }
+        }
 
         return this;
     }
@@ -163,21 +249,49 @@ export class BracketGame implements IBracketGame
         return await this.Bind(ctx);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.IsLinkedToBracket
+    ----------------------------------------------------------------------------*/
     get IsLinkedToBracket(): boolean
     {
         return this.m_topTeamLocation != null && this.m_bottomTeamLocation != null && this.m_gameNumberLocation != null;
     }
 
-    get TopTeamCellName(): string
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.TopTeamCellNameInvariant
+    ----------------------------------------------------------------------------*/
+    get TopTeamCellNameInvariant(): string
     {
         return `${this.m_bracketName}_G${this.GameNum}_1`;
     }
 
-    get BottomTeamCellName(): string
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.TopTeamCellName
+    ----------------------------------------------------------------------------*/
+    get TopTeamCellName(): string
+    {
+        return this.m_swapTopBottom ? this.BottomTeamCellNameInvariant : this.TopTeamCellNameInvariant;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.BottomTeamCellNameInvariant
+    ----------------------------------------------------------------------------*/
+    get BottomTeamCellNameInvariant(): string
     {
         return `${this.m_bracketName}_G${this.GameNum}_2`;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.BottomTeamCellName
+    ----------------------------------------------------------------------------*/
+    get BottomTeamCellName(): string
+    {
+        return this.m_swapTopBottom ? this.TopTeamCellNameInvariant : this.BottomTeamCellNameInvariant;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.GameNumberCellName
+    ----------------------------------------------------------------------------*/
     get GameNumberCellName(): string
     {
         return `${this.m_bracketName}_Game${this.GameNum}`;

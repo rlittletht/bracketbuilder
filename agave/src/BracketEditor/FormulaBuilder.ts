@@ -1,5 +1,6 @@
 
 import { BracketDefinition } from "../Brackets/BracketDefinitions";
+import { BracketGame } from "./BracketGame";
 
 export class FormulaBuilder
 {
@@ -41,7 +42,7 @@ export class FormulaBuilder
         const topScoreRef = this.getScoreRefFromTeamRef(topTeamRef);
         const bottomScoreRef = this.getScoreRefFromTeamRef(bottomTeamRef);
 
-        const noWinnerString = this.getShowTeamSourcesConditional(`W${gameNumber}`);
+        const noWinnerString = this.getShowTeamSourcesConditional(`"W${gameNumber}"`);
 
         return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}>${bottomScoreRef},${topScoreRef},${bottomScoreRef}))`;
     }
@@ -54,7 +55,7 @@ export class FormulaBuilder
         const topScoreRef = this.getScoreRefFromTeamRef(topTeamRef);
         const bottomScoreRef = this.getScoreRefFromTeamRef(bottomTeamRef);
 
-        const noWinnerString = this.getShowTeamSourcesConditional(`L${gameNumber}`);
+        const noWinnerString = this.getShowTeamSourcesConditional(`"L${gameNumber}"`);
 
         return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}<${bottomScoreRef},${
             topScoreRef},${bottomScoreRef}))`;
@@ -62,14 +63,19 @@ export class FormulaBuilder
 
     static getTeamNameFormulaFromSource(source: string, bracketName: string): string
     {
-        if (source[0] != "=")
-            return source; // static team name
+        if (BracketGame.IsTeamSourceStatic(source))
+            return this.getTeamNameLookup(source);
 
-        if (source[1] === "W")
-            return this.getWinnerFormulaFromSource(Number(source.substring(2)), bracketName);
-        if (source[1] === "L")
-            return this.getLoserFormulaFromSource(Number(source.substring(2)), bracketName);
+        if (source[0] === "W")
+            return this.getWinnerFormulaFromSource(Number(source.substring(1)), bracketName);
+        if (source[0] === "L")
+            return this.getLoserFormulaFromSource(Number(source.substring(1)), bracketName);
 
         throw "bad source string";
+    }
+
+    static getTeamNameLookup(teamNum: string): string
+    {
+        return `=INDEX(TeamNames[TeamName],MATCH("${teamNum}", TeamNames[TeamNum],0))`;
     }
 }

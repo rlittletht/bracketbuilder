@@ -17,4 +17,9 @@ export class OADate
 
         return new Date(dDaysEcmaBase * 1000.0 * 60.0 * 60.0 * 24.0);
     }
+
+    static OATimeFromMinutes(minutes: number): number
+    {
+        return minutes / (60 * 24);
+    }
 }

@@ -4,6 +4,7 @@ import { BracketDefinition } from "../Brackets/BracketDefinitions";
 import { FormulaBuilder } from "./FormulaBuilder";
 import { IAppContext} from "../AppContext";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
+import { OADate } from "../Interop/Dates";
 
 export class StructureEditor
 {
@@ -276,7 +277,7 @@ export class StructureEditor
 
         formulas.push([game.Field, `G${game.GameNum}`]);
         formulas.push(["", ""]);
-        formulas.push([game.StartTime, ""]);
+        formulas.push([OADate.OATimeFromMinutes(game.StartTime), ""]);
         formulas.push(["", ""]);
         formulas.push([game.FormatLoser(), ""]);
 
