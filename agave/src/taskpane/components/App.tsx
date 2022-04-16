@@ -13,6 +13,7 @@ import { BracketStructureBuilder, BracketOption } from "./../../Brackets/Bracket
 import GameItem from "./GameItem";
 import Games from "./Games";
 import { StructureEditor } from "../../BracketEditor/StructureEditor";
+import { RangeInfo, Ranges } from "../../Interop/Ranges";
 
 /* global console, Excel, require  */
 
@@ -201,6 +202,63 @@ export default class App extends React.Component<AppProps, AppState>
             });
     }
 
+    static async obliterateGameFromSheet2(ctx: any, appContext: IAppContext, rangeInfo: RangeInfo)
+    {
+       appContext;
+        let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet(); rangeInfo;
+        let range: Excel.Range = sheet.getRange("G14:I24"); // Ranges.rangeFromRangeInfo(sheet, rangeInfo);
+
+//        await this.removeAllGameFormatting(ctx, range);
+        
+        // now go looking for connecting lines
+        let feederLine: RangeInfo;
+
+//        feederLine = await this.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1));
+//        await this.removeAllGameFormatting(ctx, Ranges.rangeFromRangeInfo(sheet, feederLine));
+
+//        feederLine = await this.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1));
+//        await this.removeAllGameFormatting(ctx, Ranges.rangeFromRangeInfo(sheet, feederLine));
+
+//        range.load("rowIndex");
+//        range.load("columnIndex");
+        await ctx.sync();
+
+        // and now look for merged regions so we can find the outgoing line
+        const areas: Excel.RangeAreas = range.getMergedAreasOrNullObject();
+        await ctx.sync();
+
+//        areas.load("address");
+//        areas.load("cellcount");
+//        areas.load("rowIndex");
+//        areas.load("columnIndex");
+        await ctx.sync();
+
+        if (!areas.isNullObject)
+        {
+            const mergedRange: Excel.Range = areas.areas.getItemAt(0);
+            mergedRange.load("address");
+            mergedRange.load("rowIndex");
+            mergedRange.load("columnIndex");
+
+            await ctx.sync();
+
+            // the middle row is the outgoing row
+            const rangeLine: Excel.Range =
+                sheet.getRangeByIndexes(mergedRange.rowIndex + 1, mergedRange.columnIndex + 1, 1, 1);
+
+            if (await StructureEditor.isCellInLineColumn(ctx, rangeLine))
+            {
+                feederLine = await StructureEditor.getOutgoingLineRange(ctx,
+                    sheet,
+                    new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
+
+                await StructureEditor.removeAllGameFormatting(ctx, Ranges.rangeFromRangeInfo(sheet, feederLine));
+            }
+            mergedRange.unmerge();
+            await ctx.sync();
+        }
+    }
+
     async click()
     {
         try
@@ -208,11 +266,47 @@ export default class App extends React.Component<AppProps, AppState>
             console.log("testing");
             await Excel.run(async (context) =>
             {
+                await App.obliterateGameFromSheet2(context, null, null);
+                let sheet: Excel.Worksheet = context.workbook.worksheets.getActiveWorksheet();
+                let range: Excel.Range = sheet.getRange("G14:I24"); // Ranges.rangeFromRangeInfo(sheet, rangeInfo);
+
+                //        await this.removeAllGameFormatting(ctx, range);
+                let feederLine: RangeInfo;
+
+                // now go looking for connecting lines
+                // let feederLine: RangeInfo;
+
+                //        feederLine = await this.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1));
+                //        await this.removeAllGameFormatting(ctx, Ranges.rangeFromRangeInfo(sheet, feederLine));
+
+                //        feederLine = await this.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1));
+                //        await this.removeAllGameFormatting(ctx, Ranges.rangeFromRangeInfo(sheet, feederLine));
+
+                //        range.load("rowIndex");
+                //        range.load("columnIndex");
+                await context.sync();
+
+                // and now look for merged regions so we can find the outgoing line
+                const areas: Excel.RangeAreas = range.getMergedAreasOrNullObject();
+                await context.sync();
+
+                //        areas.load("address");
+                //        areas.load("cellcount");
+                //        areas.load("rowIndex");
+                //        areas.load("columnIndex");
+                await context.sync();
+
+                if (!areas.isNullObject)
+                {
+                    const mergedRange: Excel.Range = areas.areas.getItemAt(0);
+                }
+
                 console.log("state: " + await(SetupBook.getWorkbookSetupState(context)));
                 /**
                  * Insert your Excel code here
                  */
-                const range = context.workbook.getSelectedRange();
+                // const
+                    range = context.workbook.getSelectedRange();
 
                 // Read the range address
                 range.load("address");
@@ -222,8 +316,9 @@ export default class App extends React.Component<AppProps, AppState>
 
 
                 // Update the fill color
-//                range.format.fill.color = "blue";
-                StructureEditor.formatConnectingLineRange(context, range);
+//                range.format.fill.color = "#FFFFFF";
+                range.format.fill.clear();
+//                StructureEditor.formatConnectingLineRange(context, range);
 
                 await context.sync();
                 console.log(`The range address was ${range.address}.`);

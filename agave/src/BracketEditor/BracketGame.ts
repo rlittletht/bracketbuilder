@@ -37,6 +37,7 @@ export interface IBracketGame
     get BottomTeamCellName(): string;
     get GameNumberCellName(): string;
     get IsLinkedToBracket(): boolean;
+    get FullGameRange(): RangeInfo;
 }
 
 
@@ -59,6 +60,14 @@ export class BracketGame implements IBracketGame
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
     get BracketName(): string { return this.m_bracketName;  }
     get GameNum(): number { return this.m_gameNum + 1; }
+    get FullGameRange(): RangeInfo
+    {
+        return new RangeInfo(
+            this.m_topTeamLocation.FirstRow,
+            this.m_bottomTeamLocation.LastRow - this.m_topTeamLocation.FirstRow + 1,
+            this.m_topTeamLocation.FirstColumn,
+            3);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.IsTeamSourceStatic
@@ -165,7 +174,7 @@ export class BracketGame implements IBracketGame
 
         await ctx.sync();
 
-        return new RangeInfo(range.rowIndex, range.columnIndex, range.rowCount, range.columnCount);
+        return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
     }
 
     /*----------------------------------------------------------------------------
@@ -173,8 +182,8 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Bind(ctx: any): Promise<IBracketGame>
     {
-        this.m_topTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
         this.m_bottomTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
+        this.m_topTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
         this.m_gameNumberLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
 
         if (this.m_topTeamLocation != null && this.m_bottomTeamLocation != null)
@@ -187,7 +196,7 @@ export class BracketGame implements IBracketGame
             // we didn't bind to a game in the bracket. get the swap state from the source data
             // table
 
-            const sheet: Excel.Worksheet = ctx.workbook.worksheet.getItemOrNullObject("BracketSources");
+            const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketSources");
             await ctx.sync();
 
             if (!sheet.isNullObject)

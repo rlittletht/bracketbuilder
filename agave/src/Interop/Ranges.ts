@@ -129,4 +129,18 @@ export class Ranges
         let rng: Excel.Range = sheet.getRangeByIndexes(from[0], from[1], rows, cols);
         await this.createOrReplaceNamedRange(ctx, name, rng);
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.rangeFromRangeInfo
+    ----------------------------------------------------------------------------*/
+    static rangeFromRangeInfo(sheet: Excel.Worksheet, rangeInfo: RangeInfo): Excel.Range
+    {
+        if (rangeInfo == null)
+            return null;
+
+        return sheet.getRangeByIndexes(rangeInfo.FirstRow,
+            rangeInfo.FirstColumn,
+            rangeInfo.RowCount,
+            rangeInfo.ColumnCount);
+    }
 }

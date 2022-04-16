@@ -43,7 +43,7 @@ export default class ActionButton extends React.Component<ActionButtonProps, Act
                 <IconButton
                     iconProps={{ iconName: this.props.icon }}
                     size={100}
-                    onClick={() => this.props.delegate(this.props.appContext, this.state.bracketGame)}/>
+                    onClick={async () => await this.props.delegate(this.props.appContext, this.state.bracketGame)}/>
             </TooltipHost>
         );
     }

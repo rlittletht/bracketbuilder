@@ -39,6 +39,12 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
         return true; // we don't get an error back...
     }
 
+    async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
+        return true; // we don't get an error back...
+    }
+
     render() {
 
 //        this.props.bracketOptions.forEach(
@@ -60,8 +66,15 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                                     tooltip="Insert Game"
                                     tooltipId={`gid-${this.state.bracketGame.GameNum}`}
                                     bracketGame={this.state.bracketGame}
-                                    delegate={this.DoInsertGame.bind(this)}
+                                    delegate={this.DoInsertGame}
                                     icon="Add"/>
+                                <ActionButton
+                                    appContext={this.props.appContext}
+                                    tooltip="Remove Game"
+                                    tooltipId={`gid-${this.state.bracketGame.GameNum}`}
+                                    bracketGame={this.state.bracketGame}
+                                    delegate={this.DoRemoveGame.bind(this)}
+                                    icon="Remove"/>
                             </Stack.Item>
                         </Stack>
                     </Stack.Item>
