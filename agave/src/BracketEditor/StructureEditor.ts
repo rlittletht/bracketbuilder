@@ -1,6 +1,6 @@
 
-import { IBracketGame } from "./BracketGame";
-import { BracketDefinition } from "../Brackets/BracketDefinitions";
+import { IBracketGame, BracketGame } from "./BracketGame";
+import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
 import { FormulaBuilder } from "./FormulaBuilder";
 import { IAppContext} from "../AppContext";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
@@ -253,6 +253,63 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.findMatchingGameConnections
+
+        find the matching game connections:
+        [topSource, bottomSource, winnerTarget]
+
+        These can be used to determine adjustments to a games placement (or even
+        an "i'm feeling lucky" placement), as well as whether home/away needs to
+        be swapped.
+
+        These ranges, if not null, represent the first cell that should be
+        included in the connection line (or it might be the underline portion of
+        the next game)
+    ----------------------------------------------------------------------------*/
+    static async findMatchingGameConnections(ctx: any, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    {
+        let topSource: RangeInfo = null;
+        let bottomSource: RangeInfo = null;
+        let winnerTarget: RangeInfo = null;
+
+        const top: string = game.BracketGameDefinition.topSource;
+
+        if (!BracketGame.IsTeamSourceStatic(top))
+        {
+            let gameSource: BracketGame = new BracketGame();
+
+            await gameSource.Load(ctx, game.BracketName, Number(top.substring(1)));
+            topSource = new RangeInfo(gameSource.GameNumberRange.FirstRow + 1, 1, gameSource.GameNumberRange.FirstColumn + 2, 1);
+        }
+
+        const bottom: string = game.BracketGameDefinition.bottomSource;
+        if (!BracketGame.IsTeamSourceStatic(bottom))
+        {
+            let gameSource: BracketGame = new BracketGame();
+
+            await gameSource.Load(ctx, game.BracketName, Number(bottom.substring(1)));
+            topSource = new RangeInfo(gameSource.GameNumberRange.FirstRow + 1, 1, gameSource.GameNumberRange.FirstColumn + 2, 1);
+        }
+
+        const winner: string = game.BracketGameDefinition.winner;
+        if (winner != "")
+        {
+            let gameSource: BracketGame = new BracketGame();
+
+            await gameSource.Load(ctx, game.BracketName, Number(winner.substring(1)));
+            if (winner.substring(0) === "T")
+            {
+                winnerTarget = new RangeInfo(gameSource.TopTeamRange.FirstRow + 1, 1, gameSource.TopTeamRange.FirstColumn - 1, 1);
+            }
+            else
+            {
+                winnerTarget = new RangeInfo(gameSource.BottomTeamRange.FirstRow - 1, 1, gameSource.BottomTeamRange.FirstColumn - 1, 1);
+            }
+        }
+
+        return [topSource, bottomSource, winnerTarget];
+    }
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
 
         this will insert the text and set the global cell names for all the parts
@@ -349,12 +406,13 @@ export class StructureEditor
         if (range == null)
             return;
 
-        range.format.font.name = "Calibri";
-        range.format.font.size = 11;
-        range.format.font.bold = false;
-        range.format.horizontalAlignment = Excel.HorizontalAlignment.left;
-        range.format.verticalAlignment = Excel.VerticalAlignment.top;
-        range.format.fill.clear();
+        range.clear();
+        //range.format.font.name = "Calibri";
+        //range.format.font.size = 11;
+        //range.format.font.bold = false;
+        //range.format.horizontalAlignment = Excel.HorizontalAlignment.left;
+        //range.format.verticalAlignment = Excel.VerticalAlignment.top;
+        //range.format.fill.clear();
         //await ctx.sync();
     }
 
@@ -489,7 +547,7 @@ export class StructureEditor
         ctx.trackedObjects.add(range);
         range.clear();
 
-        await this.removeAllGameFormatting(ctx, range);
+//        await this.removeAllGameFormatting(ctx, range);
         range.load("rowIndex");
         range.load("columnIndex");
 

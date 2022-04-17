@@ -20,6 +20,70 @@ export class RangeInfo
         this.m_columnStart = columnStart;
         this.m_columnCount = columnCount;
     }
+
+    static isOverlappingSegment(seg1First: number, seg1Last: number, seg2First: number, seg2Last: number): boolean
+    {
+        // first row of range2 is within range1
+        if (seg1First <= seg2First
+            && seg2First <= seg1Last)
+        {
+            return true;
+        }
+
+        // last row of range2 is within range1
+        if (seg1First <= seg2Last
+            && seg2Last <= seg1Last)
+        {
+            return true;
+        }
+
+        // range2 begins before range1 and ends after range2
+        if (seg2First <= seg1First
+            && seg1Last <= seg2Last)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    static isOverlappingRows(range1: RangeInfo, range2: RangeInfo): boolean
+    {
+        return this.isOverlappingSegment(range1.FirstRow, range1.LastRow, range2.FirstRow, range2.LastRow);
+    }
+
+    static isOverlappingColumns(range1: RangeInfo, range2: RangeInfo): boolean
+    {
+        return this.isOverlappingSegment(range1.FirstColumn, range1.LastColumn, range2.FirstColumn, range2.LastColumn);
+    }
+
+    static isOverlapping(range1: RangeInfo, range2: RangeInfo): boolean
+    {
+        return this.isOverlappingRows(range1, range2) && this.isOverlappingColumns(range1, range2);
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.getRangeInfoForNamedCell
+    ----------------------------------------------------------------------------*/
+    static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
+    {
+        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
+        await ctx.sync();
+
+        if (nameObject.isNullObject)
+            return null;
+
+        const range: Excel.Range = nameObject.getRange();
+        range.load("rowIndex");
+        range.load("rowCount");
+        range.load("columnIndex");
+        range.load("columnCount");
+
+        await ctx.sync();
+
+        return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+    }
 }
 
 export class Ranges

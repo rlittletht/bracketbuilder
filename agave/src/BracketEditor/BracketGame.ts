@@ -38,6 +38,9 @@ export interface IBracketGame
     get GameNumberCellName(): string;
     get IsLinkedToBracket(): boolean;
     get FullGameRange(): RangeInfo;
+    get TopTeamRange(): RangeInfo;
+    get BottomTeamRange(): RangeInfo;
+    get GameNumberRange(): RangeInfo;
 }
 
 
@@ -67,6 +70,21 @@ export class BracketGame implements IBracketGame
             this.m_bottomTeamLocation.LastRow - this.m_topTeamLocation.FirstRow + 1,
             this.m_topTeamLocation.FirstColumn,
             3);
+    }
+
+    get TopTeamRange(): RangeInfo
+    {
+        return this.m_topTeamLocation;
+    }
+
+    get BottomTeamRange(): RangeInfo
+    {
+        return this.m_bottomTeamLocation;
+    }
+
+    get GameNumberRange(): RangeInfo
+    {
+        return this.m_gameNumberLocation;
     }
 
     /*----------------------------------------------------------------------------
@@ -156,25 +174,13 @@ export class BracketGame implements IBracketGame
     get Field(): string { return this.m_field; }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketGame.getRangeInfoForNamedCell
+        %%Function: BracketGame.Unbind
     ----------------------------------------------------------------------------*/
-    static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
+    async Unbind()
     {
-        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-        await ctx.sync();
-
-        if (nameObject.isNullObject)
-            return null;
-
-        const range: Excel.Range = nameObject.getRange();
-        range.load("rowIndex");
-        range.load("rowCount");
-        range.load("columnIndex");
-        range.load("columnCount");
-
-        await ctx.sync();
-
-        return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+        this.m_bottomTeamLocation = null
+        this.m_topTeamLocation = null;
+        this.m_gameNumberLocation = null;
     }
 
     /*----------------------------------------------------------------------------
@@ -182,9 +188,12 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Bind(ctx: any): Promise<IBracketGame>
     {
-        this.m_bottomTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
-        this.m_topTeamLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
-        this.m_gameNumberLocation = await BracketGame.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
+        if (this.IsLinkedToBracket)
+            return this;
+
+        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
+        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
+        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
 
         if (this.m_topTeamLocation != null && this.m_bottomTeamLocation != null)
         {
