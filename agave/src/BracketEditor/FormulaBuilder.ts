@@ -74,6 +74,17 @@ export class FormulaBuilder
         throw "bad source string";
     }
 
+    static getSourceGameNumberIfWinner(source: string): number
+    {
+        if (BracketGame.IsTeamSourceStatic(source))
+            return -1;
+
+        if (source[0] === "W")
+            return Number(source.substring(1));
+
+        return -1;
+    }
+
     static getTeamNameLookup(teamNum: string): string
     {
         return `=INDEX(TeamNames[TeamName],MATCH("${teamNum}", TeamNames[TeamNum],0))`;

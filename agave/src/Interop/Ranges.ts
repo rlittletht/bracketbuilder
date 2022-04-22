@@ -1,4 +1,12 @@
 
+export enum RangeOverlapKind
+{
+    None,
+    Partial,
+    Equal
+}
+
+
 export class RangeInfo
 {
     m_rowStart: number;
@@ -19,6 +27,46 @@ export class RangeInfo
         this.m_rowCount = rowCount;
         this.m_columnStart = columnStart;
         this.m_columnCount = columnCount;
+    }
+
+    static createFromRangeInfo(range: RangeInfo): RangeInfo
+    {
+        if (range == null)
+            return null;
+
+        return new RangeInfo(range.FirstRow, range.RowCount, range.FirstColumn, range.ColumnCount);
+    }
+
+    static createFromRange(range: Excel.Range): RangeInfo
+    {
+        if (range == null || range.isNullObject)
+            return null;
+
+        return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+    }
+
+    offset(dRows: number, newRowCount: number, dColumns: number, newColumnCount: number): RangeInfo
+    {
+        return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
+    }
+
+    isEqual(range: RangeInfo): boolean
+    {
+        if (this.m_rowStart == range.m_rowStart
+            && this.m_rowCount == range.m_rowCount
+            && this.m_columnCount == range.m_columnCount
+            && this.m_columnStart == range.m_columnStart)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    toString(): string
+    {
+        return `[${this.FirstRow},${this.FirstColumn}]-[${this.LastRow},${this.LastColumn}]`;
     }
 
     static isOverlappingSegment(seg1First: number, seg1Last: number, seg2First: number, seg2Last: number): boolean
@@ -57,33 +105,57 @@ export class RangeInfo
         return this.isOverlappingSegment(range1.FirstColumn, range1.LastColumn, range2.FirstColumn, range2.LastColumn);
     }
 
-    static isOverlapping(range1: RangeInfo, range2: RangeInfo): boolean
+    static isOverlapping(range1: RangeInfo, range2: RangeInfo): RangeOverlapKind
     {
-        return this.isOverlappingRows(range1, range2) && this.isOverlappingColumns(range1, range2);
+        if (range1 == null && range2 == null)
+            return RangeOverlapKind.Equal;
+
+        if (range1 == null || range2 == null)
+            return RangeOverlapKind.None;
+
+        if (this.isOverlappingRows(range1, range2) && this.isOverlappingColumns(range1, range2))
+        {
+            return range1.isEqual(range2) ? RangeOverlapKind.Equal : RangeOverlapKind.Partial;
+        }
+
+        return RangeOverlapKind.None;
     }
 
 
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.getRangeInfoForNamedCell
+
+        NOTE: Often named ranges get broken references (because rows are deleted,
+        moved, etc). We are robust to rebuild them when we insert games, so we 
+        also have to be robustin getting ranges for them here
     ----------------------------------------------------------------------------*/
     static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
     {
-        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-        await ctx.sync();
+        try
+        {
+            const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
+            await ctx.sync();
 
-        if (nameObject.isNullObject)
+            if (nameObject.isNullObject)
+                return null;
+
+            const range: Excel.Range = nameObject.getRange();
+            range.load("rowIndex");
+            range.load("rowCount");
+            range.load("columnIndex");
+            range.load("columnCount");
+
+            await ctx.sync();
+
+            return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+        }
+        catch (e)
+        {
             return null;
-
-        const range: Excel.Range = nameObject.getRange();
-        range.load("rowIndex");
-        range.load("rowCount");
-        range.load("columnIndex");
-        range.load("columnCount");
-
-        await ctx.sync();
-
-        return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+        }
     }
+
+    get IsSingleCell() { return this.m_rowCount <= 1 && this.m_columnCount <= 1; }
 }
 
 export class Ranges
@@ -171,9 +243,11 @@ export class Ranges
     ----------------------------------------------------------------------------*/
     static async createOrReplaceNamedRange(ctx: any, name: string, rng: Excel.Range)
     {
+        ctx.trackedObjects.add(rng);
         await Ranges.ensureGlobalNameDeleted(ctx, name);
         ctx.workbook.names.add(name, rng);
         await ctx.sync();
+        ctx.trackedObjects.remove(rng);
     }
 
 
@@ -206,5 +280,35 @@ export class Ranges
             rangeInfo.FirstColumn,
             rangeInfo.RowCount,
             rangeInfo.ColumnCount);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketGame.getRangeInfoForNamedCell
+    ----------------------------------------------------------------------------*/
+    static async getRangeForNamedCell(ctx: any, name: string): Promise<Excel.Range>
+    {
+        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
+        await ctx.sync();
+
+        if (nameObject.isNullObject)
+            return null;
+
+        return nameObject.getRange();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.createRangeInfoForSelection
+    ----------------------------------------------------------------------------*/
+    static async createRangeInfoForSelection(ctx: any): Promise<RangeInfo>
+    {
+        const rng: Excel.Range = ctx.workbook.getSelectedRange();
+
+        rng.load("rowIndex");
+        rng.load("rowCount");
+        rng.load("columnIndex");
+        rng.load("columnCount");
+        await ctx.sync();
+
+        return RangeInfo.createFromRange(rng);
     }
 }
