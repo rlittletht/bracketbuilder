@@ -37,6 +37,21 @@ export class RangeInfo
         return new RangeInfo(range.FirstRow, range.RowCount, range.FirstColumn, range.ColumnCount);
     }
 
+    static createFromCorners(rangeTopLeft: RangeInfo, rangeBottomRight: RangeInfo): RangeInfo
+    {
+        if (rangeTopLeft == null)
+            return null;
+
+        if (rangeBottomRight == null)
+            return this.createFromRangeInfo(rangeTopLeft);
+
+        return new RangeInfo(
+            rangeTopLeft.FirstRow,
+            rangeBottomRight.FirstRow - rangeTopLeft.FirstRow + 1,
+            rangeTopLeft.FirstColumn,
+            rangeBottomRight.FirstColumn - rangeTopLeft.FirstColumn + 1);
+    }
+
     static createFromRange(range: Excel.Range): RangeInfo
     {
         if (range == null || range.isNullObject)
@@ -63,6 +78,50 @@ export class RangeInfo
         return false;
     }
 
+    topLeft(): RangeInfo
+    {
+        return new RangeInfo(this.FirstRow, 1, this.FirstColumn, 1);
+    }
+
+    bottomRight(): RangeInfo
+    {
+        return new RangeInfo(this.LastRow, 1, this.LastColumn, 1);
+    }
+
+    setColumn(column: number)
+    {
+        this.m_columnStart = column;
+    }
+
+    setRow(row: number)
+    {
+        this.m_rowStart = row;
+    }
+
+    setLastRow(row: number)
+    {
+        this.m_rowCount = row - this.FirstRow + 1;
+    }
+
+    newSetColumn(column: number): RangeInfo
+    {
+        return new RangeInfo(this.FirstRow, this.RowCount, column, this.ColumnCount);
+    }
+
+    newSetRow(row: number): RangeInfo
+    {
+        return new RangeInfo(row, this.RowCount, this.FirstColumn, this.ColumnCount);
+    }
+
+    fuzzyMatchRow(row: number, rowTolerance: number): boolean
+    {
+        return (Math.abs(this.FirstRow - row) <= rowTolerance);
+    }
+
+    fuzzyMatchColumn(column: number, columnTolerance: number): boolean
+    {
+        return (Math.abs(this.FirstColumn - column) <= columnTolerance);
+    }
 
     toString(): string
     {

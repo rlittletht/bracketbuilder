@@ -7,132 +7,18 @@ import { GameLines } from "./GameLines";
 import { GameFormatting } from "./GameFormatting";
 import { GridGameInsert } from "./GridGameInsert";
 import { FormulaBuilder } from "./FormulaBuilder";
-
-export class GridItem
-{
-    m_range: RangeInfo;
-    m_topTeamRange: RangeInfo = null;
-    m_bottomTeamRange: RangeInfo = null;
-    m_gameNumberRange: RangeInfo = null;
-    m_swapTopBottom: boolean = false; // we will save this from the bound game - allows us to find connecting lines
-
-    m_gameNum: number = -1;
-
-    get isLineRange(): boolean
-    {
-        return this.m_gameNum == -1;
-    }
-
-    get swapTopBottom(): boolean { return this.m_swapTopBottom; }
-
-    get GameNum(): number
-    {
-        return this.m_gameNum;
-    }
-
-    get TopTeamRange(): RangeInfo
-    {
-        return this.m_topTeamRange;
-    }
-
-    get BottomTeamRange(): RangeInfo
-    {
-        return this.m_bottomTeamRange;
-    }
-
-    get GameNumberRange(): RangeInfo
-    {
-        return this.m_gameNumberRange;
-    }
-
-    get Range(): RangeInfo
-    {
-        return this.m_range;
-    }
-
-    constructor(range: RangeInfo, gameNum: number, isLine: boolean)
-    {
-        this.m_range = range;
-        this.m_gameNum = isLine ? -1 : gameNum;
-    }
-
-    attachGame(game: IBracketGame)
-    {
-        if (!game.IsLinkedToBracket)
-            throw "can't attach game that isn't linked";
-
-        this.m_topTeamRange = RangeInfo.createFromRangeInfo(game.TopTeamRange);
-        this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(game.BottomTeamRange);
-        this.m_gameNumberRange = RangeInfo.createFromRangeInfo(game.GameNumberRange);
-        this.m_swapTopBottom = game.SwapTopBottom;
-    }
-
-    isEqual(item: GridItem): boolean
-    {
-        if (this.GameNum != item.GameNum)
-            return false;
-
-        if (RangeInfo.isOverlapping(this.Range, item.Range) != RangeOverlapKind.Equal)
-            return false;
-        if (RangeInfo.isOverlapping(this.TopTeamRange, item.TopTeamRange) != RangeOverlapKind.Equal)
-            return false;
-        if (RangeInfo.isOverlapping(this.BottomTeamRange, item.BottomTeamRange) != RangeOverlapKind.Equal)
-            return false;
-        if (RangeInfo.isOverlapping(this.GameNumberRange, item.GameNumberRange) != RangeOverlapKind.Equal)
-            return false;
-
-        return true;
-    }
-
-    static createFromItem(item: GridItem): GridItem
-    {
-        let itemNew = new GridItem(item.Range, item.GameNum, item.isLineRange);
-
-        itemNew.m_topTeamRange = RangeInfo.createFromRangeInfo(item.TopTeamRange);
-        itemNew.m_bottomTeamRange = RangeInfo.createFromRangeInfo(item.BottomTeamRange);
-        itemNew.m_gameNumberRange = RangeInfo.createFromRangeInfo(item.GameNumberRange);
-        itemNew.m_swapTopBottom = item.m_swapTopBottom;
-
-        return itemNew;
-    }
-}
-
-export enum GridChangeOperation
-{
-    Insert,
-    Remove
-}
-
-export class GridChange
-{
-    m_changeOp: GridChangeOperation;
-    m_gridItem: GridItem;
-
-    get ChangeOp() { return this.m_changeOp };
-    get Range() { return this.m_gridItem.Range; }
-    get GameNumber() { return this.m_gridItem.GameNum; }
-    get IsLine() { return this.m_gridItem.isLineRange; }
-
-    constructor(op: GridChangeOperation, item: GridItem)
-    {
-        this.m_changeOp = op;
-        this.m_gridItem = item;
-    }
-
-    toString(): string
-    {
-        return `${this.m_changeOp == GridChangeOperation.Remove ? "<" : ">"} ${this.GameNumber}: ${this.Range.toString()}`;
-    }
-}
+import { GridItem } from "./GridItem";
+import { GridChange, GridChangeOperation } from "./GridChange";
 
 export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
 
-    addGameRange(range: RangeInfo, gameNum: number): GridItem
+    addGameRange(range: RangeInfo, gameNum: number, swapTopBottom: boolean): GridItem
     {
         let item: GridItem = new GridItem(range, gameNum, false);
+        item.m_swapTopBottom = swapTopBottom;
         this.m_gridItems.push(item);
 
         return item;
@@ -445,7 +331,7 @@ export class Grid
                 if (overlapKind != RangeOverlapKind.None)
                     throw `overlapping detected on loadGridFromBracket: game ${game.GameNum}`;
 
-                this.addGameRange(game.FullGameRange, game.GameNum).attachGame(game);
+                this.addGameRange(game.FullGameRange, game.GameNum, false).attachGame(game);
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 console.log("lgfb.5");
@@ -511,18 +397,214 @@ export class Grid
         if (item == null)
             return null;
 
-        if ((game.BracketGameDefinition.winner[0] === "T" && item.swapTopBottom == false)
-            || (game.BracketGameDefinition.winner[0] === "B" && item.swapTopBottom == true))
+        if ((game.BracketGameDefinition.winner[0] === "T" && item.SwapTopBottom == false)
+            || (game.BracketGameDefinition.winner[0] === "B" && item.SwapTopBottom == true))
         {
             // the two cases we want the top game
             return item.TopTeamRange.offset(1, 1, -1, 1);
         }
         else
         {
-            return item.TopTeamRange.offset(-1, 1, -1, 1);
+            return item.BottomTeamRange.offset(-1, 1, -1, 1);
         }
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.doFeederLinesOverlap
+
+        return string describing the overlap, or null if no overlap
+
+        the column value is the actual insert column, so adjust it to be the
+        first non-game column before this game insert
+    ----------------------------------------------------------------------------*/
+    doFeederLinesOverlap(source1: RangeInfo, source2: RangeInfo, column: number): string
+    {
+        if (source1 != null
+            && this.doesRangeOverlap(
+                RangeInfo.createFromCorners(
+                    source1,
+                    source1.newSetColumn(column - 1))) != RangeOverlapKind.None)
+        {
+            return `Top feeder line (${source1.toString()}) overlaps existing item`;
+        }
+
+        if (source2 != null
+            && this.doesRangeOverlap(
+                RangeInfo.createFromCorners(
+                    source2,
+                    source2.newSetColumn(column - 1))) != RangeOverlapKind.None)
+        {
+            return `Bottom feeder line (${source1.toString()}) overlaps existing item`;
+        }
+
+        return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.adjustRangeForGridAlignment
+
+        adjust the given rangeInfo to align with:
+        
+        * the top left cell should be in a full height row, and should be in a
+          game title column)
+        * bottom right cell should be in a full height row, and should be in the
+          same game title column
+        
+        use the calculated pattern start location as the basis for this alignment
+
+        nudge up for top cell and down for bottom cell
+    ----------------------------------------------------------------------------*/
+    adjustRangeForGridAlignment(range: RangeInfo)
+    {
+        if ((range.FirstRow & 0x01) != (this.m_firstGridPattern.FirstRow & 0x01))
+        {
+            range.m_rowStart--;
+            range.m_rowCount++;
+        }
+
+        if ((range.LastRow & 0x01) != (this.m_firstGridPattern.LastRow & 0x01))
+        {
+            range.m_rowCount++;
+        }
+
+        const colAdjust: number =
+            Math.abs(range.FirstColumn - this.m_firstGridPattern.FirstColumn) % 3;
+
+        if (colAdjust > 0)
+            range.m_columnStart += colAdjust;
+
+        range.m_columnCount = 1;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.gridGameFromConstraints
+
+        Given a set of constraints (feeder lines in, and feeder line out, and the
+        column the game should go in), figure out where to place the game.
+
+        If a large enough non-overlapping range is provided for the game, that
+        will be given priority, even if the feeder lines would overlap.
+    ----------------------------------------------------------------------------*/
+    gridGameFromConstraints(game: IBracketGame, source1: RangeInfo, source2: RangeInfo, outgoing: RangeInfo, requested: RangeInfo): GridGameInsert
+    {
+        let gameInsert: GridGameInsert = new GridGameInsert();
+        let fSwapTopBottom: boolean = game.SwapTopBottom;
+
+        // normalize the sources
+        if (source1 != null && source2 != null)
+        {
+            if (source1.FirstRow > source2.FirstRow)
+            {
+                let temp = source2;
+                source2 = source1;
+                source1 = temp;
+                fSwapTopBottom = !fSwapTopBottom;
+            }
+        }
+
+        // first, see if we have a requested range and if it is good
+        if (requested.RowCount > 8)
+        {
+            // (we can always adjust +/- 1 row to make the requested range work)
+            if (source1 != null)
+            {
+                if (source1.fuzzyMatchRow(requested.FirstRow + 1, 1))
+                {
+                    requested.setRow(source1.FirstRow - 1);
+                }
+                else if (source1.fuzzyMatchRow(requested.LastRow - 1, 1))
+                {
+                    // if the top game (source1) matches the bottom of our requested range
+                    // then we have to swap whatever the state of swap is
+                    requested.setRow(source1.LastRow + 1);
+                    fSwapTopBottom = !fSwapTopBottom
+                }
+            }
+            if (source2 != null)
+            {
+                if (source2.fuzzyMatchRow(requested.LastRow - 1, 1))
+                {
+                    requested.setLastRow(source2.LastRow + 1);
+                }
+                else if (source2.fuzzyMatchRow(requested.FirstRow + 1, 1))
+                {
+                    requested.setRow(source2.FirstRow - 1);
+                    fSwapTopBottom = !fSwapTopBottom
+                }
+            }
+            // now adjust the range so it aligns with the grid. (it should align if there were
+            // feeder lines, but when there aren't feeder lines we might have to nudge it)
+            this.adjustRangeForGridAlignment(requested);
+
+            const fIncludeFeederLines = this.doFeederLinesOverlap(source1, source2, requested.FirstColumn) == null;
+
+            // lastly figure out if we can include the winner feeder output
+            const fIncludeWinnerLine = outgoing != null
+                && this.doesRangeOverlap(
+                    RangeInfo.createFromCorners(
+                        outgoing.newSetColumn(requested.FirstColumn + 3),
+                        outgoing)) == RangeOverlapKind.None;
+
+            gameInsert.m_rangeGame = new RangeInfo(requested.FirstRow, requested.RowCount, requested.FirstColumn, 3);
+
+            gameInsert.setFeedersFromSources(
+                fIncludeFeederLines ? source1 : null,
+                fIncludeFeederLines ? source2 : null,
+                fIncludeWinnerLine ? outgoing : null,
+                requested.FirstColumn,
+                fSwapTopBottom);
+
+            gameInsert.m_swapTopBottom = fSwapTopBottom;
+
+            return gameInsert;
+        }
+
+        gameInsert.m_failReason = "NYI";
+        return null;
+
+        if (source1 == null && source2 == null)
+        {
+            // we only have outgoing to worry about
+        }
+
+        if (source1 != null && source2 != null)
+        {
+            if (source1.FirstRow > source2.FirstRow)
+            {
+                gameInsert.m_swapTopBottom = true;
+                let temp = source2;
+                source2 = source1;
+                source1 = temp;
+            }
+
+            if (source2.FirstRow - source1.FirstRow < 9)
+            {
+                gameInsert.m_failReason = "Not enough space between source games to automatically insert";
+                return gameInsert;
+            }
+
+            if ((gameInsert.m_failReason = this.doFeederLinesOverlap(source1, source2, requested.FirstColumn)) != null)
+                return gameInsert;
+
+            // we are good to insert
+            return gameInsert;
+        }
+
+        let source: RangeInfo = source1 == null ? source2 : source1;
+
+        // generally we want to insert with the winning feeder game on top
+        if (this.doesRangeOverlap(RangeInfo.createFromCorners(source.newSetRow(1), source.newSetColumn(requested.FirstColumn))) == RangeOverlapKind.None)
+        {
+            // exception 1: if there are no games above where we are trying to insert, then we will
+            // 'insert up'
+            if (source2 != null)
+            {
+                gameInsert.m_swapTopBottom = true;
+
+            }
+
+        }
+    }
     /*----------------------------------------------------------------------------
         %%Function: Grid.gridGameInsertForGame
 
@@ -530,9 +612,8 @@ export class Grid
 
         must provide a column for the game to be inserted into
     ----------------------------------------------------------------------------*/
-    gridGameInsertForGame(game: IBracketGame, column: number): GridGameInsert
+    gridGameInsertForGame(game: IBracketGame, requested: RangeInfo): GridGameInsert
     {
-        column;
         let gameInsert: GridGameInsert = new GridGameInsert();
 
         let sourceGameNum: number = -1;
@@ -546,6 +627,20 @@ export class Grid
             sourceFeedFirst = this.getOutgoingConnectionForGameResult(sourceGameNum);
 
         let outgoingGameFeed: RangeInfo = this.getTargetGameFeedForGameResult(game);
+
+        // figure out all the connecting info for the game
+        sourceGameNum = FormulaBuilder.getSourceGameNumberIfWinner(game.BottomTeamName);
+
+        let sourceFeedSecond: RangeInfo = null;
+        if (sourceGameNum != -1)
+            sourceFeedSecond = this.getOutgoingConnectionForGameResult(sourceGameNum);
+
+        gameInsert = this.gridGameFromConstraints(
+            game,
+            sourceFeedFirst,
+            sourceFeedSecond,
+            outgoingGameFeed,
+            requested);
 
         // now, in theory we have the rows we would like to place this game...
 
@@ -586,5 +681,27 @@ export class Grid
         {
             console.log(`${item.toString()}`);
         }
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getRangeInfoForGameInfo
+    ----------------------------------------------------------------------------*/
+    static getRangeInfoForGameInfo(rangeInfo: RangeInfo): RangeInfo
+    {
+        if (rangeInfo.RowCount < 9)
+            throw new Error("bad rangeInfo param");
+
+        // this is the total number of full height rows to fill information into
+        const bodyRowCount: number = Math.floor((rangeInfo.RowCount - 3 - 1) / 2 + 0.5);
+
+        // this is the offset to the first row of body text, in full height rows.
+        // We need 3 full height rows for our data, so the remaining is divided between the two
+        const bodyTopText: number = Math.floor((bodyRowCount - 3) / 2 + 0.5);
+
+        // now we have to convert this offset to full height rows into actual row offsets
+        // and calculate the offset from the start of the game info region (which will
+        // always start at least after the game title and the underline row)
+        return new RangeInfo(rangeInfo.FirstRow + 2 + bodyTopText * 2, 5, rangeInfo.FirstColumn, rangeInfo.ColumnCount);
     }
 }

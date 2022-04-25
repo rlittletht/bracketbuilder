@@ -32,6 +32,7 @@ export interface IBracketGame
     FormatLoser(): string;
     Bind(ctx: any): Promise<IBracketGame>;
     Unbind();
+    SetSwapTopBottom(swapped: boolean);
 
     get Field(): string;
 
@@ -99,6 +100,11 @@ export class BracketGame implements IBracketGame
     get GameNumberRange(): RangeInfo
     {
         return this.m_gameNumberLocation;
+    }
+
+    SetSwapTopBottom(swapped: boolean)
+    {
+        this.m_swapTopBottom = swapped;
     }
 
     /*----------------------------------------------------------------------------
@@ -218,6 +224,13 @@ export class BracketGame implements IBracketGame
         {
             // we can determine top/bottom swap state by the ranges we are bound to
             this.m_swapTopBottom = this.m_topTeamLocation.FirstRow > this.m_bottomTeamLocation.FirstRow;
+            if (this.m_swapTopBottom)
+            {
+                const temp: RangeInfo = this.m_topTeamLocation;
+                this.m_topTeamLocation = this.m_bottomTeamLocation;
+                this.m_bottomTeamLocation = temp;
+            }
+
             console.log("b.6");
         }
         else

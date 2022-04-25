@@ -5,10 +5,13 @@ import { FormulaBuilder } from "./FormulaBuilder";
 import { IAppContext} from "../AppContext";
 import { RangeInfo, Ranges, RangeOverlapKind } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
-import { Grid, GridChange, GridChangeOperation, GridItem } from "./Grid";
+import { Grid } from "./Grid";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { GameFormatting } from "./GameFormatting";
 import { GameLines } from "./GameLines";
+import { GridGameInsert } from "./GridGameInsert";
+import { GridChange, GridChangeOperation } from "./GridChange";
+import { GridItem } from "./GridItem";
 
 export class StructureEditor
 {
@@ -86,26 +89,6 @@ export class StructureEditor
         return null
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.getRangeInfoForGameInfo
-    ----------------------------------------------------------------------------*/
-    static getRangeInfoForGameInfo(rangeInfo: RangeInfo): RangeInfo
-    {
-        if (rangeInfo.RowCount < 9)
-            throw new Error("bad rangeInfo param");
-
-        // this is the total number of full height rows to fill information into
-        const bodyRowCount: number = Math.floor((rangeInfo.RowCount - 3 - 1) / 2 + 0.5);
-
-        // this is the offset to the first row of body text, in full height rows.
-        // We need 3 full height rows for our data, so the remaining is divided between the two
-        const bodyTopText: number = Math.floor((bodyRowCount - 3) / 2 + 0.5);
-
-        // now we have to convert this offset to full height rows into actual row offsets
-        // and calculate the offset from the start of the game info region (which will
-        // always start at least after the game title and the underline row)
-        return new RangeInfo(rangeInfo.FirstRow + 2 + bodyTopText * 2, 5, rangeInfo.FirstColumn, rangeInfo.ColumnCount);
-    }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.pushPadding
@@ -156,10 +139,17 @@ export class StructureEditor
         let grid: Grid = await this.gridBuildFromBracket(ctx);
 
         // now let's figure out where we want to insert the game
-        const rng: Excel.Range = ctx.workbook.getSelectedRange();
+        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
 
-        const gridInsert = grid.gridGameInsertForGame(game, rng.columnIndex);
+        const gridInsert: GridGameInsert = grid.gridGameInsertForGame(game, requested);
 
+        if (gridInsert.m_failReason != null)
+        {
+            appContext.log(`failed: ${gridInsert.m_failReason}`);
+            return;
+        }
+
+        /*
         const insertRangeInfo = await StructureEditor.getValidRangeInfoForGameInsert(ctx, rng);
 
         // ok, see if it overlaps anything on the schedule
@@ -170,11 +160,27 @@ export class StructureEditor
             appContext.log(`Can't insert game at ${insertRangeInfo.toString()} -- overlap detected`);
             return;
         }
-
+        */
         // we aren't free and clear yet -- we have to try to place the game and make attachments
         let gridNew: Grid = grid.clone();
 
-        gridNew.addGameRange(insertRangeInfo, game.GameNum);
+        // gridNew.addGameRange(insertRangeInfo, game.GameNum);
+        if (gridInsert.m_rangeFeederTop != null)
+            gridNew.addLineRange(gridInsert.m_rangeFeederTop);
+        if (gridInsert.m_rangeFeederBottom != null)
+            gridNew.addLineRange(gridInsert.m_rangeFeederBottom);
+        if (gridInsert.m_rangeWinnerFeeder != null)
+            gridNew.addLineRange(gridInsert.m_rangeWinnerFeeder);
+
+        // this IBracketGame probably won't get anywhere right now, so setting the top/bottom
+        // is probably pointless.  the addGameRange below will capture the swap.
+        // FUTURE: When we implement persistent game data (like team names, game times, etc),
+        // we *could* persist the swap data at this point, and when they build the game for insert
+        // we *could* try to read the swap data during that load.  but that might be overkill
+        // it might be better to just let the game insert handle the swap setting
+        game.SetSwapTopBottom(gridInsert.m_swapTopBottom);
+        gridNew.addGameRange(gridInsert.m_rangeGame, game.GameNum, gridInsert.m_swapTopBottom);
+
         await this.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
     }
 
@@ -222,13 +228,13 @@ export class StructureEditor
         if (game == null || !game.IsLinkedToBracket)
         {
             console.log("appc.8");
-            await this.removeGame(appContext, ctx, null, change.Range);
+            await this.removeGame(appContext, ctx, null, change.Range, false);
             console.log("appc.9");
         }
         else
         {
             console.log("appc.10");
-            await this.removeGame(appContext, ctx, game, change.Range);
+            await this.removeGame(appContext, ctx, game, change.Range, false);
             console.log("appc.11");
         }
     }
@@ -239,6 +245,20 @@ export class StructureEditor
     static async executeAddChange(appContext: IAppContext, ctx: any, change: GridChange, bracketName: string)
     {
         console.log("appc.14");
+        if (change.IsLine)
+        {
+            console.log("appc.14.1");
+
+            // just format the range as an underline
+            await GameFormatting.formatConnectingLineRange(
+                ctx,
+                Ranges.rangeFromRangeInfo(
+                    ctx.workbook.worksheets.getActiveWorksheet(),
+                    change.Range));
+
+            console.log("appc.14.2");
+            return;
+        }
         let game: BracketGame = new BracketGame();
 
         console.log("appc.15");
@@ -247,6 +267,7 @@ export class StructureEditor
         if (game.IsLinkedToBracket)
             throw "game can't be linked - we should have already removed it from the bracket";
 
+        game.SetSwapTopBottom(change.SwapTopBottom);
         console.log("appc.17");
         await this.insertGameAtRange(appContext, ctx, game, change.Range);
         console.log("appc.18");
@@ -292,11 +313,16 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async insertGameAtRange(appContext: IAppContext, ctx: any, game: IBracketGame, insertRangeInfo: RangeInfo)
     {
+        // don't automatically remove games anymore in this function -- callers need to
+        // take care of that now
+
+        /*
         // first, see if this game is already on the bracket, and if so, delete it
         await game.Bind(ctx);
 
         if (game.IsLinkedToBracket)
             await this.findAndRemoveGame(appContext, ctx, game);
+        */
 
         if (insertRangeInfo == null)
         {
@@ -310,7 +336,7 @@ export class StructureEditor
         const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
         ctx.trackedObjects.add(rng);
 
-        const gameInfoRangeInfo = this.getRangeInfoForGameInfo(insertRangeInfo);
+        const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
         // figure out how big the game will be (width,height)
         let formulas: any[][] = [];
@@ -399,20 +425,23 @@ export class StructureEditor
         (there doesn't appear to be an API for this in javascript, so we will
         rely on the caller to cleanup the names)
     ----------------------------------------------------------------------------*/
-    static async obliterateGameRangeFromSheet(ctx: any, appContext: IAppContext, rangeInfo: RangeInfo)
+    static async obliterateGameRangeFromSheet(ctx: any, appContext: IAppContext, rangeInfo: RangeInfo, removeConnections: boolean)
     {
         appContext;
         let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
         ctx.trackedObjects.add(sheet);
 
-        // now go looking for connecting lines
-        let feederLine: RangeInfo;
+        if (removeConnections)
+        {
+            // now go looking for connecting lines
+            let feederLine: RangeInfo;
 
-        feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1));
-        GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1));
+            GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
 
-        feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1));
-        GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1));
+            GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+        }
 
         let range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfo);
         ctx.trackedObjects.add(range);
@@ -439,22 +468,25 @@ export class StructureEditor
             mergedRange.load("columnIndex");
 
             await ctx.sync();
-
-            // the middle row is the outgoing row
-            let rangeLine: Excel.Range =
-                sheet.getRangeByIndexes(mergedRange.rowIndex + 1, mergedRange.columnIndex + 1, 1, 1);
-
-            rangeLine.load("rowIndex");
-            rangeLine.load("columnIndex");
-
-            if (await GameFormatting.isCellInLineColumn(ctx, rangeLine))
+            if (removeConnections)
             {
-                feederLine = await GameLines.getOutgoingLineRange(ctx,
-                    sheet,
-                    new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
+                // the middle row is the outgoing row
+                let rangeLine: Excel.Range =
+                    sheet.getRangeByIndexes(mergedRange.rowIndex + 1, mergedRange.columnIndex + 1, 1, 1);
 
-                GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+                rangeLine.load("rowIndex");
+                rangeLine.load("columnIndex");
+
+                if (await GameFormatting.isCellInLineColumn(ctx, rangeLine))
+                {
+                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRange(ctx,
+                        sheet,
+                        new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
+
+                    GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+                }
             }
+
             mergedRange.unmerge();
             await ctx.sync();
 
@@ -471,7 +503,7 @@ export class StructureEditor
         If only the rangeinfo is provided, then use that as the range to remove.
         If both are provided, they must be consistent.
     ----------------------------------------------------------------------------*/
-    static async removeGame(appContext: IAppContext, ctx: any, game: IBracketGame, range: RangeInfo)
+    static async removeGame(appContext: IAppContext, ctx: any, game: IBracketGame, range: RangeInfo, removeConnections: boolean)
     {
         console.log("remgm.1");
 
@@ -484,7 +516,7 @@ export class StructureEditor
         }
 
         console.log("remgm.4");
-        await this.obliterateGameRangeFromSheet(ctx, appContext, range == null ? game.FullGameRange : range);
+        await this.obliterateGameRangeFromSheet(ctx, appContext, range == null ? game.FullGameRange : range, removeConnections);
 
         console.log("remgm.5");
         if (game != null && game.IsLinkedToBracket)
@@ -534,7 +566,7 @@ export class StructureEditor
         {
             if (grid.doesRangeOverlap(rangeSelected) == RangeOverlapKind.None)
             {
-                this.removeGame(appContext, ctx, null, rangeSelected);
+                this.removeGame(appContext, ctx, null, rangeSelected, true);
                 return;
             }
         }
