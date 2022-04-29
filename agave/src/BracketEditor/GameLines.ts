@@ -1,4 +1,4 @@
-import { RangeInfo } from "../Interop/Ranges";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { GameFormatting } from "./GameFormatting";
 import { IBracketGame, IBracketGame as IBracketGame1, BracketGame } from "./BracketGame";
 
@@ -82,9 +82,9 @@ export class GameLines
         let feederLine: RangeInfo;
 
         console.log("giaolfg.5");
-        feederTop = await this.getFeedingLineRangeInfo(ctx, sheet, game.TopTeamRange.offset(1, 1, 0, 1));
+        feederTop = await this.getFeedingLineRangeInfo(ctx, sheet, game.TopTeamRange.offset(1, 1, 0, 1), true);
         console.log("giaolfg.6");
-        feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1));
+        feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
         console.log("giaolfg.7");
         feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameNumberRange.offset(1, 1, 1, 1));
         console.log("giaolfg.8");
@@ -93,6 +93,18 @@ export class GameLines
         ctx.trackedObjects.remove(sheet);
         console.log("giaolfg.10");
         return [feederTop, feederBottom, feederWinner];
+    }
+
+    static async isCellEmpty(ctx: any, sheet: Excel.Worksheet, rangeCheck: RangeInfo): Promise<boolean>
+    {
+        let range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeCheck);
+        range.load("values");
+        await ctx.sync();
+
+        if (range.values[0][0] != "")
+            return false;
+
+        return true;
     }
 
 
@@ -107,11 +119,14 @@ export class GameLines
     static async getFeedingLineRangeInfo(
         ctx: any,
         sheet: Excel.Worksheet,
-        rangeGameLine: RangeInfo): Promise<RangeInfo> {
+        rangeGameLine: RangeInfo,
+        topTeam: boolean): Promise<RangeInfo>
+    {
         let curColumn: number = rangeGameLine.FirstColumn - 1;
         let outColumn: number = -1;
 
-        while (curColumn > 0) {
+        while (curColumn > 0)
+        {
             let range: Excel.Range = sheet.getRangeByIndexes(rangeGameLine.FirstRow, curColumn, 1, 1);
             ctx.trackedObjects.add(range);
 
@@ -119,7 +134,8 @@ export class GameLines
             range.load("width");
             await ctx.sync();
 
-            if (range.format.fill.color !== "black" && range.format.fill.color !== "#000000")
+            if ((range.format.fill.color !== "black" && range.format.fill.color !== "#000000")
+                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow + (topTeam ? -1 : 1), 1, curColumn, 1)))
             {
                 ctx.trackedObjects.remove(range);
                 break;
@@ -127,7 +143,8 @@ export class GameLines
 
             // we don't want to include this cell quite yet -- only if the
             // next cell beyond is also filled...
-            if (!(await GameFormatting.isCellInLineColumn(ctx, range))) {
+            if (!(await GameFormatting.isCellInLineColumn(ctx, range)))
+            {
                 outColumn = curColumn;
                 ctx.trackedObjects.remove(range);
             }
@@ -172,7 +189,9 @@ export class GameLines
             range.format.load("fill");
             await ctx.sync();
 
-            if (range.format.fill.color !== "black" && range.format.fill.color !== "#000000")
+            if ((range.format.fill.color !== "black" && range.format.fill.color !== "#000000")
+                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
+                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
             {
                 ctx.trackedObjects.remove(range);
                 break;

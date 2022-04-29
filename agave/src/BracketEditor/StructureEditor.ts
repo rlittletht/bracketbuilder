@@ -413,10 +413,10 @@ export class StructureEditor
             // now go looking for connecting lines
             let feederLine: RangeInfo;
 
-            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1));
+            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
             GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
 
-            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1));
+            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
             GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
         }
 

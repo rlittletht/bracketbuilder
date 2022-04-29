@@ -552,11 +552,14 @@ export class Grid
             else if (source1.fuzzyMatchRow(requested.LastRow - 1, 1)) {
                 // if the top game (source1) matches the bottom of our requested range
                 // then we have to swap whatever the state of swap is
-                requested.setRow(source1.LastRow + 1);
                 const temp = source1;
                 source1 = source2;
                 source2 = temp;
                 fSwapTopBottom = !fSwapTopBottom
+                if (source1 != null)
+                    requested.setRow(source1.FirstRow - 1);
+                else
+                    requested.setRow(source2.offset(-11 + 2, 1, 0, 1).FirstRow);
             }
         }
         if (source2 != null)
@@ -601,6 +604,31 @@ export class Grid
         return gameInsert;
     }
 
+    shouldGrowUpInstead(requested: RangeInfo): boolean
+    {
+        // are we at the top of the grid?
+        if (requested.FirstRow - 6 > this.m_firstGridPattern.FirstRow
+            && this.doesRangeOverlap(
+                RangeInfo.createFromCorners(
+                    this.m_firstGridPattern,
+                    requested.offset(-6, 1, 0, 1)))
+            == RangeOverlapKind.None)
+        {
+            return true;
+        }
+
+        // will growing down overlap something, but growing up won't?
+        if (this.doesRangeOverlap(
+                RangeInfo.createFromCorners(
+                    requested,
+                    requested.offset(11 - 1, 1, 2, 1)))
+            != RangeOverlapKind.None)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.buildGridGameForAnchoredSourceNoOutgoingPresent
@@ -642,12 +670,7 @@ export class Grid
 
         // no outgoing, so just grow down unless we are the top game
         // (offset from the requested cell by 6 rows to clear any feeding games)
-        if (requested.FirstRow - 6 > this.m_firstGridPattern.FirstRow
-            && this.doesRangeOverlap(
-                RangeInfo.createFromCorners(
-                    this.m_firstGridPattern,
-                    requested.offset(-6, 1, 0, 1)))
-            == RangeOverlapKind.None)
+        if (this.shouldGrowUpInstead(requested))
         {
             const temp = source1;
             source1 = source2;
@@ -909,10 +932,21 @@ export class Grid
             source1 != null ? source1.FirstColumn : targetColumn,
             source2 != null ? source2.FirstColumn : targetColumn);
 
-        const overlapRegion: RangeInfo =
-            RangeInfo.createFromCorners(
+        let overlapRegion: RangeInfo;
+
+        if (source1 == null || source2 == null)
+        {
+            // assume we're going to grow down
+            overlapRegion = RangeInfo.createFromCorners(
+                source1.offset(-1, 1, 0, 1).newSetColumn(maxColumn),
+                source1.offset(11 - 2, 1, 0, 1).newSetColumn(targetColumn + 2));
+        }
+        else
+        {
+            overlapRegion = RangeInfo.createFromCorners(
                 source1.offset(-1, 1, 0, 1).newSetColumn(maxColumn),
                 source2.offset(1, 0, 0, 1).newSetColumn(targetColumn + 2));
+        }
 
         if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)
         {
@@ -1013,17 +1047,13 @@ export class Grid
 
         [source1, source2, f] = this.normalizeSources(source1, source2, f);
 
-        if (source1 == null || source2 == null)
+        if (source1 == null && source2 == null)
         {
-            // can't determine an overlap to correct for
+            // can't determine an overlap to correct with no sources
             return;
         }
 
-        if (this.doesRangeOverlap(
-                RangeInfo.createFromCorners(
-                    source1.offset(-1, 1, 0, 1),
-                    source2.offset(1, 0, 0, 1).newSetColumn(column + 2)))
-            == RangeOverlapKind.None)
+        if (!gridTry.doesSourceOverlapRangeOverlap(source1, source2, column))
         {
             console.log(`no region swapping needed, no overlap detected.`);
             return;

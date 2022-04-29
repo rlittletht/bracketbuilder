@@ -18,8 +18,6 @@ export interface GameItemProps
 
 export interface GameItemState
 {
-    linkedToGrid: boolean;
-    bracketGame: IBracketGame;
 }
 
 
@@ -27,11 +25,6 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
 {
     constructor(props, context) {
         super(props, context);
-
-        this.state = {
-            bracketGame: props.game,
-            linkedToGrid: props.linkedToGrid,
-    };
     }
 
     async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
@@ -54,36 +47,38 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
 //            });
         let background = {};
         if (this.props.linkedToGrid)
-            background = { background: "gray" };
+            background = { background: "#cccccc" };
 
         return (
             <div className="singleGameItem" style={background}>
-                <Stack>
-                    <Stack.Item>
-                        <Stack horizontal>
-                            <Stack.Item grow align="center">
-                                Game {this.state.bracketGame.GameNum}
-                            </Stack.Item>
+                <Stack horizontal gap={8}>
+                    <Stack.Item align="center" grow={0}>
+                        ({this.props.game.GameNum})
+                    </Stack.Item>
+                    <Stack.Item align="center" grow={2}>
+                        {this.props.game.TopTeamName} vs {this.props.game.BottomTeamName}
+                    </Stack.Item>
+                    <Stack.Item align="center" grow={0}>
+                        <Stack horizontal horizontalAlign="end">
                             <Stack.Item grow={0}>
                                 <ActionButton
                                     appContext={this.props.appContext}
                                     tooltip="Insert Game"
-                                    tooltipId={`gid-${this.state.bracketGame.GameNum}`}
-                                    bracketGame={this.state.bracketGame}
+                                    tooltipId={`gid-${this.props.game.GameNum}`}
+                                    bracketGame={this.props.game}
                                     delegate={this.DoInsertGame}
                                     icon="Add"/>
+                            </Stack.Item>
+                            <Stack.Item grow={0}>
                                 <ActionButton
                                     appContext={this.props.appContext}
                                     tooltip="Remove Game"
-                                    tooltipId={`gid-${this.state.bracketGame.GameNum}`}
-                                    bracketGame={this.state.bracketGame}
+                                    tooltipId={`gid-${this.props.game.GameNum}`}
+                                    bracketGame={this.props.game}
                                     delegate={this.DoRemoveGame.bind(this)}
                                     icon="Remove"/>
                             </Stack.Item>
                         </Stack>
-                    </Stack.Item>
-                    <Stack.Item>
-                             {this.state.bracketGame.TopTeamName} vs {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
                     </Stack.Item>
                 </Stack>
             </div>

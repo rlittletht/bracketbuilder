@@ -353,7 +353,6 @@ export default class App extends React.Component<AppProps, AppState>
 
         return (
             <div className="ms-welcome">
-                <Header logo={require("./../../../assets/logo-filled.png")} title={this.props.title} message="Hiya"/>
                 <div>
                     {this.state.errorMessage}
                 </div>
