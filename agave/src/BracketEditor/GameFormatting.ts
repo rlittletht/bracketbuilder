@@ -95,7 +95,7 @@ export class GameFormatting
         range.load("address");
         await ctx.sync();
 
-        return range.height < 1;
+        return range.height <= 1;
     }
 
     /*----------------------------------------------------------------------------

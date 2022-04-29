@@ -24,10 +24,13 @@ export class SetupBook
     static async getBracketsStructureSheetOrNull(ctx: any): Promise<Excel.Worksheet>
     {
         const bracketStructureSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketStructure");
+        console.log("gbsson.1");
         await ctx.sync();
 
+        console.log("gbsson.2");
         if (bracketStructureSheet.isNullObject)
             return null;
+        console.log("gbsson.3");
 
         return bracketStructureSheet;
     }
@@ -140,22 +143,29 @@ export class SetupBook
     static async getWorkbookSetupState(ctx: any): Promise<SetupState>
     {
         // any bracket workbook has to have a BracketStructure sheet
+        console.log("gwss.1");
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(ctx);
+        console.log("gwss.2");
 
         if (bracketStructureSheet ==  null)
             return SetupState.NoBracketStructure;
 
+        console.log("gwss.3");
         const bracketChoice: string = await this.getBracketChoiceOrNull(ctx);
+        console.log("gwss.4");
 
         if (bracketChoice != null)
         {
+            console.log("gwss.5");
             const bracketTable: Excel.Table = await this.getBracketTableOrNull(ctx, bracketStructureSheet, bracketChoice);
                 bracketStructureSheet.tables.getItemOrNullObject(bracketChoice.concat("Bracket"));
             await ctx.sync();
+            console.log("gwss.6");
 
             if (bracketTable.isNullObject)
                 return SetupState.NoBracketData;
 
+            console.log("gwss.7");
             if (await this.getBracketsDataSheetOrNull(ctx) == null)
                 return SetupState.NoBracketData;
 

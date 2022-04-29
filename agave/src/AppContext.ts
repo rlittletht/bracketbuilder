@@ -1,9 +1,11 @@
+import { IBracketGame } from "./BracketEditor/BracketGame";
 
 export interface IAppContext
 {
     log(message: string);
     /*async*/ invalidateHeroList(ctx: any);
     getSelectedBracket();
+    getGames();
 }
 
 export interface AddLogMessageDelegate
@@ -21,11 +23,17 @@ export interface GetSelectedBracketDelegate
     (): string;
 }
 
+export interface GetGamesDelegate
+{
+    (): IBracketGame[];
+}
+
 export class AppContext implements IAppContext
 {
     m_addLogMessageDelegate: AddLogMessageDelegate;
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
     m_getSelectedBracket: GetSelectedBracketDelegate;
+    m_getGames: GetGamesDelegate;
 
     log(message: string)
     {
@@ -47,14 +55,24 @@ export class AppContext implements IAppContext
         return "";
     }
 
+    getGames(): IBracketGame[]
+    {
+        if (this.m_getGames)
+            return this.m_getGames();
+
+        return [];
+    }
+
     setDelegates(
         addMessageDelegate: AddLogMessageDelegate,
         invalidateHeroList: InvalidateHeroListDelegate,
-        getSelectedBracket: GetSelectedBracketDelegate
+        getSelectedBracket: GetSelectedBracketDelegate,
+        getGames: GetGamesDelegate
         )
     {
         this.m_addLogMessageDelegate = addMessageDelegate;
         this.m_invalidateHeroListDelegate = invalidateHeroList;
         this.m_getSelectedBracket = getSelectedBracket;
+        this.m_getGames = getGames;
     }
 }

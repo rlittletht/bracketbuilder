@@ -26,7 +26,10 @@ export class StructureEditor
     static async insertGameAtSelectionClick(appContext: IAppContext, game: IBracketGame)
     {
         await Excel.run(async (context) =>
-            this.insertGameAtSelection(appContext, context, game));
+        {
+            await this.insertGameAtSelection(appContext, context, game);
+            await appContext.invalidateHeroList(context);
+        });
     }
 
     /*----------------------------------------------------------------------------
@@ -37,7 +40,10 @@ export class StructureEditor
     static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame)
     {
         await Excel.run(async (context) =>
-            { StructureEditor.findAndRemoveGame(appContext, context, game) } );
+        {
+            await StructureEditor.findAndRemoveGame(appContext, context, game);
+            await appContext.invalidateHeroList(context);
+        } );
     }
 
     /*----------------------------------------------------------------------------
@@ -141,45 +147,16 @@ export class StructureEditor
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
 
-        const gridInsert: GridGameInsert = grid.gridGameInsertForGame(game, requested);
+        let gridNew: Grid = null;
+        let failReason: string = null;
 
-        if (gridInsert.m_failReason != null)
+        [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
+
+        if (failReason != null)
         {
-            appContext.log(`failed: ${gridInsert.m_failReason}`);
+            appContext.log(`failed: ${failReason}`);
             return;
         }
-
-        /*
-        const insertRangeInfo = await StructureEditor.getValidRangeInfoForGameInsert(ctx, rng);
-
-        // ok, see if it overlaps anything on the schedule
-        let overlapKind: RangeOverlapKind = grid.doesRangeOverlap(insertRangeInfo);
-
-        if (overlapKind != RangeOverlapKind.None)
-        {
-            appContext.log(`Can't insert game at ${insertRangeInfo.toString()} -- overlap detected`);
-            return;
-        }
-        */
-        // we aren't free and clear yet -- we have to try to place the game and make attachments
-        let gridNew: Grid = grid.clone();
-
-        // gridNew.addGameRange(insertRangeInfo, game.GameNum);
-        if (gridInsert.m_rangeFeederTop != null)
-            gridNew.addLineRange(gridInsert.m_rangeFeederTop);
-        if (gridInsert.m_rangeFeederBottom != null)
-            gridNew.addLineRange(gridInsert.m_rangeFeederBottom);
-        if (gridInsert.m_rangeWinnerFeeder != null)
-            gridNew.addLineRange(gridInsert.m_rangeWinnerFeeder);
-
-        // this IBracketGame probably won't get anywhere right now, so setting the top/bottom
-        // is probably pointless.  the addGameRange below will capture the swap.
-        // FUTURE: When we implement persistent game data (like team names, game times, etc),
-        // we *could* persist the swap data at this point, and when they build the game for insert
-        // we *could* try to read the swap data during that load.  but that might be overkill
-        // it might be better to just let the game insert handle the swap setting
-        game.SetSwapTopBottom(gridInsert.m_swapTopBottom);
-        gridNew.addGameRange(gridInsert.m_rangeGame, game.GameNum, gridInsert.m_swapTopBottom);
 
         await this.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
     }

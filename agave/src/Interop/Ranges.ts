@@ -23,8 +23,13 @@ export class RangeInfo
 
     constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
     {
+        if (rowCount < 0)
+            throw "negative row count";
         this.m_rowStart = rowStart;
         this.m_rowCount = rowCount;
+
+        if (columnCount < 0)
+            throw "negative column count";
         this.m_columnStart = columnStart;
         this.m_columnCount = columnCount;
     }
@@ -35,6 +40,29 @@ export class RangeInfo
             return null;
 
         return new RangeInfo(range.FirstRow, range.RowCount, range.FirstColumn, range.ColumnCount);
+    }
+
+    static createFromCornersSafe(rangeTopLeft: RangeInfo, rangeBottomRight: RangeInfo): RangeInfo
+    {
+        if (rangeTopLeft == null)
+            return null;
+
+        if (rangeBottomRight == null)
+            return this.createFromRangeInfo(rangeTopLeft);
+
+        if (rangeTopLeft.FirstRow < rangeBottomRight.FirstRow)
+        {
+            return new RangeInfo(
+                rangeTopLeft.FirstRow,
+                rangeBottomRight.FirstRow - rangeTopLeft.FirstRow + 1,
+                rangeTopLeft.FirstColumn,
+                rangeBottomRight.FirstColumn - rangeTopLeft.FirstColumn + 1);
+        }
+        return new RangeInfo(
+            rangeBottomRight.FirstRow,
+            rangeTopLeft.FirstRow - rangeBottomRight.FirstRow + 1,
+            rangeBottomRight.FirstColumn,
+            rangeTopLeft.FirstColumn - rangeBottomRight.FirstColumn + 1);
     }
 
     static createFromCorners(rangeTopLeft: RangeInfo, rangeBottomRight: RangeInfo): RangeInfo

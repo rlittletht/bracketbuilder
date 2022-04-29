@@ -14,6 +14,8 @@ import GameItem from "./GameItem";
 import Games from "./Games";
 import { StructureEditor } from "../../BracketEditor/StructureEditor";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
+import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
+import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 
 /* global console, Excel, require  */
 
@@ -33,6 +35,7 @@ export interface AppState
     errorMessage: string;
     selectedBracket: string;
     bracketOptions: BracketOption[];
+    games: IBracketGame[];
 }
 
 export default class App extends React.Component<AppProps, AppState>
@@ -51,14 +54,22 @@ export default class App extends React.Component<AppProps, AppState>
             errorMessage: "",
             selectedBracket: "",
             bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
-        };
+            games: [],
+    };
 
         this.m_appContext = new AppContext();
         this.m_appContext.setDelegates(
             this.addLogMessage.bind(this),
             this.invalidateHeroList.bind(this),
-            this.getSelectedBracket.bind(this));
+            this.getSelectedBracket.bind(this),
+            this.getGames.bind(this));
     }
+
+    getGames(): IBracketGame[]
+    {
+        return this.state.games;
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: App.addLogMessage
@@ -78,19 +89,56 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     async invalidateHeroList(ctx: any)
     {
+        console.log("ihl.1");
         let setupState: SetupState = await(this.getSetupState(ctx));
+        console.log("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
+        console.log("ihl.3");
+        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(ctx);
+        console.log("ihl.4");
+        if (bracketChoice == null)
+            bracketChoice = this.state.selectedBracket;
 
-        [format, title, list] = await this.buildHeroList(setupState);
+        console.log("ihl.5");
+        let games: IBracketGame[] = await this.getGamesList(ctx, bracketChoice);
+        console.log("ihl.6");
 
+
+        console.log("ihl.7");
+        [format, title, list] = this.buildHeroList(setupState);
+        console.log("ihl.8");
+
+        // update the games list
+
+        console.log("ihl.9");
         this.setState({
             heroList: list,
             heroListFormat: format,
             heroTitle: title,
-            setupState: setupState
-        });
+            setupState: setupState,
+            games: games,
+            selectedBracket: bracketChoice });
+    }
+
+    // now have to have the hero list get the games from here as a param, and use that in populating the games.
+    async getGamesList(ctx: any, bracket: string): Promise<IBracketGame[]>
+    {
+        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
+
+        if (bracketDef == null)
+            return [];
+
+        let games: IBracketGame[] = [];
+
+        for (let i = 0; i < bracketDef.games.length; i++)
+        {
+            let temp: IBracketGame = await BracketGame.CreateFromGame(ctx, bracket, i);
+            games.push(temp);
+        }
+
+        return games;
     }
 
     /*----------------------------------------------------------------------------
@@ -100,12 +148,14 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     async getSetupState(ctx: any): Promise<SetupState>
     {
+        console.log("gss.1");
         let setupState: SetupState;
 
         if (ctx != null)
             setupState = await SetupBook.getWorkbookSetupState(ctx);
         else
             setupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
+        console.log("gss.2");
 
         return setupState;
     }
@@ -200,7 +250,7 @@ export default class App extends React.Component<AppProps, AppState>
         let list: HeroListItem[];
         let title: string;
 
-        [format, title, list] = await this.buildHeroList(setupState);
+        [format, title, list] = this.buildHeroList(setupState);
         // figure out our top level menu.... Setup, or bracket editing
         this.setState(
             {
@@ -209,6 +259,14 @@ export default class App extends React.Component<AppProps, AppState>
                 heroTitle: title,
                 selectedBracket: "",
                 setupState: setupState,
+                games: []
+            });
+
+        // now grab the games async and have it update
+        Excel.run(
+            async (context) =>
+            {
+                await this.invalidateHeroList(context);
             });
     }
 

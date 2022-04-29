@@ -182,7 +182,7 @@ export class GridBuilder
         await this.formatRepeatingColumns(ctx, sheet, colStart, 3, 2, 0.9, days);
 
         await this.formatRepeatingRows(ctx, sheet, 9, 2, 0, 15, 300);
-        await this.formatRepeatingRows(ctx, sheet, 9, 2, 1, .5, 300);
+        await this.formatRepeatingRows(ctx, sheet, 9, 2, 1, 1, 300);
     }
 
     /*----------------------------------------------------------------------------

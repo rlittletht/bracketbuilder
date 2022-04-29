@@ -33,10 +33,10 @@ export default class Games extends React.Component<GamesProps, GamesState>
         //                options.push({ key: value.key, text: value.name });
         //            });
         let bracket: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${this.props.bracketName}Bracket`);
-
-        const games = bracket.games.map((_item, index) =>
+        const games = this.props.appContext.getGames();
+        const gameItems = games.map((_item, index) => 
             (
-            <GameItem appContext={this.props.appContext} bracketName={this.props.bracketName} gameNum={index} key={index}/>
+            <GameItem appContext={this.props.appContext} bracketName={this.props.bracketName} game={_item} key={index} linkedToGrid={_item.IsLinkedToBracket}/>
             ));
 
         return (
@@ -45,7 +45,7 @@ export default class Games extends React.Component<GamesProps, GamesState>
                     <tbody>
                         <tr>
                             <td className="games">
-                                {games}
+                                {gameItems}
                             </td>
                         </tr>
                     </tbody>

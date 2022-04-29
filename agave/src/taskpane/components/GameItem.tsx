@@ -10,13 +10,15 @@ import { StructureEditor } from "../../BracketEditor/StructureEditor";
 
 export interface GameItemProps
 {
-    gameNum: number;
+    game: IBracketGame;
     bracketName: string;
     appContext: IAppContext;
+    linkedToGrid: boolean;
 }
 
 export interface GameItemState
 {
+    linkedToGrid: boolean;
     bracketGame: IBracketGame;
 }
 
@@ -26,11 +28,10 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
     constructor(props, context) {
         super(props, context);
 
-        let temp: BracketGame = new BracketGame();
-        temp.Load(null, props.bracketName, props.gameNum);
         this.state = {
-            bracketGame: temp
-        };
+            bracketGame: props.game,
+            linkedToGrid: props.linkedToGrid,
+    };
     }
 
     async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
@@ -51,9 +52,12 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
 //            (value: BracketOption) => {
 //                options.push({ key: value.key, text: value.name });
 //            });
+        let background = {};
+        if (this.props.linkedToGrid)
+            background = { background: "gray" };
 
         return (
-            <div className="singleGameItem">
+            <div className="singleGameItem" style={background}>
                 <Stack>
                     <Stack.Item>
                         <Stack horizontal>
@@ -79,7 +83,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                         </Stack>
                     </Stack.Item>
                     <Stack.Item>
-                        {this.state.bracketGame.TopTeamName} vs {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
+                             {this.state.bracketGame.TopTeamName} vs {this.state.bracketGame.BottomTeamName} ({this.state.bracketGame.Field} {this.state.bracketGame.FormatTime()}) <br />
                     </Stack.Item>
                 </Stack>
             </div>

@@ -18,12 +18,13 @@ export class GridGameInsert
 
     setFeedersFromSources(sourceTop: RangeInfo, sourceBottom: RangeInfo, winnerTarget: RangeInfo, column: number, fSwapTopBottom: boolean)
     {
-        if (fSwapTopBottom)
-        {
-            const temp = sourceTop;
-            sourceTop = sourceBottom;
-            sourceBottom = temp;
-        }
+        fSwapTopBottom;
+//        if (fSwapTopBottom)
+//        {
+//            const temp = sourceTop;
+//            sourceTop = sourceBottom;
+            //sourceBottom = temp;
+//        }
 
         if (sourceTop != null
             && sourceTop.FirstColumn < column - 1

@@ -43,9 +43,21 @@ export class GridItem
         return this.m_range;
     }
 
+    shiftByRows(rowAdjust: number)
+    {
+        if (this.m_topTeamRange != null)
+            this.m_topTeamRange.setRow(this.m_topTeamRange.FirstRow + rowAdjust);
+        if (this.m_bottomTeamRange != null)
+            this.m_bottomTeamRange.setRow(this.m_bottomTeamRange.FirstRow + rowAdjust);
+        if (this.m_gameNumberRange != null)
+            this.m_gameNumberRange.setRow(this.m_gameNumberRange.FirstRow + rowAdjust);
+        if (this.m_range != null)
+            this.m_range.setRow(this.m_range.FirstRow + rowAdjust);
+    }
+
     constructor(range: RangeInfo, gameNum: number, isLine: boolean)
     {
-        this.m_range = range;
+        this.m_range = RangeInfo.createFromRangeInfo(range);
         this.m_gameNum = isLine ? -1 : gameNum;
     }
 
