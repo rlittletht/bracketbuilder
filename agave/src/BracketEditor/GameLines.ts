@@ -1,6 +1,7 @@
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { GameFormatting } from "./GameFormatting";
 import { IBracketGame, IBracketGame as IBracketGame1, BracketGame } from "./BracketGame";
+import { AppContext } from "../AppContext";
 
 export class GameLines
 {
@@ -67,31 +68,31 @@ export class GameLines
         let feederBottom: RangeInfo = null;
         let feederWinner: RangeInfo = null;
 
-        console.log("giaolfg.1");
+        AppContext.checkpoint("giaolfg.1");
         await game.Bind(ctx);
-        console.log("giaolfg.2");
+        AppContext.checkpoint("giaolfg.2");
         if (!game.IsLinkedToBracket)
         {
-            console.log("giaolfg.3");
+            AppContext.checkpoint("giaolfg.3");
             return [feederTop, feederBottom, feederWinner];
         }
 
-        console.log("giaolfg.4");
+        AppContext.checkpoint("giaolfg.4");
         let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
         ctx.trackedObjects.add(sheet);
         let feederLine: RangeInfo;
 
-        console.log("giaolfg.5");
+        AppContext.checkpoint("giaolfg.5");
         feederTop = await this.getFeedingLineRangeInfo(ctx, sheet, game.TopTeamRange.offset(1, 1, 0, 1), true);
-        console.log("giaolfg.6");
+        AppContext.checkpoint("giaolfg.6");
         feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
-        console.log("giaolfg.7");
+        AppContext.checkpoint("giaolfg.7");
         feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameNumberRange.offset(1, 1, 1, 1));
-        console.log("giaolfg.8");
+        AppContext.checkpoint("giaolfg.8");
 
-        console.log("giaolfg.9");
+        AppContext.checkpoint("giaolfg.9");
         ctx.trackedObjects.remove(sheet);
-        console.log("giaolfg.10");
+        AppContext.checkpoint("giaolfg.10");
         return [feederTop, feederBottom, feederWinner];
     }
 
@@ -174,7 +175,8 @@ export class GameLines
     static async getOutgoingLineRange(
         ctx: any,
         sheet: Excel.Worksheet,
-        rangeGameLine: RangeInfo): Promise<RangeInfo> {
+        rangeGameLine: RangeInfo): Promise<RangeInfo>
+    {
         let range: Excel.Range;
         let curColumn: number = rangeGameLine.FirstColumn + 1;
         let outColumn: number = -1;
@@ -189,15 +191,16 @@ export class GameLines
             range.format.load("fill");
             await ctx.sync();
 
-            if ((range.format.fill.color !== "black" && range.format.fill.color !== "#000000")
-                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
-                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
+            // an unfilled range marks the end of a title range, which means that the
+            // 3 previous filled cells should be discounted
+            if ((range.format.fill.color !== "black" && range.format.fill.color !== "#000000"))
             {
                 ctx.trackedObjects.remove(range);
                 break;
             }
 
-            if (fLastWasLineColumn) {
+            if (fLastWasLineColumn)
+            {
                 // everything up to and including the line column is part of the outgoing
                 // line range
                 outColumn = curColumn - 1;
@@ -207,8 +210,17 @@ export class GameLines
             if ((await GameFormatting.isCellInLineColumn(ctx, range)))
                 fLastWasLineColumn = true;
 
-            curColumn++;
             ctx.trackedObjects.remove(range);
+
+            // if there is text above or below us, this means we are in the first cell
+            // of a title range. which means this cell should be discounted
+            if (!await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
+                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
+            {
+                break;
+            }
+
+            curColumn++;
         }
 
         if (outColumn == -1 || outColumn <= rangeGameLine.FirstColumn + 1)
@@ -216,5 +228,4 @@ export class GameLines
 
         return new RangeInfo(rangeGameLine.FirstRow, 1, rangeGameLine.FirstColumn + 1, outColumn - rangeGameLine.FirstColumn);
     }
-
 }

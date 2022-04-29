@@ -9,6 +9,7 @@ import { GridGameInsert } from "./GridGameInsert";
 import { FormulaBuilder } from "./FormulaBuilder";
 import { GridItem } from "./GridItem";
 import { GridChange, GridChangeOperation } from "./GridChange";
+import { AppContext } from "../AppContext";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -229,7 +230,7 @@ export class Grid
     {
         let grid: Grid = new Grid();
 
-        console.log("cgfb.1");
+        AppContext.checkpoint("cgfb.1");
         await grid.loadGridFromBracket(ctx, bracketName);
         return grid;
     }
@@ -342,13 +343,13 @@ export class Grid
     ----------------------------------------------------------------------------*/
     async loadGridFromBracket(ctx: any, bracketName: string)
     {
-        console.log("lgfb.1");
+        AppContext.checkpoint("lgfb.1");
         this.m_firstGridPattern = await this.getFirstGridPatternCell(ctx);
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
-        console.log("lgfb.2");
+        AppContext.checkpoint("lgfb.2");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
             let game: BracketGame = new BracketGame()
@@ -356,9 +357,9 @@ export class Grid
             let feederBottom: RangeInfo = null;
             let feederWinner: RangeInfo = null;
 
-            console.log("lgfb.3");
+            AppContext.checkpoint("lgfb.3");
             await game.Load(ctx, bracketName, i);
-            console.log("lgfb.4");
+            AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
                 let overlapKind: RangeOverlapKind = this.doesRangeOverlap(game.FullGameRange);
@@ -370,9 +371,9 @@ export class Grid
                 this.addGameRange(game.FullGameRange, game.GameNum, false).attachGame(game);
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
-                console.log("lgfb.5");
+                AppContext.checkpoint("lgfb.5");
                 [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(ctx, game);
-                console.log("lgfb.6");
+                AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
                 // identify game underlines as actual feeder lines. that means we would

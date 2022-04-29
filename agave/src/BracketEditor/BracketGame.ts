@@ -3,6 +3,7 @@ import { BracketDefinition, GameDefinition, s_brackets } from "../Brackets/Brack
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { RangeInfo } from "../Interop/Ranges";
 import { Grid } from "./Grid";
+import { AppContext } from "../AppContext";
 
 export interface IBracketGame
 {
@@ -63,10 +64,10 @@ export class BracketGame implements IBracketGame
 
     static async CreateFromGame(ctx: any, bracket: string, gameNumber: number): Promise<IBracketGame>
     {
-        console.log("cfg.1");
+        AppContext.checkpoint("cfg.1");
         let game: BracketGame = new BracketGame();
 
-        console.log("cfg.2");
+        AppContext.checkpoint("cfg.2");
         return await game.Load(ctx, bracket, gameNumber);
     }
 
@@ -208,17 +209,17 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Bind(ctx: any): Promise<IBracketGame>
     {
-        console.log("b.1");
+        AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
             return this;
 
-        console.log("b.2");
+        AppContext.checkpoint("b.2");
         this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
-        console.log("b.3");
+        AppContext.checkpoint("b.3");
         this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
-        console.log("b.4");
+        AppContext.checkpoint("b.4");
         this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
-        console.log("b.5");
+        AppContext.checkpoint("b.5");
 
         if (this.m_topTeamLocation != null && this.m_bottomTeamLocation != null)
         {
@@ -231,32 +232,32 @@ export class BracketGame implements IBracketGame
                 this.m_bottomTeamLocation = temp;
             }
 
-            console.log("b.6");
+            AppContext.checkpoint("b.6");
         }
         else
         {
             // we didn't bind to a game in the bracket. get the swap state from the source data
             // table
 
-            console.log("b.7");
+            AppContext.checkpoint("b.7");
             const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketSources");
             await ctx.sync();
-            console.log("b.8");
+            AppContext.checkpoint("b.8");
 
             if (!sheet.isNullObject)
             {
                 const table: Excel.Table = sheet.tables.getItemOrNullObject("BracketSourceData");
-                console.log("b.9");
+                AppContext.checkpoint("b.9");
                 await ctx.sync();
-                console.log("b.10");
+                AppContext.checkpoint("b.10");
 
                 if (!table.isNullObject)
                 {
                     const range: Excel.Range = table.getDataBodyRange();
                     range.load("values");
-                    console.log("b.11");
+                    AppContext.checkpoint("b.11");
                     await ctx.sync();
-                    console.log("b.12");
+                    AppContext.checkpoint("b.12");
 
                     const data: any[][] = range.values;
 
@@ -272,7 +273,7 @@ export class BracketGame implements IBracketGame
             }
         }
 
-        console.log("b.13");
+        AppContext.checkpoint("b.13");
         return this;
     }
 
@@ -285,11 +286,11 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Load(ctx: any, bracketName: string, gameNum: number): Promise<IBracketGame>
     {
-        console.log("l.1");
+        AppContext.checkpoint("l.1");
 
         let bracketDefinition: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
-        console.log("l.2");
+        AppContext.checkpoint("l.2");
         this.m_gameNum = gameNum;
         this.m_bracketName = bracketName;
 
@@ -300,7 +301,7 @@ export class BracketGame implements IBracketGame
         this.m_startTime = 18 * 60;
         this.m_field = "Field #1";
 
-        console.log("l.3");
+        AppContext.checkpoint("l.3");
         // if we don't have a context, then we aren't async and we aren't going to fetch anything from the sheet
         if (ctx == null)
             return this;
@@ -308,7 +309,7 @@ export class BracketGame implements IBracketGame
         // ok, try to load the linkage. do this by finding the named ranges
         // for the parts of this game
 
-        console.log("l.4");
+        AppContext.checkpoint("l.4");
         return await this.Bind(ctx);
     }
 

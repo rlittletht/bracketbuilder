@@ -75,4 +75,10 @@ export class AppContext implements IAppContext
         this.m_getSelectedBracket = getSelectedBracket;
         this.m_getGames = getGames;
     }
+
+    static checkpoint(log: string)
+    {
+        log;
+        // console.log(log);
+    }
 }

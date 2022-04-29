@@ -1,20 +1,53 @@
 
 
+export enum EnsureSheetPlacement
+{
+    First,
+    Last,
+    BeforeGiven,
+    AfterGiven
+}
+
 export class Sheets
 {
-    static async ensureSheetExists(ctx: any, sSheetName: string): Promise<Excel.Worksheet>
+    static async ensureSheetExists(
+        ctx: any,
+        sSheetName: string,
+        sheetRelativeToName: string = null,
+        placement: EnsureSheetPlacement = EnsureSheetPlacement.Last): Promise<Excel.Worksheet>
     {
         // have to use any here because we don't have type information that knows about getItemOrNullObject.
         let worksheets: Excel.WorksheetCollection = ctx.workbook.worksheets;
         let sheet: Excel.Worksheet = null;
+        let sheetRelative: Excel.Worksheet = null;
 
         sheet = worksheets.getItemOrNullObject(sSheetName);
+        if (sheetRelativeToName != null)
+        {
+            sheetRelative = worksheets.getItemOrNullObject(sheetRelativeToName);
+        }
+
         await ctx.sync();
 
         if (sheet.isNullObject)
         {
             sheet = worksheets.add(sSheetName);
+            if (sheetRelative != null
+                && !sheetRelative.isNullObject
+                && placement != EnsureSheetPlacement.First
+                    && placement != EnsureSheetPlacement.Last)
+            {
+                sheetRelative.load("position");
+                await ctx.sync();
+
+                sheet.position = sheetRelative.position + EnsureSheetPlacement.AfterGiven ? 1 : 0;
+            }
+
+            if (placement == EnsureSheetPlacement.First)
+                sheet.position = 0;
+
             await ctx.sync();
+
         }
         return sheet;
     }

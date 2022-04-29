@@ -1,7 +1,7 @@
 
 import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
 import { FastTables } from "./Interop/FastTables";
-import { IAppContext } from "./AppContext";
+import { IAppContext, AppContext } from "./AppContext";
 import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
 
 export enum SetupState
@@ -24,13 +24,13 @@ export class SetupBook
     static async getBracketsStructureSheetOrNull(ctx: any): Promise<Excel.Worksheet>
     {
         const bracketStructureSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketStructure");
-        console.log("gbsson.1");
+        AppContext.checkpoint("gbsson.1");
         await ctx.sync();
 
-        console.log("gbsson.2");
+        AppContext.checkpoint("gbsson.2");
         if (bracketStructureSheet.isNullObject)
             return null;
-        console.log("gbsson.3");
+        AppContext.checkpoint("gbsson.3");
 
         return bracketStructureSheet;
     }
@@ -143,29 +143,29 @@ export class SetupBook
     static async getWorkbookSetupState(ctx: any): Promise<SetupState>
     {
         // any bracket workbook has to have a BracketStructure sheet
-        console.log("gwss.1");
+        AppContext.checkpoint("gwss.1");
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(ctx);
-        console.log("gwss.2");
+        AppContext.checkpoint("gwss.2");
 
         if (bracketStructureSheet ==  null)
             return SetupState.NoBracketStructure;
 
-        console.log("gwss.3");
+        AppContext.checkpoint("gwss.3");
         const bracketChoice: string = await this.getBracketChoiceOrNull(ctx);
-        console.log("gwss.4");
+        AppContext.checkpoint("gwss.4");
 
         if (bracketChoice != null)
         {
-            console.log("gwss.5");
+            AppContext.checkpoint("gwss.5");
             const bracketTable: Excel.Table = await this.getBracketTableOrNull(ctx, bracketStructureSheet, bracketChoice);
                 bracketStructureSheet.tables.getItemOrNullObject(bracketChoice.concat("Bracket"));
             await ctx.sync();
-            console.log("gwss.6");
+            AppContext.checkpoint("gwss.6");
 
             if (bracketTable.isNullObject)
                 return SetupState.NoBracketData;
 
-            console.log("gwss.7");
+            AppContext.checkpoint("gwss.7");
             if (await this.getBracketsDataSheetOrNull(ctx) == null)
                 return SetupState.NoBracketData;
 

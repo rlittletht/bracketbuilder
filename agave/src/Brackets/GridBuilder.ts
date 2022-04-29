@@ -1,4 +1,4 @@
-import { Sheets } from "../Interop/Sheets";
+import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 
@@ -194,7 +194,7 @@ export class GridBuilder
     {
         const colFirstGridColumn: number = 6;
 
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "GridTemplate");
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "Games", null, EnsureSheetPlacement.First);
         let rng: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
 
         rng.formulas = [["=TournamentTitle"], ["=TournamentSubTitle"], ["=TournamentLocation"]]
@@ -217,6 +217,7 @@ export class GridBuilder
         await this.addDayGridFormulas(ctx, sheet, 4, 6, 18);
 
         sheet.showGridlines = false;
+        sheet.activate();
         await ctx.sync();
     }
 }

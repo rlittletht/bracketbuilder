@@ -2,7 +2,7 @@
 import { IBracketGame, BracketGame } from "./BracketGame";
 import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
 import { FormulaBuilder } from "./FormulaBuilder";
-import { IAppContext} from "../AppContext";
+import { IAppContext, AppContext } from "../AppContext";
 import { RangeInfo, Ranges, RangeOverlapKind } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 import { Grid } from "./Grid";
@@ -183,36 +183,36 @@ export class StructureEditor
     {
         if (change.IsLine)
         {
-            console.log("appc.3");
+            AppContext.checkpoint("appc.3");
             // simple, just remove the line formatting
             GameFormatting.removeAllGameFormatting(
                 Ranges.rangeFromRangeInfo(ctx.workbook.worksheets.getActiveWorksheet(), change.Range));
 
-            console.log("appc.4");
+            AppContext.checkpoint("appc.4");
             await ctx.sync();
-            console.log("appc.5");
+            AppContext.checkpoint("appc.5");
             return;
         }
 
-        console.log("appc.6");
+        AppContext.checkpoint("appc.6");
         // if its a game, then we have to completely remove it, including its
         // named ranges
         let game: IBracketGame = await BracketGame.CreateFromGame(ctx, bracketName, change.GameNumber - 1);
 
-        console.log("appc.7");
+        AppContext.checkpoint("appc.7");
         // if we couldn't create the game, or if its not linked to the bracket, then
         // just delete the range
         if (game == null || !game.IsLinkedToBracket)
         {
-            console.log("appc.8");
+            AppContext.checkpoint("appc.8");
             await this.removeGame(appContext, ctx, null, change.Range, false);
-            console.log("appc.9");
+            AppContext.checkpoint("appc.9");
         }
         else
         {
-            console.log("appc.10");
+            AppContext.checkpoint("appc.10");
             await this.removeGame(appContext, ctx, game, change.Range, false);
-            console.log("appc.11");
+            AppContext.checkpoint("appc.11");
         }
     }
 
@@ -221,10 +221,10 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async executeAddChange(appContext: IAppContext, ctx: any, change: GridChange, bracketName: string)
     {
-        console.log("appc.14");
+        AppContext.checkpoint("appc.14");
         if (change.IsLine)
         {
-            console.log("appc.14.1");
+            AppContext.checkpoint("appc.14.1");
 
             // just format the range as an underline
             await GameFormatting.formatConnectingLineRange(
@@ -233,21 +233,21 @@ export class StructureEditor
                     ctx.workbook.worksheets.getActiveWorksheet(),
                     change.Range));
 
-            console.log("appc.14.2");
+            AppContext.checkpoint("appc.14.2");
             return;
         }
         let game: BracketGame = new BracketGame();
 
-        console.log("appc.15");
+        AppContext.checkpoint("appc.15");
         await game.Load(ctx, bracketName, change.GameNumber - 1);
-        console.log("appc.16");
+        AppContext.checkpoint("appc.16");
         if (game.IsLinkedToBracket)
             throw "game can't be linked - we should have already removed it from the bracket";
 
         game.SetSwapTopBottom(change.SwapTopBottom);
-        console.log("appc.17");
+        AppContext.checkpoint("appc.17");
         await this.insertGameAtRange(appContext, ctx, game, change.Range);
-        console.log("appc.18");
+        AppContext.checkpoint("appc.18");
     }
 
     /*----------------------------------------------------------------------------
@@ -257,12 +257,12 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async applyChanges(appContext: IAppContext, ctx: any, changes: GridChange[], bracketName: string)
     {
-        console.log("appc.1");
+        AppContext.checkpoint("appc.1");
 
         // do all the removes first
         for (let item of changes)
         {
-            console.log("appc.2");
+            AppContext.checkpoint("appc.2");
             if (item.ChangeOp == GridChangeOperation.Insert)
                 continue;
 
@@ -271,10 +271,10 @@ export class StructureEditor
 
         // and now do all the adds
 
-        console.log("appc.12");
+        AppContext.checkpoint("appc.12");
         for (let item of changes)
         {
-            console.log("appc.13");
+            AppContext.checkpoint("appc.13");
             if (item.ChangeOp == GridChangeOperation.Remove)
                 continue;
 
@@ -482,31 +482,31 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async removeGame(appContext: IAppContext, ctx: any, game: IBracketGame, range: RangeInfo, removeConnections: boolean)
     {
-        console.log("remgm.1");
+        AppContext.checkpoint("remgm.1");
 
         if (range != null && game != null && game.IsLinkedToBracket)
         {
-            console.log("remgm.2");
+            AppContext.checkpoint("remgm.2");
             if (!range.isEqual(game.FullGameRange))
                 throw "remove game: bound game range != given range";
-            console.log("remgm.3");
+            AppContext.checkpoint("remgm.3");
         }
 
-        console.log("remgm.4");
+        AppContext.checkpoint("remgm.4");
         await this.obliterateGameRangeFromSheet(ctx, appContext, range == null ? game.FullGameRange : range, removeConnections);
 
-        console.log("remgm.5");
+        AppContext.checkpoint("remgm.5");
         if (game != null && game.IsLinkedToBracket)
         {
             // obliterate can't deal with the named ranges (there's no way to map
             // range back to named item), but we know the names, so we can delete them
-            console.log("remgm.6");
+            AppContext.checkpoint("remgm.6");
             await Ranges.ensureGlobalNameDeleted(ctx, game.TopTeamCellName);
-            console.log("remgm.7");
+            AppContext.checkpoint("remgm.7");
             await Ranges.ensureGlobalNameDeleted(ctx, game.BottomTeamCellName);
-            console.log("remgm.8");
+            AppContext.checkpoint("remgm.8");
             await Ranges.ensureGlobalNameDeleted(ctx, game.GameNumberCellName);
-            console.log("remgm.9");
+            AppContext.checkpoint("remgm.9");
         }
     }
 

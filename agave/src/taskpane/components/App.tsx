@@ -89,30 +89,30 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     async invalidateHeroList(ctx: any)
     {
-        console.log("ihl.1");
+        AppContext.checkpoint("ihl.1");
         let setupState: SetupState = await(this.getSetupState(ctx));
-        console.log("ihl.2");
+        AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
-        console.log("ihl.3");
+        AppContext.checkpoint("ihl.3");
         let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(ctx);
-        console.log("ihl.4");
+        AppContext.checkpoint("ihl.4");
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
-        console.log("ihl.5");
+        AppContext.checkpoint("ihl.5");
         let games: IBracketGame[] = await this.getGamesList(ctx, bracketChoice);
-        console.log("ihl.6");
+        AppContext.checkpoint("ihl.6");
 
 
-        console.log("ihl.7");
+        AppContext.checkpoint("ihl.7");
         [format, title, list] = this.buildHeroList(setupState);
-        console.log("ihl.8");
+        AppContext.checkpoint("ihl.8");
 
         // update the games list
 
-        console.log("ihl.9");
+        AppContext.checkpoint("ihl.9");
         this.setState({
             heroList: list,
             heroListFormat: format,
@@ -148,14 +148,14 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     async getSetupState(ctx: any): Promise<SetupState>
     {
-        console.log("gss.1");
+        AppContext.checkpoint("gss.1");
         let setupState: SetupState;
 
         if (ctx != null)
             setupState = await SetupBook.getWorkbookSetupState(ctx);
         else
             setupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
-        console.log("gss.2");
+        AppContext.checkpoint("gss.2");
 
         return setupState;
     }
@@ -274,10 +274,10 @@ export default class App extends React.Component<AppProps, AppState>
     {
         try
         {
-            console.log("testing");
+            AppContext.checkpoint("testing");
             await Excel.run(async (context) =>
             {
-                console.log("state: " + await(SetupBook.getWorkbookSetupState(context)));
+                AppContext.checkpoint("state: " + await(SetupBook.getWorkbookSetupState(context)));
                 /**
                  * Insert your Excel code here
                  */
@@ -287,7 +287,7 @@ export default class App extends React.Component<AppProps, AppState>
                 range.load("address");
                 range.format.fill.load("color");
                 await context.sync();
-                console.log(`The color is ${range.format.fill.color}.`);
+                AppContext.checkpoint(`The color is ${range.format.fill.color}.`);
 
 
                 // Update the fill color
@@ -296,7 +296,7 @@ export default class App extends React.Component<AppProps, AppState>
 //                StructureEditor.formatConnectingLineRange(context, range);
 
                 await context.sync();
-                console.log(`The range address was ${range.address}.`);
+                AppContext.checkpoint(`The range address was ${range.address}.`);
             });
         }
         catch (error)
