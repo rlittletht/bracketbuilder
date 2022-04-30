@@ -12,6 +12,8 @@ import { GameLines } from "./GameLines";
 import { GridGameInsert } from "./GridGameInsert";
 import { GridChange, GridChangeOperation } from "./GridChange";
 import { GridItem } from "./GridItem";
+import { TeamNameMap, BracketSources } from "../Brackets/BracketSources";
+import { Tables } from "../Interop/Tables";
 
 export class StructureEditor
 {
@@ -473,6 +475,174 @@ export class StructureEditor
         }
     }
 
+    static async removeNamedRangeAndUpdateBracketSource(ctx: any, cellName: string, gameTeamName: string): Promise<[string, string]>
+    {
+        // if this team name is not static, then we don't propagate any direct typing
+        if (!BracketGame.IsTeamSourceStatic(gameTeamName))
+            return null;
+
+        let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
+
+        if (range == null)
+            return [null, null];
+
+        range.load("formulas");
+        await ctx.sync();
+
+        const value: string = range.formulas[0][0];
+        await Ranges.ensureGlobalNameDeleted(ctx, cellName);
+
+        if (value[0] == "=")
+        {
+            // there was no direct edit. return no update
+            return [null, null];
+        }
+
+        return [gameTeamName, value];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.removeGameInfoNamedRangeAndUpdateBracketSource
+
+        Given the name of the gameinfo cell, remove the named range and return
+        the values for the field# and the time
+    ----------------------------------------------------------------------------*/
+    static async removeGameInfoNamedRangeAndUpdateBracketSource(ctx: any, cellName: string): Promise<[string, number]>
+    {
+        let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
+
+        if (range == null)
+            return [null, 0];
+
+        range.load("address, rowIndex, rowCount, columnIndex, columnCount");
+        await ctx.sync();
+        const gameNumRange: RangeInfo = RangeInfo.createFromRange(range);
+
+        range = Ranges.rangeFromRangeInfo(
+            range.worksheet,
+            gameNumRange.offset(0, 3, -1, 1));
+
+        range.load("formulas");
+        await ctx.sync();
+
+        const field: string = range.formulas[0][0];
+        const time: number = range.formulas[2][0];
+
+        await Ranges.ensureGlobalNameDeleted(ctx, cellName);
+
+        return [field, time];
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.removeNamedRangesAndUpdateBracketSources
+
+        remove the named ranges for this game. also, get any direct edits from
+        these ranges and propagate these edits to the bracket sources table
+    ----------------------------------------------------------------------------*/
+    static async removeNamedRangesAndUpdateBracketSources(ctx: any, game: IBracketGame)
+    {
+        let gameTeamName1: string;
+        let overrideText1: string;
+        let gameTeamName2: string;
+        let overrideText2: string;
+        let field: string;
+        let time: number;
+
+        [gameTeamName1, overrideText1] = await this.removeNamedRangeAndUpdateBracketSource(ctx, game.TopTeamCellName, game.TopTeamName);
+        [gameTeamName2, overrideText2] = await this.removeNamedRangeAndUpdateBracketSource(ctx, game.BottomTeamCellName, game.BottomTeamName);
+
+        [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(ctx, game.GameNumberCellName);
+
+        let map: TeamNameMap[] = [];
+
+        if (overrideText1 && overrideText1 != null && overrideText1 != "")
+            map.push(
+                {
+                    teamNum: gameTeamName1,
+                    name: overrideText1
+                });
+        if (overrideText2 && overrideText2 != null && overrideText2 != "")
+            map.push(
+                {
+                    teamNum: gameTeamName2,
+                    name: overrideText2
+                });
+
+        await this.updateBracketSourcesTeamNames(ctx, map);
+        if (field && field != null && field != "")
+            await this.updateGameInfo(ctx, game.GameNum - 1, field, time, game.SwapTopBottom);
+
+        console.log(`saved: ${gameTeamName1}=${overrideText1}, ${gameTeamName2}=${overrideText2}, field=${field}, time=${time}`);
+    }
+
+    static async updateGameInfo(ctx: any, gameNum: number, field: string, time: number, swapHomeAway: boolean)
+    {
+        // find the team names table
+        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
+
+        let range: Excel.Range = table.getDataBodyRange();
+        range.load("values, rowCount");
+        await ctx.sync();
+
+        let newValues: any[][] = [];
+        
+        for (let i = 0; i < range.rowCount; i++)
+        {
+            if (range.values[i][0] == gameNum)
+                newValues.push([gameNum, field, time, swapHomeAway]);
+            else
+                newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
+        }
+
+        range.values = newValues;
+        await ctx.sync();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.updateBracketSourcesTeamNames
+
+        Update the given team names in the bracket sources team names. Its an
+        array of maps (and array of [][])
+    ----------------------------------------------------------------------------*/
+    static async updateBracketSourcesTeamNames(ctx: any, teamNames: TeamNameMap[])
+    {
+        // find the team names table
+        let table: Excel.Table = await BracketSources.getTeamNameTable(ctx);
+
+        let range: Excel.Range = table.getDataBodyRange();
+        range.load("values, rowCount");
+        await ctx.sync();
+
+        // now update the values
+        for (let nameMap of teamNames)
+        {
+            if (nameMap.name == null || nameMap.name == "")
+                continue;
+
+            let comp: string = nameMap.teamNum.toUpperCase();
+
+            for (let i = 0; i < range.rowCount; i++)
+            {
+                if (range.values[i][0].toUpperCase() == comp)
+                {
+                    range.values[i][1] = nameMap.name;
+                }
+            }
+        }
+
+        // we can't update changes in-place, so create a new array
+        let newValues: any[][] = [];
+        for (let i = 0; i < range.rowCount; i++)
+        {
+            newValues.push([range.values[i][0], range.values[i][1]]);
+        }
+
+        range.values = newValues; // this is what will get picked up
+
+        await ctx.sync();
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.removeGame
 
@@ -492,22 +662,25 @@ export class StructureEditor
             AppContext.checkpoint("remgm.3");
         }
 
+        if (game != null && game.IsLinkedToBracket)
+        {
+            await this.removeNamedRangesAndUpdateBracketSources(ctx, game);
+            /*
+                        // obliterate can't deal with the named ranges (there's no way to map
+                        // range back to named item), but we know the names, so we can delete them
+                        AppContext.checkpoint("remgm.6");
+                        await Ranges.ensureGlobalNameDeleted(ctx, game.TopTeamCellName);
+                        AppContext.checkpoint("remgm.7");
+                        await Ranges.ensureGlobalNameDeleted(ctx, game.BottomTeamCellName);
+                        AppContext.checkpoint("remgm.8");
+                        await Ranges.ensureGlobalNameDeleted(ctx, game.GameNumberCellName);
+                        AppContext.checkpoint("remgm.9");*/
+        }
+
         AppContext.checkpoint("remgm.4");
         await this.obliterateGameRangeFromSheet(ctx, appContext, range == null ? game.FullGameRange : range, removeConnections);
 
         AppContext.checkpoint("remgm.5");
-        if (game != null && game.IsLinkedToBracket)
-        {
-            // obliterate can't deal with the named ranges (there's no way to map
-            // range back to named item), but we know the names, so we can delete them
-            AppContext.checkpoint("remgm.6");
-            await Ranges.ensureGlobalNameDeleted(ctx, game.TopTeamCellName);
-            AppContext.checkpoint("remgm.7");
-            await Ranges.ensureGlobalNameDeleted(ctx, game.BottomTeamCellName);
-            AppContext.checkpoint("remgm.8");
-            await Ranges.ensureGlobalNameDeleted(ctx, game.GameNumberCellName);
-            AppContext.checkpoint("remgm.9");
-        }
     }
 
     /*----------------------------------------------------------------------------

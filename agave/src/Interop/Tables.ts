@@ -290,6 +290,25 @@ export class Tables
         return rgFormulasPreserve;
     }
 
+    static async getTableOrNull(ctx: any, sheet: Excel.Worksheet = null, tableName: string): Promise<Excel.Table>
+    {
+        let table: Excel.Table = null;
+
+        try
+        {
+            if (sheet != null)
+                table = sheet.tables.getItem(tableName);
+            else
+                table = ctx.workbook.tables.getItem(tableName);
+
+            await ctx.sync();
+            return table;
+        }
+        catch (e)
+        {
+            return null;
+        }
+    }
 
     static async ensureTableExists(
         ctx: any,
@@ -299,18 +318,7 @@ export class Tables
         sShape: string,
         header: string[]): Promise<Excel.Table>
     {
-        let table = null;
-
-        try
-        {
-            table = sheet.tables.getItem(sTable);
-
-            await ctx.sync();
-        }
-        catch (e)
-        {
-            table = null;
-        }
+        let table: Excel.Table = await this.getTableOrNull(ctx, sheet, sTable);
 
         if (table == null)
         {

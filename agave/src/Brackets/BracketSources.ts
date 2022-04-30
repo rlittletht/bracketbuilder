@@ -6,8 +6,25 @@ import { OADate } from "../Interop/Dates";
 import { IFastTables } from "../Interop/FastTables";
 import { Tables } from "../Interop/Tables";
 
+export interface TeamNameMap
+{
+    teamNum: string;
+    name: string;
+}
+
 export class BracketSources
 {
+    static async getTeamNameTable(ctx: any): Promise<Excel.Table>
+    {
+        return await Tables.getTableOrNull(ctx, null, "TeamNames");
+    }
+
+    static async getGameInfoTable(ctx: any): Promise<Excel.Table>
+    {
+        return await Tables.getTableOrNull(ctx, null, "BracketSourceData");
+    }
+
+
     /*----------------------------------------------------------------------------
         %%Function: BracketDataBuilder.buildBracketDataSheet
 
