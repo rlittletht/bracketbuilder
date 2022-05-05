@@ -24,6 +24,11 @@ export class BracketSources
         return await Tables.getTableOrNull(ctx, null, "BracketSourceData");
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketSources.updateGameInfo
+
+        update the given game information in the bracketsourcedata table
+    ----------------------------------------------------------------------------*/
     static async updateGameInfo(ctx: any, gameNum: number, field: any, time: any, swapHomeAway: boolean)
     {
         // find the team names table

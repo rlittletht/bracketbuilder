@@ -51,6 +51,22 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.removeGameAtSelectionClick
+
+        Remove the game that the selection overlaps
+    ----------------------------------------------------------------------------*/
+    static async removeGameAtSelectionClick(appContext: IAppContext)
+    {
+        await Excel.run(
+            async (context) =>
+            {
+                await StructureEditor.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
+                await appContext.invalidateHeroList(context);
+            });
+    }
+
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.findAndRemoveGameClick
 
         find the given game in the bracket grid and remove it.
@@ -59,7 +75,7 @@ export class StructureEditor
     {
         await Excel.run(async (context) =>
         {
-            await StructureEditor.findAndRemoveGame(appContext, context, game);
+            await StructureEditor.findAndRemoveGame(appContext, context, game, game.BracketName);
             await appContext.invalidateHeroList(context);
         } );
     }
@@ -164,7 +180,7 @@ export class StructureEditor
         await game.Bind(ctx);
 
         if (game.IsLinkedToBracket)
-            await this.findAndRemoveGame(appContext, ctx, game);
+            await this.findAndRemoveGame(appContext, ctx, game, game.BracketName);
 
         // first make sure we have a complete grid for the bracket
         let grid: Grid = await this.gridBuildFromBracket(ctx);
@@ -679,9 +695,22 @@ export class StructureEditor
         If there is no selected range, then find the given game and remove it.
 
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGame(appContext: IAppContext, ctx: any, game: IBracketGame)
+    static async findAndRemoveGame(appContext: IAppContext, ctx: any, game: IBracketGame, bracketName: string)
     {
+        // load the grid
+        let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
         const rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
+
+        if (game == null && rangeSelected.IsSingleCell)
+        {
+            // see if we are intersecting a game and that is what we will remove
+            const [item, kind] = grid.getOverlappingItem(rangeSelected);
+
+            if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
+            {
+                game = await BracketGame.CreateFromGame(ctx, bracketName, item.GameNum - 1);
+            }
+        }
 
         await game.Bind(ctx);
 
@@ -692,9 +721,6 @@ export class StructureEditor
             appContext.log(`Cannot find game ${game.GameNum} in the bracket`);
             return;
         }
-
-        // load the grid
-        let grid: Grid = await Grid.createGridFromBracket(ctx, game.BracketName);
 
         // first, see if the selected range overlaps any known games
         if (!rangeSelected.IsSingleCell)

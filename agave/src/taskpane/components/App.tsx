@@ -200,7 +200,11 @@ export default class App extends React.Component<AppProps, AppState>
                     icon: "RemoveEvent",
                     primaryText: "Remove Game from bracket",
                     cursor: "cursorPointer",
-                    delegate: null
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.removeGameAtSelectionClick(appContext);
+                        return true;
+                    }
                 });
             listItems.push(
                 {
