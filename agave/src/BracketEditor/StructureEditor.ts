@@ -35,6 +35,22 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.repairGameAtSelectionClick
+
+        Remove and reinsert the game at the selection
+    ----------------------------------------------------------------------------*/
+    static async repairGameAtSelectionClick(appContext: IAppContext)
+    {
+        await Excel.run(
+            async (context) =>
+            {
+                let brack
+                await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
+                await appContext.invalidateHeroList(context);
+            });
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.findAndRemoveGameClick
 
         find the given game in the bracket grid and remove it.
@@ -113,19 +129,26 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.getBracketName
+
+        get the bracketName from the workbook
+    ----------------------------------------------------------------------------*/
+    static async getBracketName(ctx: any): Promise<string>
+    {
+        // get the bracket choice
+        const bracketChoice: Excel.Range = await Ranges.getRangeForNamedCell(ctx, "BracketChoice");
+        bracketChoice.load("values");
+        await ctx.sync();
+
+        return bracketChoice.values[0][0];
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.gridBuildFromBracket
     ----------------------------------------------------------------------------*/
     static async gridBuildFromBracket(context: any): Promise<Grid>
     {
-        let grid: Grid = new Grid();
-
-        // get the bracket choice
-        const bracketChoice: Excel.Range = await Ranges.getRangeForNamedCell(context, "BracketChoice");
-        bracketChoice.load("values");
-        await context.sync();
-
-        await grid.loadGridFromBracket(context,
-            bracketChoice.values[0][0]);
+        const grid: Grid = await Grid.createGridFromBracket(context, await this.getBracketName(context));
 
         return grid;
     }
@@ -161,6 +184,32 @@ export class StructureEditor
         }
 
         await this.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.repairGameAtSelection
+    ----------------------------------------------------------------------------*/
+    static async repairGameAtSelection(appContext: IAppContext, ctx: any, bracketName: string)
+    {
+        let selection: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
+
+        let grid: Grid = await this.gridBuildFromBracket(ctx);
+        const [item, kind] = grid.getOverlappingItem(selection);
+
+        if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
+        {
+            appContext.log(`no game detected at range ${selection.toString()}`);
+            return;
+        }
+
+        // since we want to delete and add it back, we're going to manually
+        // create out diff list
+        let changes: GridChange[] = [];
+
+        changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
+        changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
+
+        await this.applyChanges(appContext, ctx, changes, bracketName);
     }
 
     /*----------------------------------------------------------------------------
@@ -330,9 +379,9 @@ export class StructureEditor
             gameInfoRangeInfo.FirstRow
             - (insertRangeInfo.FirstRow + 1));
 
-        formulas.push([game.Field, `G${game.GameNum}`]);
+        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.BracketGameNum), `G${game.GameNum}`]);
         formulas.push(["", ""]);
-        formulas.push([OADate.OATimeFromMinutes(game.StartTime), ""]);
+        formulas.push([FormulaBuilder.getTimeFormulaFromGameNumber(game.BracketGameNum), ""]);
         formulas.push(["", ""]);
         formulas.push([game.FormatLoser(), ""]);
 
@@ -475,11 +524,14 @@ export class StructureEditor
         }
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.removeNamedRangeAndUpdateBracketSource
+    ----------------------------------------------------------------------------*/
     static async removeNamedRangeAndUpdateBracketSource(ctx: any, cellName: string, gameTeamName: string): Promise<[string, string]>
     {
         // if this team name is not static, then we don't propagate any direct typing
         if (!BracketGame.IsTeamSourceStatic(gameTeamName))
-            return null;
+            return [null, null];
 
         let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
 
@@ -497,7 +549,7 @@ export class StructureEditor
             // there was no direct edit. return no update
             return [null, null];
         }
-
+        
         return [gameTeamName, value];
     }
 
@@ -507,7 +559,7 @@ export class StructureEditor
         Given the name of the gameinfo cell, remove the named range and return
         the values for the field# and the time
     ----------------------------------------------------------------------------*/
-    static async removeGameInfoNamedRangeAndUpdateBracketSource(ctx: any, cellName: string): Promise<[string, number]>
+    static async removeGameInfoNamedRangeAndUpdateBracketSource(ctx: any, cellName: string): Promise<[any, any]>
     {
         let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
 
@@ -525,8 +577,8 @@ export class StructureEditor
         range.load("formulas");
         await ctx.sync();
 
-        const field: string = range.formulas[0][0];
-        const time: number = range.formulas[2][0];
+        const field: any = range.formulas[0][0];
+        const time: any = range.formulas[2][0];
 
         await Ranges.ensureGlobalNameDeleted(ctx, cellName);
 
@@ -569,78 +621,11 @@ export class StructureEditor
                     name: overrideText2
                 });
 
-        await this.updateBracketSourcesTeamNames(ctx, map);
+        await BracketSources.updateBracketSourcesTeamNames(ctx, map);
         if (field && field != null && field != "")
-            await this.updateGameInfo(ctx, game.GameNum - 1, field, time, game.SwapTopBottom);
+            await BracketSources.updateGameInfo(ctx, game.GameNum - 1, field, time, game.SwapTopBottom);
 
         console.log(`saved: ${gameTeamName1}=${overrideText1}, ${gameTeamName2}=${overrideText2}, field=${field}, time=${time}`);
-    }
-
-    static async updateGameInfo(ctx: any, gameNum: number, field: string, time: number, swapHomeAway: boolean)
-    {
-        // find the team names table
-        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
-
-        let range: Excel.Range = table.getDataBodyRange();
-        range.load("values, rowCount");
-        await ctx.sync();
-
-        let newValues: any[][] = [];
-        
-        for (let i = 0; i < range.rowCount; i++)
-        {
-            if (range.values[i][0] == gameNum)
-                newValues.push([gameNum, field, time, swapHomeAway]);
-            else
-                newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
-        }
-
-        range.values = newValues;
-        await ctx.sync();
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.updateBracketSourcesTeamNames
-
-        Update the given team names in the bracket sources team names. Its an
-        array of maps (and array of [][])
-    ----------------------------------------------------------------------------*/
-    static async updateBracketSourcesTeamNames(ctx: any, teamNames: TeamNameMap[])
-    {
-        // find the team names table
-        let table: Excel.Table = await BracketSources.getTeamNameTable(ctx);
-
-        let range: Excel.Range = table.getDataBodyRange();
-        range.load("values, rowCount");
-        await ctx.sync();
-
-        // now update the values
-        for (let nameMap of teamNames)
-        {
-            if (nameMap.name == null || nameMap.name == "")
-                continue;
-
-            let comp: string = nameMap.teamNum.toUpperCase();
-
-            for (let i = 0; i < range.rowCount; i++)
-            {
-                if (range.values[i][0].toUpperCase() == comp)
-                {
-                    range.values[i][1] = nameMap.name;
-                }
-            }
-        }
-
-        // we can't update changes in-place, so create a new array
-        let newValues: any[][] = [];
-        for (let i = 0; i < range.rowCount; i++)
-        {
-            newValues.push([range.values[i][0], range.values[i][1]]);
-        }
-
-        range.values = newValues; // this is what will get picked up
-
-        await ctx.sync();
     }
 
     /*----------------------------------------------------------------------------

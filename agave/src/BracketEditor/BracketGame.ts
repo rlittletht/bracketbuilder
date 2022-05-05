@@ -12,6 +12,7 @@ export interface IBracketGame
     get SwapTopBottom(): boolean;
     get BracketName(): string; // "T2" for 2 team bracket, etc. Can derive table name from it
     get GameNum(): number; // this is the game number (0 based) in the overall static bracket definition
+    get BracketGameNum(): number;
 
     // the following properties are volatile -- we want editors of the bracket
     // to be able to be able to easily edit them without understanding
@@ -76,6 +77,8 @@ export class BracketGame implements IBracketGame
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
     get BracketName(): string { return this.m_bracketName;  }
     get GameNum(): number { return this.m_gameNum + 1; }
+    get BracketGameNum(): number { return this.m_gameNum; }
+
     get FullGameRange(): RangeInfo
     {
         if (!this.IsLinkedToBracket)

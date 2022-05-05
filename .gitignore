@@ -16,6 +16,8 @@
 *.sln.docstates
 
 dist/
+agave/src/**/*.js
+agave/src/**/*.js.map
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

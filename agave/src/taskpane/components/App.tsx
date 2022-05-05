@@ -204,6 +204,17 @@ export default class App extends React.Component<AppProps, AppState>
                 });
             listItems.push(
                 {
+                    icon: "Repair",
+                    primaryText: "Repair the current game",
+                    cursor: "cursorPointer",
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.repairGameAtSelectionClick(appContext);
+                        return true;
+                    }
+                });
+            listItems.push(
+                {
                     icon: "AlertSolid",
                     primaryText: "Test Grid",
                     cursor: "cursorPointer",

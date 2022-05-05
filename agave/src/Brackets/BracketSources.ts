@@ -24,6 +24,79 @@ export class BracketSources
         return await Tables.getTableOrNull(ctx, null, "BracketSourceData");
     }
 
+    static async updateGameInfo(ctx: any, gameNum: number, field: any, time: any, swapHomeAway: boolean)
+    {
+        // find the team names table
+        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
+
+        let range: Excel.Range = table.getDataBodyRange();
+        range.load("values, rowCount");
+        await ctx.sync();
+
+        let newValues: any[][] = [];
+        for (let i = 0; i < range.rowCount; i++)
+        {
+            if (range.values[i][0] == gameNum)
+            {
+                newValues.push(
+                    [
+                        gameNum, field[0] == "=" ? range.values[i][1] : field,
+                        typeof time !== "number" ? range.values[i][2] : time, swapHomeAway
+                    ]);
+            }
+            else
+            {
+                newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
+            }
+        }
+
+        range.values = newValues;
+        await ctx.sync();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.updateBracketSourcesTeamNames
+
+        Update the given team names in the bracket sources team names. Its an
+        array of maps (and array of [][])
+    ----------------------------------------------------------------------------*/
+    static async updateBracketSourcesTeamNames(ctx: any, teamNames: TeamNameMap[])
+    {
+        // find the team names table
+        let table: Excel.Table = await BracketSources.getTeamNameTable(ctx);
+
+        let range: Excel.Range = table.getDataBodyRange();
+        range.load("values, rowCount");
+        await ctx.sync();
+
+        // now update the values
+        for (let nameMap of teamNames)
+        {
+            if (nameMap.name == null || nameMap.name == "")
+                continue;
+
+            let comp: string = nameMap.teamNum.toUpperCase();
+
+            for (let i = 0; i < range.rowCount; i++)
+            {
+                if (range.values[i][0].toUpperCase() == comp)
+                {
+                    range.values[i][1] = nameMap.name;
+                }
+            }
+        }
+
+        // we can't update changes in-place, so create a new array
+        let newValues: any[][] = [];
+        for (let i = 0; i < range.rowCount; i++)
+        {
+            newValues.push([range.values[i][0], range.values[i][1]]);
+        }
+
+        range.values = newValues; // this is what will get picked up
+
+        await ctx.sync();
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: BracketDataBuilder.buildBracketDataSheet

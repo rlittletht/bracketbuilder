@@ -61,6 +61,9 @@ export class FormulaBuilder
             topScoreRef},${bottomScoreRef}))`;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getTeamNameFormulaFromSource
+    ----------------------------------------------------------------------------*/
     static getTeamNameFormulaFromSource(source: string, bracketName: string): string
     {
         if (BracketGame.IsTeamSourceStatic(source))
@@ -74,6 +77,31 @@ export class FormulaBuilder
         throw "bad source string";
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getFieldFormulaFromGameNumber
+
+        Get the formula for the field info for this game.
+
+        NOTE: GameNum here is the 0-based game number
+    ----------------------------------------------------------------------------*/
+    static getFieldFormulaFromGameNumber(gameNum: number): string
+    {
+        return `=INDEX(BracketSourceData[Field],MATCH(${gameNum}, BracketSourceData[GameNum],0))`;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getTimeFormulaFromGameNumber
+
+        NOTE: GameNum here is the 0-based game number
+    ----------------------------------------------------------------------------*/
+    static getTimeFormulaFromGameNumber(gameNum: number): string
+    {
+        return `=INDEX(BracketSourceData[Time],MATCH(${gameNum}, BracketSourceData[GameNum],0))`;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getSourceGameNumberIfWinner
+    ----------------------------------------------------------------------------*/
     static getSourceGameNumberIfWinner(source: string): number
     {
         if (BracketGame.IsTeamSourceStatic(source))
