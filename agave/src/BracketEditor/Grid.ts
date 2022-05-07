@@ -222,13 +222,19 @@ export class Grid
         if (item != null && item.isLineRange)
             items.push(item);
 
-        item = this.findContainingItem(gameItem.BottomTeamRange.offset(-1, 1, -1, 1));
-        if (item != null && item.isLineRange)
-            items.push(item);
+        if (gameItem.BottomTeamRange != null)
+        {
+            item = this.findContainingItem(gameItem.BottomTeamRange.offset(-1, 1, -1, 1));
+            if (item != null && item.isLineRange)
+                items.push(item);
+        }
 
-        item = this.findContainingItem(gameItem.GameNumberRange.offset(1, 1, 2, 1));
-        if (item != null && item.isLineRange)
-            items.push(item);
+        if (gameItem.GameNumberRange != null)
+        {
+            item = this.findContainingItem(gameItem.GameNumberRange.offset(1, 1, 2, 1));
+            if (item != null && item.isLineRange)
+                items.push(item);
+        }
 
         return items;
     }
@@ -691,6 +697,8 @@ export class Grid
         %%Function: Grid.buildGridGameForAnchoredSourceNoOutgoingPresent
 
         Note that we don't take the other match since there's only one match...
+
+        This also handles the championship game
     ----------------------------------------------------------------------------*/
     buildGridGameForAnchoredSourceNoOutgoingPresent(
         source1: RangeInfo,
@@ -698,12 +706,16 @@ export class Grid
         anchor: RangeInfo,
         other: RangeInfo,
         requested: RangeInfo,
+        fChampionshipGame: boolean,
         fSwapTopBottom: boolean)
     {
         let gameInsert: GridGameInsert = new GridGameInsert();
 
         if (anchor != null && other != null)
         {
+            if (fChampionshipGame)
+                return GridGameInsert.createFailedGame("championship game can't have two feeder sources");
+
             // we passed the check, we know our dimensions
             gameInsert.m_rangeGame =
                 RangeInfo.createFromCorners(
@@ -727,7 +739,7 @@ export class Grid
 
         // no outgoing, so just grow down unless we are the top game
         // (offset from the requested cell by 6 rows to clear any feeding games)
-        if (this.shouldGrowUpInstead(requested))
+        if (this.shouldGrowUpInstead(requested) && !fChampionshipGame)
         {
             const temp = source1;
             source1 = source2;
@@ -757,15 +769,18 @@ export class Grid
             gameInsert.m_swapTopBottom = fSwapTopBottom;
             return gameInsert;
         }
+
         // we are growing down
         gameInsert.m_rangeGame =
             RangeInfo.createFromCorners(
                 anchor.offset(-1, 1, 0, 1).newSetColumn(requested.FirstColumn),
                 anchor.offset(
-                    11 - 2,
+                    fChampionshipGame ? (3 - 2) : (11 - 2),
                     1,
                     0,
                     1).newSetColumn(requested.FirstColumn + 2));
+
+        gameInsert.m_isChampionshipGame = fChampionshipGame;
 
         gameInsert.setFeedersFromSources(
             source1,
@@ -1113,7 +1128,6 @@ export class Grid
     {
         let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
 
-        let gameInsert: GridGameInsert = new GridGameInsert();
         let fSwapTopBottom: boolean = game.SwapTopBottom;
 
         // normalize the sources
@@ -1168,6 +1182,9 @@ export class Grid
             // now grow to including outgoing
             if (outgoing != null)
             {
+                if (game.IsChampionship)
+                    return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
+
                 return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
                     source1,
                     source2,
@@ -1184,6 +1201,7 @@ export class Grid
                 matched,
                 other,
                 requested,
+                game.IsChampionship,
                 fSwapTopBottom);
         }
 
@@ -1193,6 +1211,9 @@ export class Grid
         // if we have both sources, then we either work or not
         if (source1 != null && source2 != null)
         {
+            if (game.IsChampionship)
+                return GridGameInsert.createFailedGame("championship game can't have 2 sources");
+
             return this.buildGridGameFor2Feeders(
                 source1,
                 source2,
@@ -1222,6 +1243,9 @@ export class Grid
             // now grow to including outgoing
             if (outgoing != null)
             {
+                if (game.IsChampionship)
+                    return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
+
                 return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
                     source1,
                     source2,
@@ -1238,6 +1262,7 @@ export class Grid
                 matched,
                 other,
                 requested,
+                game.IsChampionship,
                 fSwapTopBottom);
         }
 
@@ -1255,14 +1280,18 @@ export class Grid
                     this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
         }
 
+        let gameInsert: GridGameInsert = new GridGameInsert();
+
         gameInsert.m_rangeGame =
             RangeInfo.createFromCorners(
                 requested.offset(0, 1, 0, 1).newSetColumn(requested.FirstColumn),
                 requested.offset(
-                    10,
+                    game.IsChampionship ? 2 : 10,
                     1,
                     0,
                     1).newSetColumn(requested.FirstColumn + 2));
+
+        gameInsert.m_isChampionshipGame = game.IsChampionship;
 
         gameInsert.setFeedersFromSources(
             source1,
@@ -1276,53 +1305,6 @@ export class Grid
 
         gameInsert.m_swapTopBottom = fSwapTopBottom;
         return gameInsert;
-
-        // now with just one source, let's insert
-        gameInsert.m_failReason = "NYI";
-        return gameInsert;
-
-        if (source1 == null && source2 == null)
-        {
-            // we only have outgoing to worry about
-        }
-
-        if (source1 != null && source2 != null)
-        {
-            if (source1.FirstRow > source2.FirstRow)
-            {
-                gameInsert.m_swapTopBottom = true;
-                let temp = source2;
-                source2 = source1;
-                source1 = temp;
-            }
-
-            if (source2.FirstRow - source1.FirstRow < 9)
-            {
-                gameInsert.m_failReason = "Not enough space between source games to automatically insert";
-                return gameInsert;
-            }
-
-            if ((gameInsert.m_failReason = this.doFeederLinesOverlap(source1, source2, requested.FirstColumn)) != null)
-                return gameInsert;
-
-            // we are good to insert
-            return gameInsert;
-        }
-
-        let source: RangeInfo = source1 == null ? source2 : source1;
-
-        // generally we want to insert with the winning feeder game on top
-        if (this.doesRangeOverlap(RangeInfo.createFromCorners(source.newSetRow(1), source.newSetColumn(requested.FirstColumn))) == RangeOverlapKind.None)
-        {
-            // exception 1: if there are no games above where we are trying to insert, then we will
-            // 'insert up'
-            if (source2 != null)
-            {
-                gameInsert.m_swapTopBottom = true;
-
-            }
-
-        }
     }
 
     getFeederInfoForGame(game: IBracketGame): [RangeInfo, RangeInfo, RangeInfo]

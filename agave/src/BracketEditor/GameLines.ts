@@ -19,14 +19,16 @@ export class GameLines
         included in the connection line (or it might be the underline portion of
         the next game)
     ----------------------------------------------------------------------------*/
-    static async findMatchingGameConnections(ctx: any, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]> {
+    static async findMatchingGameConnections(ctx: any, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    {
         let topSource: RangeInfo = null;
         let bottomSource: RangeInfo = null;
         let winnerTarget: RangeInfo = null;
 
         const top: string = game.BracketGameDefinition.topSource;
 
-        if (!BracketGame.IsTeamSourceStatic(top)) {
+        if (!BracketGame.IsTeamSourceStatic(top))
+        {
             let gameSource: BracketGame = new BracketGame();
 
             await gameSource.Load(ctx, game.BracketName, Number(top.substring(1)));
@@ -34,7 +36,8 @@ export class GameLines
         }
 
         const bottom: string = game.BracketGameDefinition.bottomSource;
-        if (!BracketGame.IsTeamSourceStatic(bottom)) {
+        if (!BracketGame.IsTeamSourceStatic(bottom) && !game.IsChampionship)
+        {
             let gameSource: BracketGame = new BracketGame();
 
             await gameSource.Load(ctx, game.BracketName, Number(bottom.substring(1)));
@@ -42,14 +45,17 @@ export class GameLines
         }
 
         const winner: string = game.BracketGameDefinition.winner;
-        if (winner != "") {
+        if (winner != "" && !game.IsChampionship)
+        {
             let gameSource: BracketGame = new BracketGame();
 
             await gameSource.Load(ctx, game.BracketName, Number(winner.substring(1)));
-            if (winner.substring(0) === "T") {
+            if (winner.substring(0) === "T")
+            {
                 winnerTarget = new RangeInfo(gameSource.TopTeamRange.FirstRow + 1, 1, gameSource.TopTeamRange.FirstColumn - 1, 1);
             }
-            else {
+            else
+            {
                 winnerTarget = new RangeInfo(gameSource.BottomTeamRange.FirstRow - 1, 1, gameSource.BottomTeamRange.FirstColumn - 1, 1);
             }
         }
@@ -85,12 +91,15 @@ export class GameLines
         AppContext.checkpoint("giaolfg.5");
         feederTop = await this.getFeedingLineRangeInfo(ctx, sheet, game.TopTeamRange.offset(1, 1, 0, 1), true);
         AppContext.checkpoint("giaolfg.6");
-        feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
-        AppContext.checkpoint("giaolfg.7");
-        feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameNumberRange.offset(1, 1, 1, 1));
-        AppContext.checkpoint("giaolfg.8");
 
-        AppContext.checkpoint("giaolfg.9");
+        if (!game.IsChampionship)
+        {
+            feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
+            AppContext.checkpoint("giaolfg.7");
+            feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameNumberRange.offset(1, 1, 1, 1));
+            AppContext.checkpoint("giaolfg.8");
+        }
+
         ctx.trackedObjects.remove(sheet);
         AppContext.checkpoint("giaolfg.10");
         return [feederTop, feederBottom, feederWinner];

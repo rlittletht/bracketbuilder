@@ -15,10 +15,19 @@ export class GridGameInsert
     m_rangeFeederBottom: RangeInfo;
     m_rangeWinnerFeeder: RangeInfo;
     m_failReason: string;
+    m_isChampionshipGame: boolean = false;
 
     get Range(): RangeInfo
     {
         return this.m_rangeGame;
+    }
+
+    static createFailedGame(error: string): GridGameInsert
+    {
+        let gameInsert: GridGameInsert = new GridGameInsert();
+
+        gameInsert.m_failReason = error;
+        return gameInsert;
     }
 
     setFeedersFromSources(sourceTop: RangeInfo, sourceBottom: RangeInfo, winnerTarget: RangeInfo, column: number, fSwapTopBottom: boolean)

@@ -30,6 +30,8 @@ export interface IBracketGame
     get TopTeamName(): string; // if this is the first game, this is the team name
     get BottomTeamName(): string; // if this is the bottom game, this is the team name
     get StartTime(): number; // this is the number of minutes since the start of the day
+    get IsChampionship(): boolean;
+
     FormatTime(): string;
     FormatLoser(): string;
     Bind(ctx: any): Promise<IBracketGame>;
@@ -63,6 +65,14 @@ export class BracketGame implements IBracketGame
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
 
+    get IsChampionship(): boolean
+    {
+        return (!this.m_bracketGameDefinition.loser
+                || this.m_bracketGameDefinition.loser == "")
+            && (!this.m_bracketGameDefinition.winner
+                || this.m_bracketGameDefinition.winner == "");
+    }
+
     static CreateFromGameSync(bracket: string, gameNumber: number): IBracketGame
     {
         AppContext.checkpoint("cfg.1");
@@ -93,6 +103,14 @@ export class BracketGame implements IBracketGame
         if (!this.IsLinkedToBracket)
             return null;
 
+        if (this.IsChampionship)
+        {
+            return new RangeInfo(
+                this.m_topTeamLocation.FirstRow,
+                3,
+                this.m_topTeamLocation.FirstColumn,
+                3);
+        }
         return new RangeInfo(
             this.m_topTeamLocation.FirstRow,
             this.m_bottomTeamLocation.LastRow - this.m_topTeamLocation.FirstRow + 1,
@@ -233,52 +251,55 @@ export class BracketGame implements IBracketGame
         this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
         AppContext.checkpoint("b.5");
 
-        if (this.m_topTeamLocation != null && this.m_bottomTeamLocation != null)
+        if (!this.IsChampionship)
         {
-            // we can determine top/bottom swap state by the ranges we are bound to
-            this.m_swapTopBottom = this.m_topTeamLocation.FirstRow > this.m_bottomTeamLocation.FirstRow;
-            if (this.m_swapTopBottom)
+            if (this.m_topTeamLocation != null && this.m_bottomTeamLocation != null)
             {
-                const temp: RangeInfo = this.m_topTeamLocation;
-                this.m_topTeamLocation = this.m_bottomTeamLocation;
-                this.m_bottomTeamLocation = temp;
-            }
-
-            AppContext.checkpoint("b.6");
-        }
-        else
-        {
-            // we didn't bind to a game in the bracket. get the swap state from the source data
-            // table
-
-            AppContext.checkpoint("b.7");
-            const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketSources");
-            await ctx.sync();
-            AppContext.checkpoint("b.8");
-
-            if (!sheet.isNullObject)
-            {
-                const table: Excel.Table = sheet.tables.getItemOrNullObject("BracketSourceData");
-                AppContext.checkpoint("b.9");
-                await ctx.sync();
-                AppContext.checkpoint("b.10");
-
-                if (!table.isNullObject)
+                // we can determine top/bottom swap state by the ranges we are bound to
+                this.m_swapTopBottom = this.m_topTeamLocation.FirstRow > this.m_bottomTeamLocation.FirstRow;
+                if (this.m_swapTopBottom)
                 {
-                    const range: Excel.Range = table.getDataBodyRange();
-                    range.load("values");
-                    AppContext.checkpoint("b.11");
+                    const temp: RangeInfo = this.m_topTeamLocation;
+                    this.m_topTeamLocation = this.m_bottomTeamLocation;
+                    this.m_bottomTeamLocation = temp;
+                }
+
+                AppContext.checkpoint("b.6");
+            }
+            else
+            {
+                // we didn't bind to a game in the bracket. get the swap state from the source data
+                // table
+
+                AppContext.checkpoint("b.7");
+                const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketSources");
+                await ctx.sync();
+                AppContext.checkpoint("b.8");
+
+                if (!sheet.isNullObject)
+                {
+                    const table: Excel.Table = sheet.tables.getItemOrNullObject("BracketSourceData");
+                    AppContext.checkpoint("b.9");
                     await ctx.sync();
-                    AppContext.checkpoint("b.12");
+                    AppContext.checkpoint("b.10");
 
-                    const data: any[][] = range.values;
-
-                    // sadly we have to go searching for this on our own...
-                    for (let i: number = 0; i < data.length; i++)
+                    if (!table.isNullObject)
                     {
-                        if (data[i][0] == this.m_gameNum)
+                        const range: Excel.Range = table.getDataBodyRange();
+                        range.load("values");
+                        AppContext.checkpoint("b.11");
+                        await ctx.sync();
+                        AppContext.checkpoint("b.12");
+
+                        const data: any[][] = range.values;
+
+                        // sadly we have to go searching for this on our own...
+                        for (let i: number = 0; i < data.length; i++)
                         {
-                            this.m_swapTopBottom = data[i][3];
+                            if (data[i][0] == this.m_gameNum)
+                            {
+                                this.m_swapTopBottom = data[i][3];
+                            }
                         }
                     }
                 }
@@ -336,7 +357,10 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get IsLinkedToBracket(): boolean
     {
-        return this.m_topTeamLocation != null && this.m_bottomTeamLocation != null && this.m_gameNumberLocation != null;
+        return this.m_topTeamLocation != null
+            && (this.IsChampionship
+                || (this.m_bottomTeamLocation != null
+                    && this.m_gameNumberLocation != null));
     }
 
     /*----------------------------------------------------------------------------

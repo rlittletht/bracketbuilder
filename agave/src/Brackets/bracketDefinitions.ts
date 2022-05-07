@@ -25,7 +25,8 @@ export const s_brackets: BracketDefinition[] =
         [
             { winner: "T2", loser: "B2", topSource: "Team 1", bottomSource: "Team 2" },
             { winner: "T3", loser: "B3", topSource: "W1", bottomSource: "L1" },
-            { winner: "", loser: "", topSource: "W2", bottomSource: "L2" },
+            { winner: "T4", loser: "", topSource: "W2", bottomSource: "L2" },
+            { winner: "", loser: "", topSource: "W3", bottomSource: "" },
         ]
     },
     {
@@ -38,7 +39,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "T4", loser: "B3", topSource: "W1", bottomSource: "Team 3" },
             { winner: "B4", loser: "", topSource: "L1", bottomSource: "L2" },
             { winner: "T5", loser: "B5", topSource: "W2", bottomSource: "W3" },
-            { winner: "", loser: "", topSource: "W4", bottomSource: "L4" },
+            { winner: "T6", loser: "", topSource: "W4", bottomSource: "L4" },
+            { winner: "", loser: "", topSource: "W5", bottomSource: "" },
         ]
     },
     {
@@ -53,7 +55,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B5", loser: "", topSource: "L1", bottomSource: "L2" },
             { winner: "B6", loser: "", topSource: "L3", bottomSource: "W4" },
             { winner: "T7", loser: "B7", topSource: "W3", bottomSource: "W5" },
-            { winner: "", loser: "", topSource: "W6", bottomSource: "L6" },
+            { winner: "T8", loser: "", topSource: "W6", bottomSource: "L6" },
+            { winner: "", loser: "", topSource: "W7", bottomSource: "" },
         ]
     },
     {
@@ -70,7 +73,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B7", loser: "", topSource: "W4", bottomSource: "L3" },
             { winner: "B8", loser: "", topSource: "L5", bottomSource: "W6" },
             { winner: "T9", loser: "B9", topSource: "W5", bottomSource: "W7" },
-            { winner: "", loser: "", topSource: "W8", bottomSource: "L8" },
+            { winner: "T10", loser: "", topSource: "W8", bottomSource: "L8" },
+            { winner: "", loser: "", topSource: "W9", bottomSource: "" },
         ]
     },
     {
@@ -89,7 +93,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B9", loser: "", topSource: "W5", bottomSource: "W6" },
             { winner: "B10", loser: "", topSource: "L7", bottomSource: "W8" },
             { winner: "T11", loser: "B11", topSource: "W7", bottomSource: "W9" },
-            { winner: "", loser: "", topSource: "W10", bottomSource: "L10" },
+            { winner: "T12", loser: "", topSource: "W10", bottomSource: "L10" },
+            { winner: "", loser: "", topSource: "W11", bottomSource: "" },
         ]
     },
     {
@@ -110,7 +115,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B11", loser: "", topSource: "W7", bottomSource: "W8" },
             { winner: "B12", loser: "", topSource: "L9", bottomSource: "W10" },
             { winner: "T13", loser: "B13", topSource: "W9", bottomSource: "W11" },
-            { winner: "", loser: "", topSource: "W12", bottomSource: "L12" },
+            { winner: "T14", loser: "", topSource: "W12", bottomSource: "L12" },
+            { winner: "", loser: "", topSource: "W13", bottomSource: "" },
         ]
     },
     {
@@ -133,7 +139,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B13", loser: "", topSource: "W9", bottomSource: "W10" },
             { winner: "B14", loser: "", topSource: "L11", bottomSource: "W12" },
             { winner: "T15", loser: "B15", topSource: "W11", bottomSource: "W13" },
-            { winner: "", loser: "", topSource: "W14", bottomSource: "L14" },
+            { winner: "T16", loser: "", topSource: "W14", bottomSource: "L14" },
+            { winner: "", loser: "", topSource: "W15", bottomSource: "" },
         ]
     },
     {
@@ -158,7 +165,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B15", loser: "", topSource: "W12", bottomSource: "W11" },
             { winner: "B16", loser: "", topSource: "L13", bottomSource: "W14" },
             { winner: "T17", loser: "B17", topSource: "W13", bottomSource: "W15" },
-            { winner: "", loser: "", topSource: "W16", bottomSource: "L16" },
+            { winner: "T18", loser: "", topSource: "W16", bottomSource: "L16" },
+            { winner: "", loser: "", topSource: "W17", bottomSource: "" },
         ]
     },
     {
@@ -185,7 +193,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B17", loser: "", topSource: "W14", bottomSource: "W13" },
             { winner: "B18", loser: "", topSource: "L15", bottomSource: "W16" },
             { winner: "T19", loser: "B19", topSource: "W15", bottomSource: "W17" },
-            { winner: "", loser: "", topSource: "W18", bottomSource: "L18" },
+            { winner: "T20", loser: "", topSource: "W18", bottomSource: "L18" },
+            { winner: "", loser: "", topSource: "W19", bottomSource: "" },
         ]
     },
     {
@@ -214,7 +223,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B19", loser: "", topSource: "W16", bottomSource: "W15" },
             { winner: "B20", loser: "", topSource: "L17", bottomSource: "W18" },
             { winner: "T21", loser: "B21", topSource: "W17", bottomSource: "W19" },
-            { winner: "", loser: "", topSource: "W20", bottomSource: "L20" },
+            { winner: "T22", loser: "", topSource: "W20", bottomSource: "L20" },
+            { winner: "", loser: "", topSource: "W21", bottomSource: "" },
         ]
     },
     {
@@ -245,7 +255,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B21", loser: "", topSource: "W18", bottomSource: "W17" },
             { winner: "B22", loser: "", topSource: "L19", bottomSource: "W20" },
             { winner: "T23", loser: "B23", topSource: "W19", bottomSource: "W21" },
-            { winner: "", loser: "", topSource: "W22", bottomSource: "L22" },
+            { winner: "T24", loser: "", topSource: "W22", bottomSource: "L22" },
+            { winner: "", loser: "", topSource: "W23", bottomSource: "" },
         ]
     },
     {
@@ -278,7 +289,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B23", loser: "", topSource: "W21", bottomSource: "W20" },
             { winner: "B24", loser: "", topSource: "L19", bottomSource: "W22" },
             { winner: "T25", loser: "B25", topSource: "W19", bottomSource: "W23" },
-            { winner: "", loser: "", topSource: "W24", bottomSource: "L24" },
+            { winner: "T26", loser: "", topSource: "W24", bottomSource: "L24" },
+            { winner: "", loser: "", topSource: "W25", bottomSource: "" },
         ]
     },
     {
@@ -313,7 +325,8 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B25", loser: "", topSource: "W23", bottomSource: "W22" },
             { winner: "B26", loser: "", topSource: "L21", bottomSource: "W24" },
             { winner: "T27", loser: "B27", topSource: "W21", bottomSource: "W25" },
-            { winner: "", loser: "", topSource: "W26", bottomSource: "L26" },
+            { winner: "T28", loser: "", topSource: "W26", bottomSource: "L26" },
+            { winner: "", loser: "", topSource: "W27", bottomSource: "" },
         ]
     },
 ];

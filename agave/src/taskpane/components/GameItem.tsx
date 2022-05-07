@@ -49,6 +49,11 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
         if (this.props.linkedToGrid)
             background = { background: "#cccccc" };
 
+        const gameTitle: string =
+            this.props.game.IsChampionship
+                ? "Championship"
+                : `${this.props.game.TopTeamName} vs ${this.props.game.BottomTeamName}`;
+
         return (
             <div className="singleGameItem" style={background}>
                 <Stack horizontal gap={8}>
@@ -56,7 +61,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                         ({this.props.game.GameNum})
                     </Stack.Item>
                     <Stack.Item align="center" grow={2}>
-                        {this.props.game.TopTeamName} vs {this.props.game.BottomTeamName}
+                        {gameTitle}
                     </Stack.Item>
                     <Stack.Item align="center" grow={0}>
                         <Stack horizontal horizontalAlign="end">

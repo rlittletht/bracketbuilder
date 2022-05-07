@@ -314,7 +314,10 @@ export class StructureEditor
 
         game.SetSwapTopBottom(change.SwapTopBottom);
         AppContext.checkpoint("appc.17");
-        await this.insertGameAtRange(appContext, ctx, game, change.Range);
+        if (game.IsChampionship)
+            await this.insertChampionshipGameAtRange(appContext, ctx, game, change.Range);
+        else
+            await this.insertGameAtRange(appContext, ctx, game, change.Range);
         AppContext.checkpoint("appc.18");
     }
 
@@ -349,6 +352,63 @@ export class StructureEditor
             await this.executeAddChange(appContext, ctx, item, bracketName);
         }
     }
+
+    static async insertChampionshipGameAtRange(appContext: IAppContext, ctx: any, game: IBracketGame, insertRangeInfo: RangeInfo)
+    {
+        if (insertRangeInfo == null)
+        {
+            appContext.log("Selection is invalid for a game insert");
+            return;
+        }
+
+        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
+        ctx.trackedObjects.add(sheet);
+
+        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
+        ctx.trackedObjects.add(rng);
+
+        // figure out how big the game will be (width,height)
+        let formulas: any[][] = [];
+
+        formulas.push(
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
+        formulas.push(["", ""]);
+        formulas.push(["Champion", ""]);
+
+        rng.load("rowIndex");
+        rng.load("columnIndex");
+        await ctx.sync();
+
+        let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
+            insertRangeInfo.FirstRow,
+            insertRangeInfo.FirstColumn,
+            insertRangeInfo.RowCount,
+            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+
+        rngTarget.formulas = formulas;
+        ctx.trackedObjects.add(rngTarget);
+        await ctx.sync();
+
+        // if there are any existing global names for this game, they will get deleted -- 
+        // by now, we are committed to this game going in this spot
+
+        // now we have to format the game and assign global names
+        await GameFormatting.formatTeamNameRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
+        await Ranges.createOrReplaceNamedRange(ctx, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+
+        await GameFormatting.formatGameInfoBodyText(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+
+        await GameFormatting.formatConnectingLineRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
+
+        ctx.trackedObjects.remove(rngTarget);
+
+        // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
+        await game.Bind(ctx);
+        ctx.trackedObjects.remove(rngTarget);
+        ctx.trackedObjects.remove(rng);
+        ctx.trackedObjects.remove(sheet);
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
@@ -546,10 +606,6 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async removeNamedRangeAndUpdateBracketSource(ctx: any, cellName: string, gameTeamName: string): Promise<[string, string]>
     {
-        // if this team name is not static, then we don't propagate any direct typing
-        if (!BracketGame.IsTeamSourceStatic(gameTeamName))
-            return [null, null];
-
         let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
 
         if (range == null)
@@ -560,6 +616,10 @@ export class StructureEditor
 
         const value: string = range.formulas[0][0];
         await Ranges.ensureGlobalNameDeleted(ctx, cellName);
+
+        // if this team name is not static, then we don't propagate any direct typing
+        if (!BracketGame.IsTeamSourceStatic(gameTeamName))
+            return [null, null];
 
         if (value[0] == "=")
         {
@@ -619,6 +679,10 @@ export class StructureEditor
         let time: number;
 
         [gameTeamName1, overrideText1] = await this.removeNamedRangeAndUpdateBracketSource(ctx, game.TopTeamCellName, game.TopTeamName);
+
+        if (game.IsChampionship)
+            return;
+
         [gameTeamName2, overrideText2] = await this.removeNamedRangeAndUpdateBracketSource(ctx, game.BottomTeamCellName, game.BottomTeamName);
 
         [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(ctx, game.GameNumberCellName);
