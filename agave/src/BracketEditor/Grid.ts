@@ -1004,6 +1004,27 @@ export class Grid
         }
         return false;
     }
+
+    getFirstItemInColumn(column: number): GridItem
+    {
+        let minRow = this.m_firstGridPattern.FirstRow;
+        let minItem: GridItem = null;
+
+        for (let item of this.m_gridItems)
+        {
+            if (RangeInfo.isOverlappingSegment(item.Range.FirstColumn, item.Range.LastColumn, column, column))
+            {
+                if (item.Range.FirstRow < minRow)
+                {
+                    minRow = item.Range.FirstRow;
+                    minItem = item;
+                }
+            }
+        }
+
+        return minItem;
+    }
+
     getLastItemInColumn(column: number): GridItem
     {
         let maxRow = this.m_firstGridPattern.FirstRow;

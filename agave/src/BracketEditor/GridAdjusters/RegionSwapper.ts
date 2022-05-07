@@ -35,11 +35,11 @@ export class RegionSwapper
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: RegionSwapper.regionSwapper
+        %%Function: RegionSwapper.swapRegions
 
         Perform the swap of the two regions. Assumes its valid.
     ----------------------------------------------------------------------------*/
-    static regionSwapper(
+    static swapRegions(
         gridTry: Grid,
         regionTop: RangeInfo,
         regionBottom: RangeInfo)

@@ -4,6 +4,7 @@ import { IBracketGame } from "../BracketGame";
 import { GridItem } from "../GridItem";
 import { IGridAdjuster } from "./IGridAdjuster";
 import { RegionSwapper_BottomGame } from "./RegionSwapper_BottomGame";
+import { Adjuster_WantToGrowUpAtTopOfGrid } from "./Adjuster_WantToGrowUpAtTopOfGrid";
 
 export class GridAdjust
 {
@@ -31,7 +32,8 @@ export class GridAdjust
 
     static adjusters: IGridAdjuster[] =
         [
-        new RegionSwapper_BottomGame()
+        new RegionSwapper_BottomGame(),
+        new Adjuster_WantToGrowUpAtTopOfGrid()
         ];
 
     /*----------------------------------------------------------------------------

@@ -16,6 +16,8 @@ import { StructureEditor } from "../../BracketEditor/StructureEditor";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
 import { BracketDefinition } from "../../Brackets/BracketDefinitions";
+import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
+import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
 
 /* global console, Excel, require  */
 
@@ -227,7 +229,8 @@ export default class App extends React.Component<AppProps, AppState>
                         try
                         {
                             await StructureEditor.testGridClick(appContext);
-                            StructureEditor.testRegionSwap1(appContext);
+                            RegionSwapper_BottomGame.testRegionSwap1(appContext);
+                            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
 
                             appContext.log("tests complete");
                         }
