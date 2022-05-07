@@ -1,5 +1,6 @@
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
 import { IBracketGame } from "./BracketGame";
+import { Grid } from "./Grid";
 
 export class GridItem
 {
@@ -59,6 +60,22 @@ export class GridItem
     {
         this.m_range = RangeInfo.createFromRangeInfo(range);
         this.m_gameNum = isLine ? -1 : gameNum;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GridItem.inferGameInternals
+
+        the sub-ranges for a game (top/bottom team range, game number range) are
+        normally populated when a real IBracketGame is attached to the item.
+
+        for things like tests, though, we don't want a workbook involved. this
+        will infer those locations based on the overall extents of the game.
+    ----------------------------------------------------------------------------*/
+    inferGameInternals()
+    {
+        this.m_topTeamRange = this.m_range.topLeft();
+        this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
+        this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
     }
 
     attachGame(game: IBracketGame)

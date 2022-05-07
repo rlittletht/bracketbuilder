@@ -80,6 +80,11 @@ export class RangeInfo
             rangeBottomRight.FirstColumn - rangeTopLeft.FirstColumn + 1);
     }
 
+    static createFromCornersCoord(rowTopLeft: number, colTopLeft: number, rowBottomRight: number, colBottomRight: number): RangeInfo
+    {
+        return new RangeInfo(rowTopLeft, rowBottomRight - rowTopLeft + 1, colTopLeft, colBottomRight - colTopLeft + 1);
+    }
+
     static createFromRange(range: Excel.Range): RangeInfo
     {
         if (range == null || range.isNullObject)

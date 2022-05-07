@@ -14,6 +14,7 @@ import { GridChange, GridChangeOperation } from "./GridChange";
 import { GridItem } from "./GridItem";
 import { TeamNameMap, BracketSources } from "../Brackets/BracketSources";
 import { Tables } from "../Interop/Tables";
+import { GridAdjust } from "./GridAdjusters/GridAdjust";
 
 export class StructureEditor
 {
@@ -210,7 +211,7 @@ export class StructureEditor
         let selection: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
 
         let grid: Grid = await this.gridBuildFromBracket(ctx);
-        const [item, kind] = grid.getOverlappingItem(selection);
+        const [item, kind] = grid.getFirstOverlappingItem(selection);
 
         if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
         {
@@ -704,7 +705,7 @@ export class StructureEditor
         if (game == null && rangeSelected.IsSingleCell)
         {
             // see if we are intersecting a game and that is what we will remove
-            const [item, kind] = grid.getOverlappingItem(rangeSelected);
+            const [item, kind] = grid.getFirstOverlappingItem(rangeSelected);
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
             {
@@ -748,6 +749,50 @@ export class StructureEditor
 //        await this.removeGame(appContext, ctx, game, rangeSelected);
 
 //        await game.Bind(ctx);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.testRegionSwap1
+
+        In a 9 team grid, when game 10 is inserted, Game 4 and Game 5 need to
+        combine for a game. This requires the bottom game in the grid
+        and the top game in the grid to combine, which naturally causes a conflict
+        and requires a region swap.  Test this.
+    ----------------------------------------------------------------------------*/
+    static testRegionSwap1(appContext: IAppContext)
+    {
+        appContext;
+        let grid: Grid = new Grid();
+
+        grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        // setup the precondition
+        grid.addGameRange(RangeInfo.createFromCornersCoord(9, 6, 19, 8), 1, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(23, 6, 33, 8), 2, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(28, 9, 28, 11), -1, false);
+        grid.addGameRange(RangeInfo.createFromCornersCoord(37, 6, 47, 8), 3, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(42, 9, 42, 11), -1, false);
+        grid.addGameRange(RangeInfo.createFromCornersCoord(51, 6, 61, 8), 4, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(13, 9, 23, 11), 5, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(63, 9, 73, 11), 6, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(77, 9, 87, 11), 7, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(67, 12, 77, 14), 8, false).inferGameInternals();
+        grid.addGameRange(RangeInfo.createFromCornersCoord(27, 12, 43, 14), 9, false).inferGameInternals();
+
+        // now try to insert game...
+        let game: IBracketGame = BracketGame.CreateFromGameSync("T9", 9);
+
+        let gridNew: Grid = grid.clone();
+        let reqColumn: number = 14;
+
+        GridAdjust.rearrangeGridForCommonConflicts(gridNew, game, reqColumn);
+
+        // now verify that we have fixed the problem
+        let [source1, source2, outgoing] = gridNew.getFeederInfoForGame(game);
+        if (gridNew.doesSourceOverlapRangeOverlap(source1, source2, reqColumn))
+        {
+            throw Error("testRegionSwap1: FAILED: rearrange failed to resolve");
+        }
     }
 
     static async testGridClick(appContext: IAppContext)

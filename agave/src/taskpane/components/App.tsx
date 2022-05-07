@@ -224,7 +224,17 @@ export default class App extends React.Component<AppProps, AppState>
                     cursor: "cursorPointer",
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
-                        await StructureEditor.testGridClick(appContext);
+                        try
+                        {
+                            await StructureEditor.testGridClick(appContext);
+                            StructureEditor.testRegionSwap1(appContext);
+
+                            appContext.log("tests complete");
+                        }
+                        catch (e)
+                        {
+                            appContext.log(`caught error; ${e}`);
+                        }
                         return true;
                     }
                 });

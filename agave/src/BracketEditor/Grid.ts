@@ -10,6 +10,7 @@ import { FormulaBuilder } from "./FormulaBuilder";
 import { GridItem } from "./GridItem";
 import { GridChange, GridChangeOperation } from "./GridChange";
 import { AppContext } from "../AppContext";
+import { GridAdjust } from "./GridAdjusters/GridAdjust";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -27,6 +28,13 @@ export class Grid
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
 
+    get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
+
+    setInternalGridItems(items: GridItem[])
+    {
+        this.m_gridItems = items;
+    }
+
     addGameRange(range: RangeInfo, gameNum: number, swapTopBottom: boolean): GridItem
     {
         let item: GridItem = new GridItem(range, gameNum, false);
@@ -41,7 +49,7 @@ export class Grid
         this.m_gridItems.push(new GridItem(range, -1, true));
     }
 
-    getOverlappingItem(range: RangeInfo): [GridItem, RangeOverlapKind]
+    getFirstOverlappingItem(range: RangeInfo): [GridItem, RangeOverlapKind]
     {
         for (let item of this.m_gridItems)
         {
@@ -54,17 +62,58 @@ export class Grid
         return [null, RangeOverlapKind.None];
     }
 
+    getOverlappingItems(range: RangeInfo): GridItem[]
+    {
+        let items: GridItem[] = [];
+
+        for (let item of this.m_gridItems)
+        {
+            const overlapKind: RangeOverlapKind = RangeInfo.isOverlapping(range, item.Range);
+
+            if (overlapKind != RangeOverlapKind.None)
+                items.push(item);
+        }
+
+        return items;
+    }
 
     doesRangeOverlap(range: RangeInfo): RangeOverlapKind
     {
         let item: GridItem;
         let kind: RangeOverlapKind;
 
-        [item, kind] = this.getOverlappingItem(range);
+        [item, kind] = this.getFirstOverlappingItem(range);
 
         return kind;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.isRangeSelfContained
+
+        return true if there are no items spanning into or out of this range.
+
+        Its OK for items to be on the boundary, but they must not cross into or
+        out of this range
+    ----------------------------------------------------------------------------*/
+    isRangeSelfContained(range: RangeInfo): boolean
+    {
+        let items: GridItem[] = this.getOverlappingItems(range);
+
+        for (let item of items)
+        {
+            // we know that item overlaps our range. make sure it doesn't extend
+            // out of our range
+            if (item.Range.FirstRow < range.FirstRow
+                || item.Range.LastRow > range.LastRow
+                || item.Range.FirstColumn < range.FirstColumn
+                || item.Range.LastColumn > range.LastColumn)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
     /*----------------------------------------------------------------------------
         %%Function: Grid.diff
     ----------------------------------------------------------------------------*/
@@ -79,7 +128,7 @@ export class Grid
             let itemRight: GridItem;
             let kind: RangeOverlapKind;
 
-            [itemRight, kind] = gridRight.getOverlappingItem(itemLeft.Range);
+            [itemRight, kind] = gridRight.getFirstOverlappingItem(itemLeft.Range);
 
             if (kind != RangeOverlapKind.Equal
                 || itemLeft.GameNum != itemRight.GameNum)
@@ -95,7 +144,7 @@ export class Grid
             let itemLeft: GridItem;
             let kind: RangeOverlapKind;
 
-            [itemLeft, kind] = this.getOverlappingItem(itemRight.Range);
+            [itemLeft, kind] = this.getFirstOverlappingItem(itemRight.Range);
 
             if (kind != RangeOverlapKind.Equal
                 || itemRight.GameNum != itemLeft.GameNum)
@@ -924,7 +973,7 @@ export class Grid
     {
         let f: boolean = false;
 
-        [source1, source2, f] = this.normalizeSources(source1, source2, f);
+        [source1, source2, f] = Grid.normalizeSources(source1, source2, f);
 
         if (source1 == null || source2 == null)
             return false;
@@ -1007,7 +1056,7 @@ export class Grid
         return maxRow;
     }
 
-    normalizeSources(source1: RangeInfo, source2: RangeInfo, fSwapTopBottom: boolean): [RangeInfo, RangeInfo, boolean]
+    static normalizeSources(source1: RangeInfo, source2: RangeInfo, fSwapTopBottom: boolean): [RangeInfo, RangeInfo, boolean]
     {
         if (source1 == null || source2 == null)
             return [source1, source2, fSwapTopBottom];
@@ -1018,121 +1067,6 @@ export class Grid
         }
 
         return [source1, source2, fSwapTopBottom];
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: Grid.rearrangeGridForCommonConflicts
-
-        Find very specific conflicts and see if we can make a simple rearrangment
-        to the games to make them fit.
-
-        This can only be done when we are doing linear building of the bracket
-        (i.e. there is no outgoing feed to match up with)
-    ----------------------------------------------------------------------------*/
-    rearrangeGridForCommonConflicts(
-        game: IBracketGame, // so we can reload the sources...
-        source1: RangeInfo,
-        source2: RangeInfo,
-        outgoing: RangeInfo,
-        column: number)
-    {
-        // detect the most common conflict -- two source feeds overlap
-        // a range of games. the specific case we know about happens when the
-        // top game feed path combines with a bottom game from the first day.
-
-        if (outgoing != null)
-            return;
-
-        let gridTry: Grid = this.clone();
-        let f = false;
-
-        [source1, source2, f] = this.normalizeSources(source1, source2, f);
-
-        if (source1 == null && source2 == null)
-        {
-            // can't determine an overlap to correct with no sources
-            return;
-        }
-
-        if (!gridTry.doesSourceOverlapRangeOverlap(source1, source2, column))
-        {
-            console.log(`no region swapping needed, no overlap detected.`);
-            return;
-        }
-
-        // ok, we have an overlap.  see if moving the bottom game to the top fixes it
-        let lastItem: GridItem = gridTry.getLastItemInColumn(gridTry.m_firstGridPattern.FirstColumn);
-        const firstEmptyRowInGrid: number = gridTry.getFirstEmptyRowToUse(0, 1000, 2);
-
-        // first, there has to be a completely empty row between the two regions we want to swap
-        // (check the underline above and below the full height range as well)
-        let rangeBlankCheck: RangeInfo = lastItem.Range.offset(-3, 3, 0, 100).newSetColumn(1);
-
-        if (gridTry.doesRangeOverlap(rangeBlankCheck) != RangeOverlapKind.None)
-        {
-            console.log(`no blank row at ${rangeBlankCheck.toString()}. regions not distinct`);
-            return;
-        }
-
-        rangeBlankCheck = lastItem.Range.offset(lastItem.Range.RowCount - 2, 3, 0, 100).newSetColumn(lastItem.Range.FirstColumn + 3);
-
-        if (gridTry.doesRangeOverlap(rangeBlankCheck) != RangeOverlapKind.None)
-        {
-            console.log(`bottom of item is not blank beyond at ${rangeBlankCheck.toString()}. regions not distinct`);
-            return;
-        }
-
-        // well, we implemented a very clever region swap. but that's not what we wanted.
-        // we want 3 regions. region 1 & 2 swap, and region 3 stays the same.  region 2
-        // needs to be the last item inthe first column (lastItem from above).
-
-        // all 3 regions shoudl be distinct.  and region 1 and 2 swap just as we had, but everything
-        // in region3 (the distinct region after the last item in column 1) has to remain unchanged.
-        // ok, we have a clear break between the regions. shift one set down and the others up
-
-        const regionTop: RangeInfo = new RangeInfo(
-            this.m_firstGridPattern.FirstRow,
-            lastItem.Range.FirstRow - this.m_firstGridPattern.FirstRow + 1 - 2, // go to the empty row
-            0,
-            1000);
-
-        const regionBottom: RangeInfo = new RangeInfo(
-            lastItem.Range.FirstRow,
-            lastItem.Range.RowCount,
-            0,
-            1000);
-
-        // now, swap regionTop with regionBottom
-
-        // since we know there is a clear break between the regions, there is no chance
-        // a range overlaps the two regions. So, we only need to check the first row.
-        for (let i: number = 0; i < gridTry.m_gridItems.length; i++)
-        {
-            if (gridTry.m_gridItems[i].Range.FirstRow <= regionTop.LastRow)
-            {
-                gridTry.m_gridItems[i].shiftByRows(regionBottom.RowCount + 1);
-            }
-            else if (gridTry.m_gridItems[i].Range.FirstRow <= regionBottom.LastRow)
-            {
-                gridTry.m_gridItems[i].shiftByRows(-regionTop.RowCount - 1);
-            }
-        }
-
-        // now, see if we still have an overlap problem. if we do, well, we failed...
-        [source1, source2, outgoing] = gridTry.getFeederInfoForGame(game);
-        [source1, source2, f] = this.normalizeSources(source1, source2, f);
-
-        if (gridTry.doesSourceOverlapRangeOverlap(source1, source2, column))
-        {
-            // this means we failed to relocate -- we still have an overlap...
-            console.log("still overlaps, no region swap will help");
-            return;
-        }
-
-        // awesome, the swap helped
-
-        this.m_gridItems = gridTry.m_gridItems;
-        gridTry.m_gridItems = null; // just to make sure nobody ever tries to use it!
     }
 
 
@@ -1158,7 +1092,7 @@ export class Grid
         // normalize the sources
         if (source1 != null && source2 != null)
         {
-            [source1, source2, fSwapTopBottom] = this.normalizeSources(source1, source2, fSwapTopBottom);
+            [source1, source2, fSwapTopBottom] = Grid.normalizeSources(source1, source2, fSwapTopBottom);
         }
 
         // first, see if we have a requested range and if it is good
@@ -1175,7 +1109,7 @@ export class Grid
         // normalize source1/source2
         if (source1 != null && source2 != null && source1.FirstRow > source2.FirstRow)
         {
-            [source1, source2, fSwapTopBottom] = this.normalizeSources(source1, source2, fSwapTopBottom);
+            [source1, source2, fSwapTopBottom] = Grid.normalizeSources(source1, source2, fSwapTopBottom);
         }
 
         // ok, we don't have a big enough selection. reduce to a single point which we will consider the "top request"
@@ -1399,14 +1333,10 @@ export class Grid
         let gridNew: Grid = this.clone();
         let gameInsert: GridGameInsert = new GridGameInsert();
 
-        let source1, source2, outgoing: RangeInfo;
-        
-        [source1, source2, outgoing] = gridNew.getFeederInfoForGame(game);
-
         // first, try to do some adjustments...
-        gridNew.rearrangeGridForCommonConflicts(game, source1, source2, outgoing, requested.FirstColumn);
+        GridAdjust.rearrangeGridForCommonConflicts(gridNew, game, requested.FirstColumn);
 
-        [source1, source2, outgoing] = gridNew.getFeederInfoForGame(game);
+        let [source1, source2, outgoing] = gridNew.getFeederInfoForGame(game);
 
         gameInsert = gridNew.gridGameFromConstraints(
             game,

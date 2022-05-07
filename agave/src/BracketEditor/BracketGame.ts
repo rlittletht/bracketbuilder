@@ -63,6 +63,15 @@ export class BracketGame implements IBracketGame
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
 
+    static CreateFromGameSync(bracket: string, gameNumber: number): IBracketGame
+    {
+        AppContext.checkpoint("cfg.1");
+        let game: BracketGame = new BracketGame();
+
+        AppContext.checkpoint("cfg.2");
+        return game.LoadSync(bracket, gameNumber);
+    }
+
     static async CreateFromGame(ctx: any, bracket: string, gameNumber: number): Promise<IBracketGame>
     {
         AppContext.checkpoint("cfg.1");
@@ -280,6 +289,20 @@ export class BracketGame implements IBracketGame
         return this;
     }
 
+    async Load(ctx: any, bracketName: string, gameNum: number): Promise<IBracketGame>
+    {
+        this.LoadSync(bracketName, gameNum);
+
+        // if we don't have a context, then we aren't async and we aren't going to fetch anything from the sheet
+        if (ctx == null)
+            return this;
+
+        // ok, try to load the linkage. do this by finding the named ranges
+        // for the parts of this game
+
+        AppContext.checkpoint("l.4");
+        return await this.Bind(ctx);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.Load
@@ -287,7 +310,7 @@ export class BracketGame implements IBracketGame
         Load the static portions of this game, and if possible, load its linkage
         into the current bracket schedule
     ----------------------------------------------------------------------------*/
-    async Load(ctx: any, bracketName: string, gameNum: number): Promise<IBracketGame>
+    LoadSync(bracketName: string, gameNum: number): IBracketGame
     {
         AppContext.checkpoint("l.1");
 
@@ -305,15 +328,7 @@ export class BracketGame implements IBracketGame
         this.m_field = "Field #1";
 
         AppContext.checkpoint("l.3");
-        // if we don't have a context, then we aren't async and we aren't going to fetch anything from the sheet
-        if (ctx == null)
-            return this;
-
-        // ok, try to load the linkage. do this by finding the named ranges
-        // for the parts of this game
-
-        AppContext.checkpoint("l.4");
-        return await this.Bind(ctx);
+        return this;
     }
 
     /*----------------------------------------------------------------------------
