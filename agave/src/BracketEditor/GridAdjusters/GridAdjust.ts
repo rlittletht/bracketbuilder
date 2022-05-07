@@ -6,6 +6,8 @@ import { IGridAdjuster } from "./IGridAdjuster";
 import { RegionSwapper_BottomGame } from "./RegionSwapper_BottomGame";
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "./Adjuster_WantToGrowUpAtTopOfGrid";
 import { GridGameInsert } from "../GridGameInsert";
+import { IGridAdjuster2 } from "./IGridAdjuster2";
+import { Adjuster2_InsertRowForSeparation } from "./Adjuster2_InsertRowForSeparation";
 
 export class GridAdjust
 {
@@ -34,10 +36,10 @@ export class GridAdjust
     // these are the primary grid adjusters -- they will make it possible for a game
     // to be inserted at all. these must be run before we try to place any game
     static adjusters: IGridAdjuster[] =
-        [
+    [
         new RegionSwapper_BottomGame(),
         new Adjuster_WantToGrowUpAtTopOfGrid()
-        ];
+    ];
 
     // now we want a list of fine-tuning adjusters -- the game can be placed, but
     // it might work out a little bit better with maybe an extra blank line. try
@@ -67,12 +69,22 @@ export class GridAdjust
         }
     }
 
+    static pass2Adjusters: IGridAdjuster2[] =
+    [
+        new Adjuster2_InsertRowForSeparation()
+    ];
+
     static rearrangeGridForCommonAdjustments(
         grid: Grid,
-        gameInsert: GridGameInsert): boolean
+        gameInsert: GridGameInsert,
+        rangesAdjust: RangeInfo[]): boolean
     {
-        grid;
-        gameInsert;
+        for (let adjuster of GridAdjust.pass2Adjusters)
+        {
+            if (adjuster.doAdjustment(grid, gameInsert, rangesAdjust))
+                return true;
+        }
+
         return false;
     }
 }

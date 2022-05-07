@@ -98,6 +98,11 @@ export class RangeInfo
         return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
     }
 
+    shiftByRows(dRows: number)
+    {
+        this.m_rowStart += dRows;
+    }
+
     isEqual(range: RangeInfo): boolean
     {
         if (this.m_rowStart == range.m_rowStart

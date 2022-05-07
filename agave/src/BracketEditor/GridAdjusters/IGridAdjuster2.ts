@@ -7,11 +7,10 @@ export interface IGridAdjuster2
 {
     doesAdjusterApply(
         gridTry: Grid,
-        game: IBracketGame,
         gameInsert: GridGameInsert): boolean;
 
     doAdjustment(
         grid: Grid,
-        game: IBracketGame,
-        gameInsert: GridGameInsert): boolean;
+        gameInsert: GridGameInsert,
+        rangesAdjust: RangeInfo[]): boolean;
 }

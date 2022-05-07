@@ -16,6 +16,11 @@ export class GridGameInsert
     m_rangeWinnerFeeder: RangeInfo;
     m_failReason: string;
 
+    get Range(): RangeInfo
+    {
+        return this.m_rangeGame;
+    }
+
     setFeedersFromSources(sourceTop: RangeInfo, sourceBottom: RangeInfo, winnerTarget: RangeInfo, column: number, fSwapTopBottom: boolean)
     {
         fSwapTopBottom;

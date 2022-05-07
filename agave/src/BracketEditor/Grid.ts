@@ -87,6 +87,13 @@ export class Grid
         return kind;
     }
 
+    isBlankRow(row: number): boolean
+    {
+        const blankCheck: RangeInfo = new RangeInfo(row, 1, 0, 1000);
+
+        return this.doesRangeOverlap(blankCheck) == RangeOverlapKind.None;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: Grid.isRangeSelfContained
 
@@ -1361,7 +1368,7 @@ export class Grid
         do
         {
             gameInsert = gridNew.gridGameFromConstraints(game, requested);
-            fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert);
+            fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert, [requested]);
         } while (fAdjusted);
 
 
