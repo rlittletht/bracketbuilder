@@ -1,6 +1,6 @@
 
 import { Sheets } from "../Interop/Sheets";
-import { BracketDefinition, GameDefinition, s_brackets } from "./BracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets, _bracketManager } from "./BracketDefinitions";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
@@ -58,12 +58,14 @@ export class BracketStructureBuilder
         return brackets;
     }
 
-
     /*----------------------------------------------------------------------------
         %%Function: BracketStructureBuilder.getBracketDefinition
     ----------------------------------------------------------------------------*/
     static getBracketDefinition(bracketTableName: string): BracketDefinition
     {
+        if (_bracketManager.IsCached(bracketTableName))
+            return _bracketManager.Bracket;
+
         let returnVal: BracketDefinition = null;
 
         s_brackets.forEach(

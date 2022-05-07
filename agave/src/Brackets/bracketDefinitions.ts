@@ -15,6 +15,28 @@ export interface BracketDefinition
     games: GameDefinition[];
 }
 
+export class BracketManager
+{
+    m_bracket: BracketDefinition = null;
+
+    IsCached(bracketTableName: string): boolean
+    {
+        return this.m_bracket != null && this.m_bracket.tableName == bracketTableName;
+    }
+
+    setCache(bracket: BracketDefinition)
+    {
+        this.m_bracket = bracket;
+    }
+
+    get Bracket(): BracketDefinition
+    {
+        return this.m_bracket;
+    }
+}
+
+export let _bracketManager: BracketManager = new BracketManager();
+
 export const s_brackets: BracketDefinition[] =
 [
     {

@@ -15,9 +15,10 @@ import Games from "./Games";
 import { StructureEditor } from "../../BracketEditor/StructureEditor";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
-import { BracketDefinition } from "../../Brackets/BracketDefinitions";
+import { BracketDefinition, _bracketManager } from "../../Brackets/BracketDefinitions";
 import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
+import { TableIO } from "../../Interop/TableIO";
 
 /* global console, Excel, require  */
 
@@ -124,9 +125,43 @@ export default class App extends React.Component<AppProps, AppState>
             selectedBracket: bracketChoice });
     }
 
+    async ensureBracketLoadedFromSheet(ctx: any, bracketTableName: string)
+    {
+        if (!_bracketManager.IsCached(bracketTableName))
+        {
+            let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(bracketTableName);
+            let loading: BracketDefinition =
+            {
+                name: bracketDef.name,
+                teamCount: bracketDef.teamCount,
+                tableName: bracketDef.tableName,
+                games: []
+            };
+
+            let gameDefs: any[] = await TableIO.readDataFromExcelTable(
+                ctx,
+                bracketDef.tableName,
+                ["Game", "Winner", "Loser", "Top", "Bottom"],
+                true);
+
+            for (let game of gameDefs)
+            {
+                loading.games.push(
+                    {
+                        winner: game.Winner,
+                        loser: game.Loser,
+                        topSource: game.Top,
+                        bottomSource: game.Bottom
+                    });
+            }
+            _bracketManager.setCache(loading);
+        }
+    }
+
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(ctx: any, bracket: string): Promise<IBracketGame[]>
     {
+        await this.ensureBracketLoadedFromSheet(ctx, `${bracket}Bracket`);
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
 
         if (bracketDef == null)
