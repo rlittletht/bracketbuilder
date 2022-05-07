@@ -4,6 +4,7 @@ import { GridItem } from "../GridItem";
 import { RangeInfo } from "../../Interop/Ranges";
 import { GridAdjust } from "./GridAdjust";
 import { IBracketGame } from "../BracketGame";
+import { RegionSwapper } from "./RegionSwapper";
 
 export class RegionSwapper_BottomGame implements IGridAdjuster
 {
@@ -80,10 +81,10 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
             0,
             1000);
 
-        if (!GridAdjust.canRegionsSwap(gridTry, regionTop, regionBottom))
+        if (!RegionSwapper.canRegionsSwap(gridTry, regionTop, regionBottom))
             return false;
 
-        GridAdjust.regionSwapper(gridTry, regionTop, regionBottom);
+        RegionSwapper.regionSwapper(gridTry, regionTop, regionBottom);
 
         // now, see if we still have an overlap problem. if we do, well, we failed...
         if (this.doesAdjusterApply(gridTry, game, column))
