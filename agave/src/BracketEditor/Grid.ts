@@ -1102,11 +1102,10 @@ export class Grid
     ----------------------------------------------------------------------------*/
     gridGameFromConstraints(
         game: IBracketGame,
-        source1: RangeInfo,
-        source2: RangeInfo,
-        outgoing: RangeInfo,
         requested: RangeInfo): GridGameInsert
     {
+        let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
+
         let gameInsert: GridGameInsert = new GridGameInsert();
         let fSwapTopBottom: boolean = game.SwapTopBottom;
 
@@ -1352,19 +1351,18 @@ export class Grid
     buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): [Grid, string]
     {
         let gridNew: Grid = this.clone();
-        let gameInsert: GridGameInsert = new GridGameInsert();
+        let gameInsert: GridGameInsert;
 
         // first, try to do some adjustments...
         GridAdjust.rearrangeGridForCommonConflicts(gridNew, game, requested.FirstColumn);
 
-        let [source1, source2, outgoing] = gridNew.getFeederInfoForGame(game);
+        let fAdjusted: boolean;
 
-        gameInsert = gridNew.gridGameFromConstraints(
-            game,
-            source1,
-            source2,
-            outgoing,
-            requested);
+        do
+        {
+            gameInsert = gridNew.gridGameFromConstraints(game, requested);
+            fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert);
+        } while (fAdjusted);
 
 
         if (gameInsert.m_failReason != null)

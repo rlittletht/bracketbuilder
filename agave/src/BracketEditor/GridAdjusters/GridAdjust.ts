@@ -5,6 +5,7 @@ import { GridItem } from "../GridItem";
 import { IGridAdjuster } from "./IGridAdjuster";
 import { RegionSwapper_BottomGame } from "./RegionSwapper_BottomGame";
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "./Adjuster_WantToGrowUpAtTopOfGrid";
+import { GridGameInsert } from "../GridGameInsert";
 
 export class GridAdjust
 {
@@ -30,11 +31,21 @@ export class GridAdjust
         return false;
     }
 
+    // these are the primary grid adjusters -- they will make it possible for a game
+    // to be inserted at all. these must be run before we try to place any game
     static adjusters: IGridAdjuster[] =
         [
         new RegionSwapper_BottomGame(),
         new Adjuster_WantToGrowUpAtTopOfGrid()
         ];
+
+    // now we want a list of fine-tuning adjusters -- the game can be placed, but
+    // it might work out a little bit better with maybe an extra blank line. try
+    // adding those here. they will run IN THE MIDDLE of a game insert -- we have
+    // the game insert we want, but we will detect the problem, make the adjust
+    // and then RESTART the game insert calc process and hopefully get a better
+    // outcome.
+
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.rearrangeGridForCommonConflicts
@@ -54,5 +65,14 @@ export class GridAdjust
         {
             swapper.doAdjustment(grid, game, column);
         }
+    }
+
+    static rearrangeGridForCommonAdjustments(
+        grid: Grid,
+        gameInsert: GridGameInsert): boolean
+    {
+        grid;
+        gameInsert;
+        return false;
     }
 }
