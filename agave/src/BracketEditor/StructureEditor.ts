@@ -15,9 +15,33 @@ import { GridItem } from "./GridItem";
 import { TeamNameMap, BracketSources } from "../Brackets/BracketSources";
 import { Tables } from "../Interop/Tables";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
+import { _undoManager } from "./Undo";
 
 export class StructureEditor
 {
+    static async undoClick(appContext: IAppContext)
+    {
+        appContext;
+        await Excel.run(
+            async (context) =>
+            {
+                await _undoManager.undo(appContext, context);
+                await appContext.invalidateHeroList(context);
+            });
+    }
+
+    static async redoClick(appContext: IAppContext)
+    {
+        appContext;
+        await Excel.run(
+            async (context) =>
+            {
+                await _undoManager.redo(appContext, context);
+                await appContext.invalidateHeroList(context);
+            });
+    }
+
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelectionClick
 
@@ -200,6 +224,7 @@ export class StructureEditor
             return;
         }
 
+        _undoManager.setUndoGrid(grid);
         await this.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
     }
 
@@ -805,6 +830,7 @@ export class StructureEditor
             let gridNew: Grid = grid.clone();
 
             gridNew.removeItems(items);
+            _undoManager.setUndoGrid(grid);
             await this.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
             return;
         }

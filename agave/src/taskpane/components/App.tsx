@@ -19,6 +19,7 @@ import { BracketDefinition, _bracketManager } from "../../Brackets/BracketDefini
 import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
 import { TableIO } from "../../Interop/TableIO";
+import ActionButton from "./ActionButton";
 
 /* global console, Excel, require  */
 
@@ -416,6 +417,27 @@ export default class App extends React.Component<AppProps, AppState>
 
         return (
             <div className="ms-welcome">
+                <ActionButton
+                    icon={"Undo"}
+                    tooltip={"Undo"}
+                    tooltipId={`rid-undo`}
+                    appContext={this.m_appContext}
+                    bracketGame={null} delegate={ async (appContext: IAppContext, game: IBracketGame): Promise<boolean> =>
+                    {
+                        game;
+                        await StructureEditor.undoClick(appContext);
+                        return true;
+                    }}/>
+                <ActionButton
+                    icon={"Redo"}
+                    tooltip={"Redo"}
+                    tooltipId={`rid-redo`}
+                    appContext={this.m_appContext}
+                    bracketGame={null} delegate={async (appContext: IAppContext, game: IBracketGame): Promise<boolean> => {
+                        game;
+                        await StructureEditor.redoClick(appContext);
+                        return true;
+                    }}/>
                 <div>
                     {this.state.errorMessage}
                 </div>
@@ -423,13 +445,6 @@ export default class App extends React.Component<AppProps, AppState>
                     {insertBracketChooserMaybe()}
                 </HeroList>
                 {games}
-                <p className="ms-font-l">
-                    Modify the source files, then click <b>Run</b>.
-                </p>
-                <DefaultButton className="ms-welcome__action" iconProps={{ iconName: "ChevronRight" }} onClick={
-                    this.click}>
-                    Run
-                </DefaultButton>
             </div>
         );
     }
