@@ -111,7 +111,7 @@ export default class App extends React.Component<AppProps, AppState>
 
 
         AppContext.checkpoint("ihl.7");
-        [format, title, list] = this.buildHeroList(setupState);
+        [format, title, list] = HeroList.buildHeroList(setupState);
         AppContext.checkpoint("ihl.8");
 
         // update the games list
@@ -208,105 +208,6 @@ export default class App extends React.Component<AppProps, AppState>
         return this.state.selectedBracket;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: App.buildHeroList
-
-        Build the hero list of commands
-    ----------------------------------------------------------------------------*/
-    buildHeroList(setupState: SetupState): [HeroListFormat, string, HeroListItem[]]
-    {
-        let listItems: HeroListItem[] = [];
-
-        if (setupState == SetupState.Ready)
-        {
-            listItems.push(
-                {
-                    icon: "Sync",
-                    primaryText: "Swap top/bottom teams",
-                    cursor: "cursorPointer",
-                    delegate: null
-                });
-            listItems.push(
-                {
-                    icon: "Spacer",
-                    primaryText: "Stretch or shrink game",
-                    cursor: "cursorPointer",
-                    delegate: null
-                });
-            listItems.push(
-                {
-                    icon: "RemoveEvent",
-                    primaryText: "Remove Game from bracket",
-                    cursor: "cursorPointer",
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await StructureEditor.removeGameAtSelectionClick(appContext);
-                        return true;
-                    }
-                });
-            listItems.push(
-                {
-                    icon: "Repair",
-                    primaryText: "Repair the current game",
-                    cursor: "cursorPointer",
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await StructureEditor.repairGameAtSelectionClick(appContext);
-                        return true;
-                    }
-                });
-            listItems.push(
-                {
-                    icon: "AlertSolid",
-                    primaryText: "Test Grid",
-                    cursor: "cursorPointer",
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        try
-                        {
-                            await StructureEditor.testGridClick(appContext);
-                            RegionSwapper_BottomGame.testRegionSwap1(appContext);
-                            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
-
-                            appContext.log("tests complete");
-                        }
-                        catch (e)
-                        {
-                            appContext.log(`caught error; ${e}`);
-                        }
-                        return true;
-                    }
-                });
-            return [HeroListFormat.HorizontalRibbon, "Build your bracket!", listItems];
-        }
-
-        if (setupState == SetupState.NoBracketStructure)
-        {
-            listItems.push(
-                {
-                    icon: "Ribbon",
-                    primaryText: "Initialize Brackets",
-                    cursor: "cursorPointer",
-                    delegate: SetupBook.buildBracketStructureWorksheet,
-                });
-        }
-
-        if (setupState == SetupState.NoBracketChoice
-            || setupState == SetupState.NoBracketStructure
-            || setupState == SetupState.NoBracketData)
-        {
-            listItems.push(
-                {
-                    icon: "Ribbon",
-                    primaryText: "Build a bracket",
-                    cursor: "cursorPointer",
-                    delegate: SetupBook.buildSpecificBracket,
-                });
-        }
-
-        return [HeroListFormat.Vertical, "Setup your bracket workbook!", listItems];
-    }
-
     async componentDidMount()
     {
         let setupState: SetupState = await (this.getSetupState(null));
@@ -314,7 +215,7 @@ export default class App extends React.Component<AppProps, AppState>
         let list: HeroListItem[];
         let title: string;
 
-        [format, title, list] = this.buildHeroList(setupState);
+        [format, title, list] = HeroList.buildHeroList(setupState);
         // figure out our top level menu.... Setup, or bracket editing
         this.setState(
             {
@@ -418,24 +319,25 @@ export default class App extends React.Component<AppProps, AppState>
         return (
             <div className="ms-welcome">
                 <ActionButton
-                    icon={"Undo"}
-                    tooltip={"Undo"}
-                    tooltipId={`rid-undo`}
+                    icon={"AlertSolid"}
+                    tooltip={"Run Unit Tests"}
+                    tooltipId={`rid-unit-tests`}
                     appContext={this.m_appContext}
                     bracketGame={null} delegate={ async (appContext: IAppContext, game: IBracketGame): Promise<boolean> =>
                     {
                         game;
-                        await StructureEditor.undoClick(appContext);
-                        return true;
-                    }}/>
-                <ActionButton
-                    icon={"Redo"}
-                    tooltip={"Redo"}
-                    tooltipId={`rid-redo`}
-                    appContext={this.m_appContext}
-                    bracketGame={null} delegate={async (appContext: IAppContext, game: IBracketGame): Promise<boolean> => {
-                        game;
-                        await StructureEditor.redoClick(appContext);
+                        try
+                        {
+                            await StructureEditor.testGridClick(appContext);
+                            RegionSwapper_BottomGame.testRegionSwap1(appContext);
+                            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
+
+                            appContext.log("tests complete");
+                        }
+                        catch (e)
+                        {
+                            appContext.log(`caught error; ${e}`);
+                        }
                         return true;
                     }}/>
                 <div>
