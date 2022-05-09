@@ -667,6 +667,16 @@ export class Grid
         return gameInsert;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.shouldGrowUpInstead
+
+        most times we want to grow down. but sometimes growing up makes more
+        sense:
+        * we are at the top of the grid
+        * growing down will overlap something
+        * growing down will mean our immedate left neighbord will overlap
+          something
+    ----------------------------------------------------------------------------*/
     shouldGrowUpInstead(requested: RangeInfo): boolean
     {
         // are we at the top of the grid?
@@ -690,8 +700,70 @@ export class Grid
             return true;
         }
 
+        // will growing down overlap something on our left?
+        const check: RangeInfo = RangeInfo.createFromCorners(
+            requested.offset(11 - 3, 1, -1, 1),
+            requested.offset(11 - 1, 1, 1, 1));
+
+        if (this.doesRangeOverlap(check) != RangeOverlapKind.None)
+        {
+            // one more check -- does growing up conflict too?
+            const check2: RangeInfo = RangeInfo.createFromCorners(
+                requested.offset(-11, 1, -1, 1),
+                requested.offset(-11 + 1 + 1, 1, 1, 1));
+
+            if (this.doesRangeOverlap(check2) == RangeOverlapKind.None)
+                return true;
+        }
+
+
         return false;
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.growUnanchoredRangeUpToAvoidConflictsOnLeft
+
+        We have a range that is not anchored on the top, so there shouldn't be
+        a feeder line. this means that our title line and our underline should
+        have nothing to the left. If they do, then grow until they don't
+    ----------------------------------------------------------------------------*/
+    growUnanchoredRangeUpToAvoidConflictsOnLeft(range: RangeInfo): RangeInfo
+    {
+        let rangeReturn: RangeInfo = RangeInfo.createFromRangeInfo(range);
+        let rangeCheck: RangeInfo = range.offset(0, 4, -1, 2);
+
+        while (rangeCheck.FirstRow >= this.FirstGridPattern.FirstRow)
+        {
+            if (this.doesRangeOverlap(rangeCheck) == RangeOverlapKind.None)
+                return rangeReturn;
+
+            rangeCheck.setRow(rangeCheck.FirstRow - 2);
+            rangeReturn.setRowResize(rangeReturn.FirstRow - 2);
+        }
+
+        return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.growUnanchoredRangeDownToAvoidConflictsOnLeft
+    ----------------------------------------------------------------------------*/
+    growUnanchoredRangeDownToAvoidConflictsOnLeft(range: RangeInfo): RangeInfo
+    {
+        let rangeReturn: RangeInfo = RangeInfo.createFromRangeInfo(range);
+        let rangeCheck: RangeInfo = range.bottomLeft().offset(-2, 2, -1, 2);
+
+        while (rangeCheck.LastRow <= 1000)
+        {
+            if (this.doesRangeOverlap(rangeCheck) == RangeOverlapKind.None)
+                return rangeReturn;
+
+            rangeCheck.setRow(rangeCheck.FirstRow + 2);
+            rangeReturn.setLastRow(rangeReturn.LastRow + 2);
+        }
+
+        return null;
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.buildGridGameForAnchoredSourceNoOutgoingPresent
@@ -756,6 +828,10 @@ export class Grid
                         1).newSetColumn(requested.FirstColumn),
                     anchor.offset(1, 1, 2, 1).newSetColumn(requested.FirstColumn + 2));
 
+            gameInsert.m_rangeGame = this.growUnanchoredRangeUpToAvoidConflictsOnLeft(gameInsert.m_rangeGame);
+            if (gameInsert.m_rangeGame == null)
+                return GridGameInsert.createFailedGame("couldn't adjust the range to avoid a conflict on the left");
+
             gameInsert.setFeedersFromSources(
                 source1,
                 source2,
@@ -779,6 +855,13 @@ export class Grid
                     1,
                     0,
                     1).newSetColumn(requested.FirstColumn + 2));
+
+        if (!fChampionshipGame)
+        {
+            gameInsert.m_rangeGame = this.growUnanchoredRangeDownToAvoidConflictsOnLeft(gameInsert.m_rangeGame);
+            if (gameInsert.m_rangeGame == null)
+                return GridGameInsert.createFailedGame("couldn't adjust the range to avoid a conflict on the left");
+        }
 
         gameInsert.m_isChampionshipGame = fChampionshipGame;
 

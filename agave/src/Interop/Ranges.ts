@@ -146,7 +146,7 @@ export class RangeInfo
         this.m_rowStart = row;
     }
 
-    setRowShorten(row: number)
+    setRowResize(row: number)
     {
         const delta: number = this.m_rowStart - row;
 
@@ -209,7 +209,7 @@ export class RangeInfo
         if (this.m_rowStart < range.LastRow)
         {
             // we start inside the row we want to exclude. move the start to after the range
-            this.setRowShorten(range.LastRow + 1);
+            this.setRowResize(range.LastRow + 1);
         }
     }
     static isOverlappingSegment(seg1First: number, seg1Last: number, seg2First: number, seg2Last: number): boolean
