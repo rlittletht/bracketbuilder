@@ -19,7 +19,6 @@ const render = (Component) =>
         <AppContainer>
             <ThemeProvider>
                 <Component title={title} isOfficeInitialized={isOfficeInitialized}/>
-                <p className={`foo totallyUniqueTestName`}> Tes2t3</p>
             </ThemeProvider>
         </AppContainer>,
         document.getElementById("container")

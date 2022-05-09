@@ -44,7 +44,7 @@ export class FormulaBuilder
 
         const noWinnerString = this.getShowTeamSourcesConditional(`"W${gameNumber}"`);
 
-        return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}>${bottomScoreRef},${topScoreRef},${bottomScoreRef}))`;
+        return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}>${bottomScoreRef},${topTeamRef},${bottomTeamRef}))`;
     }
 
     static getLoserFormulaFromSource(gameNumber: number, bracketName: string): string
@@ -58,7 +58,7 @@ export class FormulaBuilder
         const noWinnerString = this.getShowTeamSourcesConditional(`"L${gameNumber}"`);
 
         return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}<${bottomScoreRef},${
-            topScoreRef},${bottomScoreRef}))`;
+            topTeamRef},${bottomTeamRef}))`;
     }
 
     /*----------------------------------------------------------------------------
