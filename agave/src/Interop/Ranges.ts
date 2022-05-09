@@ -126,6 +126,16 @@ export class RangeInfo
         return new RangeInfo(this.LastRow, 1, this.LastColumn, 1);
     }
 
+    bottomLeft(): RangeInfo
+    {
+        return new RangeInfo(this.LastRow, 1, this.FirstColumn, 1);
+    }
+
+    topRight(): RangeInfo
+    {
+        return new RangeInfo(this.FirstRow, 1, this.LastColumn, 1);
+    }
+
     setColumn(column: number)
     {
         this.m_columnStart = column;
@@ -136,9 +146,21 @@ export class RangeInfo
         this.m_rowStart = row;
     }
 
+    setRowShorten(row: number)
+    {
+        const delta: number = this.m_rowStart - row;
+
+        this.m_rowStart = row;
+        this.m_rowCount += delta;
+        if (this.m_rowCount < 0)
+            this.m_rowCount = 0;
+    }
+
     setLastRow(row: number)
     {
         this.m_rowCount = row - this.FirstRow + 1;
+        if (this.m_rowCount < 0)
+            this.m_rowCount = 0;
     }
 
     newSetColumn(column: number): RangeInfo
@@ -166,6 +188,30 @@ export class RangeInfo
         return `[${this.FirstRow},${this.FirstColumn}]-[${this.LastRow},${this.LastColumn}]`;
     }
 
+    rebase(oldTopRow: number, newTopRow: number)
+    {
+        const delta: number = this.m_rowStart - oldTopRow;
+
+        this.m_rowStart = newTopRow + delta;
+    }
+
+    excludeRangeByRows(range: RangeInfo)
+    {
+        if (RangeInfo.isOverlapping(this, range) == RangeOverlapKind.None)
+            return;
+
+        if (this.m_rowStart < range.FirstRow)
+        {
+            this.setLastRow(range.FirstRow - 1);
+            return;
+        }
+
+        if (this.m_rowStart < range.LastRow)
+        {
+            // we start inside the row we want to exclude. move the start to after the range
+            this.setRowShorten(range.LastRow + 1);
+        }
+    }
     static isOverlappingSegment(seg1First: number, seg1Last: number, seg2First: number, seg2Last: number): boolean
     {
         // first row of range2 is within range1

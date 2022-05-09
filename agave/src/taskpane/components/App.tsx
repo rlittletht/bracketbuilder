@@ -20,6 +20,7 @@ import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/Regi
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
 import { TableIO } from "../../Interop/TableIO";
 import ActionButton from "./ActionButton";
+import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
 
 /* global console, Excel, require  */
 
@@ -331,6 +332,7 @@ export default class App extends React.Component<AppProps, AppState>
                             await StructureEditor.testGridClick(appContext);
                             RegionSwapper_BottomGame.testRegionSwap1(appContext);
                             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
+                            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
 
                             appContext.log("tests complete");
                         }

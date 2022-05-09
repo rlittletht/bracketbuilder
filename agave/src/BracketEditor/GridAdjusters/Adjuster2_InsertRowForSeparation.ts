@@ -19,12 +19,12 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
     {
         const [region1, region2] = this.regionsCalculate(gridTry, gameInsert);
 
-        if (gridTry.isRangeSelfContained(region1))
+        if (gridTry.isRangeIndependent(region1))
         {
             if (!gridTry.isBlankRow(region1.LastRow))
                 return true;
         }
-        if (gridTry.isRangeSelfContained(region2))
+        if (gridTry.isRangeIndependent(region2))
         {
             if (!gridTry.isBlankRow(region2.LastRow + 1))
                 return true;
@@ -57,7 +57,7 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         let [region1, region2] = this.regionsCalculate(grid, gameInsert);
         let gridTry: Grid = null;
 
-        if (grid.isRangeSelfContained(region1))
+        if (grid.isRangeIndependent(region1))
         {
             if (!grid.isBlankRow(region1.LastRow))
             {
@@ -76,7 +76,7 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         }
 
         // if we got here, then region2 is where we want to insert. 
-        if (!grid.isRangeSelfContained(region2)
+        if (!grid.isRangeIndependent(region2)
             || grid.isBlankRow(region2.LastRow + 1))
         {
             // our preflight should guarantee that the other clause either

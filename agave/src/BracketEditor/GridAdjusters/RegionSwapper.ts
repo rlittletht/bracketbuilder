@@ -1,5 +1,6 @@
 import { Grid } from "../Grid";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { GridItem } from "../GridItem";
 
 export class RegionSwapper
 {
@@ -13,14 +14,14 @@ export class RegionSwapper
         regionTop: RangeInfo,
         regionBottom: RangeInfo)
     {
-        if (!gridTry.isRangeSelfContained(regionTop))
+        if (!gridTry.isRangeIndependent(regionTop))
             return false;
 
-        if (!gridTry.isRangeSelfContained(regionBottom))
+        if (!gridTry.isRangeIndependent(regionBottom))
             return false;
 
         // we also require a blank row between the top and bottom region
-        let rangeBlankCheck: RangeInfo = regionBottom.offset(-3, 3, 0, 100).newSetColumn(1);
+        let rangeBlankCheck: RangeInfo = regionBottom.offset(-1, 1, 0, 100).newSetColumn(1);
         if (gridTry.doesRangeOverlap(rangeBlankCheck) != RangeOverlapKind.None)
             return false;
 
@@ -58,16 +59,42 @@ export class RegionSwapper
 
         // since we know there is a clear break between the regions, there is no chance
         // a range overlaps the two regions. So, we only need to check the first row.
+
+        // these aren't difficult calculations, but the names help make things
+        // clear
+        const topRegionRowDelta: number = regionBottom.RowCount - regionTop.RowCount;
+        const newBottomRegionFirstRow: number = regionBottom.FirstRow + topRegionRowDelta;
+
         for (let i: number = 0; i < gridTry.m_gridItems.length; i++)
         {
-            if (gridTry.m_gridItems[i].Range.FirstRow <= regionTop.LastRow)
+            let item: GridItem = gridTry.m_gridItems[i];
+
+            if (item.Range.LastRow < regionTop.FirstRow)
             {
-                gridTry.m_gridItems[i].shiftByRows(regionBottom.RowCount + 1);
+                continue;
             }
-            else if (gridTry.m_gridItems[i].Range.FirstRow <= regionBottom.LastRow)
+            else if (RangeInfo.isOverlappingRows(item.Range, regionTop))
             {
-                gridTry.m_gridItems[i].shiftByRows(-regionTop.RowCount - 1);
+                // we are in the top region. we now want to be in the bottom
+                // region
+                item.rebase(regionTop.FirstRow, newBottomRegionFirstRow);
             }
+            else if (RangeInfo.isOverlappingRows(item.Range, regionBottom))
+            {
+                // we are in the bottom region. we now want to be in the top
+                // region
+                // can't just rebase the game range -- what about the rest of the
+                // ranges in the item?!?
+                item.rebase(regionBottom.FirstRow, regionTop.FirstRow);
+            }
+            else if (item.Range.FirstRow < regionBottom.FirstRow)
+            {
+                // we are before the bottom region, but (by exclusion)
+                // we aren't in the top region or before the top region.
+                // move us down by the change in the top region
+                item.shiftByRows(topRegionRowDelta);
+            }
+            // if we are after the last region, there's nothing to do...
         }
     }
 }

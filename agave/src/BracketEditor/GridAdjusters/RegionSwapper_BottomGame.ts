@@ -37,7 +37,7 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         if (source1 == null || source2 == null)
             return false;
 
-        if (!gridTry.doesSourceOverlapRangeOverlap(source1, source2, column))
+        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column))
         {
             console.log(`no region swapping needed, no overlap detected.`);
             return false;
@@ -109,7 +109,8 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         and the top game in the grid to combine, which naturally causes a conflict
         and requires a region swap.  Test this.
     ----------------------------------------------------------------------------*/
-    static testRegionSwap1(appContext: IAppContext) {
+    static testRegionSwap1(appContext: IAppContext)
+    {
         appContext;
         let grid: Grid = new Grid();
 
@@ -138,7 +139,8 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
 
         // now verify that we have fixed the problem
         let [source1, source2, outgoing] = gridNew.getFeederInfoForGame(game);
-        if (gridNew.doesSourceOverlapRangeOverlap(source1, source2, reqColumn)) {
+        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn))
+        {
             throw Error("testRegionSwap1: FAILED: rearrange failed to resolve");
         }
     }

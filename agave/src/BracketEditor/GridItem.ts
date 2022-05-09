@@ -56,6 +56,18 @@ export class GridItem
             this.m_range.setRow(this.m_range.FirstRow + rowAdjust);
     }
 
+    rebase(oldTopRow: number, newTopRow: number)
+    {
+        if (this.m_topTeamRange != null)
+            this.m_topTeamRange.rebase(oldTopRow, newTopRow);
+        if (this.m_bottomTeamRange != null)
+            this.m_bottomTeamRange.rebase(oldTopRow, newTopRow);
+        if (this.m_gameNumberRange != null)
+            this.m_gameNumberRange.rebase(oldTopRow, newTopRow);
+        if (this.m_range != null)
+            this.m_range.rebase(oldTopRow, newTopRow);
+    }
+
     constructor(range: RangeInfo, gameNum: number, isLine: boolean)
     {
         this.m_range = RangeInfo.createFromRangeInfo(range);

@@ -16,7 +16,7 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 // (because the "advance to" line is often blank at the bottom)
 // Choose which way to grow the game range to accommodate that extra
 // row
-enum AdjustRangeGrowExtraRow
+export enum AdjustRangeGrowExtraRow
 {
     None, // don't try to add an extra row
     Up,
@@ -95,14 +95,14 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: Grid.isRangeSelfContained
+        %%Function: Grid.isRangeIndependent
 
         return true if there are no items spanning into or out of this range.
 
         Its OK for items to be on the boundary, but they must not cross into or
         out of this range
     ----------------------------------------------------------------------------*/
-    isRangeSelfContained(range: RangeInfo): boolean
+    isRangeIndependent(range: RangeInfo): boolean
     {
         let items: GridItem[] = this.getOverlappingItems(range);
 
@@ -976,10 +976,25 @@ export class Grid
             return false;
         }
 
+        let source1: RangeInfo = gameInsert.m_rangeFeederTop;
+        let source2: RangeInfo = gameInsert.m_rangeFeederBottom;
+
+        if (!source1 || source1 == null)
+        {
+            // for this comparison, we have to have a source, even if there's no feeder line
+            source1 = gameInsert.m_rangeGame.offset(1, 1, 0, 1);
+        }
+
+        if (!source2 || source2 == null)
+        {
+            source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
+        }
+
         if (this.doesSourceOverlapRangeOverlap(
-            gameInsert.m_rangeFeederTop,
-            gameInsert.m_rangeFeederBottom,
-            gameInsert.m_rangeGame.FirstColumn))
+            source1,
+            source2,
+            gameInsert.m_rangeGame.FirstColumn,
+            false))
         {
             gameInsert.m_failReason = `overlap region overlapped`;
             return false;
@@ -988,7 +1003,7 @@ export class Grid
         return true;
     }
 
-    doesSourceOverlapRangeOverlap(
+    doesSourceOverlapAreaRangeOverlap(
         source1: RangeInfo,
         source2: RangeInfo,
         targetColumn: number): boolean
@@ -1000,26 +1015,114 @@ export class Grid
         if (source1 == null || source2 == null)
             return false;
 
-        const maxColumn: number = Math.max(
+        let overlapRegion: RangeInfo;
+
+        const minColumn: number = Math.min(
             source1 != null ? source1.FirstColumn : targetColumn,
             source2 != null ? source2.FirstColumn : targetColumn);
-
-        let overlapRegion: RangeInfo;
 
         if (source1 == null || source2 == null)
         {
             // assume we're going to grow down
             overlapRegion = RangeInfo.createFromCorners(
-                source1.offset(-1, 1, 0, 1).newSetColumn(maxColumn),
+                source1.offset(-1, 1, 0, 1).newSetColumn(minColumn),
                 source1.offset(11 - 2, 1, 0, 1).newSetColumn(targetColumn + 2));
         }
         else
         {
             overlapRegion = RangeInfo.createFromCorners(
-                source1.offset(-1, 1, 0, 1).newSetColumn(maxColumn),
+                source1.offset(-1, 1, 0, 1).newSetColumn(minColumn),
                 source2.offset(1, 0, 0, 1).newSetColumn(targetColumn + 2));
         }
 
+        if (source1 != null)
+        {
+            const [gameItem, kind] = this.getFirstOverlappingItem(source1.offset(0, 1, -1, 1));
+
+            if (gameItem != null)
+                overlapRegion.excludeRangeByRows(gameItem.Range);
+        }
+
+        if (source2 != null)
+        {
+            const [gameItem, kind] = this.getFirstOverlappingItem(source2.offset(0, 1, -1, 1));
+
+            if (gameItem != null)
+                overlapRegion.excludeRangeByRows(gameItem.Range);
+        }
+
+        if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.doesSourceOverlapRangeOverlap
+
+        we have two choices when it comes to overlap checking. one is strict
+        overlap checking, which asks if any line crosses our regions.
+
+        the other also checks area overlapping -- does the area created by the
+        source ranges overlap. this may not strictly overlap, but we still want
+        to flag it. ask for this using enforceAreaOverlap
+    ----------------------------------------------------------------------------*/
+    doesSourceOverlapRangeOverlap(
+        source1: RangeInfo,
+        source2: RangeInfo,
+        targetColumn: number,
+        enforceAreaOverlap: boolean): boolean
+    {
+        let f: boolean = false;
+
+        [source1, source2, f] = Grid.normalizeSources(source1, source2, f);
+
+        if (source1 == null || source2 == null)
+            return false;
+
+        let overlapRegion: RangeInfo;
+
+        if (enforceAreaOverlap)
+        {
+            const minColumn: number = Math.min(
+                source1 != null ? source1.FirstColumn : targetColumn,
+                source2 != null ? source2.FirstColumn : targetColumn);
+
+            if (source1 == null || source2 == null)
+            {
+                // assume we're going to grow down
+                overlapRegion = RangeInfo.createFromCorners(
+                    source1.offset(-1, 1, 0, 1).newSetColumn(minColumn),
+                    source1.offset(11 - 2, 1, 0, 1).newSetColumn(targetColumn + 2));
+            }
+            else
+            {
+                overlapRegion = RangeInfo.createFromCorners(
+                    source1.offset(-1, 1, 0, 1).newSetColumn(minColumn),
+                    source2.offset(1, 0, 0, 1).newSetColumn(targetColumn + 2));
+            }
+        }
+        else
+        {
+            const maxColumn: number = Math.max(
+                source1 != null ? source1.FirstColumn : targetColumn,
+                source2 != null ? source2.FirstColumn : targetColumn);
+
+            if (source1 == null || source2 == null)
+            {
+                // assume we're going to grow down
+                overlapRegion = RangeInfo.createFromCorners(
+                    source1.offset(-1, 1, 0, 1).newSetColumn(maxColumn),
+                    source1.offset(11 - 2, 1, 0, 1).newSetColumn(targetColumn + 2));
+            }
+            else
+            {
+                overlapRegion = RangeInfo.createFromCorners(
+                    source1.offset(-1, 1, 0, 1).newSetColumn(maxColumn),
+                    source2.offset(1, 0, 0, 1).newSetColumn(targetColumn + 2));
+            }
+        }
         if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)
         {
             return true;
