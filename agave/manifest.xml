@@ -6,15 +6,15 @@
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
 	<Id>f4607fe8-d788-4c7e-95ee-3ba1f85b5566</Id>
 	<Version>1.0.0.0</Version>
-	<ProviderName>Contoso</ProviderName>
+	<ProviderName>Robert Little</ProviderName>
 	<DefaultLocale>en-US</DefaultLocale>
-	<DisplayName DefaultValue="XLTest" />
-	<Description DefaultValue="A template to get started." />
+	<DisplayName DefaultValue="TwBracketBuilder" />
+	<Description DefaultValue="Build double elimination tournament brackets compatible with Little League double elimination brackets" />
 	<IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png" />
 	<HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png" />
-	<SupportUrl DefaultValue="https://www.contoso.com/help" />
+	<SupportUrl DefaultValue="https://www.d9ump.org" />
 	<AppDomains>
-		<AppDomain>https://www.contoso.com</AppDomain>
+		<AppDomain>https://www.d9ump.org</AppDomain>
 	</AppDomains>
 	<Hosts>
 		<Host Name="Workbook" />
