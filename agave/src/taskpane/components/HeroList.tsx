@@ -37,7 +37,8 @@ export default class HeroList extends React.Component<HeroListProps>
 
         Build the hero list of commands
     ----------------------------------------------------------------------------*/
-    static buildHeroList(setupState: SetupState): [HeroListFormat, string, HeroListItem[]] {
+    static buildHeroList(setupState: SetupState): [HeroListFormat, string, HeroListItem[]]
+    {
         let listItems: HeroListItem[] = [];
 
         if (setupState == SetupState.Ready)
@@ -83,7 +84,8 @@ export default class HeroList extends React.Component<HeroListProps>
                     icon: "RemoveEvent",
                     primaryText: "Remove Game from bracket",
                     cursor: "cursorPointer",
-                    delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
                         await StructureEditor.removeGameAtSelectionClick(appContext);
                         return true;
                     }
@@ -93,7 +95,8 @@ export default class HeroList extends React.Component<HeroListProps>
                     icon: "Repair",
                     primaryText: "Repair the current game",
                     cursor: "cursorPointer",
-                    delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
                         await StructureEditor.repairGameAtSelectionClick(appContext);
                         return true;
                     }
@@ -101,7 +104,8 @@ export default class HeroList extends React.Component<HeroListProps>
             return [HeroListFormat.HorizontalRibbon, "Build your bracket!", listItems];
         }
 
-        if (setupState == SetupState.NoBracketStructure) {
+        if (setupState == SetupState.NoBracketStructure)
+        {
             listItems.push(
                 {
                     icon: "Ribbon",
@@ -113,7 +117,8 @@ export default class HeroList extends React.Component<HeroListProps>
 
         if (setupState == SetupState.NoBracketChoice
             || setupState == SetupState.NoBracketStructure
-            || setupState == SetupState.NoBracketData) {
+            || setupState == SetupState.NoBracketData)
+        {
             listItems.push(
                 {
                     icon: "Ribbon",
@@ -129,15 +134,16 @@ export default class HeroList extends React.Component<HeroListProps>
     buildVerticalList()
     {
         const { children, items, message } = this.props;
-        const listItemsVertical = items.map((item, index) => (
-            <Stack.Item grow className={item.cursor} align="center" key={index} onClick={() =>
+        const listItemsVertical = items.map(
+            (item, index) => (
+                <Stack.Item grow className={item.cursor} align="center" key={index} onClick={() =>
                 {
                     item.delegate(this.props.appContext)
                 }}>
-                <i className={`ms-Icon ms-Icon--${item.icon}`}></i>
-                <span className="ms-font-m ms-fontColor-neutralPrimary">{item.primaryText}</span>
-            </Stack.Item>
-        ));
+                    <i className={`ms-Icon ms-Icon--${item.icon}`}></i>
+                    <span className="ms-font-m ms-fontColor-neutralPrimary">{item.primaryText}</span>
+                </Stack.Item>
+            ));
 
         return (
             <main className="ms-welcome__main">
@@ -156,16 +162,17 @@ export default class HeroList extends React.Component<HeroListProps>
         const { children, items, message } = this.props;
         let i: number = 0;
 
-        const ribbonItems = items.map((item, index) => (
-            <Stack.Item grow align="center" key={index} >
-                <ActionButton
-                    icon={item.icon}
-                    tooltip={item.primaryText}
-                    tooltipId={`rid-${i++}`}
-                    appContext={this.props.appContext}
-                    bracketGame={null} delegate={() => item.delegate(this.props.appContext)} />
-            </Stack.Item>
-        ));
+        const ribbonItems = items.map(
+            (item, index) => (
+                <Stack.Item grow align="center" key={index}>
+                    <ActionButton
+                        icon={item.icon}
+                        tooltip={item.primaryText}
+                        tooltipId={`rid-${i++}`}
+                        appContext={this.props.appContext}
+                        bracketGame={null} delegate={() => item.delegate(this.props.appContext)}/>
+                </Stack.Item>
+            ));
 
         return (
             <main className="ms-welcome__main">
