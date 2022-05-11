@@ -40,6 +40,12 @@ echo.
 echo Change webpack.config.js to properly define the production url:
 echo.
 echo	const urlProd = "https://%ROOT_NAME%cdnendpoint.azureedge.net/";
+echo.
+echo To build:
+echo     npm run build
+echo.
+echo To publish:
+echo     npm run publish
 
 goto LExit
 :LUsage
