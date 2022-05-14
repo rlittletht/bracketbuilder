@@ -1,10 +1,11 @@
 
 import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
-import { Sheets } from "../Interop/Sheets";
+import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 import { IFastTables } from "../Interop/FastTables";
 import { Tables } from "../Interop/Tables";
+import { GridBuilder } from "./GridBuilder";
 
 export interface TeamNameMap
 {
@@ -14,6 +15,8 @@ export interface TeamNameMap
 
 export class BracketSources
 {
+    static SheetName: string = "TeamsAndFields";
+
     static async getTeamNameTable(ctx: any): Promise<Excel.Table>
     {
         return await Tables.getTableOrNull(ctx, null, "TeamNames");
@@ -104,7 +107,7 @@ export class BracketSources
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketDataBuilder.buildBracketDataSheet
+        %%Function: BracketSources.buildBracketSourcesSheet
 
         Build the bracket sources sheet. This is the durable source of data for
         the bracket grid. On creation it has the default values for populating
@@ -131,7 +134,7 @@ export class BracketSources
     ----------------------------------------------------------------------------*/
     static async buildBracketSourcesSheet(ctx: any, fastTables: IFastTables, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketSources");
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let formulasGameInfo: any[][] = [];
         const gameInfoHeader: any[] = ["GameNum", "Field", "Time", "SwapTopBottom"];

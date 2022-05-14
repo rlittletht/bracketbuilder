@@ -65,20 +65,22 @@ export default class HeroList extends React.Component<HeroListProps>
                         return true;
                     }
                 });
-            listItems.push(
-                {
-                    icon: "Sync",
-                    primaryText: "Swap top/bottom teams",
-                    cursor: "cursorPointer",
-                    delegate: null
-                });
-            listItems.push(
-                {
-                    icon: "Spacer",
-                    primaryText: "Stretch or shrink game",
-                    cursor: "cursorPointer",
-                    delegate: null
-                });
+            /*
+                        listItems.push(
+                            {
+                                icon: "Sync",
+                                primaryText: "Swap top/bottom teams",
+                                cursor: "cursorPointer",
+                                delegate: null
+                            });
+                        listItems.push(
+                            {
+                                icon: "Spacer",
+                                primaryText: "Stretch or shrink game",
+                                cursor: "cursorPointer",
+                                delegate: null
+                            });
+                            */
             listItems.push(
                 {
                     icon: "RemoveEvent",
@@ -102,17 +104,6 @@ export default class HeroList extends React.Component<HeroListProps>
                     }
                 });
             return [HeroListFormat.HorizontalRibbon, "Build your bracket!", listItems];
-        }
-
-        if (setupState == SetupState.NoBracketStructure)
-        {
-            listItems.push(
-                {
-                    icon: "Ribbon",
-                    primaryText: "Initialize Brackets",
-                    cursor: "cursorPointer",
-                    delegate: SetupBook.buildBracketStructureWorksheet,
-                });
         }
 
         if (setupState == SetupState.NoBracketChoice

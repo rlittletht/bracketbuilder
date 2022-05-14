@@ -1,5 +1,5 @@
 
-import { Sheets } from "../Interop/Sheets";
+import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { BracketDefinition, GameDefinition, s_brackets, _bracketManager } from "./BracketDefinitions";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
@@ -19,6 +19,8 @@ export interface BracketOption
 
 export class BracketStructureBuilder
 {
+    static SheetName: string = "BracketDefs";
+
     /*----------------------------------------------------------------------------
         %%Function: BracketStructureBuilder.getArrayValuesFromBracketDefinition
     ----------------------------------------------------------------------------*/
@@ -169,7 +171,7 @@ export class BracketStructureBuilder
     {
         try
         {
-            let sheetBrackets: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketStructure");
+            let sheetBrackets: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketStructureBuilder.SheetName);
             let row: number = 1;
 
             for (const bracketNum in s_brackets)
@@ -193,7 +195,7 @@ export class BracketStructureBuilder
     static async buildSpecificBracketCore(ctx: any, appContext: IAppContext, fastTables: IFastTables)
     {
         const bracketChoice: string = appContext.getSelectedBracket();
-        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketStructure");
+        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketStructureBuilder.SheetName, null, EnsureSheetPlacement.Last);
 
         let bracketTable: Excel.Table =
             await SetupBook.getBracketTableOrNull(ctx, bracketsSheet, bracketChoice);
@@ -213,10 +215,10 @@ export class BracketStructureBuilder
             await this.insertBracketDefinitionAtRow(ctx, bracketsSheet, fastTables, rowFirst + 2, bracketDefinition);
         }
 
-        await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
-        await GlobalDataBuilder.buildGlobalDataSheet(ctx);
         await GridBuilder.buildGridSheet(ctx);
+        await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
         await BracketSources.buildBracketSourcesSheet(ctx, fastTables, bracketDefinition);
+        await GlobalDataBuilder.buildGlobalDataSheet(ctx);
     }
 
 }

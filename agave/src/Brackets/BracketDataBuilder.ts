@@ -1,10 +1,13 @@
 
 import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
-import { Sheets } from "../Interop/Sheets";
+import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
+import { GridBuilder } from "./GridBuilder";
 
 export class BracketDataBuilder
 {
+    static SheetName: string = "BracketInfo";
+
     /*----------------------------------------------------------------------------
         %%Function: BracketDataBuilder.buildBracketDataSheet
 
@@ -13,7 +16,7 @@ export class BracketDataBuilder
     ----------------------------------------------------------------------------*/
     static async buildBracketDataSheet(ctx: any, bracketChoice: string, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "BracketData");
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketDataBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
         await ctx.sync();
 
@@ -21,14 +24,13 @@ export class BracketDataBuilder
         await ctx.sync();
 
         await Ranges.createOrReplaceNamedRange(ctx, "BracketChoice", rng);
-        await ctx.sync();
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading
         const rowFieldScheduleFirst: number = rowResultsLast + 2;
         const rowFieldScheduleLast: number = rowFieldScheduleFirst + bracketDefinition.games.length;
 
-        rng = sheet.getRangeByIndexes(rowResultsFirst, 0, rowResultsLast - rowResultsFirst + 1, 4);
+        let rngResults: Excel.Range = sheet.getRangeByIndexes(rowResultsFirst, 0, rowResultsLast - rowResultsFirst + 1, 4);
         let formulasResults: any[][] = [];
         let formulasFields: any[][] = [];
 
@@ -56,27 +58,26 @@ export class BracketDataBuilder
                     ]);
             });
 
-        rng.formulas = formulasResults;
-        await ctx.sync();
-        rng = sheet.getRangeByIndexes(rowFieldScheduleFirst, 0, rowFieldScheduleLast - rowFieldScheduleFirst + 1, 4);
-        rng.formulas = formulasFields;
-        await ctx.sync();
+        rngResults.formulas = formulasResults;
+        let rngFields: Excel.Range = sheet.getRangeByIndexes(rowFieldScheduleFirst, 0, rowFieldScheduleLast - rowFieldScheduleFirst + 1, 4);
+        rngFields.formulas = formulasFields;
 
-        // lastly format it
-        rng = sheet.getRangeByIndexes(rowResultsFirst, 0, 1, 1);
-        rng.load("format");
-        await ctx.sync();
+        let rngFieldsDates: Excel.Range = sheet.getRangeByIndexes(rowFieldScheduleFirst, 2, rowFieldScheduleLast - rowFieldScheduleFirst + 1, 1);
+        rngFieldsDates.numberFormat = [["m/d/yy"]];
 
-        rng.format.font.bold = true;
-        rng.format.font.size = 22;
-        await ctx.sync();
+        let rngFieldsTimes: Excel.Range = sheet.getRangeByIndexes(rowFieldScheduleFirst, 3, rowFieldScheduleLast - rowFieldScheduleFirst + 1, 1);
+        rngFieldsTimes.numberFormat = [["h:mm AM/PM"]];;
 
-        rng = sheet.getRangeByIndexes(rowFieldScheduleFirst, 0, 1, 1);
-        rng.load("format");
-        await ctx.sync();
+        // lastly format the headers
+        let rngResultsHeader: Excel.Range = sheet.getRangeByIndexes(rowResultsFirst, 0, 1, 1);
 
-        rng.format.font.bold = true;
-        rng.format.font.size = 22;
+        rngResultsHeader.format.font.bold = true;
+        rngResultsHeader.format.font.size = 22;
+
+        let rngFieldsHeader: Excel.Range = sheet.getRangeByIndexes(rowFieldScheduleFirst, 0, 1, 1);
+        rngFieldsHeader.format.font.bold = true;
+        rngFieldsHeader.format.font.size = 22;
+
         await ctx.sync();
     }
 }

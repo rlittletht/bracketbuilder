@@ -1,12 +1,15 @@
-import { Sheets } from "../Interop/Sheets";
+import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
+import { BracketDataBuilder } from "./BracketDataBuilder";
 
 export class GlobalDataBuilder
 {
+    static SheetName: string = "TournamentInfo";
+
     static async buildGlobalDataSheet(ctx: any)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "GlobalData");
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, GlobalDataBuilder.SheetName, BracketDataBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 6, 2);
         rng.values =

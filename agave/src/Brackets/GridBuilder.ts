@@ -4,6 +4,8 @@ import { OADate } from "../Interop/Dates";
 
 export class GridBuilder
 {
+    static SheetName: string = "Games";
+
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.mergeAndFormatDay
     ----------------------------------------------------------------------------*/
@@ -194,19 +196,20 @@ export class GridBuilder
     {
         const colFirstGridColumn: number = 6;
 
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, "Games", null, EnsureSheetPlacement.First);
-        let rng: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
+        let rngHeader: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
 
-        rng.formulas = [["=TournamentTitle"], ["=TournamentSubTitle"], ["=TournamentLocation"]]
-        rng.format.font.bold = true;
-        rng.format.font.size = 26;
-        await ctx.sync();
+        rngHeader.formulas = [["=TournamentTitle"], ["=TournamentSubTitle"], ["=TournamentLocation"]]
+        rngHeader.format.font.bold = true;
+        rngHeader.format.font.size = 26;
 
-        rng = sheet.getRangeByIndexes(3, colFirstGridColumn, 1, 1);
-        rng.formulas = [["=TournamentAddress"]];
-        rng.format.font.italic = true;
-        rng.format.font.size = 18;
-        await ctx.sync();
+        let rngAddress: Excel.Range = sheet.getRangeByIndexes(3, colFirstGridColumn, 1, 1);
+        rngAddress.formulas = [["=TournamentAddress"]];
+        rngAddress.format.font.italic = true;
+        rngAddress.format.font.size = 18;
+
+        let rngBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
+        rngBuilding.values = [["BUILDING"]];
 
         await this.formatGridSheetDays(ctx, sheet, 6, 18);
         await this.formatColumns(ctx, sheet, ["A:A"], 60);
@@ -216,8 +219,106 @@ export class GridBuilder
         await this.formatColumns(ctx, sheet, ["F:F"], 48);
         await this.addDayGridFormulas(ctx, sheet, 4, 6, 18);
 
+//        await this.addTipsAndDirections(ctx, sheet);
+
         sheet.showGridlines = false;
         sheet.activate();
+        await ctx.sync();
+    }
+
+
+    static async addTipsAndDirections(ctx: any, sheet: Excel.Worksheet)
+    {
+        const tips: any[][] =
+        [
+            ["Hide these columns when you are done building your"],
+            ["bracket and are ready to publish. Here are some helpful"],
+            ["tips on using BracketBuilder to build your tournament"],
+            ["bracket."],
+            [""],
+            [""],
+            [""],
+            ["1. The cell at the top (A1) is the \"BUILDING\" cell."],
+            [""],
+            ["When \"BUILDING\" is in the cell, then every game"],
+            [""],
+            ["will show the source for the game (W1 or L3, for"],
+            [""],
+            ["example). Otherwise, it will be blank until the"],
+            [""],
+            ["bracket starts filling in to that game. Play with"],
+            [""],
+            ["it."],
+            [""],
+            [""],
+            [""],
+            ["2. To change the start date for the tournament,"],
+            [""],
+            ["ONLY CHANGE the date in G6 to be the first day."],
+            [""],
+            ["All of the other days will automatically adjust."],
+            [""],
+            [""],
+            [""],
+            ["3. To \"automagically\" insert a game, select a cell"],
+            [""],
+            ["anywhere in the column for the day you want. Its"],
+            [""],
+            ["better to select a cell at the top of the column, or"],
+            [""],
+            ["away from other games. Then click the " + " next to"],
+            [""],
+            ["the game you want to insert."],
+            [""],
+            [""],
+            [""],
+            ["4. To manually place a game where you want it, "],
+            [""],
+            ["select the range where you want the game to be"],
+            [""],
+            ["and click the " + ".  The game will try to fit there."],
+            [""],
+            [""],
+            [""],
+            ["5. If the game looks wrong or is needs \"repaired\","],
+            [""],
+            ["select a cell inside the game and click the wrench"],
+            [""],
+            ["icon."],
+            [""],
+            [""],
+            [""],
+            ["6. DO NOT merge cells or delete columns or"],
+            [""],
+            ["rows unless you are sure you aren't going to"],
+            [""],
+            ["break the pattern."],
+            [""],
+            [""],
+            [""],
+            ["7. This grid is carefully constructed to allow lines to"],
+            [""],
+            ["connect games and create visual affects. You can change"],
+            [""],
+            ["things like row height and column widths, but don't"],
+            [""],
+            ["change the pattern."],
+            [""],
+            ["* Rows are in pairs: a full height for text, and a 1 pixel"],
+            [""],
+            ["row for lines."],
+            [""],
+            ["* Columns are in threes:  A wide column for team names,"],
+            [""],
+            ["a narrow column for game score, and a 1 pixel column"],
+            [""],
+            ["for lines."]
+        ];
+
+        let rng: Excel.Range = sheet.getRangeByIndexes(6, 0, tips.length, 1);
+        rng.values = tips;
+        rng.format.font.size = 9;
+        rng.format.font.name = "Segoe UI";
         await ctx.sync();
     }
 }

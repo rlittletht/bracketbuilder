@@ -522,22 +522,28 @@ export class Grid
     ----------------------------------------------------------------------------*/
     doFeederLinesOverlap(source1: RangeInfo, source2: RangeInfo, column: number): string
     {
-        if (source1 != null
-            && this.doesRangeOverlap(
-                RangeInfo.createFromCorners(
-                    source1,
-                    source1.newSetColumn(column - 1))) != RangeOverlapKind.None)
+        if (source1 != null)
         {
-            return `Top feeder line (${source1.toString()}) overlaps existing item`;
+            const range1: RangeInfo = RangeInfo.createFromCorners(
+                source1,
+                source1.newSetColumn(column - 1));
+
+            if (range1.ColumnCount > 0 && this.doesRangeOverlap(range1) != RangeOverlapKind.None)
+            {
+                return `Top feeder line (${source1.toString()}) overlaps existing item`;
+            }
         }
 
-        if (source2 != null
-            && this.doesRangeOverlap(
-                RangeInfo.createFromCorners(
-                    source2,
-                    source2.newSetColumn(column - 1))) != RangeOverlapKind.None)
+        if (source2 != null)
         {
-            return `Bottom feeder line (${source2.toString()}) overlaps existing item`;
+            const range2: RangeInfo = RangeInfo.createFromCorners(
+                source2,
+                source2.newSetColumn(column - 1));
+
+            if (range2.ColumnCount > 0 && this.doesRangeOverlap(range2) != RangeOverlapKind.None)
+            {
+                return `Bottom feeder line (${source2.toString()}) overlaps existing item`;
+            }
         }
 
         return null;

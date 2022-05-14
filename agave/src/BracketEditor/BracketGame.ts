@@ -4,6 +4,7 @@ import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { RangeInfo } from "../Interop/Ranges";
 import { Grid } from "./Grid";
 import { AppContext } from "../AppContext";
+import { BracketSources } from "../Brackets/BracketSources";
 
 export interface IBracketGame
 {
@@ -272,7 +273,7 @@ export class BracketGame implements IBracketGame
                 // table
 
                 AppContext.checkpoint("b.7");
-                const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketSources");
+                const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
                 await ctx.sync();
                 AppContext.checkpoint("b.8");
 

@@ -23,14 +23,11 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getBracketsStructureSheetOrNull(ctx: any): Promise<Excel.Worksheet>
     {
-        const bracketStructureSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketStructure");
-        AppContext.checkpoint("gbsson.1");
+        const bracketStructureSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
         await ctx.sync();
 
-        AppContext.checkpoint("gbsson.2");
         if (bracketStructureSheet.isNullObject)
             return null;
-        AppContext.checkpoint("gbsson.3");
 
         return bracketStructureSheet;
     }
@@ -40,7 +37,7 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getBracketsDataSheetOrNull(ctx: any): Promise<Excel.Worksheet>
     {
-        const bracketDataSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject("BracketData");
+        const bracketDataSheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject(BracketDataBuilder.SheetName);
         await ctx.sync();
 
         if (bracketDataSheet.isNullObject)
@@ -65,17 +62,15 @@ export class SetupBook
             if (bracketChoiceNameObject.isNullObject)
                 return null;
 
-            bracketChoiceNameObject.load();
+            bracketChoiceNameObject.load("type");
             await ctx.sync();
             if (bracketChoiceNameObject.type == "Error")
                 return null;
 
             const bracketChoiceRange: Excel.Range = bracketChoiceNameObject.getRange();
-            await ctx.sync();
-            bracketChoiceRange.load();
+            bracketChoiceRange.load("values");
             await ctx.sync();
             const bracketChoice: string = bracketChoiceRange.values[0][0];
-            await ctx.sync();
 
             return bracketChoice;
         }
@@ -143,34 +138,27 @@ export class SetupBook
     static async getWorkbookSetupState(ctx: any): Promise<SetupState>
     {
         // any bracket workbook has to have a BracketStructure sheet
-        AppContext.checkpoint("gwss.1");
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(ctx);
-        AppContext.checkpoint("gwss.2");
 
         if (bracketStructureSheet ==  null)
             return SetupState.NoBracketStructure;
 
-        AppContext.checkpoint("gwss.3");
         const bracketChoice: string = await this.getBracketChoiceOrNull(ctx);
-        AppContext.checkpoint("gwss.4");
 
         if (bracketChoice != null)
         {
-            AppContext.checkpoint("gwss.5");
             const bracketTable: Excel.Table = await this.getBracketTableOrNull(ctx, bracketStructureSheet, bracketChoice);
-                bracketStructureSheet.tables.getItemOrNullObject(bracketChoice.concat("Bracket"));
-            await ctx.sync();
-            AppContext.checkpoint("gwss.6");
 
             if (bracketTable.isNullObject)
                 return SetupState.NoBracketData;
 
-            AppContext.checkpoint("gwss.7");
             if (await this.getBracketsDataSheetOrNull(ctx) == null)
                 return SetupState.NoBracketData;
 
             return SetupState.Ready;
         }
+
+/* We don't support prepopulating brackets into the workbook and choosing from them -- it was too confusing of a paradigm
 
         // we don't have a bracket choice. figure out what brackets we have data for
         var brackets: string[] = [];
@@ -182,7 +170,7 @@ export class SetupBook
 
         if (brackets.length > 0)
             return SetupState.NoBracketChoice;
-
+*/
         return SetupState.NoBracketStructure;
     }
 
