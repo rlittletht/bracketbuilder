@@ -16,19 +16,7 @@ import { TeamNameMap, BracketSources } from "../Brackets/BracketSources";
 import { Tables } from "../Interop/Tables";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { _undoManager } from "./Undo";
-import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
-
-// NOTE on mutex use. Most of the stuff we do is asynchronous, and while
-// javascript only runs on one thread, that doesn't save us from threading
-// issues. Every time we await something, we are waiting for a signal to
-// wake us up again. While we are waiting, the user could click another
-// button and start another command. That means that we could start an
-// undo operation WHILE another undo operation is running (because the
-// first undo hit an await and is waiting to be signalled)
-
-// to prevent this problem, we use a mutex to prevent multiple commands
-// from running at the same time.
-export const _mutex = new Mutex();
+import { DispatchWithCatchDelegate, Dispatcher } from "./Dispatcher";
 
 export class StructureEditor
 {
@@ -39,15 +27,19 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async undoClick(appContext: IAppContext)
     {
-        await _mutex.runExclusive(async () =>
+        let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            await Excel.run(
-                async (context) =>
-                {
-                    await _undoManager.undo(appContext, context);
-                    await appContext.invalidateHeroList(context);
-                });
-        })
+            await _undoManager.undo(appContext, context);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async doCrash()
+    {
+        let a = null;
+        a.foo = 1;
     }
 
     /*----------------------------------------------------------------------------
@@ -57,16 +49,13 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async redoClick(appContext: IAppContext)
     {
-        await _mutex.runExclusive(
-            async () =>
-            {
-                await Excel.run(
-                    async (context) =>
-                    {
-                        await _undoManager.redo(appContext, context);
-                        await appContext.invalidateHeroList(context);
-                    });
-            });
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await _undoManager.redo(appContext, context);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
     /*----------------------------------------------------------------------------
@@ -79,16 +68,13 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async insertGameAtSelectionClick(appContext: IAppContext, game: IBracketGame)
     {
-        await _mutex.runExclusive(
-            async () =>
-            {
-                await Excel.run(
-                    async (context) =>
-                    {
-                        await this.insertGameAtSelection(appContext, context, game);
-                        await appContext.invalidateHeroList(context);
-                    });
-            });
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.insertGameAtSelection(appContext, context, game);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
     /*----------------------------------------------------------------------------
@@ -98,17 +84,13 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async repairGameAtSelectionClick(appContext: IAppContext)
     {
-        await _mutex.runExclusive(
-            async () =>
-            {
-                await Excel.run(
-                    async (context) =>
-                    {
-                        let brack
-                        await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
-                        await appContext.invalidateHeroList(context);
-                    });
-            });
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
     /*----------------------------------------------------------------------------
@@ -118,16 +100,13 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async removeGameAtSelectionClick(appContext: IAppContext)
     {
-        await _mutex.runExclusive(
-            async () =>
-            {
-                await Excel.run(
-                    async (context) =>
-                    {
-                        await StructureEditor.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
-                        await appContext.invalidateHeroList(context);
-                    })
-            });
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await StructureEditor.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
 
@@ -138,16 +117,13 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame)
     {
-        await _mutex.runExclusive(
-            async () =>
-            {
-                await Excel.run(
-                    async (context) =>
-                    {
-                        await StructureEditor.findAndRemoveGame(appContext, context, game, game.BracketName);
-                        await appContext.invalidateHeroList(context);
-                    })
-            });
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await StructureEditor.findAndRemoveGame(appContext, context, game, game.BracketName);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
     /*----------------------------------------------------------------------------
@@ -168,8 +144,7 @@ export class StructureEditor
         range.load("address");
         await ctx.sync();
 
-        if (!await GameFormatting.isCellInLineRow(ctx, range.getOffsetRange(-1, 0)) ||
-            !await GameFormatting.isCellInLineRow(ctx, range.getOffsetRange(1, 0)))
+        if (!await GameFormatting.isCellInLineRow(ctx, range.getOffsetRange(-1, 0)) || !await GameFormatting.isCellInLineRow(ctx, range.getOffsetRange(1, 0)))
         {
             return false;
         }
@@ -276,7 +251,7 @@ export class StructureEditor
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 18)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 21)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
-                + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
 
             appContext.log(`Can't insert game. Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`);
             return;
@@ -646,7 +621,7 @@ export class StructureEditor
         ctx.trackedObjects.add(range);
         GameFormatting.removeAllGameFormatting(range);
 
-//        await this.removeAllGameFormatting(ctx, range);
+        //        await this.removeAllGameFormatting(ctx, range);
         range.load("rowIndex");
         range.load("columnIndex");
 
@@ -678,7 +653,8 @@ export class StructureEditor
 
                 if (await GameFormatting.isCellInLineColumn(ctx, rangeLine))
                 {
-                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRange(ctx,
+                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRange(
+                        ctx,
                         sheet,
                         new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
 
@@ -720,7 +696,7 @@ export class StructureEditor
             // there was no direct edit. return no update
             return [null, null];
         }
-        
+
         return [gameTeamName, value];
     }
 
@@ -905,24 +881,21 @@ export class StructureEditor
         }
 
         // we're linked to a game, so we can go straight to it and obliterate it
-//        await this.removeGame(appContext, ctx, game, rangeSelected);
+        //        await this.removeGame(appContext, ctx, game, rangeSelected);
 
-//        await game.Bind(ctx);
+        //        await game.Bind(ctx);
     }
 
     static async testGridClick(appContext: IAppContext)
     {
         appContext;
-        await _mutex.runExclusive(
-            async () =>
-            {
-                await Excel.run(
-                    async (context) =>
-                    {
-                        let grid: Grid = await this.gridBuildFromBracket(context);
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            let grid: Grid = await this.gridBuildFromBracket(context);
 
-                        grid.logGrid();
-                    })
-            });
+            grid.logGrid();
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 }
