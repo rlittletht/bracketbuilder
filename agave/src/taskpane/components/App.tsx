@@ -329,10 +329,11 @@ export default class App extends React.Component<AppProps, AppState>
                         game;
                         try
                         {
-                            await StructureEditor.testGridClick(appContext);
                             RegionSwapper_BottomGame.testRegionSwap1(appContext);
                             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
                             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
+
+                            await StructureEditor.testGridClick(appContext);
 
                             appContext.log("tests complete");
                         }

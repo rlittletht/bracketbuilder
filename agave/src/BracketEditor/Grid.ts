@@ -23,6 +23,17 @@ export enum AdjustRangeGrowExtraRow
     Down
 }
 
+export interface RangeOverlapDelegate
+{
+    (range: RangeInfo, item: GridItem, kind: RangeOverlapKind): boolean;
+}
+
+export interface RangeOverlapMatch
+{
+    range: RangeInfo;
+    delegate: RangeOverlapDelegate
+}
+
 export class Grid
 {
     m_gridItems: GridItem[] = [];
@@ -33,6 +44,15 @@ export class Grid
     setInternalGridItems(items: GridItem[])
     {
         this.m_gridItems = items;
+    }
+
+    enumerate(fun: (item: GridItem) => boolean): boolean
+    {
+        for (let item of this.m_gridItems)
+            if (!fun(item))
+                return false;
+
+        return true;
     }
 
     addGameRange(range: RangeInfo, gameNum: number, swapTopBottom: boolean): GridItem
@@ -49,30 +69,68 @@ export class Grid
         this.m_gridItems.push(new GridItem(range, -1, true));
     }
 
+    enumerateOverlapping(ranges: RangeOverlapMatch[]): boolean
+    {
+        return this.enumerate(
+            (item: GridItem) =>
+            {
+                for (let range of ranges)
+                {
+                    const overlapKind: RangeOverlapKind = RangeInfo.isOverlapping(range.range, item.Range);
+
+                    if (overlapKind != RangeOverlapKind.None)
+                    {
+                        if (!range.delegate(range.range, item, overlapKind))
+                            return false;
+                    }
+                }
+
+                return true;
+            });
+    }
+
     getFirstOverlappingItem(range: RangeInfo): [GridItem, RangeOverlapKind]
     {
-        for (let item of this.m_gridItems)
-        {
-            const overlapKind: RangeOverlapKind = RangeInfo.isOverlapping(range, item.Range);
+        let item: GridItem = null;
+        let overlapKind: RangeOverlapKind;
 
-            if (overlapKind != RangeOverlapKind.None)
-                return [item, overlapKind];
+        if (this.enumerateOverlapping(
+            [
+                {
+                    range: range,
+                    delegate: (matchRange: RangeInfo, matchItem: GridItem, matchKind: RangeOverlapKind) =>
+                    {
+                        matchRange;
+                        item = matchItem;
+                        overlapKind = matchKind;
+                        return false;
+                    }
+                }
+            ]))
+        {
+            return [null, RangeOverlapKind.None];
         }
 
-        return [null, RangeOverlapKind.None];
+        return [item, overlapKind];
     }
 
     getOverlappingItems(range: RangeInfo): GridItem[]
     {
         let items: GridItem[] = [];
 
-        for (let item of this.m_gridItems)
-        {
-            const overlapKind: RangeOverlapKind = RangeInfo.isOverlapping(range, item.Range);
-
-            if (overlapKind != RangeOverlapKind.None)
-                items.push(item);
-        }
+        this.enumerateOverlapping(
+            [
+                {
+                    range: range,
+                    delegate: (matchRange: RangeInfo, matchItem: GridItem, matchKind: RangeOverlapKind) =>
+                    {
+                        matchRange;
+                        matchKind;
+                        items.push(matchItem);
+                        return true;
+                    }
+                }
+            ]);
 
         return items;
     }
@@ -1499,6 +1557,67 @@ export class Grid
         return gameInsert;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridItemConnectedToRange
+
+        return the grid item that connects to this feeder range. if that's a game,
+        also make sure it lines up with the outgoing item location on the game
+    ----------------------------------------------------------------------------*/
+    getGridItemConnectedToRange(range: RangeInfo): GridItem
+    {
+        const [item, kind] = this.getFirstOverlappingItem(range);
+
+        if (item != null && kind == RangeOverlapKind.Equal)
+            return item;
+
+        if (kind == RangeOverlapKind.Partial && range.ColumnCount == 0 && !item.isLineRange)
+        {
+            // this means that the feeder line we calculated was 0 width,
+            // so the source game is immediately adjacent.
+
+            if (item.GameNumberRange.offset(1, 1, 2, 0).isEqual(range))
+                return item;
+        }
+
+        return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getFeederItemsForGame
+
+        This will get the actual grid items for the feeder items for this game
+        (if the items aren't on the grid, then null will be returned for it)
+
+        if this game is immediately adjacent to its feeder can and the outgoing
+        point of the source game matches our incoming feeder, then return that
+        game item
+    ----------------------------------------------------------------------------*/
+    getFeederItemsForGame(gridGame: GridItem, game: IBracketGame): [GridItem, GridItem]
+    {
+        let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
+        let fSwap: boolean = false;
+
+        [source1, source2, fSwap] = Grid.normalizeSources(source1, source2, fSwap);
+
+        // now we know where they are supposed to be going...
+        const item1: GridItem =
+            source1 != null
+                ? this.getGridItemConnectedToRange(RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1)))
+                : null;
+
+        const item2: GridItem =
+            source2 != null
+                ? this.getGridItemConnectedToRange(RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1)))
+                : null;
+
+        return [item1, item2];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getFeederInfoForGame
+
+        figure out where the feeder lines are going to come from for this game
+    ----------------------------------------------------------------------------*/
     getFeederInfoForGame(game: IBracketGame): [RangeInfo, RangeInfo, RangeInfo]
     {
         let source1: RangeInfo = null;

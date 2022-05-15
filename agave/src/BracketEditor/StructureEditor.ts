@@ -17,6 +17,7 @@ import { Tables } from "../Interop/Tables";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { _undoManager } from "./Undo";
 import { DispatchWithCatchDelegate, Dispatcher } from "./Dispatcher";
+import { GridRanker } from "./GridRanker";
 
 export class StructureEditor
 {
@@ -894,6 +895,8 @@ export class StructureEditor
             let grid: Grid = await this.gridBuildFromBracket(context);
 
             grid.logGrid();
+            
+            console.log(`rank: ${GridRanker.getGridRank(grid, await this.getBracketName(context))}`)
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
