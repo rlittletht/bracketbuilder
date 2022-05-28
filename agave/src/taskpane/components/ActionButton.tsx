@@ -13,6 +13,7 @@ export interface ActionButtonProps
     icon: string;
     tooltip: string;
     tooltipId: string;
+    disabled: boolean;
     delegate: (appContext: IAppContext, game: IBracketGame) => Promise<boolean>;
 }
 
@@ -43,6 +44,7 @@ export default class ActionButton extends React.Component<ActionButtonProps, Act
                 <IconButton
                     iconProps={{ iconName: this.props.icon }}
                     size={100}
+                    disabled={this.props.disabled}
                     onClick={async () => await this.props.delegate(this.props.appContext, this.state.bracketGame)}/>
             </TooltipHost>
         );

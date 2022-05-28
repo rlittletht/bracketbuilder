@@ -72,6 +72,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                                     tooltipId={`gid-${this.props.game.GameNum}`}
                                     bracketGame={this.props.game}
                                     delegate={this.DoInsertGame}
+                                    disabled={false}
                                     icon="Add"/>
                             </Stack.Item>
                             <Stack.Item grow={0}>
@@ -81,6 +82,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
                                     tooltipId={`gid-${this.props.game.GameNum}`}
                                     bracketGame={this.props.game}
                                     delegate={this.DoRemoveGame.bind(this)}
+                                    disabled={false}
                                     icon="Remove"/>
                             </Stack.Item>
                         </Stack>

@@ -10,7 +10,7 @@ initializeIcons();
 
 let isOfficeInitialized = false;
 
-const title = "Contoso Task Pane Add-in";
+const title = "TrainWreck Bracket Builder";
 // OfficeExtension.config.extendedErrorLogging = true;
 
 const render = (Component) =>

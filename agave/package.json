@@ -19,7 +19,7 @@
     "lint:fix": "office-addin-lint fix",
     "prettier": "office-addin-lint prettier",
     "provision": "az-provision %npm_config_subscription% TwBBld WestUs twbbld",
-    "publish": "az-publish twbbldstg",
+    "publish": "az-publish %npm_config_subscription% TwBBld WestUs twbbld",
     "start": "office-addin-debugging start manifest.xml",
     "start:desktop": "office-addin-debugging start manifest.xml desktop",
     "start:web": "office-addin-debugging start manifest.xml web",

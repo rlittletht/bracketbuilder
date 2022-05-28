@@ -32,6 +32,7 @@ export interface IBracketGame
     get BottomTeamName(): string; // if this is the bottom game, this is the team name
     get StartTime(): number; // this is the number of minutes since the start of the day
     get IsChampionship(): boolean;
+    get WinningTeamAdvancesToGame(): number;
 
     FormatTime(): string;
     FormatLoser(): string;
@@ -117,6 +118,15 @@ export class BracketGame implements IBracketGame
             this.m_bottomTeamLocation.LastRow - this.m_topTeamLocation.FirstRow + 1,
             this.m_topTeamLocation.FirstColumn,
             3);
+    }
+
+    get WinningTeamAdvancesToGame(): number
+    {
+        // we know what game we want to have
+        if (this.BracketGameDefinition.winner == "")
+            return -1; // winner goes nowhere
+
+        return Number(this.BracketGameDefinition.winner.substring(1));
     }
 
     get TopTeamRange(): RangeInfo

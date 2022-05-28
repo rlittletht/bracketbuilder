@@ -39,6 +39,11 @@ export class GridItem
         return this.m_gameNumberRange;
     }
 
+    get OutgoingFeederPoint(): RangeInfo
+    {
+        return this.m_gameNumberRange.offset(1, 1, 2, 1);
+    }
+
     get Range(): RangeInfo
     {
         return this.m_range;
@@ -54,6 +59,8 @@ export class GridItem
             this.m_gameNumberRange.setRow(this.m_gameNumberRange.FirstRow + rowAdjust);
         if (this.m_range != null)
             this.m_range.setRow(this.m_range.FirstRow + rowAdjust);
+
+        return this;
     }
 
     rebase(oldTopRow: number, newTopRow: number)
@@ -90,6 +97,29 @@ export class GridItem
         this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
     }
 
+    setAndInferGameInternals(range: RangeInfo)
+    {
+        this.m_range = range;
+        this.inferGameInternals();
+
+        return this;
+    }
+
+    setGameInternals(
+        range: RangeInfo,
+        topTeamRange: RangeInfo,
+        bottomTeamRange: RangeInfo,
+        gameNumberRange: RangeInfo)
+    {
+        this.m_range = RangeInfo.createFromRangeInfo(range);
+        if (!this.isLineRange)
+        {
+            this.m_topTeamRange = RangeInfo.createFromRangeInfo(topTeamRange);
+            this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(bottomTeamRange);
+            this.m_gameNumberRange = RangeInfo.createFromRangeInfo(gameNumberRange);
+        }
+    }
+
     attachGame(game: IBracketGame)
     {
         if (!game.IsLinkedToBracket)
@@ -108,12 +138,16 @@ export class GridItem
 
         if (RangeInfo.isOverlapping(this.Range, item.Range) != RangeOverlapKind.Equal)
             return false;
-        if (RangeInfo.isOverlapping(this.TopTeamRange, item.TopTeamRange) != RangeOverlapKind.Equal)
-            return false;
-        if (RangeInfo.isOverlapping(this.BottomTeamRange, item.BottomTeamRange) != RangeOverlapKind.Equal)
-            return false;
-        if (RangeInfo.isOverlapping(this.GameNumberRange, item.GameNumberRange) != RangeOverlapKind.Equal)
-            return false;
+
+        if (!this.isLineRange)
+        {
+            if (RangeInfo.isOverlapping(this.TopTeamRange, item.TopTeamRange) != RangeOverlapKind.Equal)
+                return false;
+            if (RangeInfo.isOverlapping(this.BottomTeamRange, item.BottomTeamRange) != RangeOverlapKind.Equal)
+                return false;
+            if (RangeInfo.isOverlapping(this.GameNumberRange, item.GameNumberRange) != RangeOverlapKind.Equal)
+                return false;
+        }
 
         return true;
     }
@@ -128,5 +162,10 @@ export class GridItem
         itemNew.m_swapTopBottom = item.m_swapTopBottom;
 
         return itemNew;
+    }
+
+    clone(): GridItem
+    {
+        return GridItem.createFromItem(this);
     }
 }

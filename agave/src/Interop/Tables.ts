@@ -55,6 +55,71 @@ export class Tables
         });
     }
 
+    static async appendArrayToTableSlow(
+        ctx: Excel.RequestContext,
+        sTable: string,
+        data: Array<Array<string>>,
+        header: Array<string>)
+    {
+        let rgColsToPreserve: number[] = null;
+        let rgFormulasPreserve: string[];
+        let dataToInsert: Array<Array<string>> = data;
+
+        if (dataToInsert.length == 0)
+            return;
+
+        let table: Excel.Table = ctx.workbook.tables.getItem(sTable);
+
+        table.load("worksheet");
+        await ctx.sync();
+
+        let sheet: Excel.Worksheet = table.worksheet;
+        let mapNew: Map<string, number> = null;
+        let rgNewToOld: number[];
+
+        // first, see if the table headers need to be updated
+        if (header != null)
+        {
+            [mapNew, rgNewToOld, rgColsToPreserve] = await this.matchTableHeader(ctx, table, header);
+
+            dataToInsert = new Array<Array<string>>();
+
+            for (let item of data)
+            {
+                dataToInsert.push(Arrays.createArrayFromArrayMapping(item, rgNewToOld, true /*fAvoidNull*/));
+            }
+        }
+
+        rgFormulasPreserve = await this.GetFormulasToSave(ctx, table, rgColsToPreserve);
+        let range: Excel.Range = table.getDataBodyRange().getLastRow();
+
+        range.load("address");
+        range.load("rowIndex");
+        range.load("columnIndex");
+
+        await ctx.sync();
+
+        let sAddress: string = Ranges.addressFromCoordinates_1Based(
+            [range.rowIndex + 1, range.columnIndex + 1],
+            [range.rowIndex + dataToInsert.length, range.columnIndex + dataToInsert[0].length]);
+
+        range = sheet.getRange(sAddress);
+        range.load("values");
+        await ctx.sync();
+
+        // no need to require this since it doesn't speed anything up...
+        // (<any>ctx.workbook.application).suspendApiCalculationUntilNextSync();
+        range.values = dataToInsert;
+        await ctx.sync();
+
+        table = ctx.workbook.tables.getItem(sTable);
+
+        await this.RestoreFormulas(ctx, table, rgColsToPreserve, rgFormulasPreserve);
+        await ctx.sync();
+
+        return;
+    }
+
     // match the given header to the tables real header. 
     // if there are columns missing, add them. 
     // if there are extra columes, that's fine, ignore them.

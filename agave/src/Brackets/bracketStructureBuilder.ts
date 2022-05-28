@@ -112,8 +112,8 @@ export class BracketStructureBuilder
             Ranges.addressFromCoordinates([rowFirstTable, 1], [rowFirstTable, 7]),
             ["Game", "Winner", "Loser", "Top", "Bottom", "CountTopCheck", "CountBottomCheck"]);
 
-        await Tables.appendArrayToTable(
-            fastTables,
+        await Tables.appendArrayToTableSlow(
+            ctx,
             bracketDefinition.tableName,
             this.getArrayValuesFromBracketDefinition(bracketDefinition),
             ["Game", "Winner", "Loser", "Top", "Bottom"]);

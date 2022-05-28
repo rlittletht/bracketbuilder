@@ -7,6 +7,7 @@ import { StructureEditor } from "../../BracketEditor/StructureEditor";
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
 import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { RangeInfo } from "../../Interop/Ranges";
 
 export interface HeroListItem
 {
@@ -14,6 +15,7 @@ export interface HeroListItem
     primaryText: string;
     cursor: string;
     delegate: (appContext: IAppContext) => Promise<boolean>;
+    stateChecker: string;
 }
 
 export declare const enum HeroListFormat
@@ -30,8 +32,22 @@ export interface HeroListProps
     appContext: IAppContext;
 }
 
-export default class HeroList extends React.Component<HeroListProps>
+export interface HeroListState
 {
+    rangeForMove: RangeInfo
+}
+export default class HeroList extends React.Component<HeroListProps, HeroListState>
+{
+    constructor(props, context)
+    {
+        super(props, context);
+
+        this.state =
+        {
+            rangeForMove: null
+        }
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: HeroList.buildHeroList
 
@@ -48,6 +64,7 @@ export default class HeroList extends React.Component<HeroListProps>
                     icon: "Undo",
                     primaryText: "Undo last operation",
                     cursor: "cursorPointer",
+                    stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
                         await StructureEditor.undoClick(appContext);
@@ -59,6 +76,7 @@ export default class HeroList extends React.Component<HeroListProps>
                     icon: "Redo",
                     primaryText: "Redo last undone operation",
                     cursor: "cursorPointer",
+                    stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
                         await StructureEditor.redoClick(appContext);
@@ -73,19 +91,37 @@ export default class HeroList extends React.Component<HeroListProps>
                                 cursor: "cursorPointer",
                                 delegate: null
                             });
-                        listItems.push(
-                            {
-                                icon: "Spacer",
-                                primaryText: "Stretch or shrink game",
-                                cursor: "cursorPointer",
-                                delegate: null
-                            });
                             */
+            listItems.push(
+                {
+                    icon: "Upload",
+                    primaryText: "Pick up game for move",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.captureSelectionForMove(appContext);
+                        return true;
+                    }
+                });
+            listItems.push(
+                {
+                    icon: "Download",
+                    primaryText: "Drop game for move",
+                    cursor: "cursorPointer",
+                    stateChecker: "rangeForMove",
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.moveGameAtSelectionClick(appContext);
+                        return true;
+                    }
+                });
             listItems.push(
                 {
                     icon: "RemoveEvent",
                     primaryText: "Remove Game from bracket",
                     cursor: "cursorPointer",
+                    stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
                         await StructureEditor.removeGameAtSelectionClick(appContext);
@@ -97,6 +133,7 @@ export default class HeroList extends React.Component<HeroListProps>
                     icon: "Repair",
                     primaryText: "Repair the current game",
                     cursor: "cursorPointer",
+                    stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
                         await StructureEditor.repairGameAtSelectionClick(appContext);
@@ -115,6 +152,7 @@ export default class HeroList extends React.Component<HeroListProps>
                     icon: "Ribbon",
                     primaryText: "Build a bracket",
                     cursor: "cursorPointer",
+                    stateChecker: null,
                     delegate: SetupBook.buildSpecificBracket,
                 });
         }
@@ -161,6 +199,7 @@ export default class HeroList extends React.Component<HeroListProps>
                         tooltip={item.primaryText}
                         tooltipId={`rid-${i++}`}
                         appContext={this.props.appContext}
+                        disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
                         bracketGame={null} delegate={() => item.delegate(this.props.appContext)}/>
                 </Stack.Item>
             ));

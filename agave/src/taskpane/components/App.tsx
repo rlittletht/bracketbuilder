@@ -21,6 +21,7 @@ import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjust
 import { TableIO } from "../../Interop/TableIO";
 import ActionButton from "./ActionButton";
 import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
+import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
 
 /* global console, Excel, require  */
 
@@ -324,6 +325,7 @@ export default class App extends React.Component<AppProps, AppState>
                     tooltip={"Run Unit Tests"}
                     tooltipId={`rid-unit-tests`}
                     appContext={this.m_appContext}
+                    disabled={false}
                     bracketGame={null} delegate={ async (appContext: IAppContext, game: IBracketGame): Promise<boolean> =>
                     {
                         game;
@@ -332,7 +334,8 @@ export default class App extends React.Component<AppProps, AppState>
                             RegionSwapper_BottomGame.testRegionSwap1(appContext);
                             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
                             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
-
+                            GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext);
+                            GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext);
                             await StructureEditor.testGridClick(appContext);
 
                             appContext.log("tests complete");
@@ -342,7 +345,7 @@ export default class App extends React.Component<AppProps, AppState>
                             appContext.log(`caught error; ${e}`);
                         }
                         return true;
-                    }}/>
+                    }}/> Version 1.0.0.8
                 <div>
                     {this.state.errorMessage}
                 </div>

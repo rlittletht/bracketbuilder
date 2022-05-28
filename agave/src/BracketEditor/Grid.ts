@@ -135,6 +135,18 @@ export class Grid
         return items;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.isItemOnGrid
+
+        return true if this item is on the grid, exactly as given
+    ----------------------------------------------------------------------------*/
+    isItemOnGrid(item: GridItem): boolean
+    {
+        const [itemMatch, kind] = this.getFirstOverlappingItem(item.Range);
+
+        return kind == RangeOverlapKind.Equal && item.isEqual(itemMatch);
+    }
+
     doesRangeOverlap(range: RangeInfo): RangeOverlapKind
     {
         let item: GridItem;
@@ -263,6 +275,17 @@ export class Grid
             if (RangeInfo.isOverlapping(item.Range, range) != RangeOverlapKind.None)
                 return item;
         }
+
+        return null;
+    }
+
+    inferGameItemFromSelection(rangeSelected: RangeInfo): GridItem
+    {
+        // see if we are intersecting a game and that is what we will remove
+        const [item, kind] = this.getFirstOverlappingItem(rangeSelected);
+
+        if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
+            return item;
 
         return null;
     }
@@ -537,7 +560,7 @@ export class Grid
         if (item == null)
             return null;
 
-        return item.GameNumberRange.offset(1, 1, 2, 1);
+        return item.OutgoingFeederPoint;
     }
 
     /*----------------------------------------------------------------------------
@@ -548,11 +571,10 @@ export class Grid
     ----------------------------------------------------------------------------*/
     getTargetGameFeedForGameResult(game: IBracketGame): RangeInfo
     {
-        // we know what game we want to have
-        if (game.BracketGameDefinition.winner == "")
+        const targetGameNumber: number = game.WinningTeamAdvancesToGame;
+        if (targetGameNumber == -1)
             return null; // winner goes nowhere
 
-        const targetGameNumber: number = Number(game.BracketGameDefinition.winner.substring(1));
         const item: GridItem = this.findGameItem(targetGameNumber);
 
         if (item == null)
@@ -1583,7 +1605,7 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: Grid.getFeederItemsForGame
+        %%Function: Grid.getFeederConnectionsForGame
 
         This will get the actual grid items for the feeder items for this game
         (if the items aren't on the grid, then null will be returned for it)
@@ -1591,8 +1613,14 @@ export class Grid
         if this game is immediately adjacent to its feeder can and the outgoing
         point of the source game matches our incoming feeder, then return that
         game item
+
+        NOTE: This is subtlely different than Grid.GetAllGameLines. This will
+        return the connected game if the game is immediately adjacent to our
+        feeder connection point. GetAllGameLines will only return the actual
+        lines, which means you might get null even if you are connected but
+        adjacent
     ----------------------------------------------------------------------------*/
-    getFeederItemsForGame(gridGame: GridItem, game: IBracketGame): [GridItem, GridItem]
+    getFeederConnectionsForGame(gridGame: GridItem, game: IBracketGame): [GridItem, GridItem]
     {
         let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
         let fSwap: boolean = false;
@@ -1689,6 +1717,19 @@ export class Grid
         return [gridNew, null];
     }
 
+    logGridCondensed()
+    {
+        console.log(`first repeating: ${this.m_firstGridPattern.toString()}`);
+
+        let s: string = "";
+
+        for (let item of this.m_gridItems)
+        {
+            s += `${item.GameNum}: ${item.Range.toString()}`;
+        }
+        console.log(s);
+    }
+
     logGrid()
     {
         console.log(`first repeating: ${this.m_firstGridPattern.toString()}`);
@@ -1699,12 +1740,24 @@ export class Grid
         }
     }
 
+    logChangesToString(changes: GridChange[])
+    {
+        let s: string = "";
+
+        for (let item of changes)
+            s += `${item.toString()}\n`;
+
+        return s;
+    }
+
     logChanges(changes: GridChange[])
     {
-        for (let item of changes)
+        console.log(this.logChangesToString(changes));
+/*        for (let item of changes)
         {
             console.log(`${item.toString()}`);
         }
+*/
     }
 
 

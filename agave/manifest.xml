@@ -5,7 +5,7 @@
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
 	<Id>f4607fe8-d788-4c7e-95ee-3ba1f85b5566</Id>
-	<Version>1.0.0.3</Version>
+	<Version>1.0.0.9</Version>
 	<ProviderName>Robert Little</ProviderName>
 	<DefaultLocale>en-US</DefaultLocale>
 	<DisplayName DefaultValue="TwBracketBuilder" />
@@ -20,7 +20,7 @@
 		<Host Name="Workbook" />
 	</Hosts>
 	<DefaultSettings>
-		<SourceLocation DefaultValue="https://localhost:3000/taskpane.html" />
+		<SourceLocation DefaultValue="https://localhost:3000/taskpane.html?version=1.0.0.9" />
 	</DefaultSettings>
 	<Permissions>ReadWriteDocument</Permissions>
 </OfficeApp>

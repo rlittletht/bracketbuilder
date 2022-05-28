@@ -18,6 +18,9 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { _undoManager } from "./Undo";
 import { DispatchWithCatchDelegate, Dispatcher } from "./Dispatcher";
 import { GridRanker } from "./GridRanker";
+import { GameMover } from "./GridAdjusters/GameMover";
+
+let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
@@ -88,6 +91,35 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+
+    static async captureSelectionForMove(appContext: IAppContext)
+    {
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            _moveSelection = await Ranges.createRangeInfoForSelection(context);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async moveGameAtSelectionClick(appContext: IAppContext)
+    {
+        if (_moveSelection == null)
+        {
+            appContext.log("no selection was capture for the move");
+            return;
+        }
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.doGameMoveToSelection(appContext, context, _moveSelection, await this.getBracketName(context));
             await appContext.invalidateHeroList(context);
         };
 
@@ -885,6 +917,23 @@ export class StructureEditor
         //        await this.removeGame(appContext, ctx, game, rangeSelected);
 
         //        await game.Bind(ctx);
+    }
+
+    static async doGameMoveToSelection(appContext: IAppContext, ctx: any, selection: RangeInfo, bracketName: string)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
+        const itemOld: GridItem = grid.inferGameItemFromSelection(selection);
+        const newSelection: RangeInfo = await await Ranges.createRangeInfoForSelection(ctx);
+        const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(newSelection);
+
+        const mover: GameMover = new GameMover(grid);
+        const gridNew = mover.moveGame(itemOld, itemNew, bracketName);
+
+        if (gridNew != null)
+        {
+            _undoManager.setUndoGrid(grid);
+            await this.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
+        }
     }
 
     static async testGridClick(appContext: IAppContext)
