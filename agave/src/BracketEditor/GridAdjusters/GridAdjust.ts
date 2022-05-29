@@ -9,6 +9,7 @@ import { GridGameInsert } from "../GridGameInsert";
 import { IGridAdjuster2 } from "./IGridAdjuster2";
 import { Adjuster2_InsertRowForSeparation } from "./Adjuster2_InsertRowForSeparation";
 import { Adjuster_SwapGameRegonsForOverlap } from "./Adjuster_SwapGameRegonsForOverlap";
+import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "./Adjuster_SwapAdjacentGameRegionsForOverlap";
 
 export class GridAdjust
 {
@@ -39,6 +40,7 @@ export class GridAdjust
     static adjusters: IGridAdjuster[] =
     [
         new Adjuster_SwapGameRegonsForOverlap(),
+        new Adjuster_SwapAdjacentGameRegonsForOverlap(),
         new RegionSwapper_BottomGame(),
         new Adjuster_WantToGrowUpAtTopOfGrid()
     ];

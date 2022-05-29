@@ -36,6 +36,36 @@ export class RegionSwapper
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: RegionSwapper.adjustRegionsForAdjacency
+
+        Regions need to be adjacent for swapping. If two regions are separated
+        by empty space, then absorb the empty space into the top region
+    ----------------------------------------------------------------------------*/
+    static adjustRegionsForAdjacency(
+        gridTry: Grid,
+        regionTop: RangeInfo,
+        regionBottom: RangeInfo)
+    {
+        // check if they are already adjacent
+        if (regionTop.LastRow + 1 == regionBottom.FirstRow
+            || regionTop.LastRow + 2 == regionBottom.FirstRow)
+        {
+            return;
+        }
+
+        const regionBetween: RangeInfo =
+            RangeInfo.createFromCorners(
+                regionTop.bottomLeft().shiftByRows(2),
+                regionBottom.topRight().shiftByRows(-2));
+
+        // if the region isn't empty...
+        if (gridTry.doesRangeOverlap(regionBetween) != RangeOverlapKind.None)
+            return;
+
+        regionTop.setLastRow(regionBottom.FirstRow - 2);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: RegionSwapper.swapRegions
 
         Perform the swap of the two regions. Assumes its valid.

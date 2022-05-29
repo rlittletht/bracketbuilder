@@ -192,6 +192,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
     {
         appContext;
         let grid: Grid = new Grid();
+        grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
         grid.addGameRange(RangeInfo.createFromCornersCoord(13, 6, 23, 8), 1, false).inferGameInternals();
         grid.addGameRange(RangeInfo.createFromCornersCoord(27, 6, 37, 8), 2, false).inferGameInternals();

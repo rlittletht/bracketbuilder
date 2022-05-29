@@ -98,9 +98,10 @@ export class RangeInfo
         return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
     }
 
-    shiftByRows(dRows: number)
+    shiftByRows(dRows: number): RangeInfo
     {
         this.m_rowStart += dRows;
+        return this;
     }
 
     isEqual(range: RangeInfo): boolean

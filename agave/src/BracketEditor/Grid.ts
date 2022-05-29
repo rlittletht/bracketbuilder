@@ -1162,11 +1162,11 @@ export class Grid
             source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
         }
 
-        if (this.doesSourceOverlapRangeOverlap(
+        if (this.doesSourceOverlapAreaRangeOverlap(
             source1,
             source2,
-            gameInsert.m_rangeGame.FirstColumn,
-            false))
+            gameInsert.m_rangeGame.FirstColumn))
+            //false))
         {
             gameInsert.m_failReason = `overlap region overlapped`;
             return false;
@@ -1184,8 +1184,8 @@ export class Grid
 
         [source1, source2, f] = Grid.normalizeSources(source1, source2, f);
 
-        if (source1 == null || source2 == null)
-            return false;
+//        if (source1 == null || source2 == null)
+//            return false;
 
         let overlapRegion: RangeInfo;
 
@@ -1722,7 +1722,7 @@ export class Grid
 
     logGridCondensed()
     {
-        console.log(`first repeating: ${this.m_firstGridPattern.toString()}`);
+        console.log(`first repeating: ${this.m_firstGridPattern ? this.m_firstGridPattern.toString(): "unset"}`);
 
         let s: string = "";
 
