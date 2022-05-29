@@ -708,7 +708,10 @@ export class Grid
                 if (source1 != null)
                     requested.setRow(source1.FirstRow - 1);
                 else
-                    requested.setRow(source2.offset(-11 + 2, 1, 0, 1).FirstRow);
+                {
+                    if (requested.RowCount < 11)
+                        requested.setRow(source2.offset(-11 + 2, 1, 0, 1).FirstRow);
+                }
             }
         }
         if (source2 != null)

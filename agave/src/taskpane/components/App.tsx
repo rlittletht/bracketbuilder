@@ -345,7 +345,7 @@ export default class App extends React.Component<AppProps, AppState>
                             appContext.log(`caught error; ${e}`);
                         }
                         return true;
-                    }}/> Version 1.0.0.8
+                    }}/> Version 1.0.0.10
                 <div>
                     {this.state.errorMessage}
                 </div>
