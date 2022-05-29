@@ -12,8 +12,8 @@ export interface IBracketGame
     get BracketGameDefinition(): GameDefinition;
     get SwapTopBottom(): boolean;
     get BracketName(): string; // "T2" for 2 team bracket, etc. Can derive table name from it
-    get GameNum(): number; // this is the game number (0 based) in the overall static bracket definition
-    get BracketGameNum(): number;
+    get GameId(): number; // this is the game id (1 based) in the overall static bracket definition
+    get GameNum(): number;
 
     // the following properties are volatile -- we want editors of the bracket
     // to be able to be able to easily edit them without understanding
@@ -49,7 +49,7 @@ export interface IBracketGame
     get FullGameRange(): RangeInfo;
     get TopTeamRange(): RangeInfo;
     get BottomTeamRange(): RangeInfo;
-    get GameNumberRange(): RangeInfo;
+    get GameIdRange(): RangeInfo;
 }
 
 
@@ -84,7 +84,7 @@ export class BracketGame implements IBracketGame
         return game.LoadSync(bracket, gameNumber);
     }
 
-    static async CreateFromGame(ctx: any, bracket: string, gameNumber: number): Promise<IBracketGame>
+    static async CreateFromGameNumber(ctx: any, bracket: string, gameNumber: number): Promise<IBracketGame>
     {
         AppContext.checkpoint("cfg.1");
         let game: BracketGame = new BracketGame();
@@ -93,12 +93,18 @@ export class BracketGame implements IBracketGame
         return await game.Load(ctx, bracket, gameNumber);
     }
 
+
+    static async CreateFromGameId(ctx: any, bracket: string, gameId: number): Promise<IBracketGame>
+    {
+        return await this.CreateFromGameNumber(ctx, bracket, gameId - 1);
+    }
+
     // getters
     get BracketGameDefinition(): GameDefinition { return this.m_bracketGameDefinition; }
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
     get BracketName(): string { return this.m_bracketName;  }
-    get GameNum(): number { return this.m_gameNum + 1; }
-    get BracketGameNum(): number { return this.m_gameNum; }
+    get GameId(): number { return this.m_gameNum + 1; }
+    get GameNum(): number { return this.m_gameNum; }
 
     get FullGameRange(): RangeInfo
     {
@@ -139,7 +145,7 @@ export class BracketGame implements IBracketGame
         return this.m_bottomTeamLocation;
     }
 
-    get GameNumberRange(): RangeInfo
+    get GameIdRange(): RangeInfo
     {
         return this.m_gameNumberLocation;
     }
@@ -379,7 +385,7 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get TopTeamCellNameInvariant(): string
     {
-        return `${this.m_bracketName}_G${this.GameNum}_1`;
+        return `${this.m_bracketName}_G${this.GameId}_1`;
     }
 
     /*----------------------------------------------------------------------------
@@ -395,7 +401,7 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get BottomTeamCellNameInvariant(): string
     {
-        return `${this.m_bracketName}_G${this.GameNum}_2`;
+        return `${this.m_bracketName}_G${this.GameId}_2`;
     }
 
     /*----------------------------------------------------------------------------
@@ -411,6 +417,6 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get GameNumberCellName(): string
     {
-        return `${this.m_bracketName}_Game${this.GameNum}`;
+        return `${this.m_bracketName}_Game${this.GameId}`;
     }
 }

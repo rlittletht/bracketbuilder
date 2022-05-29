@@ -367,7 +367,7 @@ export class StructureEditor
         AppContext.checkpoint("appc.6");
         // if its a game, then we have to completely remove it, including its
         // named ranges
-        let game: IBracketGame = await BracketGame.CreateFromGame(ctx, bracketName, change.GameNumber - 1);
+        let game: IBracketGame = await BracketGame.CreateFromGameId(ctx, bracketName, change.GameId);
 
         AppContext.checkpoint("appc.7");
         // if we couldn't create the game, or if its not linked to the bracket, then
@@ -409,7 +409,7 @@ export class StructureEditor
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("appc.15");
-        await game.Load(ctx, bracketName, change.GameNumber - 1);
+        await game.Load(ctx, bracketName, change.GameId - 1);
         AppContext.checkpoint("appc.16");
         if (game.IsLinkedToBracket)
             throw "game can't be linked - we should have already removed it from the bracket";
@@ -558,9 +558,9 @@ export class StructureEditor
             gameInfoRangeInfo.FirstRow
             - (insertRangeInfo.FirstRow + 1));
 
-        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.BracketGameNum), `G${game.GameNum}`]);
+        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId}`]);
         formulas.push(["", ""]);
-        formulas.push([FormulaBuilder.getTimeFormulaFromGameNumber(game.BracketGameNum), ""]);
+        formulas.push([FormulaBuilder.getTimeFormulaFromGameNumber(game.GameNum), ""]);
         formulas.push(["", ""]);
         formulas.push([game.FormatLoser(), ""]);
 
@@ -807,7 +807,7 @@ export class StructureEditor
 
         await BracketSources.updateBracketSourcesTeamNames(ctx, map);
         if (field && field != null && field != "")
-            await BracketSources.updateGameInfo(ctx, game.GameNum - 1, field, time, game.SwapTopBottom);
+            await BracketSources.updateGameInfo(ctx, game.GameId - 1, field, time, game.SwapTopBottom);
 
         console.log(`saved: ${gameTeamName1}=${overrideText1}, ${gameTeamName2}=${overrideText2}, field=${field}, time=${time}`);
     }
@@ -876,7 +876,7 @@ export class StructureEditor
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
             {
-                game = await BracketGame.CreateFromGame(ctx, bracketName, item.GameNum - 1);
+                game = await BracketGame.CreateFromGameId(ctx, bracketName, item.GameId);
             }
         }
 
@@ -886,7 +886,7 @@ export class StructureEditor
         // we can't do anything
         if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1)
         {
-            appContext.log(`Cannot find game ${game.GameNum} in the bracket`);
+            appContext.log(`Cannot find game ${game.GameId} in the bracket`);
             return;
         }
 
@@ -901,7 +901,7 @@ export class StructureEditor
         }
 
         // find the given game in the grid
-        let items: GridItem[] = grid.getAllGameItems(game.GameNum);
+        let items: GridItem[] = grid.getAllGameItems(game.GameId);
 
         if (items.length > 0)
         {

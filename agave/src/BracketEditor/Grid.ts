@@ -55,9 +55,9 @@ export class Grid
         return true;
     }
 
-    addGameRange(range: RangeInfo, gameNum: number, swapTopBottom: boolean): GridItem
+    addGameRange(range: RangeInfo, gameId: number, swapTopBottom: boolean): GridItem
     {
-        let item: GridItem = new GridItem(range, gameNum, false);
+        let item: GridItem = new GridItem(range, gameId, false);
         item.m_swapTopBottom = swapTopBottom;
         this.m_gridItems.push(item);
 
@@ -208,7 +208,7 @@ export class Grid
             [itemRight, kind] = gridRight.getFirstOverlappingItem(itemLeft.Range);
 
             if (kind != RangeOverlapKind.Equal
-                || itemLeft.GameNum != itemRight.GameNum)
+                || itemLeft.GameId != itemRight.GameId)
             {
                 // any kind of difference means this has to be removed
                 changes.push(new GridChange(GridChangeOperation.Remove, itemLeft));
@@ -224,7 +224,7 @@ export class Grid
             [itemLeft, kind] = this.getFirstOverlappingItem(itemRight.Range);
 
             if (kind != RangeOverlapKind.Equal
-                || itemRight.GameNum != itemLeft.GameNum)
+                || itemRight.GameId != itemLeft.GameId)
 
             {
                 // any kind of difference means this is an add
@@ -254,11 +254,11 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.findGameItem
     ----------------------------------------------------------------------------*/
-    findGameItem(gameNumber: number): GridItem
+    findGameItem(gameId: number): GridItem
     {
         for (let item of this.m_gridItems)
         {
-            if (item.GameNum == gameNumber)
+            if (item.GameId == gameId)
                 return item;
         }
 
@@ -328,11 +328,11 @@ export class Grid
 
         the game item will be the first item in the array
     ----------------------------------------------------------------------------*/
-    getAllGameItems(gameNumber: number): GridItem[]
+    getAllGameItems(gameId: number): GridItem[]
     {
         let items: GridItem[] = [];
 
-        let item = this.findGameItem(gameNumber);
+        let item = this.findGameItem(gameId);
         if (item == null)
             return [];
 
@@ -509,9 +509,9 @@ export class Grid
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw `overlapping detected on loadGridFromBracket: game ${game.GameNum}`;
+                    throw `overlapping detected on loadGridFromBracket: game ${game.GameId}`;
 
-                this.addGameRange(game.FullGameRange, game.GameNum, false).attachGame(game);
+                this.addGameRange(game.FullGameRange, game.GameId, false).attachGame(game);
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
@@ -553,9 +553,9 @@ export class Grid
         this.logGrid();
     }
 
-    getOutgoingConnectionForGameResult(gameNumber: number): RangeInfo
+    getOutgoingConnectionForGameResult(gameId: number): RangeInfo
     {
-        const item: GridItem = this.findGameItem(gameNumber);
+        const item: GridItem = this.findGameItem(gameId);
 
         if (item == null)
             return null;
@@ -571,11 +571,11 @@ export class Grid
     ----------------------------------------------------------------------------*/
     getTargetGameFeedForGameResult(game: IBracketGame): RangeInfo
     {
-        const targetGameNumber: number = game.WinningTeamAdvancesToGame;
-        if (targetGameNumber == -1)
+        const targetGameId: number = game.WinningTeamAdvancesToGame;
+        if (targetGameId == -1)
             return null; // winner goes nowhere
 
-        const item: GridItem = this.findGameItem(targetGameNumber);
+        const item: GridItem = this.findGameItem(targetGameId);
 
         if (item == null)
             return null;
@@ -1656,18 +1656,18 @@ export class Grid
         let outgoing: RangeInfo = null;
 
         // figure out all the connecting info for the game
-        let gameNumber: number = FormulaBuilder.getSourceGameNumberIfWinner(game.TopTeamName);
+        let gameId: number = FormulaBuilder.getSourceGameNumberIfWinner(game.TopTeamName);
 
-        if (gameNumber != -1)
-            source1 = this.getOutgoingConnectionForGameResult(gameNumber);
+        if (gameId != -1)
+            source1 = this.getOutgoingConnectionForGameResult(gameId);
 
         outgoing = this.getTargetGameFeedForGameResult(game);
 
         // figure out all the connecting info for the game
-        gameNumber = FormulaBuilder.getSourceGameNumberIfWinner(game.BottomTeamName);
+        gameId = FormulaBuilder.getSourceGameNumberIfWinner(game.BottomTeamName);
 
-        if (gameNumber != -1)
-            source2 = this.getOutgoingConnectionForGameResult(gameNumber);
+        if (gameId != -1)
+            source2 = this.getOutgoingConnectionForGameResult(gameId);
 
         return [source1, source2, outgoing];
     }
@@ -1715,7 +1715,7 @@ export class Grid
         // we *could* try to read the swap data during that load.  but that might be overkill
         // it might be better to just let the game insert handle the swap setting
         game.SetSwapTopBottom(gameInsert.m_swapTopBottom);
-        gridNew.addGameRange(gameInsert.m_rangeGame, game.GameNum, gameInsert.m_swapTopBottom);
+        gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom);
 
         return [gridNew, null];
     }
@@ -1728,7 +1728,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            s += `${item.GameNum}: ${item.Range.toString()}`;
+            s += `${item.GameId}: ${item.Range.toString()}`;
         }
         console.log(s);
     }
@@ -1739,7 +1739,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            console.log(`${item.GameNum}: ${item.Range.toString()}`);
+            console.log(`${item.GameId}: ${item.Range.toString()}`);
         }
     }
 

@@ -15,7 +15,7 @@ export class GridChange
 
     get Range() { return this.m_gridItem.Range; }
 
-    get GameNumber() { return this.m_gridItem.GameNum; }
+    get GameId() { return this.m_gridItem.GameId; }
 
     get SwapTopBottom() { return this.m_gridItem.SwapTopBottom; }
 
@@ -29,6 +29,6 @@ export class GridChange
 
     toString(): string
     {
-        return `${this.m_changeOp == GridChangeOperation.Remove ? "<" : ">"} ${this.GameNumber}: ${this.Range.toString()}`;
+        return `${this.m_changeOp == GridChangeOperation.Remove ? "<" : ">"} ${this.GameId}: ${this.Range.toString()}`;
     }
 }

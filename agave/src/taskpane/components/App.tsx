@@ -175,7 +175,7 @@ export default class App extends React.Component<AppProps, AppState>
 
         for (let i = 0; i < bracketDef.games.length; i++)
         {
-            let temp: IBracketGame = await BracketGame.CreateFromGame(ctx, bracket, i);
+            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, bracket, i);
             games.push(temp);
         }
 

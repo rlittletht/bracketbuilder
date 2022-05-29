@@ -19,7 +19,7 @@ export class GridItem
 
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
 
-    get GameNum(): number
+    get GameId(): number
     {
         return this.m_gameNum;
     }
@@ -127,13 +127,13 @@ export class GridItem
 
         this.m_topTeamRange = RangeInfo.createFromRangeInfo(game.TopTeamRange);
         this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(game.BottomTeamRange);
-        this.m_gameNumberRange = RangeInfo.createFromRangeInfo(game.GameNumberRange);
+        this.m_gameNumberRange = RangeInfo.createFromRangeInfo(game.GameIdRange);
         this.m_swapTopBottom = game.SwapTopBottom;
     }
 
     isEqual(item: GridItem): boolean
     {
-        if (this.GameNum != item.GameNum)
+        if (this.GameId != item.GameId)
             return false;
 
         if (RangeInfo.isOverlapping(this.Range, item.Range) != RangeOverlapKind.Equal)
@@ -154,7 +154,7 @@ export class GridItem
 
     static createFromItem(item: GridItem): GridItem
     {
-        let itemNew = new GridItem(item.Range, item.GameNum, item.isLineRange);
+        let itemNew = new GridItem(item.Range, item.GameId, item.isLineRange);
 
         itemNew.m_topTeamRange = RangeInfo.createFromRangeInfo(item.TopTeamRange);
         itemNew.m_bottomTeamRange = RangeInfo.createFromRangeInfo(item.BottomTeamRange);

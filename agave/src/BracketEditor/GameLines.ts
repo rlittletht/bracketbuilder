@@ -32,7 +32,7 @@ export class GameLines
             let gameSource: BracketGame = new BracketGame();
 
             await gameSource.Load(ctx, game.BracketName, Number(top.substring(1)));
-            topSource = new RangeInfo(gameSource.GameNumberRange.FirstRow + 1, 1, gameSource.GameNumberRange.FirstColumn + 2, 1);
+            topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
         const bottom: string = game.BracketGameDefinition.bottomSource;
@@ -41,7 +41,7 @@ export class GameLines
             let gameSource: BracketGame = new BracketGame();
 
             await gameSource.Load(ctx, game.BracketName, Number(bottom.substring(1)));
-            topSource = new RangeInfo(gameSource.GameNumberRange.FirstRow + 1, 1, gameSource.GameNumberRange.FirstColumn + 2, 1);
+            topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
         const winner: string = game.BracketGameDefinition.winner;
@@ -96,7 +96,7 @@ export class GameLines
         {
             feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
             AppContext.checkpoint("giaolfg.7");
-            feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameNumberRange.offset(1, 1, 1, 1));
+            feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameIdRange.offset(1, 1, 1, 1));
             AppContext.checkpoint("giaolfg.8");
         }
 
