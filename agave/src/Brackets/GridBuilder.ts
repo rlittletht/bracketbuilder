@@ -11,14 +11,11 @@ export class GridBuilder
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.mergeAndFormatDay
     ----------------------------------------------------------------------------*/
-    static async mergeAndFormatDay(ctx: any, sheet: Excel.Worksheet, row: number, col: number)
+    static mergeAndFormatDay(sheet: Excel.Worksheet, row: number, col: number)
     {
         // don't merge the vertical line ranges into the day cells
         const range: Excel.Range = sheet.getRangeByIndexes(row, col, 2, 2);
-
-        await ctx.sync();
         range.merge(true);
-        await ctx.sync();
 
         const rangeJustDays = sheet.getRangeByIndexes(row, col, 2, 3);
 
@@ -33,7 +30,7 @@ export class GridBuilder
         const rangeVerticalLine = sheet.getRangeByIndexes(row, col + 2, 2, 1);
 
         // this is going to take care of our ctx.sync()...
-        await GameFormatting.formatConnectingLineRange(ctx, rangeVerticalLine);
+        GameFormatting.formatConnectingLineRangeSync(rangeVerticalLine);
     }
 
 
@@ -42,7 +39,7 @@ export class GridBuilder
 
         each day is 3 columns (the team, the score, and the vertical line)
     ----------------------------------------------------------------------------*/
-    static async addDayGridFormulas(ctx: any, sheet: Excel.Worksheet, rowStart: number, colStart: number, days: number)
+    static async addDayGridFormulas(sheet: Excel.Worksheet, rowStart: number, colStart: number, days: number)
     {
         if (days <= 1)
             throw "days must be > 1";
@@ -81,11 +78,9 @@ export class GridBuilder
         ary.push(arySecondRow);
 
         rng.formulas = ary;
-        await ctx.sync();
 
         rng = sheet.getRangeByIndexes(rowStart + 1, colStart, 1, daysSpan);
         rng.numberFormat = [["d-mmm"]];
-        await ctx.sync();
 
         // now merge and format the cells
         col = colStart;
@@ -97,7 +92,7 @@ export class GridBuilder
 
         while (col < colStart + daysSpan)
         {
-            await this.mergeAndFormatDay(ctx, sheet, rowStart, col);
+            this.mergeAndFormatDay(sheet, rowStart, col);
             col += 3;
         }
     }
@@ -105,24 +100,19 @@ export class GridBuilder
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.formatColumns
     ----------------------------------------------------------------------------*/
-    static async formatColumns(
-        ctx: any,
+    static formatColumns(
         sheet: Excel.Worksheet,
         columns: string[],
         width: number)
     {
         let ranges = sheet.getRanges(columns.join(","));
-        await ctx.sync();
-
         ranges.format.columnWidth = width;
-        await ctx.sync();
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.formatRepeatingColumns
     ----------------------------------------------------------------------------*/
-    static async formatRepeatingColumns(
-        ctx: any,
+    static formatRepeatingColumns(
         sheet: Excel.Worksheet,
         colStart: number,
         colSkip: number,
@@ -139,30 +129,25 @@ export class GridBuilder
             col += colSkip;
         }
 
-        await this.formatColumns(ctx, sheet, rangeAddresses, width);
+        this.formatColumns(sheet, rangeAddresses, width);
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.formatRows
     ----------------------------------------------------------------------------*/
-    static async formatRows(
-        ctx: any,
+    static formatRows(
         sheet: Excel.Worksheet,
         columns: string[],
         height: number)
     {
         let ranges = sheet.getRanges(columns.join(","));
-        await ctx.sync();
-
         ranges.format.rowHeight = height;
-        await ctx.sync();
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.formatRepeatingRows
     ----------------------------------------------------------------------------*/
-    static async formatRepeatingRows(
-        ctx: any,
+    static formatRepeatingRows(
         sheet: Excel.Worksheet,
         rowStart: number,
         rowSkip: number,
@@ -179,20 +164,20 @@ export class GridBuilder
             row += rowSkip;
         }
 
-        await this.formatRows(ctx, sheet, rangeAddresses, height);
+        this.formatRows(sheet, rangeAddresses, height);
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.formatGridSheetDays
     ----------------------------------------------------------------------------*/
-    static async formatGridSheetDays(ctx: any, sheet: Excel.Worksheet, colStart: number, days: number)
+    static formatGridSheetDays(sheet: Excel.Worksheet, colStart: number, days: number)
     {
-        await this.formatRepeatingColumns(ctx, sheet, colStart, 3, 0, 104, days);
-        await this.formatRepeatingColumns(ctx, sheet, colStart, 3, 1, 17.28, days);
-        await this.formatRepeatingColumns(ctx, sheet, colStart, 3, 2, 0.9, days);
+        this.formatRepeatingColumns(sheet, colStart, 3, 0, 104, days);
+        this.formatRepeatingColumns(sheet, colStart, 3, 1, 17.28, days);
+        this.formatRepeatingColumns(sheet, colStart, 3, 2, 0.9, days);
 
-        await this.formatRepeatingRows(ctx, sheet, 9, 2, 0, 15, 300);
-        await this.formatRepeatingRows(ctx, sheet, 9, 2, 1, 1, 300);
+        this.formatRepeatingRows(sheet, 9, 2, 0, 15, 300);
+        this.formatRepeatingRows(sheet, 9, 2, 1, 1, 300);
     }
 
     /*----------------------------------------------------------------------------
@@ -219,13 +204,13 @@ export class GridBuilder
         let rngBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
         rngBuilding.values = [["BUILDING"]];
 
-        await this.formatGridSheetDays(ctx, sheet, 6, GridBuilder.maxDays);
-        await this.formatColumns(ctx, sheet, ["A:A"], 60);
-        await this.formatColumns(ctx, sheet, ["B:B", "E:E"], 0.9);
-        await this.formatColumns(ctx, sheet, ["C:C"], 104);
-        await this.formatColumns(ctx, sheet, ["D:D"], 17.28);
-        await this.formatColumns(ctx, sheet, ["F:F"], 48);
-        await this.addDayGridFormulas(ctx, sheet, 4, 6, GridBuilder.maxDays);
+        this.formatGridSheetDays(sheet, 6, GridBuilder.maxDays);
+        this.formatColumns(sheet, ["A:A"], 60);
+        this.formatColumns(sheet, ["B:B", "E:E"], 0.9);
+        this.formatColumns(sheet, ["C:C"], 104);
+        this.formatColumns(sheet, ["D:D"], 17.28);
+        this.formatColumns(sheet, ["F:F"], 48);
+        this.addDayGridFormulas(sheet, 4, 6, GridBuilder.maxDays);
 
 //        await this.addTipsAndDirections(ctx, sheet);
 

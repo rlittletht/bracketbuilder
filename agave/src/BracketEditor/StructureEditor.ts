@@ -1074,6 +1074,11 @@ export class StructureEditor
 
         rangeUnformat.clear();
         rangeUnformat.unmerge();
+        sheet.pageLayout.zoom = {
+            horizontalFitToPages: 1,
+            verticalFitToPages: 1,
+            scale: null
+        };
 
         await ctx.sync();
     }

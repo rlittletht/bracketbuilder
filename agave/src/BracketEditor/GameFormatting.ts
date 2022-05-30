@@ -22,6 +22,11 @@ export class GameFormatting
         await ctx.sync();
     }
 
+    static formatConnectingLineRangeSync(lineRange: Excel.Range)
+    {
+        lineRange.format.fill.color = "black";
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatGameInfoBodyText
     ----------------------------------------------------------------------------*/
