@@ -51,7 +51,7 @@ export default class GameItem extends React.Component<GameItemProps, GameItemSta
 
         const gameTitle: string =
             this.props.game.IsChampionship
-                ? "Championship"
+                ? "Champion"
                 : `${this.props.game.TopTeamName} vs ${this.props.game.BottomTeamName}`;
 
         return (
