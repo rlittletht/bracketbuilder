@@ -1302,6 +1302,28 @@ export class Grid
         return false;
     }
 
+    getPrintArea(blankRowsAtBottom: number): RangeInfo
+    {
+        let printArea: RangeInfo = this.FirstGridPattern.offset(0, 1, 0, 1);
+
+        this.enumerate(
+            (item: GridItem) =>
+            {
+                if (item.Range.LastColumn > printArea.LastColumn)
+                    printArea.setLastColumn(item.Range.LastColumn);
+
+                if (item.Range.LastRow > printArea.LastRow)
+                    printArea.setLastRow(item.Range.LastRow);
+
+                return true;
+            });
+
+        if (blankRowsAtBottom > 0)
+            printArea.setLastRow(printArea.LastRow + blankRowsAtBottom);
+
+        return printArea;
+    }
+
     getFirstItemInColumn(column: number): GridItem
     {
         let minRow = this.m_firstGridPattern.FirstRow;

@@ -164,6 +164,13 @@ export class RangeInfo
             this.m_rowCount = 0;
     }
 
+    setLastColumn(column: number)
+    {
+        this.m_columnCount = column - this.FirstColumn + 1;
+        if (this.m_columnCount < 0)
+            this.m_columnCount = 0;
+    }
+
     newSetColumn(column: number): RangeInfo
     {
         return new RangeInfo(this.FirstRow, this.RowCount, column, this.ColumnCount);

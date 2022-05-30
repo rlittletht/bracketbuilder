@@ -1,37 +1,39 @@
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
+import { GameFormatting } from "../BracketEditor/GameFormatting";
 
 export class GridBuilder
 {
     static SheetName: string = "Games";
+    static maxDays: number = 18;
 
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.mergeAndFormatDay
     ----------------------------------------------------------------------------*/
     static async mergeAndFormatDay(ctx: any, sheet: Excel.Worksheet, row: number, col: number)
     {
-        let range: Excel.Range = sheet.getRangeByIndexes(row, col, 2, 3);
+        // don't merge the vertical line ranges into the day cells
+        const range: Excel.Range = sheet.getRangeByIndexes(row, col, 2, 2);
 
         await ctx.sync();
         range.merge(true);
         await ctx.sync();
 
-        range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
+        const rangeJustDays = sheet.getRangeByIndexes(row, col, 2, 3);
 
-        range.format.borders.getItem('EdgeTop').style = Excel.BorderLineStyle.continuous;
-        range.format.borders.getItem('EdgeTop').weight = Excel.BorderWeight.medium;
+        rangeJustDays.format.horizontalAlignment = Excel.HorizontalAlignment.center;
 
-        range.format.borders.getItem('EdgeBottom').style = Excel.BorderLineStyle.continuous;
-        range.format.borders.getItem('EdgeBottom').weight = Excel.BorderWeight.thick;
+        rangeJustDays.format.borders.getItem('EdgeTop').style = Excel.BorderLineStyle.continuous;
+        rangeJustDays.format.borders.getItem('EdgeTop').weight = Excel.BorderWeight.medium;
 
-        range.format.borders.getItem('EdgeLeft').style = Excel.BorderLineStyle.continuous;
-        range.format.borders.getItem('EdgeLeft').weight = Excel.BorderWeight.medium;
+        rangeJustDays.format.borders.getItem('EdgeBottom').style = Excel.BorderLineStyle.continuous;
+        rangeJustDays.format.borders.getItem('EdgeBottom').weight = Excel.BorderWeight.thick;
 
-        range.format.borders.getItem('EdgeRight').style = Excel.BorderLineStyle.continuous;
-        range.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.medium;
+        const rangeVerticalLine = sheet.getRangeByIndexes(row, col + 2, 2, 1);
 
-        await ctx.sync();
+        // this is going to take care of our ctx.sync()...
+        await GameFormatting.formatConnectingLineRange(ctx, rangeVerticalLine);
     }
 
 
@@ -87,6 +89,12 @@ export class GridBuilder
 
         // now merge and format the cells
         col = colStart;
+        // and add a left border just for our first day
+        const rangeJustDays = sheet.getRangeByIndexes(rowStart, colStart, 2, 1);
+
+        rangeJustDays.format.borders.getItem('EdgeLeft').style = Excel.BorderLineStyle.continuous;
+        rangeJustDays.format.borders.getItem('EdgeLeft').weight = Excel.BorderWeight.thick;
+
         while (col < colStart + daysSpan)
         {
             await this.mergeAndFormatDay(ctx, sheet, rowStart, col);
@@ -211,13 +219,13 @@ export class GridBuilder
         let rngBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
         rngBuilding.values = [["BUILDING"]];
 
-        await this.formatGridSheetDays(ctx, sheet, 6, 18);
+        await this.formatGridSheetDays(ctx, sheet, 6, GridBuilder.maxDays);
         await this.formatColumns(ctx, sheet, ["A:A"], 60);
         await this.formatColumns(ctx, sheet, ["B:B", "E:E"], 0.9);
         await this.formatColumns(ctx, sheet, ["C:C"], 104);
         await this.formatColumns(ctx, sheet, ["D:D"], 17.28);
         await this.formatColumns(ctx, sheet, ["F:F"], 48);
-        await this.addDayGridFormulas(ctx, sheet, 4, 6, 18);
+        await this.addDayGridFormulas(ctx, sheet, 4, 6, GridBuilder.maxDays);
 
 //        await this.addTipsAndDirections(ctx, sheet);
 

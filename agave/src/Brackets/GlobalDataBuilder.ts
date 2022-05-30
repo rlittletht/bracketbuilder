@@ -14,11 +14,11 @@ export class GlobalDataBuilder
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 6, 2);
         rng.values =
         [
-            ["Tournament:", "Some Tournament"],
-            ["SubTitle:", "(sub-title)"],
-            ["Location:", "Field of Dreams Park"],
+            ["Tournament:", "TOURNAMENT TITLE"],
+            ["SubTitle:", "(SUB-TITLE))"],
+            ["Location:", "FIELD OF DREAMS PARK"],
             ["Address:", "123 Strikes Out Place, Williamsport"],
-            ["Hosted:", "Hosted by Jackie Robinson"],
+            ["Hosted:", "JACKIE ROBINSON"],
             ["Last Update:", OADate.ToOADate(new Date(Date.parse("8/21/2021"))) - (7 / 24)] // adjust for UTC
             ];
 

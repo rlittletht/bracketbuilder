@@ -19,6 +19,7 @@ import { _undoManager } from "./Undo";
 import { DispatchWithCatchDelegate, Dispatcher } from "./Dispatcher";
 import { GridRanker } from "./GridRanker";
 import { GameMover } from "./GridAdjusters/GameMover";
+import { GridBuilder } from "../Brackets/GridBuilder";
 
 let _moveSelection: RangeInfo = null;
 
@@ -44,6 +45,17 @@ export class StructureEditor
     {
         let a = null;
         a.foo = 1;
+    }
+
+    static async finalizeClick(appContext: IAppContext)
+    {
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.applyFinalFormatting(appContext, context, await this.getBracketName(context));
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
     /*----------------------------------------------------------------------------
@@ -949,5 +961,120 @@ export class StructureEditor
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async applyFinalFormatting(appContext: IAppContext, ctx: any, bracketName: string)
+    {
+        appContext;
+
+        const grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
+        const gridArea: RangeInfo = grid.getPrintArea(4);
+
+        const printArea: RangeInfo = RangeInfo.createFromCorners(
+            gridArea.topLeft().newSetRow(0),
+            gridArea.bottomRight().offset(0, 1, 0, 1));
+
+        console.log(`gridArea: ${gridArea.toString()}`);
+
+        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
+        sheet.pageLayout.centerHorizontally = true;
+        sheet.pageLayout.centerVertically = true;
+        sheet.pageLayout.orientation = Excel.PageOrientation.landscape;
+        sheet.pageLayout.bottomMargin = 0;
+        sheet.pageLayout.topMargin = 0;
+        sheet.pageLayout.leftMargin = 0;
+        sheet.pageLayout.rightMargin = 0;
+        sheet.pageLayout.footerMargin = 0;
+        sheet.pageLayout.headerMargin = 0;
+        const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, printArea);
+        sheet.pageLayout.setPrintArea(range);
+
+        // and merge the main tournament rows...
+        for (let row: number = 0; row < 4; row++)
+        {
+            const toMerge: RangeInfo = new RangeInfo(
+                row,
+                1,
+                printArea.FirstColumn,
+                printArea.ColumnCount);
+
+            const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, toMerge);
+            range.merge(true);
+            range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
+        }
+
+        // and place the hosted and last updated merge regions
+        const rangeHosted: Excel.Range = sheet.getRangeByIndexes(
+            printArea.LastRow - 2,
+            printArea.FirstColumn,
+            1,
+            printArea.ColumnCount);
+        const rangeHosted1: Excel.Range = sheet.getRangeByIndexes(
+            printArea.LastRow - 2,
+            printArea.FirstColumn,
+            1,
+            1);
+
+        rangeHosted1.formulas = [["=\"HOSTED BY \" & TournamentHost"]];
+        rangeHosted.format.horizontalAlignment = Excel.HorizontalAlignment.center;
+        rangeHosted.format.font.size = 14;
+        rangeHosted.format.font.bold = true;
+
+        rangeHosted.merge(true);
+
+        const rangeLastUpdate: Excel.Range = sheet.getRangeByIndexes(
+            printArea.LastRow,
+            printArea.FirstColumn,
+            1,
+            printArea.ColumnCount);
+        const rangeLastUpdate1: Excel.Range = sheet.getRangeByIndexes(
+            printArea.LastRow,
+            printArea.FirstColumn,
+            1,
+            1);
+
+        rangeLastUpdate1.formulas = [["=\"LAST UPDATED: \" & TEXT(LastUpdate, \"mm/dd/YYYY hh:MM AM/PM\")"]];
+        rangeLastUpdate.format.horizontalAlignment = Excel.HorizontalAlignment.right;
+        rangeLastUpdate.merge(true);
+
+        // now merge the last day on the title
+        const rangeChampionDayTop: Excel.Range = sheet.getRangeByIndexes(
+            4,
+            printArea.LastColumn - 2,
+            1,
+            1);
+        const rangeChampionDayBottom: Excel.Range = sheet.getRangeByIndexes(
+            5,
+            printArea.LastColumn - 2,
+            1,
+            1);
+
+        rangeChampionDayTop.formulas = [[ "" ]];
+        rangeChampionDayBottom.formulas = [[ "" ]];
+
+        const rangeWholeChampionDayTop: Excel.Range = sheet.getRangeByIndexes(
+            4,
+            printArea.LastColumn - 5,
+            1,
+            5);
+        const rangeWholeChampionDayBottom: Excel.Range = sheet.getRangeByIndexes(
+            5,
+            printArea.LastColumn - 5,
+            1,
+            5);
+
+        rangeWholeChampionDayTop.merge(true);
+        rangeWholeChampionDayBottom.merge(true);
+
+        const rangeUnformat: Excel.Range = sheet.getRangeByIndexes(
+            3,
+            printArea.LastColumn + 1,
+            3,
+            printArea.FirstColumn + GridBuilder.maxDays * 3 - printArea.LastColumn);
+
+        rangeUnformat.clear();
+        rangeUnformat.unmerge();
+
+        await ctx.sync();
     }
 }

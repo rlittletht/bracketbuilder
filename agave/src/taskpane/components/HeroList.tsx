@@ -140,6 +140,19 @@ export default class HeroList extends React.Component<HeroListProps, HeroListSta
                         return true;
                     }
                 });
+            listItems.push(
+                {
+                    icon: "CompletedSolid",
+                    primaryText: "Apply the finishing touches",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.finalizeClick(appContext);
+                        return true;
+                    }
+                });
+
             return [HeroListFormat.HorizontalRibbon, "Build your bracket!", listItems];
         }
 
