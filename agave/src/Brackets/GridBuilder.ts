@@ -11,7 +11,7 @@ export class GridBuilder
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.mergeAndFormatDay
     ----------------------------------------------------------------------------*/
-    static mergeAndFormatDay(sheet: Excel.Worksheet, row: number, col: number)
+    static mergeAndFormatDayRequest(sheet: Excel.Worksheet, row: number, col: number)
     {
         // don't merge the vertical line ranges into the day cells
         const range: Excel.Range = sheet.getRangeByIndexes(row, col, 2, 2);
@@ -29,8 +29,7 @@ export class GridBuilder
 
         const rangeVerticalLine = sheet.getRangeByIndexes(row, col + 2, 2, 1);
 
-        // this is going to take care of our ctx.sync()...
-        GameFormatting.formatConnectingLineRangeSync(rangeVerticalLine);
+        GameFormatting.formatConnectingLineRangeRequest(rangeVerticalLine);
     }
 
 
@@ -92,7 +91,7 @@ export class GridBuilder
 
         while (col < colStart + daysSpan)
         {
-            this.mergeAndFormatDay(sheet, rowStart, col);
+            this.mergeAndFormatDayRequest(sheet, rowStart, col);
             col += 3;
         }
     }

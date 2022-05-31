@@ -8,6 +8,7 @@ import { OADate } from "../Interop/Dates";
 import { Grid } from "./Grid";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { GameFormatting } from "./GameFormatting";
+import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { GameLines } from "./GameLines";
 import { GridGameInsert } from "./GridGameInsert";
 import { GridChange, GridChangeOperation } from "./GridChange";
@@ -25,6 +26,21 @@ let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.toggleShowDataSheetsClick
+
+        Show or hide all the supporting sheets.
+    ----------------------------------------------------------------------------*/
+    static async toggleShowDataSheetsClick(appContext: IAppContext)
+    {
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.toggleShowDataSheets(appContext, context);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.undoClick
 
@@ -170,6 +186,42 @@ export class StructureEditor
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.toggleShowDataSheets
+
+        Show or hide all the supporting sheets.
+    ----------------------------------------------------------------------------*/
+    static async toggleShowDataSheets(appContext: IAppContext, ctx: any)
+    {
+        appContext;
+
+        // first, determine if we are hiding or showing -- based on whether
+        // the global data sheet is hidden
+        const dataSheet: Excel.Worksheet = ctx.workbook.worksheets.getItem(GlobalDataBuilder.SheetName);
+
+        dataSheet.load("visibility");
+        await ctx.sync();
+
+        const visibility: Excel.SheetVisibility =
+            dataSheet.visibility == Excel.SheetVisibility.hidden
+                ? Excel.SheetVisibility.visible
+                : Excel.SheetVisibility.hidden;
+
+        ctx.workbook.worksheets.load("items");
+        await ctx.sync();
+        ctx.workbook.worksheets.items.forEach(
+            async sheet =>
+            {
+                sheet.load("name");
+                await ctx.sync();
+                if (sheet.name != GridBuilder.SheetName)
+                    sheet.visibility = visibility;
+            });
+
+        await ctx.sync();
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.isRangeValidForAnyGame
@@ -409,8 +461,7 @@ export class StructureEditor
             AppContext.checkpoint("appc.14.1");
 
             // just format the range as an underline
-            await GameFormatting.formatConnectingLineRange(
-                ctx,
+            GameFormatting.formatConnectingLineRangeRequest(
                 Ranges.rangeFromRangeInfo(
                     ctx.workbook.worksheets.getActiveWorksheet(),
                     change.Range));
@@ -507,12 +558,12 @@ export class StructureEditor
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
-        await GameFormatting.formatTeamNameRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
+        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
         await Ranges.createOrReplaceNamedRange(ctx, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        await GameFormatting.formatGameInfoBodyText(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+        GameFormatting.formatGameInfoBodyTextRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
 
-        await GameFormatting.formatConnectingLineRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
+        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
 
         ctx.trackedObjects.remove(rngTarget);
 
@@ -599,25 +650,25 @@ export class StructureEditor
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
-        await GameFormatting.formatTeamNameRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
+        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
         await Ranges.createOrReplaceNamedRange(ctx, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        await GameFormatting.formatTeamNameRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
         await Ranges.createOrReplaceNamedRange(ctx, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        await GameFormatting.formatGameInfoBodyText(ctx, rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
-        await GameFormatting.formatGameInfoTimeText(ctx, rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 2, insertRangeInfo.FirstColumn, 1, 1));
-        await GameFormatting.formatGameInfoAdvanceToText(ctx, rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 4, insertRangeInfo.FirstColumn, 1, 1));
+        GameFormatting.formatGameInfoBodyTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+        GameFormatting.formatGameInfoTimeTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 2, insertRangeInfo.FirstColumn, 1, 1));
+        GameFormatting.formatGameInfoAdvanceToTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 4, insertRangeInfo.FirstColumn, 1, 1));
 
-        await GameFormatting.formatConnectingLineRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
-        await GameFormatting.formatConnectingLineRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
-        await GameFormatting.formatConnectingLineRange(ctx, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
+        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
+        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
+        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
 
         ctx.trackedObjects.remove(rngTarget);
         rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
         ctx.trackedObjects.add(rngTarget);
 
-        await GameFormatting.formatGameInfoGameNumber(ctx, rngTarget);
+        GameFormatting.formatGameInfoGameNumberRequest(rngTarget);
         await Ranges.createOrReplaceNamedRange(ctx, game.GameNumberCellName, rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet

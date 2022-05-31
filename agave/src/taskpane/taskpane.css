@@ -38,7 +38,7 @@
      align-items: center;
      -webkit-flex: 1 0 0;
      flex: 1 0 0;
-     padding: 10px 20px;
+     padding: 0px 20px;
  }
 
  .ms-welcome__main > h2 {
@@ -59,7 +59,10 @@
 
  .ms-welcome__features.ms-List .ms-ListItem > .ms-Icon { margin-right: 10px; }
 
+ .ms-welcome__main .ms-Icon { margin-right: 10px; font-size: 14pt; }
+
  .ms-welcome__action.ms-Button--hero { margin-top: 30px; }
+ .heroItem {  }
 
  .ms-Button.ms-Button--hero .ms-Button-label { color: #0078d7; }
 

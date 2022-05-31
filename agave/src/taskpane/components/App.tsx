@@ -47,6 +47,8 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
+    static version: string = "Version 1.0.0.11";
+
     m_appContext: AppContext;
 
     constructor(props, context)
@@ -295,7 +297,7 @@ export default class App extends React.Component<AppProps, AppState>
             return (
                 <Progress
                     title={title}
-                    logo={require("./../../../assets/logo-filled.png")}
+                    logo={require("./../../../assets/TW-Logo.png")}
                     message="Please sideload your addin to see app body."/>
             );
         }
@@ -321,6 +323,10 @@ export default class App extends React.Component<AppProps, AppState>
 
         return (
             <div className="ms-welcome">
+                <div style={{ background: "#cccccc", textAlign: "center" }}>
+                    <img src={require('./../../../assets/ModernTrainLTR.png')} height="24" /><b>&gt;trainwreck&lt;</b>
+                    <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
+                </div>
                 <ActionButton
                     icon={"AlertSolid"}
                     tooltip={"Run Unit Tests"}
@@ -347,7 +353,7 @@ export default class App extends React.Component<AppProps, AppState>
                             appContext.log(`caught error; ${e}`);
                         }
                         return true;
-                    }}/> Version 1.0.0.10
+                    }}/> {App.version}
                 <div>
                     {this.state.errorMessage}
                 </div>

@@ -142,6 +142,18 @@ export default class HeroList extends React.Component<HeroListProps, HeroListSta
                 });
             listItems.push(
                 {
+                    icon: "Hide3",
+                    primaryText: "Toggle showing data sheets",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.toggleShowDataSheetsClick(appContext);
+                        return true;
+                    }
+                });
+            listItems.push(
+                {
                     icon: "CompletedSolid",
                     primaryText: "Apply the finishing touches",
                     cursor: "cursorPointer",
@@ -153,7 +165,7 @@ export default class HeroList extends React.Component<HeroListProps, HeroListSta
                     }
                 });
 
-            return [HeroListFormat.HorizontalRibbon, "Build your bracket!", listItems];
+            return [HeroListFormat.HorizontalRibbon, "Let's place the games", listItems];
         }
 
         if (setupState == SetupState.NoBracketChoice
@@ -162,15 +174,15 @@ export default class HeroList extends React.Component<HeroListProps, HeroListSta
         {
             listItems.push(
                 {
-                    icon: "Ribbon",
-                    primaryText: "Build a bracket",
+                    icon: "BuildQueueNew",
+                    primaryText: "Build this bracket!",
                     cursor: "cursorPointer",
                     stateChecker: null,
                     delegate: SetupBook.buildSpecificBracket,
                 });
         }
 
-        return [HeroListFormat.Vertical, "Setup your bracket workbook!", listItems];
+        return [HeroListFormat.Vertical, "Let's get started!", listItems];
     }
 
     buildVerticalList()
@@ -178,18 +190,18 @@ export default class HeroList extends React.Component<HeroListProps, HeroListSta
         const { children, items, message } = this.props;
         const listItemsVertical = items.map(
             (item, index) => (
-                <Stack.Item grow className={item.cursor} align="center" key={index} onClick={() =>
+                <Stack.Item grow className="{item.cursor} heroItem" align="center" key={index} onClick={() =>
                 {
                     item.delegate(this.props.appContext)
                 }}>
-                    <i className={`ms-Icon ms-Icon--${item.icon}`}></i>
-                    <span className="ms-font-m ms-fontColor-neutralPrimary">{item.primaryText}</span>
+                    <i className={`ms-Icon ms-Icon--${item.icon} ${item.cursor}`}></i>
+                    <span className={`ms-font-xl ms-fontWeight-semibold ms-fontColor-neutralPrimary ${item.cursor}`}>{item.primaryText}</span>
                 </Stack.Item>
             ));
 
         return (
             <main className="ms-welcome__main">
-                <h2 className="ms-font-xl ms-fontWeight-semilight ms-fontColor-neutralPrimary ms-u-slideUpIn20">{
+                <h2 className="ms-font-xxl ms-fontWeight-semilight ms-fontColor-neutralPrimary ms-u-slideUpIn20">{
                     message}</h2>
                 <Stack tokens={{ childrenGap: 20 }}>
                     {listItemsVertical}
