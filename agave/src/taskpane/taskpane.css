@@ -59,6 +59,8 @@
 
  .ms-welcome__features.ms-List .ms-ListItem > .ms-Icon { margin-right: 10px; }
 
+ .toolbar { }
+
  .ms-welcome__main .ms-Icon { margin-right: 10px; font-size: 14pt; }
 
  .ms-welcome__action.ms-Button--hero { margin-top: 30px; }

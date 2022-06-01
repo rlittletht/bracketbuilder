@@ -23,6 +23,7 @@ import ActionButton from "./ActionButton";
 import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
 import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
 import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
+import Toolbar, { ToolbarItem } from "./Toolbar";
 
 /* global console, Excel, require  */
 
@@ -43,11 +44,13 @@ export interface AppState
     selectedBracket: string;
     bracketOptions: BracketOption[];
     games: IBracketGame[];
+    topToolbar: ToolbarItem[];
+    mainToolbar: ToolbarItem[];
 }
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "Version 1.0.0.11";
+    static version: string = "Version 1.0.0.12";
 
     m_appContext: AppContext;
 
@@ -64,6 +67,8 @@ export default class App extends React.Component<AppProps, AppState>
             selectedBracket: "",
             bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
             games: [],
+            mainToolbar: [],
+            topToolbar: this.buildTopToolbar(),
     };
 
         this.m_appContext = new AppContext();
@@ -72,6 +77,145 @@ export default class App extends React.Component<AppProps, AppState>
             this.invalidateHeroList.bind(this),
             this.getSelectedBracket.bind(this),
             this.getGames.bind(this));
+    }
+
+    static async doUnitTests(appContext: IAppContext)
+    {
+        try
+        {
+            RegionSwapper_BottomGame.testRegionSwap1(appContext);
+            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
+            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
+            Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext);
+            //GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext);
+            //GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext);
+            //await StructureEditor.testGridClick(appContext);
+
+            appContext.log("tests complete");
+        }
+        catch (e)
+        {
+            appContext.log(`caught error; ${e}`);
+        }
+    }
+
+    buildTopToolbar(): ToolbarItem[]
+    {
+        let listItems: ToolbarItem[] = [];
+
+        listItems.push(
+            {
+                icon: "Undo",
+                primaryText: "Undo last operation",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.undoClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "Redo",
+                primaryText: "Redo last undone operation",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.redoClick(appContext);
+                    return true;
+                }
+            });
+
+        listItems.push(
+            {
+                icon: "AlertSolid",
+                primaryText: "Run Unit Tests",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await App.doUnitTests(appContext);
+                    return true;
+                }
+            });
+
+        return listItems;
+    }
+
+    buildMainToolbar(): ToolbarItem[]
+    {
+        let listItems: ToolbarItem[] = [];
+
+        listItems.push(
+            {
+                icon: "Upload",
+                primaryText: "Pick up game for move",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    await StructureEditor.captureSelectionForMove(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "Download",
+                primaryText: "Drop game for move",
+                cursor: "cursorPointer",
+                stateChecker: "rangeForMove",
+                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    await StructureEditor.moveGameAtSelectionClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "RemoveEvent",
+                primaryText: "Remove Game from bracket",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    await StructureEditor.removeGameAtSelectionClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "Repair",
+                primaryText: "Repair the current game",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    await StructureEditor.repairGameAtSelectionClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "Hide3",
+                primaryText: "Toggle showing data sheets",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    await StructureEditor.toggleShowDataSheetsClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "CompletedSolid",
+                primaryText: "Apply the finishing touches",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                    await StructureEditor.finalizeClick(appContext);
+                    return true;
+                }
+            });
+
+        return listItems;
     }
 
     getGames(): IBracketGame[]
@@ -118,17 +262,26 @@ export default class App extends React.Component<AppProps, AppState>
         AppContext.checkpoint("ihl.7");
         [format, title, list] = HeroList.buildHeroList(setupState);
         AppContext.checkpoint("ihl.8");
+        let items: ToolbarItem[] = [];
+
+        if (setupState == SetupState.Ready)
+        {
+            items = this.buildMainToolbar();
+        }
 
         // update the games list
 
         AppContext.checkpoint("ihl.9");
-        this.setState({
-            heroList: list,
-            heroListFormat: format,
-            heroTitle: title,
-            setupState: setupState,
-            games: games,
-            selectedBracket: bracketChoice });
+        this.setState(
+            {
+                heroList: list,
+                heroListFormat: format,
+                heroTitle: title,
+                setupState: setupState,
+                games: games,
+                selectedBracket: bracketChoice,
+                mainToolbar: items
+            });
     }
 
     async ensureBracketLoadedFromSheet(ctx: any, bracketTableName: string)
@@ -321,46 +474,29 @@ export default class App extends React.Component<AppProps, AppState>
                           ? (<Games appContext={this.m_appContext} bracketName="T9"/>)
                           : "";
 
+        const maybeToolbar =
+            this.state.setupState == SetupState.Ready
+                ? (<Toolbar message={""} appContext={this.m_appContext} items={this.state.mainToolbar} alignment="center"/>)
+                : "";
+
         return (
             <div className="ms-welcome">
                 <div style={{ background: "#cccccc", textAlign: "center" }}>
                     <img src={require('./../../../assets/ModernTrainLTR.png')} height="24" /><b>&gt;trainwreck&lt;</b>
                     <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
                 </div>
-                <ActionButton
-                    icon={"AlertSolid"}
-                    tooltip={"Run Unit Tests"}
-                    tooltipId={`rid-unit-tests`}
-                    appContext={this.m_appContext}
-                    disabled={false}
-                    bracketGame={null} delegate={ async (appContext: IAppContext, game: IBracketGame): Promise<boolean> =>
-                    {
-                        game;
-                        try
-                        {
-                            RegionSwapper_BottomGame.testRegionSwap1(appContext);
-                            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
-                            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
-                            Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext);
-                            //GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext);
-                            //GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext);
-                            //await StructureEditor.testGridClick(appContext);
-
-                            appContext.log("tests complete");
-                        }
-                        catch (e)
-                        {
-                            appContext.log(`caught error; ${e}`);
-                        }
-                        return true;
-                    }}/> {App.version}
+                <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
                 <div>
                     {this.state.errorMessage}
                 </div>
                 <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
                     {insertBracketChooserMaybe()}
                 </HeroList>
+                {maybeToolbar}
                 {games}
+                <div style={{ textAlign: "right" }}>
+                    {App.version} 
+                </div>
             </div>
         );
     }
