@@ -24,6 +24,8 @@ import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjus
 import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
 import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
 import Toolbar, { ToolbarItem } from "./Toolbar";
+import * as CSS from "csstype";
+import LogoHeader from "./LogoHeader";
 
 /* global console, Excel, require  */
 
@@ -461,9 +463,9 @@ export default class App extends React.Component<AppProps, AppState>
                 this.state.setupState == SetupState.NoBracketStructure)
             {
                 return (
-                    <BracketChooser
+                    <BracketChooser alignment="center"
                         updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
-                        bracketOptions={this.state.bracketOptions}/>
+                            bracketOptions={this.state.bracketOptions} />
                 );
             }
             else
@@ -478,13 +480,16 @@ export default class App extends React.Component<AppProps, AppState>
             this.state.setupState == SetupState.Ready
                 ? (<Toolbar message={""} appContext={this.m_appContext} items={this.state.mainToolbar} alignment="center"/>)
                 : "";
+        const versionLabelProps: CSS.Properties =
+        {
+            position: 'absolute',
+            bottom: 0,
+            right: 0
+        };
 
         return (
             <div className="ms-welcome">
-                <div style={{ background: "#cccccc", textAlign: "center" }}>
-                    <img src={require('./../../../assets/ModernTrainLTR.png')} height="24" /><b>&gt;trainwreck&lt;</b>
-                    <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
-                </div>
+                <LogoHeader/>
                 <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
                 <div>
                     {this.state.errorMessage}
@@ -494,7 +499,7 @@ export default class App extends React.Component<AppProps, AppState>
                 </HeroList>
                 {maybeToolbar}
                 {games}
-                <div style={{ textAlign: "right" }}>
+                <div style={versionLabelProps}>
                     {App.version} 
                 </div>
             </div>

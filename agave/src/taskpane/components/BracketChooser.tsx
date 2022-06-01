@@ -1,10 +1,11 @@
 import * as React from "react";
 import { IAppContext } from "../../AppContext";
-import { ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
+import { Stack, IStackStyles, IStackItemStyles, Alignment, ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
 import { BracketOption } from "../../Brackets/BracketStructureBuilder";
 
 export interface BracketChooserProps
 {
+    alignment: any,
     bracketOptions: BracketOption[],
     updateBracketChoiceDelegate: UpdateBracketChoiceDelegate
 }
@@ -73,7 +74,17 @@ export default class BracketChooser extends React.Component<BracketChooserProps,
     render()
     {
         const options: IComboBoxOption[] = [];
-        const comboBoxStyles: Partial<IComboBoxStyles> = { root: { maxWidth: 100 } };
+        const comboBoxStyles: Partial<IComboBoxStyles> =
+        {
+            root: {
+                display: "flex",
+                maxWidth: 100,
+                paddingRight: 0,
+//                alignItems: "right",
+//                textAlign: "right",
+                justifyContent: "end"
+            }
+        };
 
         this.props.bracketOptions.forEach(
             (value: BracketOption) =>
@@ -81,15 +92,28 @@ export default class BracketChooser extends React.Component<BracketChooserProps,
                 options.push({ key: value.key, text: value.name });
             });
 
+        const stackStyles: IStackItemStyles = {
+            root: {
+                alignItems: 'baseline',
+                display: 'flex',
+                overflow: 'hidden',
+            },
+        };
+
         return (
-            <div>
-                <ComboBox
-                    label="Size of Bracket"
-                    allowFreeform={true}
-                    onChange={this.updateSelectedBracket.bind(this)}
-                    styles={comboBoxStyles}
-                    options={options}
-                />
+            <div style={{ textAlign: this.props.alignment, display: "flex", justifyContent: "center" }}>
+                <Stack horizontal tokens={{ childrenGap: 10 }} styles={stackStyles}>
+                    <Stack.Item>Bracket Size:</Stack.Item>
+                    <Stack.Item>
+                        <ComboBox
+                            label=""
+                            allowFreeform={true}
+                            onChange={this.updateSelectedBracket.bind(this)}
+                            styles={comboBoxStyles}
+                            options={options}
+                        />
+                    </Stack.Item>
+                </Stack>
             </div>
         );
     }
