@@ -76,6 +76,11 @@ export class AppContext implements IAppContext
         this.m_getGames = getGames;
     }
 
+    setLogMessageDelegate(addMessageDelegate: AddLogMessageDelegate)
+    {
+        this.m_addLogMessageDelegate = addMessageDelegate;
+    }
+
     static checkpoint(log: string)
     {
         log;

@@ -26,6 +26,8 @@ import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "../../BracketEditor/G
 import Toolbar, { ToolbarItem } from "./Toolbar";
 import * as CSS from "csstype";
 import LogoHeader from "./LogoHeader";
+import StatusBox from "./StatusBox";
+import { Alignment, DefaultPalette, Slider, Stack, IStackStyles, IStackTokens, IStackItemStyles } from '@fluentui/react';
 
 /* global console, Excel, require  */
 
@@ -52,7 +54,7 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "Version 1.0.0.12";
+    static version: string = "1.0.0.12";
 
     m_appContext: AppContext;
 
@@ -482,26 +484,54 @@ export default class App extends React.Component<AppProps, AppState>
                 : "";
         const versionLabelProps: CSS.Properties =
         {
-            position: 'absolute',
-            bottom: 0,
-            right: 0
+            textAlign: 'right'
+        };
+
+        const gamesStyle: CSS.Properties = { };
+        const headerItemStyle: IStackItemStyles = { };
+        const bodyHeaderItemStyle: IStackItemStyles = { };
+        const footerItemStyle: IStackItemStyles =
+        {
+            root: { textAlign: 'start' }
+        };
+        const bodyItemStyle: IStackItemStyles =
+        {
+            root: { overflow: 'auto' }
+        };
+
+        const stackStyles: IStackStyles =
+        {
+            root:
+            {
+                height: '99vh'
+            }
         };
 
         return (
-            <div className="ms-welcome">
-                <LogoHeader/>
-                <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
-                <div>
-                    {this.state.errorMessage}
-                </div>
-                <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
-                    {insertBracketChooserMaybe()}
-                </HeroList>
-                {maybeToolbar}
-                {games}
-                <div style={versionLabelProps}>
-                    {App.version} 
-                </div>
+            <div>
+                <Stack styles={stackStyles}>
+                    <Stack.Item styles={headerItemStyle}>
+                        <LogoHeader/>
+                        <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
+                    </Stack.Item>
+                    <Stack.Item styles={bodyHeaderItemStyle}>
+                        <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
+                            {insertBracketChooserMaybe()}
+                        </HeroList>
+                        {maybeToolbar}
+                    </Stack.Item>
+                    <Stack.Item styles={bodyItemStyle}>
+                        <div style={ gamesStyle }>
+                            {games}
+                        </div>
+                    </Stack.Item>
+                    <Stack.Item styles={footerItemStyle}>
+                        <StatusBox appContext={this.m_appContext}/>
+                        <div style={versionLabelProps}>
+                            {App.version}
+                        </div>
+                    </Stack.Item>
+                </Stack>
             </div>
         );
     }

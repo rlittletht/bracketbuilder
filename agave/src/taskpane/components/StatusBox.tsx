@@ -10,15 +10,17 @@ import { RangeInfo } from "../../Interop/Ranges";
 import { Alignment, DefaultPalette, Slider, Stack, IStackStyles, IStackTokens, IStackItemStyles } from '@fluentui/react';
 import * as CSS from "csstype";
 
-export interface LogoHeaderProps
+export interface StatusBoxProps
 {
+    appContext: IAppContext;
 }
 
-export interface LogoHeaderState
+export interface StatusBoxState
 {
+    message: string
 }
 
-export default class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState>
+export default class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 {
     constructor(props, context)
     {
@@ -26,21 +28,33 @@ export default class LogoHeader extends React.Component<LogoHeaderProps, LogoHea
 
         this.state =
         {
+            message: ""
         }
+
+        props.appContext.setLogMessageDelegate(this.addLogMessage.bind(this));
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: App.addLogMessage
+
+        Add a log message to the UI
+    ----------------------------------------------------------------------------*/
+    addLogMessage(message: string)
+    {
+        this.setState({ message: message });
     }
 
     render()
     {
-        const headerStyles: CSS.Properties =
+        const styles: CSS.Properties =
         {
-            //background: '#cccccc',
-            textAlign: 'center'
+            background: '#cccccc',
+            textAlign: 'left'
         };
 
         return (
-            <div style={headerStyles}>
-                <img src={require('./../../../assets/ModernTrainLTR.png')} height="24"/><b>&gt;trainwreck&lt;</b>
-                <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
-            </div>)
+            <div style={styles}>
+                {this.state.message}
+            </div>);
     }
 }
