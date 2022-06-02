@@ -95,7 +95,7 @@ export default class App extends React.Component<AppProps, AppState>
             //GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext);
             //await StructureEditor.testGridClick(appContext);
 
-            appContext.log("tests complete");
+            appContext.logTimeout("tests complete", 5000);
         }
         catch (e)
         {

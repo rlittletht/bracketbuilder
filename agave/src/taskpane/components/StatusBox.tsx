@@ -22,6 +22,16 @@ export interface StatusBoxState
 
 export default class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 {
+    clearCount: number = 0;
+    m_pendingTimer: any;
+
+    delayClearMessage()
+    {
+        this.setState({ message: "" });
+        this.m_pendingTimer = null;
+    }
+
+
     constructor(props, context)
     {
         super(props, context);
@@ -31,17 +41,28 @@ export default class StatusBox extends React.Component<StatusBoxProps, StatusBox
             message: ""
         }
 
-        props.appContext.setLogMessageDelegate(this.addLogMessage.bind(this));
+        props.appContext.setLogMessageDelegate(this.addLogMessage.bind(this), this.delayClearMessage.bind(this));
     }
 
     /*----------------------------------------------------------------------------
         %%Function: App.addLogMessage
 
         Add a log message to the UI
+
     ----------------------------------------------------------------------------*/
-    addLogMessage(message: string)
+    addLogMessage(message: string, msecVisible: number = 0)
     {
         this.setState({ message: message });
+        if (this.m_pendingTimer != null)
+        {
+            clearTimeout(this.m_pendingTimer);
+            this.m_pendingTimer = null;
+        }
+
+        if (msecVisible && msecVisible != 0)
+        {
+            this.m_pendingTimer = setTimeout(() => this.delayClearMessage(), msecVisible);
+        }
     }
 
     render()

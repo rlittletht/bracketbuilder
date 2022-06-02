@@ -3,6 +3,8 @@ import { IBracketGame } from "./BracketEditor/BracketGame";
 export interface IAppContext
 {
     log(message: string);
+    logTimeout(message: string, msecVisible: number);
+    logError(message:string, msecVisible: number);
     /*async*/ invalidateHeroList(ctx: any);
     getSelectedBracket();
     getGames();
@@ -10,7 +12,7 @@ export interface IAppContext
 
 export interface AddLogMessageDelegate
 {
-    (message: string): void;
+    (message: string, msecVisible: number): void;
 }
 
 export interface InvalidateHeroListDelegate
@@ -35,10 +37,22 @@ export class AppContext implements IAppContext
     m_getSelectedBracket: GetSelectedBracketDelegate;
     m_getGames: GetGamesDelegate;
 
-    log(message: string)
+    log(message: string, msecVisible: number = 0)
     {
         if (this.m_addLogMessageDelegate != null)
-            this.m_addLogMessageDelegate(message);
+            this.m_addLogMessageDelegate(message, msecVisible);
+    }
+
+    logTimeout(message: string, msecVisible: number)
+    {
+        if (this.m_addLogMessageDelegate != null)
+            this.m_addLogMessageDelegate(message, msecVisible);
+    }
+
+    logError(message: string, msecVisible: number = 0)
+    {
+        if (this.m_addLogMessageDelegate != null)
+            this.m_addLogMessageDelegate(message, msecVisible);
     }
 
     async invalidateHeroList(ctx: any)
