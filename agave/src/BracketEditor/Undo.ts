@@ -1,5 +1,5 @@
 import { Grid } from "./Grid";
-import { StructureEditor } from "./StructureEditor";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { IAppContext } from "../AppContext";
 
 export class UndoManager

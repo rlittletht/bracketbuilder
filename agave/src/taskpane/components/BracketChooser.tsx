@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import { IAppContext } from "../../AppContext";
 import { Stack, IStackStyles, IStackItemStyles, Alignment, ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
 import { BracketOption } from "../../Brackets/BracketStructureBuilder";
@@ -20,7 +21,7 @@ export interface UpdateBracketChoiceDelegate
     (selectedBracket: string): void;
 }
 
-export default class BracketChooser extends React.Component<BracketChooserProps, BracketChooserState>
+export class BracketChooser extends React.Component<BracketChooserProps, BracketChooserState>
 {
     constructor(props, context)
     {

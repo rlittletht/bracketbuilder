@@ -10,7 +10,7 @@ export interface SetupListProps {
     items: SetupListItem[];
 }
 
-export default class SetupList extends React.Component<SetupListProps>
+export class SetupList extends React.Component<SetupListProps>
 {
     render()
     {

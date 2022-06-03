@@ -1,9 +1,7 @@
 import * as React from "react";
 import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
-import { StructureEditor } from "../../BracketEditor/StructureEditor";
 import { IAppContext } from "../../AppContext";
-import { useId } from "@fluentui/react-hooks";
 import { TooltipHost, ITooltipHostStyles } from "@fluentui/react/lib/Tooltip";
 
 export interface ActionButtonProps
@@ -22,7 +20,7 @@ export interface ActionButtonState
     bracketGame: IBracketGame;
 }
 
-export default class ActionButton extends React.Component<ActionButtonProps, ActionButtonState>
+export class ActionButton extends React.Component<ActionButtonProps, ActionButtonState>
 {
     constructor(props, context)
     {

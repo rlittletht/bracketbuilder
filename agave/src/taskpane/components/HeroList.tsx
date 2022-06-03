@@ -1,13 +1,10 @@
 import * as React from "react";
+
 import { IAppContext } from "../../AppContext";
-import { Stack } from "@fluentui/react";
-import ActionButton from "./ActionButton";
+import { ActionButton } from "./ActionButton";
 import { SetupState, SetupBook } from "../../Setup";
-import { StructureEditor } from "../../BracketEditor/StructureEditor";
-import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
-import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
-import { IBracketGame } from "../../BracketEditor/BracketGame";
 import { RangeInfo } from "../../Interop/Ranges";
+import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
 
 export interface HeroListItem
 {
@@ -36,7 +33,7 @@ export interface HeroListState
 {
     rangeForMove: RangeInfo
 }
-export default class HeroList extends React.Component<HeroListProps, HeroListState>
+export class HeroList extends React.Component<HeroListProps, HeroListState>
 {
     constructor(props, context)
     {

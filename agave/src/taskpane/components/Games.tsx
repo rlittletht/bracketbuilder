@@ -1,11 +1,8 @@
 import * as React from "react";
 import { IAppContext } from "../../AppContext";
-import { ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
-import { BracketOption, BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
-import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
-import { GameItemProps, GameItemState } from "./GameItem"
-import GameItem from "./GameItem"
+import { BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
 import { BracketDefinition } from "../../Brackets/BracketDefinitions";
+import { GameItem } from "./GameItem"
 
 // import styles from '../taskpane.css';
 
@@ -18,7 +15,7 @@ export interface GamesState {
 }
 
 
-export default class Games extends React.Component<GamesProps, GamesState>
+export class Games extends React.Component<GamesProps, GamesState>
 {
     constructor(props, context) {
         super(props, context);

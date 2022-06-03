@@ -8,7 +8,7 @@ export interface ProgressProps
     title: string;
 }
 
-export default class Progress extends React.Component<ProgressProps>
+export class Progress extends React.Component<ProgressProps>
 {
     render()
     {

@@ -1,33 +1,31 @@
 import * as React from "react";
+import * as CSS from "csstype";
+
 import { DefaultButton } from "@fluentui/react";
 import { ComboBox } from "@fluentui/react";
 
-import Header from "./Header";
-import HeroList, { HeroListItem, HeroListFormat } from "./HeroList";
-import Progress from "./Progress";
+import { HeroList, HeroListItem, HeroListFormat } from "./HeroList";
+import { Progress } from "./Progress";
 import { SetupState } from "../../Setup";
 import { SetupBook } from "../../Setup";
 import { IAppContext, AppContext } from "../../AppContext";
-import BracketChooser, { UpdateBracketChoiceDelegate } from "./BracketChooser";
+import { BracketChooser, UpdateBracketChoiceDelegate } from "./BracketChooser";
 import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
-import GameItem from "./GameItem";
-import Games from "./Games";
-import { StructureEditor } from "../../BracketEditor/StructureEditor";
-import { RangeInfo, Ranges } from "../../Interop/Ranges";
+import { GameItem } from "./GameItem";
+import { Games } from "./Games";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
 import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
 import { BracketDefinition, _bracketManager } from "../../Brackets/BracketDefinitions";
 import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
 import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
 import { TableIO } from "../../Interop/TableIO";
-import ActionButton from "./ActionButton";
 import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
 import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
 import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
-import Toolbar, { ToolbarItem } from "./Toolbar";
-import * as CSS from "csstype";
-import LogoHeader from "./LogoHeader";
-import StatusBox from "./StatusBox";
-import { Alignment, DefaultPalette, Slider, Stack, IStackStyles, IStackTokens, IStackItemStyles } from '@fluentui/react';
+import { Toolbar, ToolbarItem } from "./Toolbar";
+import { LogoHeader } from "./LogoHeader";
+import { StatusBox } from "./StatusBox";
+import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
 
 /* global console, Excel, require  */
 

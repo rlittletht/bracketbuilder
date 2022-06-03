@@ -1,26 +1,26 @@
 
-import { IBracketGame, BracketGame } from "./BracketGame";
-import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
-import { FormulaBuilder } from "./FormulaBuilder";
-import { IAppContext, AppContext } from "../AppContext";
-import { RangeInfo, Ranges, RangeOverlapKind } from "../Interop/Ranges";
-import { OADate } from "../Interop/Dates";
-import { Grid } from "./Grid";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { GameFormatting } from "./GameFormatting";
-import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
-import { GameLines } from "./GameLines";
-import { GridGameInsert } from "./GridGameInsert";
-import { GridChange, GridChangeOperation } from "./GridChange";
-import { GridItem } from "./GridItem";
-import { TeamNameMap, BracketSources } from "../Brackets/BracketSources";
-import { Tables } from "../Interop/Tables";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { _undoManager } from "./Undo";
-import { DispatchWithCatchDelegate, Dispatcher } from "./Dispatcher";
-import { GridRanker } from "./GridRanker";
-import { GameMover } from "./GridAdjusters/GameMover";
-import { GridBuilder } from "../Brackets/GridBuilder";
+import { IBracketGame, BracketGame } from "../BracketGame";
+import { BracketDefinition, GameDefinition } from "../../Brackets/BracketDefinitions";
+import { FormulaBuilder } from "../FormulaBuilder";
+import { IAppContext, AppContext } from "../../AppContext";
+import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
+import { OADate } from "../../Interop/Dates";
+import { Grid } from "../Grid";
+import { BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
+import { GameFormatting } from "../GameFormatting";
+import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
+import { GameLines } from "../GameLines";
+import { GridGameInsert } from "../GridGameInsert";
+import { GridChange, GridChangeOperation } from "../GridChange";
+import { GridItem } from "../GridItem";
+import { TeamNameMap, BracketSources } from "../../Brackets/BracketSources";
+import { Tables } from "../../Interop/Tables";
+import { GridAdjust } from "../GridAdjusters/GridAdjust";
+import { _undoManager } from "../Undo";
+import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
+import { GridRanker } from "../GridRanker";
+import { GameMover } from "../GridAdjusters/GameMover";
+import { GridBuilder } from "../../Brackets/GridBuilder";
 
 let _moveSelection: RangeInfo = null;
 

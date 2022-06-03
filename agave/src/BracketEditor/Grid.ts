@@ -2,7 +2,7 @@ import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
 import { BracketDefinition } from "../Brackets/BracketDefinitions";
 import { BracketGame, IBracketGame } from "./BracketGame";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { StructureEditor } from "./StructureEditor";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { GameLines } from "./GameLines";
 import { GameFormatting } from "./GameFormatting";
 import { GridGameInsert } from "./GridGameInsert";

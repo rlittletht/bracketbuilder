@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
-import { StructureEditor } from "../../BracketEditor/StructureEditor";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
 import { IAppContext } from "../../AppContext";
 
 export interface InsertButtonProps
@@ -15,7 +15,7 @@ export interface InsertButtonState
     bracketGame: IBracketGame;
 }
 
-export default class InsertButton extends React.Component<InsertButtonProps, InsertButtonState>
+export class InsertButton extends React.Component<InsertButtonProps, InsertButtonState>
 {
     constructor(props, context)
     {
