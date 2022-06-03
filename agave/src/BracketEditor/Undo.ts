@@ -1,6 +1,7 @@
 import { Grid } from "./Grid";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { IAppContext } from "../AppContext";
+import { ApplyGridChange } from "./StructureEditor/ApplyGridChange";
 
 export class UndoManager
 {
@@ -22,7 +23,7 @@ export class UndoManager
         let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
         let gridNew: Grid = this.m_undoStack.pop();
 
-        await StructureEditor.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
+        await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
         this.m_redoStack.push(grid.clone());
     }
 
@@ -35,7 +36,7 @@ export class UndoManager
         let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
         let gridNew: Grid = this.m_redoStack.pop();
 
-        await StructureEditor.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
+        await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
         this.m_undoStack.push(grid.clone());
     }
 }
