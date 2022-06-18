@@ -218,7 +218,6 @@ export class BracketStructureBuilder
         await GridBuilder.buildGridSheet(ctx);
         await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
         await BracketSources.buildBracketSourcesSheet(ctx, fastTables, bracketDefinition);
-        await GlobalDataBuilder.buildGlobalDataSheet(ctx);
     }
 
 }

@@ -2,6 +2,7 @@ import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 import { GameFormatting } from "../BracketEditor/GameFormatting";
+import { GlobalDataBuilder } from "./GlobalDataBuilder";
 
 export class GridBuilder
 {
@@ -211,6 +212,7 @@ export class GridBuilder
         this.formatColumns(sheet, ["F:F"], 48);
         this.addDayGridFormulas(sheet, 4, 6, GridBuilder.maxDays);
 
+        await GlobalDataBuilder.addGlobalDataToSheet(ctx, sheet, 4);
 //        await this.addTipsAndDirections(ctx, sheet);
 
         sheet.showGridlines = false;
