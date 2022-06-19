@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as CSS from "csstype";
+import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
 
 export interface LogoHeaderProps
 {
@@ -28,10 +29,34 @@ export class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState
             textAlign: 'center'
         };
 
+        const stackStyles: IStackStyles =
+        {
+            root:
+            {
+                width: "100%"
+            }
+        }
+
+        const stackItemCenter: IStackStyles =
+        {
+            root:
+            {
+                textAlign: 'center'
+            }
+        }
         return (
             <div style={headerStyles}>
-                <img src={require('./../../../assets/ModernTrainLTR.png')} height="24"/><b>&gt;trainwreck&lt;</b>
-                <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
+                <Stack horizontal>
+                    <Stack.Item>
+                        <img src={require('./../../../assets/ModernTrainLTR.png')} height="24" />
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <b>&gt;trainwreck&lt;</b>
+                    </Stack.Item>
+                    <Stack.Item>
+                        <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
+                    </Stack.Item>
+                </Stack>
             </div>)
     }
 }
