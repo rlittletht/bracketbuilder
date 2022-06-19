@@ -39,7 +39,7 @@
   "devDependencies": {
     "@babel/core": "^7.13.10",
     "@babel/preset-typescript": "^7.13.0",
-    "@types/office-js": "^1.0.246",
+    "@types/office-js": "^1.0.264",
     "@types/office-runtime": "^1.0.17",
     "@types/react": "^16.8.22",
     "@types/react-dom": "^16.8.4",

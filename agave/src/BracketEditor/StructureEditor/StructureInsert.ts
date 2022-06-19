@@ -47,10 +47,6 @@ export class StructureInsert
         formulas.push(["", ""]);
         formulas.push(["Champion", ""]);
 
-        rng.load("rowIndex");
-        rng.load("columnIndex");
-        await ctx.sync();
-
         let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
             insertRangeInfo.FirstRow,
             insertRangeInfo.FirstColumn,
@@ -59,7 +55,6 @@ export class StructureInsert
 
         rngTarget.formulas = formulas;
         ctx.trackedObjects.add(rngTarget);
-        await ctx.sync();
 
         // if there are any existing global names for this game, they will get deleted -- 
         // by now, we are committed to this game going in this spot
@@ -81,6 +76,59 @@ export class StructureInsert
         ctx.trackedObjects.remove(sheet);
     }
 
+    static setAndFormatGameInfo(
+        sheet: Excel.Worksheet,
+        gameInfoRange: RangeInfo,
+        gameInfoRangeInfo: RangeInfo,
+        game: IBracketGame1,
+        connectedTop: boolean,
+        connectedBottom: boolean)
+    {
+        let formulas: any[][] = [];
+        let topString: string = game.FormatLoser();
+        let bottomString: string = "";
+
+        if (topString == "" && !connectedTop)
+        {
+            topString = game.TopSource;
+            if (topString != "" && topString[0] != 'L')
+                topString = "";
+        }
+
+        if (!connectedBottom)
+        {
+            bottomString = game.BottomSource;
+            if (bottomString != "" && bottomString[0] != 'L')
+                bottomString = "";
+        }
+
+        formulas.push([topString]);
+        this.pushPadding(
+            formulas,
+            [""],
+            gameInfoRangeInfo.FirstRow - gameInfoRange.FirstRow - 1);
+        formulas.push(
+            [
+                FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum)
+            ]);
+        formulas.push([""]);
+        formulas.push([FormulaBuilder.getTimeFormulaFromGameNumber(game.GameNum)]);
+
+        this.pushPadding(formulas, [""], gameInfoRange.LastRow - gameInfoRangeInfo.LastRow);
+        formulas.push([""]);
+        formulas.push([bottomString]);
+
+        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, gameInfoRange);
+        rng.formulas = formulas;
+
+        GameFormatting.formatGameInfoBodyTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(0, 1, 0, 1)));
+        GameFormatting.formatGameInfoTimeTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(2, 1, 0, 1)));
+        GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.offset(0, 1, 0, 1)), Excel.VerticalAlignment.top);
+        GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.bottomLeft().offset(0, 1, 0, 1)), Excel.VerticalAlignment.bottom);
+
+        return;
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
@@ -88,7 +136,13 @@ export class StructureInsert
         this will insert the text and set the global cell names for all the parts
         of the game. 
     ----------------------------------------------------------------------------*/
-    static async insertGameAtRange(appContext: IAppContext1, ctx: any, game: IBracketGame1, insertRangeInfo: RangeInfo)
+    static async insertGameAtRange(
+        appContext: IAppContext1,
+        ctx: any,
+        game: IBracketGame1,
+        insertRangeInfo: RangeInfo,
+        connectedTop: boolean,
+        connectedBottom: boolean)
     {
         // don't automatically remove games anymore in this function -- callers need to
         // take care of that now
@@ -129,19 +183,12 @@ export class StructureInsert
             - (insertRangeInfo.FirstRow + 1));
 
         formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId}`]);
-        formulas.push(["", ""]);
-        formulas.push([FormulaBuilder.getTimeFormulaFromGameNumber(game.GameNum), ""]);
-        formulas.push(["", ""]);
-        formulas.push([game.FormatLoser(), ""]);
+        // we will fill in the game info text later. for now just push space
 
-        this.pushPadding(formulas, ["", ""], insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
+        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
 
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
-
-        rng.load("rowIndex");
-        rng.load("columnIndex");
-        await ctx.sync();
 
         let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
             insertRangeInfo.FirstRow,
@@ -150,8 +197,15 @@ export class StructureInsert
             insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
 
         rngTarget.formulas = formulas;
+        this.setAndFormatGameInfo(
+            rng.worksheet,
+            new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4 - ((insertRangeInfo.RowCount - 3) % 4), insertRangeInfo.FirstColumn, 1),
+            gameInfoRangeInfo,
+            game,
+            connectedTop,
+            connectedBottom);
+
         ctx.trackedObjects.add(rngTarget);
-        await ctx.sync();
 
         // if there are any existing global names for this game, they will get deleted -- 
         // by now, we are committed to this game going in this spot
@@ -163,9 +217,9 @@ export class StructureInsert
         GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
         await Ranges.createOrReplaceNamedRange(ctx, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        GameFormatting.formatGameInfoBodyTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
-        GameFormatting.formatGameInfoTimeTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 2, insertRangeInfo.FirstColumn, 1, 1));
-        GameFormatting.formatGameInfoAdvanceToTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 4, insertRangeInfo.FirstColumn, 1, 1));
+//        GameFormatting.formatGameInfoBodyTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+//        GameFormatting.formatGameInfoTimeTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 2, insertRangeInfo.FirstColumn, 1, 1));
+//        GameFormatting.formatGameInfoAdvanceToTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 4, insertRangeInfo.FirstColumn, 1, 1));
 
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));

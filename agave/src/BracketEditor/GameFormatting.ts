@@ -33,7 +33,7 @@ export class GameFormatting
         range.format.font.name = "Calibri";
         range.format.font.size = 9;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        range.format.verticalAlignment = Excel.VerticalAlignment.top;
+        range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
     }
 
     /*----------------------------------------------------------------------------
@@ -44,19 +44,21 @@ export class GameFormatting
         range.format.font.name = "Calibri";
         range.format.font.size = 9;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
+        range.format.verticalAlignment = Excel.VerticalAlignment.top;
         range.numberFormat = [["h:mm AM/PM"]];
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatGameInfoAdvanceToText
     ----------------------------------------------------------------------------*/
-    static formatGameInfoAdvanceToTextRequest(range: Excel.Range)
+    static formatGameInfoAdvanceToTextRequest(range: Excel.Range, align: Excel.VerticalAlignment)
     {
         range.format.font.name = "Calibri";
-        range.format.font.size = 6;
+        range.format.font.size = 8;
+        range.format.font.bold = true;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        range.format.verticalAlignment = Excel.VerticalAlignment.top;
+        range.format.verticalAlignment = align;
+        range.format.font.color = "#ff0000";
     }
 
     /*----------------------------------------------------------------------------

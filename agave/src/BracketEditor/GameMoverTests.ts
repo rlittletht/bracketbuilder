@@ -50,7 +50,7 @@ export class GameMoverTests
         gridExpected.addGameRange(RangeInfo.createFromCornersCoord(83, 9, 93, 11,), 7, false).inferGameInternals();
         gridExpected.addGameRange(RangeInfo.createFromCornersCoord(31, 9, 47, 11,), 9, false).inferGameInternals();
 
-        const changes: GridChange[] = gridNew.diff(gridExpected);
+        const changes: GridChange[] = gridNew.diff(gridExpected, "T9");
         if (changes.length != 0)
         {
             grid.logChanges(changes);
@@ -98,7 +98,7 @@ export class GameMoverTests
         gridExpected.addGameRange(RangeInfo.createFromCornersCoord(83, 9, 93, 11,), 7, false).inferGameInternals();
         gridExpected.addGameRange(RangeInfo.createFromCornersCoord(31, 9, 47, 11,), 9, false).inferGameInternals();
 
-        const changes: GridChange[] = gridNew.diff(gridExpected);
+        const changes: GridChange[] = gridNew.diff(gridExpected, "T9");
         if (changes.length != 0) {
             grid.logChanges(changes);
             throw Error(`testMoveItemUpPushingOneGameUpMaintainBuffer: ${grid.logChangesToString(changes)}`);

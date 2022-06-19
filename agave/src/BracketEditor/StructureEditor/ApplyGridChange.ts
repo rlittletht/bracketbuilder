@@ -17,7 +17,7 @@ export class ApplyGridChange
     static async diffAndApplyChanges(appContext: IAppContext, ctx: any, grid: Grid, gridNew: Grid, bracketName: string)
     {
         // now, diff the grids
-        const changes: GridChange[] = grid.diff(gridNew);
+        const changes: GridChange[] = grid.diff(gridNew, bracketName);
 
         grid.logChanges(changes);
 
@@ -96,7 +96,7 @@ export class ApplyGridChange
         if (game.IsChampionship)
             await StructureInsert.insertChampionshipGameAtRange(appContext, ctx, game, change.Range);
         else
-            await StructureInsert.insertGameAtRange(appContext, ctx, game, change.Range);
+            await StructureInsert.insertGameAtRange(appContext, ctx, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
         AppContext.checkpoint("appc.18");
     }
 

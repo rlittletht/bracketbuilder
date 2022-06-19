@@ -194,7 +194,7 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.diff
     ----------------------------------------------------------------------------*/
-    diff(gridRight: Grid): GridChange[]
+    diff(gridRight: Grid, bracket: string): GridChange[]
     {
         let changes: GridChange[] = [];
 
@@ -225,10 +225,22 @@ export class Grid
 
             if (kind != RangeOverlapKind.Equal
                 || itemRight.GameId != itemLeft.GameId)
-
             {
+                let connectedTop: boolean = false;
+                let connectedBottom: boolean = false;
+
+                if (!itemRight.isLineRange)
+                {
+                    const gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
+
+                    itemRight.inferGameInternals();
+                    const [top, bottom] = gridRight.getFeederConnectionsForGame(itemRight, gameStatic);
+
+                    connectedTop = top != null;
+                    connectedBottom = bottom != null;
+                }
                 // any kind of difference means this is an add
-                changes.push(new GridChange(GridChangeOperation.Insert, itemRight));
+                changes.push(new GridChange(GridChangeOperation.Insert, itemRight, connectedTop, connectedBottom));
             }
         }
 
@@ -557,7 +569,7 @@ export class Grid
     {
         const item: GridItem = this.findGameItem(gameId);
 
-        if (item == null)
+        if (item == null || item.GameNumberRange == null)
             return null;
 
         return item.OutgoingFeederPoint;

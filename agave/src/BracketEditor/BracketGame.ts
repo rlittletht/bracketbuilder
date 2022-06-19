@@ -50,6 +50,8 @@ export interface IBracketGame
     get TopTeamRange(): RangeInfo;
     get BottomTeamRange(): RangeInfo;
     get GameIdRange(): RangeInfo;
+    get TopSource(): string;
+    get BottomSource(): string;
 }
 
 
@@ -179,6 +181,16 @@ export class BracketGame implements IBracketGame
                    : this.m_teamNameTop;
     }
 
+    get TopSource(): string
+    {
+        return this.m_swapTopBottom ? this.BracketGameDefinition.bottomSource : this.BracketGameDefinition.topSource;
+    }
+
+    get BottomSource(): string
+    {
+        return !this.m_swapTopBottom ? this.BracketGameDefinition.bottomSource : this.BracketGameDefinition.topSource;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.TopTeamName
     ----------------------------------------------------------------------------*/
@@ -233,7 +245,7 @@ export class BracketGame implements IBracketGame
         if (this.m_bracketGameDefinition.loser == "")
             return "";
         else
-            return `Loser to ${this.m_bracketGameDefinition.loser}`;
+            return `L to ${this.m_bracketGameDefinition.loser.substring(1)}`;
     }
 
     /*----------------------------------------------------------------------------

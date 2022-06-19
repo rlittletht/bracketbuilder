@@ -86,7 +86,15 @@ export class FormulaBuilder
     ----------------------------------------------------------------------------*/
     static getFieldFormulaFromGameNumber(gameNum: number): string
     {
-        return `=INDEX(BracketSourceData[Field],MATCH(${gameNum}, BracketSourceData[GameNum],0))`;
+        return `=${this.getFieldFormulaTextFromGameNumber(gameNum)}`;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getFieldFormulaTextFromGameNumber
+    ----------------------------------------------------------------------------*/
+    static getFieldFormulaTextFromGameNumber(gameNum: number): string
+    {
+        return `INDEX(BracketSourceData[Field],MATCH(${gameNum}, BracketSourceData[GameNum],0))`;
     }
 
     /*----------------------------------------------------------------------------
@@ -96,9 +104,16 @@ export class FormulaBuilder
     ----------------------------------------------------------------------------*/
     static getTimeFormulaFromGameNumber(gameNum: number): string
     {
-        return `=INDEX(BracketSourceData[Time],MATCH(${gameNum}, BracketSourceData[GameNum],0))`;
+        return `=${this.getTimeFormulaTextFromGameNumber(gameNum)}`;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getTimeFormulaTextFromGameNumber
+    ----------------------------------------------------------------------------*/
+    static getTimeFormulaTextFromGameNumber(gameNum: number): string
+    {
+        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameNum}, BracketSourceData[GameNum],0)), "h:MM AM/PM")`;
+    }
     /*----------------------------------------------------------------------------
         %%Function: FormulaBuilder.getSourceGameNumberIfWinner
     ----------------------------------------------------------------------------*/

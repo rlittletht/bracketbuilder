@@ -10,18 +10,23 @@ export class GridItem
     m_gameNumberRange: RangeInfo = null;
     m_swapTopBottom: boolean = false; // we will save this from the bound game - allows us to find connecting lines
 
-    m_gameNum: number = -1;
+    m_gameId: number = -1;
 
     get isLineRange(): boolean
     {
-        return this.m_gameNum == -1;
+        return this.m_gameId == -1;
     }
 
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
 
     get GameId(): number
     {
-        return this.m_gameNum;
+        return this.m_gameId;
+    }
+
+    get GameNumber(): number
+    {
+        return this.m_gameId - 1;
     }
 
     get TopTeamRange(): RangeInfo
@@ -75,10 +80,10 @@ export class GridItem
             this.m_range.rebase(oldTopRow, newTopRow);
     }
 
-    constructor(range: RangeInfo, gameNum: number, isLine: boolean)
+    constructor(range: RangeInfo, gameId: number, isLine: boolean)
     {
         this.m_range = RangeInfo.createFromRangeInfo(range);
-        this.m_gameNum = isLine ? -1 : gameNum;
+        this.m_gameId = isLine ? -1 : gameId;
     }
 
     /*----------------------------------------------------------------------------
@@ -94,7 +99,8 @@ export class GridItem
     {
         this.m_topTeamRange = this.m_range.topLeft();
         this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
-        this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        if (this.m_range.RowCount > 7)
+            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
     }
 
     setAndInferGameInternals(range: RangeInfo)

@@ -10,6 +10,8 @@ export class GridChange
 {
     m_changeOp: GridChangeOperation;
     m_gridItem: GridItem;
+    m_connectedTop: boolean;
+    m_connectedBottom: boolean;
 
     get ChangeOp() { return this.m_changeOp };
 
@@ -21,10 +23,16 @@ export class GridChange
 
     get IsLine() { return this.m_gridItem.isLineRange; }
 
-    constructor(op: GridChangeOperation, item: GridItem)
+    get IsConnectedTop() { return this.m_connectedTop; }
+
+    get IsConnectedBottom() { return this.m_connectedBottom; }
+
+    constructor(op: GridChangeOperation, item: GridItem, connectedTop: boolean = false, connectedBottom: boolean = false)
     {
         this.m_changeOp = op;
         this.m_gridItem = item;
+        this.m_connectedTop = connectedTop;
+        this.m_connectedBottom = connectedBottom;
     }
 
     toString(): string
