@@ -2,7 +2,7 @@ import { IAppContext, IAppContext as IAppContext1, IAppContext as IAppContext2, 
 import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
 import { GameLines } from "../GameLines";
 import { GameFormatting } from "../GameFormatting";
-import { BracketGame, IBracketGame, IBracketGame as IBracketGame1, IBracketGame as IBracketGame2 } from "../BracketGame";
+import { BracketGame, IBracketGame } from "../BracketGame";
 import { TeamNameMap, BracketSources } from "../../Brackets/BracketSources";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
@@ -215,7 +215,7 @@ export class StructureRemove
         If only the rangeinfo is provided, then use that as the range to remove.
         If both are provided, they must be consistent.
     ----------------------------------------------------------------------------*/
-    static async removeGame(appContext: IAppContext1, ctx: any, game: IBracketGame1, range: RangeInfo, removeConnections: boolean)
+    static async removeGame(appContext: IAppContext1, ctx: any, game: IBracketGame, range: RangeInfo, removeConnections: boolean)
     {
         AppContext.checkpoint("remgm.1");
 
@@ -259,7 +259,7 @@ export class StructureRemove
         If there is no selected range, then find the given game and remove it.
 
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGame(appContext: IAppContext2, ctx: any, game: IBracketGame2, bracketName: string)
+    static async findAndRemoveGame(appContext: IAppContext2, ctx: any, game: IBracketGame, bracketName: string)
     {
         // load the grid
         let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);

@@ -1,5 +1,5 @@
 import { IAppContext, IAppContext as IAppContext1, IAppContext as IAppContext2 } from "../../AppContext";
-import { IBracketGame, IBracketGame as IBracketGame1, IBracketGame as IBracketGame2 } from "../BracketGame";
+import { IBracketGame } from "../BracketGame";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { GameFormatting } from "../GameFormatting";
@@ -85,7 +85,7 @@ export class StructureInsert
         sheet: Excel.Worksheet,
         gameInfoRange: RangeInfo,
         gameInfoRangeInfo: RangeInfo,
-        game: IBracketGame1,
+        game: IBracketGame,
         connectedTop: boolean,
         connectedBottom: boolean)
     {
@@ -153,7 +153,7 @@ export class StructureInsert
     static async insertGameAtRange(
         appContext: IAppContext1,
         ctx: any,
-        game: IBracketGame1,
+        game: IBracketGame,
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
         connectedBottom: boolean)
@@ -253,7 +253,7 @@ export class StructureInsert
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext2, ctx: any, game: IBracketGame2)
+    static async insertGameAtSelection(appContext: IAppContext2, ctx: any, game: IBracketGame)
     {
         game.Unbind();
 
