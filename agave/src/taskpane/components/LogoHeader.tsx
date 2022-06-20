@@ -37,7 +37,7 @@ export class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState
             }
         }
 
-        const stackItemCenter: IStackStyles =
+        const stackItemCenter: IStackItemStyles =
         {
             root:
             {
@@ -46,11 +46,11 @@ export class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState
         }
         return (
             <div style={headerStyles}>
-                <Stack horizontal>
+                <Stack horizontal styles={stackStyles}>
                     <Stack.Item>
                         <img src={require('./../../../assets/ModernTrainLTR.png')} height="24" />
                     </Stack.Item>
-                    <Stack.Item grow>
+                    <Stack.Item grow styles={stackItemCenter} align="end">
                         <b>&gt;trainwreck&lt;</b>
                     </Stack.Item>
                     <Stack.Item>
