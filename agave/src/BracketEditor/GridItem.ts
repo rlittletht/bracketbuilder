@@ -1,6 +1,8 @@
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
 import { IBracketGame } from "./BracketGame";
 import { Grid } from "./Grid";
+import { GameId } from "./GameId";
+import { GameNum } from "./GameNum";
 
 export class GridItem
 {
@@ -10,23 +12,23 @@ export class GridItem
     m_gameNumberRange: RangeInfo = null;
     m_swapTopBottom: boolean = false; // we will save this from the bound game - allows us to find connecting lines
 
-    m_gameId: number = -1;
+    m_gameId: GameId = null;
 
     get isLineRange(): boolean
     {
-        return this.m_gameId == -1;
+        return this.m_gameId == null;
     }
 
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
 
-    get GameId(): number
+    get GameId(): GameId
     {
         return this.m_gameId;
     }
 
-    get GameNumber(): number
+    get GameNumber(): GameNum
     {
-        return this.m_gameId - 1;
+        return this.m_gameId.GameNum;
     }
 
     get TopTeamRange(): RangeInfo
@@ -54,7 +56,7 @@ export class GridItem
         return this.m_range;
     }
 
-    shiftByRows(rowAdjust: number)
+    shiftByRows(rowAdjust: number): GridItem
     {
         if (this.m_topTeamRange != null)
             this.m_topTeamRange.setRow(this.m_topTeamRange.FirstRow + rowAdjust);
@@ -64,6 +66,18 @@ export class GridItem
             this.m_gameNumberRange.setRow(this.m_gameNumberRange.FirstRow + rowAdjust);
         if (this.m_range != null)
             this.m_range.setRow(this.m_range.FirstRow + rowAdjust);
+
+        return this;
+    }
+
+    growShrink(rowAdjust: number): GridItem
+    {
+        if (this.m_bottomTeamRange != null)
+            this.m_bottomTeamRange.setRow(this.m_bottomTeamRange.FirstRow + rowAdjust);
+        if (this.m_range != null)
+            this.m_range.setLastRow(this.m_range.LastRow + rowAdjust);
+        if (this.m_range.RowCount > 7)
+            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
 
         return this;
     }
@@ -80,10 +94,10 @@ export class GridItem
             this.m_range.rebase(oldTopRow, newTopRow);
     }
 
-    constructor(range: RangeInfo, gameId: number, isLine: boolean)
+    constructor(range: RangeInfo, gameId: GameId, isLine: boolean)
     {
         this.m_range = RangeInfo.createFromRangeInfo(range);
-        this.m_gameId = isLine ? -1 : gameId;
+        this.m_gameId = isLine ? null : gameId;
     }
 
     /*----------------------------------------------------------------------------
@@ -101,6 +115,12 @@ export class GridItem
         this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
         if (this.m_range.RowCount > 7)
             this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+    }
+
+    inferGameInternalsIfNecessary()
+    {
+        if (this.m_topTeamRange == null && this.m_bottomTeamRange == null && this.m_gameNumberRange == null)
+            this.inferGameInternals();
     }
 
     setAndInferGameInternals(range: RangeInfo)
@@ -139,7 +159,7 @@ export class GridItem
 
     isEqual(item: GridItem): boolean
     {
-        if (this.GameId != item.GameId)
+        if (!GameId.compare(this.GameId, item.GameId))
             return false;
 
         if (RangeInfo.isOverlapping(this.Range, item.Range) != RangeOverlapKind.Equal)

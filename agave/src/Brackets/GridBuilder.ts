@@ -80,7 +80,7 @@ export class GridBuilder
         rng.formulas = ary;
 
         rng = sheet.getRangeByIndexes(rowStart + 1, colStart, 1, daysSpan);
-        rng.numberFormat = [["d-mmm"]];
+        rng.numberFormat = [["mmmm d"]];
 
         // now merge and format the cells
         col = colStart;

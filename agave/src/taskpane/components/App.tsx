@@ -26,6 +26,8 @@ import { Toolbar, ToolbarItem } from "./Toolbar";
 import { LogoHeader } from "./LogoHeader";
 import { StatusBox } from "./StatusBox";
 import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import { Grid } from "../../BracketEditor/Grid";
+import { GameNum } from "../../BracketEditor/GameNum";
 
 /* global console, Excel, require  */
 
@@ -85,12 +87,23 @@ export default class App extends React.Component<AppProps, AppState>
     {
         try
         {
+            // first, dump the grid for the current sheet. this is handy if you are building
+            // unit tests since it gives you a way to generate a grid...
+            await Excel.run(
+                async (ctx) =>
+                {
+                    const grid: Grid = await Grid.createGridFromBracket(ctx, appContext.getSelectedBracket());
+
+                    grid.logGridCondensed();
+                });
+
             RegionSwapper_BottomGame.testRegionSwap1(appContext);
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
             Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext);
             GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext);
             GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext);
+//            GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer(appContext);
             //await StructureEditor.testGridClick(appContext);
 
             appContext.logTimeout("tests complete", 5000);
@@ -332,7 +345,7 @@ export default class App extends React.Component<AppProps, AppState>
 
         for (let i = 0; i < bracketDef.games.length; i++)
         {
-            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, bracket, i);
+            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, bracket, new GameNum(i));
             games.push(temp);
         }
 

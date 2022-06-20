@@ -2,6 +2,7 @@ import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { GameFormatting } from "./GameFormatting";
 import { IBracketGame, IBracketGame as IBracketGame1, BracketGame } from "./BracketGame";
 import { AppContext } from "../AppContext";
+import { BracketManager } from "../Brackets/BracketDefinitions";
 
 export class GameLines
 {
@@ -31,7 +32,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, Number(top.substring(1)));
+            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -40,7 +41,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, Number(bottom.substring(1)));
+            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -49,7 +50,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, Number(winner.substring(1)));
+            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
             if (winner.substring(0) === "T")
             {
                 winnerTarget = new RangeInfo(gameSource.TopTeamRange.FirstRow + 1, 1, gameSource.TopTeamRange.FirstColumn - 1, 1);

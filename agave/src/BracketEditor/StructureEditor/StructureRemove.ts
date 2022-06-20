@@ -203,7 +203,7 @@ export class StructureRemove
 
         await BracketSources.updateBracketSourcesTeamNames(ctx, map);
         if (field && field != null && field != "")
-            await BracketSources.updateGameInfo(ctx, game.GameId - 1, field, time, game.SwapTopBottom);
+            await BracketSources.updateGameInfo(ctx, game.GameId.GameNum, field, time, game.SwapTopBottom);
 
         console.log(`saved: ${gameTeamName1}=${overrideText1}, ${gameTeamName2}=${overrideText2}, field=${field}, time=${time}`);
     }
@@ -282,7 +282,7 @@ export class StructureRemove
         // we can't do anything
         if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1)
         {
-            appContext.log(`Cannot find game ${game.GameId} in the bracket`);
+            appContext.log(`Cannot find game ${game.GameId.Value} in the bracket`);
             return;
         }
 
@@ -291,7 +291,7 @@ export class StructureRemove
         {
             if (grid.doesRangeOverlap(rangeSelected) == RangeOverlapKind.None)
             {
-                this.removeGame(appContext, ctx, null, rangeSelected, true);
+                await this.removeGame(appContext, ctx, null, rangeSelected, true);
                 return;
             }
         }

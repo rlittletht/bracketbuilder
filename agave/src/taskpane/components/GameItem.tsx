@@ -56,7 +56,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
             <div className="singleGameItem" style={background}>
                 <Stack horizontal gap={8}>
                     <Stack.Item align="center" grow={0}>
-                        ({this.props.game.GameId})
+                        ({this.props.game.GameId.Value})
                     </Stack.Item>
                     <Stack.Item align="center" grow={2}>
                         {gameTitle}
@@ -67,7 +67,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                                 <ActionButton
                                     appContext={this.props.appContext}
                                     tooltip="Insert Game"
-                                    tooltipId={`gid-${this.props.game.GameId}`}
+                                    tooltipId={`gid-${this.props.game.GameId.Value}`}
                                     bracketGame={this.props.game}
                                     delegate={this.DoInsertGame}
                                     disabled={false}
@@ -77,7 +77,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                                 <ActionButton
                                     appContext={this.props.appContext}
                                     tooltip="Remove Game"
-                                    tooltipId={`gid-${this.props.game.GameId}`}
+                                    tooltipId={`gid-${this.props.game.GameId.Value}`}
                                     bracketGame={this.props.game}
                                     delegate={this.DoRemoveGame.bind(this)}
                                     disabled={false}

@@ -86,7 +86,7 @@ export class ApplyGridChange
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("appc.15");
-        await game.Load(ctx, bracketName, change.GameId - 1);
+        await game.Load(ctx, bracketName, change.GameId.GameNum);
         AppContext.checkpoint("appc.16");
         if (game.IsLinkedToBracket)
             throw "game can't be linked - we should have already removed it from the bracket";

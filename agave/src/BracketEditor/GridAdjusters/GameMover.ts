@@ -3,6 +3,7 @@ import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
 import { RangeOverlapKind, RangeInfo } from "../../Interop/Ranges";
 import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameId } from "../GameId";
 
 interface GridOption
 {
@@ -79,7 +80,7 @@ export class GameMover
         const fMovedUp: boolean = itemOld.Range.FirstRow > itemNew.Range.FirstRow;
         const fMovedDown: boolean = itemOld.Range.LastRow < itemNew.Range.LastRow;
 
-        if (itemOld.GameId != itemNew.GameId)
+        if (!GameId.compare(itemOld.GameId, itemNew.GameId))
             throw Error("can't change game while moving");
 
         // make this change
@@ -144,7 +145,7 @@ export class GameMover
         grid.enumerateOverlapping(
             [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
 
-        const game: IBracketGame = itemNew.isLineRange ? null : BracketGame.CreateFromGameSync(bracket, itemNew.GameId);
+        const game: IBracketGame = itemNew.isLineRange ? null : BracketGame.CreateFromGameSync(bracket, itemNew.GameId.GameNum);
         const maxItemForOutgoingDrag: number = items.length;
         // be sure to capture the length right now. any items that get added during this work should not be considered
         // in this adjustment...
@@ -185,7 +186,7 @@ export class GameMover
                     ? [null, RangeOverlapKind.None]
                     : gridWork.getFirstOverlappingItem(connectedItem.Range.offset(0, 1, connectedItem.Range.ColumnCount, 1));
 
-            if (connectedGame == null || connectedGame.isLineRange || connectedGame.GameId != game.WinningTeamAdvancesToGame)
+            if (connectedGame == null || connectedGame.isLineRange || !GameId.compare(connectedGame.GameId, game.WinningTeamAdvancesToGameId))
                 continue;
 
             // we have a game connected to us and we now have to "drag it along"

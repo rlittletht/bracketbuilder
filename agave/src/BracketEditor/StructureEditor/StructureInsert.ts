@@ -76,6 +76,11 @@ export class StructureInsert
         ctx.trackedObjects.remove(sheet);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: StructureInsert.setAndFormatGameInfo
+
+        set the text for the game info, and format the ranges
+    ----------------------------------------------------------------------------*/
     static setAndFormatGameInfo(
         sheet: Excel.Worksheet,
         gameInfoRange: RangeInfo,
@@ -102,17 +107,24 @@ export class StructureInsert
                 bottomString = "";
         }
 
-        formulas.push([topString]);
-        this.pushPadding(
-            formulas,
-            [""],
-            gameInfoRangeInfo.FirstRow - gameInfoRange.FirstRow - 1);
+        const fCompressGame = gameInfoRangeInfo.FirstRow - gameInfoRange.FirstRow - 1 < 0;
+
+        // we have to compress the game by losing the top row
+        if (!fCompressGame)
+        {
+            formulas.push([topString]);
+            this.pushPadding(
+                formulas,
+                [""],
+                gameInfoRangeInfo.FirstRow - gameInfoRange.FirstRow - 1);
+        }
+
         formulas.push(
             [
                 FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum)
             ]);
         formulas.push([""]);
-        formulas.push([FormulaBuilder.getTimeFormulaFromGameNumber(game.GameNum)]);
+        formulas.push([FormulaBuilder.getTimeFormulaFromGameId(game.GameId)]);
 
         this.pushPadding(formulas, [""], gameInfoRange.LastRow - gameInfoRangeInfo.LastRow);
         formulas.push([""]);
@@ -123,7 +135,9 @@ export class StructureInsert
 
         GameFormatting.formatGameInfoBodyTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(0, 1, 0, 1)));
         GameFormatting.formatGameInfoTimeTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(2, 1, 0, 1)));
-        GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.offset(0, 1, 0, 1)), Excel.VerticalAlignment.top);
+        if (!fCompressGame)
+            GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.offset(0, 1, 0, 1)), Excel.VerticalAlignment.top);
+
         GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.bottomLeft().offset(0, 1, 0, 1)), Excel.VerticalAlignment.bottom);
 
         return;
@@ -182,7 +196,7 @@ export class StructureInsert
             gameInfoRangeInfo.FirstRow
             - (insertRangeInfo.FirstRow + 1));
 
-        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId}`]);
+        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId.Value}`]);
         // we will fill in the game info text later. for now just push space
 
         this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
@@ -199,7 +213,7 @@ export class StructureInsert
         rngTarget.formulas = formulas;
         this.setAndFormatGameInfo(
             rng.worksheet,
-            new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4 - ((insertRangeInfo.RowCount - 3) % 4), insertRangeInfo.FirstColumn, 1),
+            new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4, insertRangeInfo.FirstColumn, 1),
             gameInfoRangeInfo,
             game,
             connectedTop,
@@ -216,10 +230,6 @@ export class StructureInsert
 
         GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
         await Ranges.createOrReplaceNamedRange(ctx, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
-
-//        GameFormatting.formatGameInfoBodyTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
-//        GameFormatting.formatGameInfoTimeTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 2, insertRangeInfo.FirstColumn, 1, 1));
-//        GameFormatting.formatGameInfoAdvanceToTextRequest(rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow + 4, insertRangeInfo.FirstColumn, 1, 1));
 
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));

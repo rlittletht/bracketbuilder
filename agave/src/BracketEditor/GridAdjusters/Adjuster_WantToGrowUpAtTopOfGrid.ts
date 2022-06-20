@@ -6,6 +6,8 @@ import { Spacer } from "./Spacer";
 import { GridAdjust } from "./GridAdjust";
 import { IAppContext } from "../../AppContext";
 import { GridItem } from "../GridItem";
+import { GameNum } from "../GameNum";
+import { GameId } from "../GameId";
 
 /*----------------------------------------------------------------------------
     Adjuster_WantToGrowUpAtTopOfGrid.Adjuster_WantToGrowUpAtTopOfGrid
@@ -125,13 +127,13 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
         // setup the precondition
-        grid.addGameRange(RangeInfo.createFromCornersCoord(9, 6, 19, 8), 1, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(23, 6, 33, 8), 2, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(37, 6, 47, 8), 3, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(51, 6, 61, 8), 4, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8), 1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8), 2, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37, 6, 47, 8), 3, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(51, 6, 61, 8), 4, false).inferGameInternals();
 
         // now try to insert game...
-        let game: IBracketGame = BracketGame.CreateFromGameSync("T9", 4);
+        let game: IBracketGame = BracketGame.CreateFromGameSync("T9", new GameNum(4));
 
         let gridNew: Grid = grid.clone();
         let reqColumn: number = 14;
@@ -139,7 +141,7 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         GridAdjust.rearrangeGridForCommonConflicts(gridNew, game, reqColumn);
 
         // now verify that the grid was adjusted
-        let item: GridItem = gridNew.findGameItem(1);
+        let item: GridItem = gridNew.findGameItem(new GameId(1));
 
         if (item == null)
             throw Error("testInsertSpaceAtTopOfGrid: game 1 disappeared?");

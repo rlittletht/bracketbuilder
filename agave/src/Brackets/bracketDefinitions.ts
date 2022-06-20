@@ -1,3 +1,5 @@
+import { GameNum } from "../BracketEditor/GameNum";
+import { GameId } from "../BracketEditor/GameId";
 
 export interface GameDefinition
 {
@@ -32,6 +34,11 @@ export class BracketManager
     get Bracket(): BracketDefinition
     {
         return this.m_bracket;
+    }
+
+    static GameIdFromWinnerLoser(winnerLoser: string): GameId
+    {
+        return new GameId(Number(winnerLoser.substring(1)));
     }
 }
 

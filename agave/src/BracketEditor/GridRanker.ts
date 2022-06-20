@@ -56,7 +56,7 @@ export class GridRanker
 
                 if (!item.isLineRange)
                 {
-                    const game: IBracketGame = BracketGame.CreateFromGameSync(bracket, item.GameId - 1);
+                    const game: IBracketGame = BracketGame.CreateFromGameSync(bracket, item.GameId.GameNum);
                     const [item1, item2] = grid.getFeederConnectionsForGame(item, game);
                     let [source1, source2, outgoing] = grid.getFeederInfoForGame(game);
                     let fSwap: boolean = false;

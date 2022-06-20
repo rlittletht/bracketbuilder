@@ -6,6 +6,7 @@ import { OADate } from "../Interop/Dates";
 import { IFastTables } from "../Interop/FastTables";
 import { Tables } from "../Interop/Tables";
 import { GridBuilder } from "./GridBuilder";
+import { GameNum } from "../BracketEditor/GameNum";
 
 export interface TeamNameMap
 {
@@ -32,7 +33,7 @@ export class BracketSources
 
         update the given game information in the bracketsourcedata table
     ----------------------------------------------------------------------------*/
-    static async updateGameInfo(ctx: any, gameNum: number, field: any, time: any, swapHomeAway: boolean)
+    static async updateGameInfo(ctx: any, gameNum: GameNum, field: any, time: any, swapHomeAway: boolean)
     {
         // find the team names table
         let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
@@ -44,11 +45,11 @@ export class BracketSources
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
         {
-            if (range.values[i][0] == gameNum)
+            if (range.values[i][0] == gameNum.Value)
             {
                 newValues.push(
                     [
-                        gameNum, field[0] == "=" ? range.values[i][1] : field,
+                        gameNum.Value, field[0] == "=" ? range.values[i][1] : field,
                         typeof time !== "number" ? range.values[i][2] : time, swapHomeAway
                     ]);
             }

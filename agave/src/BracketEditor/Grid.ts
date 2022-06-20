@@ -11,6 +11,8 @@ import { GridItem } from "./GridItem";
 import { GridChange, GridChangeOperation } from "./GridChange";
 import { AppContext } from "../AppContext";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
+import { GameId } from "./GameId";
+import { GameNum } from "./GameNum";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -55,7 +57,12 @@ export class Grid
         return true;
     }
 
-    addGameRange(range: RangeInfo, gameId: number, swapTopBottom: boolean): GridItem
+    addGameRangeByIdValue(range: RangeInfo, gameIdValue: number, swapTopBottom: boolean): GridItem
+    {
+        return this.addGameRange(range, gameIdValue == -1 ? null : new GameId(gameIdValue), swapTopBottom);
+    }
+
+    addGameRange(range: RangeInfo, gameId: GameId, swapTopBottom: boolean): GridItem
     {
         let item: GridItem = new GridItem(range, gameId, false);
         item.m_swapTopBottom = swapTopBottom;
@@ -66,7 +73,7 @@ export class Grid
 
     addLineRange(range: RangeInfo)
     {
-        this.m_gridItems.push(new GridItem(range, -1, true));
+        this.m_gridItems.push(new GridItem(range, null, true));
     }
 
     enumerateOverlapping(ranges: RangeOverlapMatch[]): boolean
@@ -208,7 +215,7 @@ export class Grid
             [itemRight, kind] = gridRight.getFirstOverlappingItem(itemLeft.Range);
 
             if (kind != RangeOverlapKind.Equal
-                || itemLeft.GameId != itemRight.GameId)
+                || !GameId.compare(itemLeft.GameId, itemRight.GameId))
             {
                 // any kind of difference means this has to be removed
                 changes.push(new GridChange(GridChangeOperation.Remove, itemLeft));
@@ -224,7 +231,7 @@ export class Grid
             [itemLeft, kind] = this.getFirstOverlappingItem(itemRight.Range);
 
             if (kind != RangeOverlapKind.Equal
-                || itemRight.GameId != itemLeft.GameId)
+                || !GameId.compare(itemRight.GameId, itemLeft.GameId))
             {
                 let connectedTop: boolean = false;
                 let connectedBottom: boolean = false;
@@ -233,7 +240,7 @@ export class Grid
                 {
                     const gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
 
-                    itemRight.inferGameInternals();
+                    itemRight.inferGameInternalsIfNecessary();
                     const [top, bottom] = gridRight.getFeederConnectionsForGame(itemRight, gameStatic);
 
                     connectedTop = top != null;
@@ -266,11 +273,11 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.findGameItem
     ----------------------------------------------------------------------------*/
-    findGameItem(gameId: number): GridItem
+    findGameItem(gameId: GameId): GridItem
     {
         for (let item of this.m_gridItems)
         {
-            if (item.GameId == gameId)
+            if (GameId.compare(item.GameId, gameId))
                 return item;
         }
 
@@ -340,7 +347,7 @@ export class Grid
 
         the game item will be the first item in the array
     ----------------------------------------------------------------------------*/
-    getAllGameItems(gameId: number): GridItem[]
+    getAllGameItems(gameId: GameId): GridItem[]
     {
         let items: GridItem[] = [];
 
@@ -513,7 +520,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(ctx, bracketName, i);
+            await game.Load(ctx, bracketName, new GameNum(i));
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
@@ -521,7 +528,7 @@ export class Grid
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw `overlapping detected on loadGridFromBracket: game ${game.GameId}`;
+                    throw `overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`;
 
                 this.addGameRange(game.FullGameRange, game.GameId, false).attachGame(game);
 
@@ -565,7 +572,7 @@ export class Grid
         this.logGrid();
     }
 
-    getOutgoingConnectionForGameResult(gameId: number): RangeInfo
+    getOutgoingConnectionForGameResult(gameId: GameId): RangeInfo
     {
         const item: GridItem = this.findGameItem(gameId);
 
@@ -583,8 +590,8 @@ export class Grid
     ----------------------------------------------------------------------------*/
     getTargetGameFeedForGameResult(game: IBracketGame): RangeInfo
     {
-        const targetGameId: number = game.WinningTeamAdvancesToGame;
-        if (targetGameId == -1)
+        const targetGameId: GameId = game.WinningTeamAdvancesToGameId;
+        if (targetGameId == null)
             return null; // winner goes nowhere
 
         const item: GridItem = this.findGameItem(targetGameId);
@@ -1662,7 +1669,12 @@ export class Grid
         let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
         let fSwap: boolean = false;
 
-        [source1, source2, fSwap] = Grid.normalizeSources(source1, source2, fSwap);
+        if (gridGame.SwapTopBottom)
+        {
+            const t = source1;
+            source1 = source2;
+            source2 = t;
+        }
 
         // now we know where they are supposed to be going...
         const item1: GridItem =
@@ -1690,17 +1702,17 @@ export class Grid
         let outgoing: RangeInfo = null;
 
         // figure out all the connecting info for the game
-        let gameId: number = FormulaBuilder.getSourceGameNumberIfWinner(game.TopTeamName);
+        let gameId: GameId = FormulaBuilder.getSourceGameIdIfWinner(game.TopTeamName);
 
-        if (gameId != -1)
+        if (gameId != null)
             source1 = this.getOutgoingConnectionForGameResult(gameId);
 
         outgoing = this.getTargetGameFeedForGameResult(game);
 
         // figure out all the connecting info for the game
-        gameId = FormulaBuilder.getSourceGameNumberIfWinner(game.BottomTeamName);
+        gameId = FormulaBuilder.getSourceGameIdIfWinner(game.BottomTeamName);
 
-        if (gameId != -1)
+        if (gameId != null)
             source2 = this.getOutgoingConnectionForGameResult(gameId);
 
         return [source1, source2, outgoing];
@@ -1749,7 +1761,7 @@ export class Grid
         // we *could* try to read the swap data during that load.  but that might be overkill
         // it might be better to just let the game insert handle the swap setting
         game.SetSwapTopBottom(gameInsert.m_swapTopBottom);
-        gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom);
+        gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom).inferGameInternals();
 
         return [gridNew, null];
     }
@@ -1762,7 +1774,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            s += `${item.GameId}: ${item.Range.toString()}`;
+            s += `${item.GameId == null ? -1 : item.GameId.Value }: ${item.Range.toString()}`;
         }
         console.log(s);
     }
@@ -1773,7 +1785,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            console.log(`${item.GameId}: ${item.Range.toString()}`);
+            console.log(`${item.GameId == null ? -1 : item.GameId.Value }: ${item.Range.toString()}`);
         }
     }
 

@@ -6,6 +6,7 @@ import { GridAdjust } from "./GridAdjust";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext";
+import { GameNum } from "../GameNum";
 
 // THIS ADJUSTER IS is for the insert of Game 16 on a 14 team bracket
 // W12 and L10. Since L10 is unanchored, it just needs space to insert into
@@ -102,10 +103,7 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         }
 
         if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column))
-        {
-            console.log(`no region swapping needed, no overlap detected.`);
             return [false, null, null];
-        }
 
         if (source2 == null)
             source2 = new RangeInfo(source1.FirstRow + 11, 1, column, 1);
@@ -153,10 +151,7 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         let [doesApply, region1, region2] = this.doesAdjusterApplyWithRegions(grid, game, column);
 
         if (!doesApply)
-        {
-            console.log(`no region swapping needed, no overlap detected.`);
             return false;
-        }
 
         // ok, swap region2 and region3
         let gridTry: Grid = grid.clone();
@@ -201,25 +196,25 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
-        grid.addGameRange(RangeInfo.createFromCornersCoord(13, 6, 23, 8,), 1, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(27, 6, 37, 8,), 2, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(41, 6, 51, 8,), 3, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(55, 6, 65, 8,), 4, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(69, 6, 79, 8,), 5, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(83, 6, 93, 8,), 6, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(9, 9, 19, 11,), 7, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(31, 9, 47, 11,), 8, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(59, 9, 75, 11,), 9, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(87, 9, 97, 11,), 10, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(101, 9, 111, 11,), 11, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(106, 12, 106, 14,), -1, false);
-        grid.addGameRange(RangeInfo.createFromCornersCoord(117, 9, 127, 11,), 12, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(129, 12, 139, 14,), 13, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(143, 12, 153, 14,), 14, false).inferGameInternals();
-        grid.addGameRange(RangeInfo.createFromCornersCoord(105, 15, 115, 17,), 15, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 6, 23, 8,), 1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 6, 37, 8,), 2, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 6, 51, 8,), 3, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(55, 6, 65, 8,), 4, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(69, 6, 79, 8,), 5, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 6, 93, 8,), 6, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 9, 19, 11,), 7, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 9, 47, 11,), 8, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 9, 75, 11,), 9, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(87, 9, 97, 11,), 10, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(101, 9, 111, 11,), 11, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(106, 12, 106, 14,), -1, false);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(117, 9, 127, 11,), 12, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(129, 12, 139, 14,), 13, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 12, 153, 14,), 14, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 15, 115, 17,), 15, false).inferGameInternals();
 
         // now try to insert game 16
-        let game: IBracketGame = BracketGame.CreateFromGameSync("T14", 15);
+        let game: IBracketGame = BracketGame.CreateFromGameSync("T14", new GameNum(15));
 
         let gridNew: Grid = grid.clone();
         let reqColumn: number = 15;

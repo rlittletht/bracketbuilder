@@ -1,10 +1,12 @@
 
-import { BracketDefinition, GameDefinition, s_brackets } from "../Brackets/BracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets, BracketManager } from "../Brackets/BracketDefinitions";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { RangeInfo } from "../Interop/Ranges";
 import { Grid } from "./Grid";
 import { AppContext } from "../AppContext";
 import { BracketSources } from "../Brackets/BracketSources";
+import { GameNum } from "./GameNum";
+import { GameId } from "./GameId";
 
 export interface IBracketGame
 {
@@ -12,8 +14,8 @@ export interface IBracketGame
     get BracketGameDefinition(): GameDefinition;
     get SwapTopBottom(): boolean;
     get BracketName(): string; // "T2" for 2 team bracket, etc. Can derive table name from it
-    get GameId(): number; // this is the game id (1 based) in the overall static bracket definition
-    get GameNum(): number;
+    get GameId(): GameId; // this is the game id (1 based) in the overall static bracket definition
+    get GameNum(): GameNum;
 
     // the following properties are volatile -- we want editors of the bracket
     // to be able to be able to easily edit them without understanding
@@ -32,7 +34,7 @@ export interface IBracketGame
     get BottomTeamName(): string; // if this is the bottom game, this is the team name
     get StartTime(): number; // this is the number of minutes since the start of the day
     get IsChampionship(): boolean;
-    get WinningTeamAdvancesToGame(): number;
+    get WinningTeamAdvancesToGameId(): GameId;
 
     FormatTime(): string;
     FormatLoser(): string;
@@ -60,7 +62,7 @@ export class BracketGame implements IBracketGame
     m_bracketGameDefinition: GameDefinition;
     m_swapTopBottom: boolean;
     m_bracketName: string;
-    m_gameNum: number;
+    m_gameNum: GameNum;
     m_teamNameTop: string = null;
     m_teamNameBottom: string = null;
     m_startTime: number = 18 * 60; // 6pm
@@ -77,7 +79,7 @@ export class BracketGame implements IBracketGame
                 || this.m_bracketGameDefinition.winner == "");
     }
 
-    static CreateFromGameSync(bracket: string, gameNumber: number): IBracketGame
+    static CreateFromGameSync(bracket: string, gameNumber: GameNum): IBracketGame
     {
         AppContext.checkpoint("cfg.1");
         let game: BracketGame = new BracketGame();
@@ -86,7 +88,7 @@ export class BracketGame implements IBracketGame
         return game.LoadSync(bracket, gameNumber);
     }
 
-    static async CreateFromGameNumber(ctx: any, bracket: string, gameNumber: number): Promise<IBracketGame>
+    static async CreateFromGameNumber(ctx: any, bracket: string, gameNumber: GameNum): Promise<IBracketGame>
     {
         AppContext.checkpoint("cfg.1");
         let game: BracketGame = new BracketGame();
@@ -96,17 +98,17 @@ export class BracketGame implements IBracketGame
     }
 
 
-    static async CreateFromGameId(ctx: any, bracket: string, gameId: number): Promise<IBracketGame>
+    static async CreateFromGameId(ctx: any, bracket: string, gameId: GameId): Promise<IBracketGame>
     {
-        return await this.CreateFromGameNumber(ctx, bracket, gameId - 1);
+        return await this.CreateFromGameNumber(ctx, bracket, gameId.GameNum);
     }
 
     // getters
     get BracketGameDefinition(): GameDefinition { return this.m_bracketGameDefinition; }
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
     get BracketName(): string { return this.m_bracketName;  }
-    get GameId(): number { return this.m_gameNum + 1; }
-    get GameNum(): number { return this.m_gameNum; }
+    get GameId(): GameId { return this.m_gameNum.GameId; }
+    get GameNum(): GameNum { return this.m_gameNum; }
 
     get FullGameRange(): RangeInfo
     {
@@ -128,13 +130,13 @@ export class BracketGame implements IBracketGame
             3);
     }
 
-    get WinningTeamAdvancesToGame(): number
+    get WinningTeamAdvancesToGameId(): GameId
     {
         // we know what game we want to have
         if (this.BracketGameDefinition.winner == "")
-            return -1; // winner goes nowhere
+            return null; // winner goes nowhere
 
-        return Number(this.BracketGameDefinition.winner.substring(1));
+        return BracketManager.GameIdFromWinnerLoser(this.BracketGameDefinition.winner);
     }
 
     get TopTeamRange(): RangeInfo
@@ -325,7 +327,7 @@ export class BracketGame implements IBracketGame
                         // sadly we have to go searching for this on our own...
                         for (let i: number = 0; i < data.length; i++)
                         {
-                            if (data[i][0] == this.m_gameNum)
+                            if (data[i][0] == this.m_gameNum.Value)
                             {
                                 this.m_swapTopBottom = data[i][3];
                             }
@@ -339,7 +341,7 @@ export class BracketGame implements IBracketGame
         return this;
     }
 
-    async Load(ctx: any, bracketName: string, gameNum: number): Promise<IBracketGame>
+    async Load(ctx: any, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
     {
         this.LoadSync(bracketName, gameNum);
 
@@ -360,7 +362,7 @@ export class BracketGame implements IBracketGame
         Load the static portions of this game, and if possible, load its linkage
         into the current bracket schedule
     ----------------------------------------------------------------------------*/
-    LoadSync(bracketName: string, gameNum: number): IBracketGame
+    LoadSync(bracketName: string, gameNum: GameNum): IBracketGame
     {
         AppContext.checkpoint("l.1");
 
@@ -370,7 +372,7 @@ export class BracketGame implements IBracketGame
         this.m_gameNum = gameNum;
         this.m_bracketName = bracketName;
 
-        this.m_bracketGameDefinition = bracketDefinition.games[gameNum];
+        this.m_bracketGameDefinition = bracketDefinition.games[gameNum.Value];
         this.m_swapTopBottom = false;
         this.m_teamNameTop = null;
         this.m_teamNameBottom = null;
@@ -397,7 +399,7 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get TopTeamCellNameInvariant(): string
     {
-        return `${this.m_bracketName}_G${this.GameId}_1`;
+        return `${this.m_bracketName}_G${this.GameId.Value}_1`;
     }
 
     /*----------------------------------------------------------------------------
@@ -413,7 +415,7 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get BottomTeamCellNameInvariant(): string
     {
-        return `${this.m_bracketName}_G${this.GameId}_2`;
+        return `${this.m_bracketName}_G${this.GameId.Value}_2`;
     }
 
     /*----------------------------------------------------------------------------
@@ -429,6 +431,6 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     get GameNumberCellName(): string
     {
-        return `${this.m_bracketName}_Game${this.GameId}`;
+        return `${this.m_bracketName}_Game${this.GameId.Value}`;
     }
 }

@@ -1,6 +1,8 @@
 
-import { BracketDefinition } from "../Brackets/BracketDefinitions";
+import { BracketDefinition, BracketManager } from "../Brackets/BracketDefinitions";
 import { BracketGame } from "./BracketGame";
+import { GameNum } from "./GameNum";
+import { GameId } from "./GameId";
 
 export class FormulaBuilder
 {
@@ -9,24 +11,24 @@ export class FormulaBuilder
         return `OFFSET(${teamRef}, 0, 1)`;
     }
 
-    static getTopTeamRefFromBracketAndGame(bracketName: string, gameNumber: number): string
+    static getTopTeamRefFromBracketAndGame(bracketName: string, gameId: GameId): string
     {
-        return `${bracketName}_G${gameNumber}_1`;
+        return `${bracketName}_G${gameId.Value}_1`;
     }
 
-    static getBottomTeamRefFromBracketAndGame(bracketName: string, gameNumber: number): string
+    static getBottomTeamRefFromBracketAndGame(bracketName: string, gameId: GameId): string
     {
-        return `${bracketName}_G${gameNumber}_2`;
+        return `${bracketName}_G${gameId.Value}_2`;
     }
 
-    static getTopTeamScoreRefFromBracketAndGame(bracketName: string, gameNumber: number): string
+    static getTopTeamScoreRefFromBracketAndGame(bracketName: string, gameId: GameId): string
     {
-        return this.getScoreRefFromTeamRef(this.getTopTeamRefFromBracketAndGame(bracketName, gameNumber));
+        return this.getScoreRefFromTeamRef(this.getTopTeamRefFromBracketAndGame(bracketName, gameId));
     }
 
-    static getBottomTeamScoreRefFromBracketAndGame(bracketName: string, gameNumber: number): string
+    static getBottomTeamScoreRefFromBracketAndGame(bracketName: string, gameId: GameId): string
     {
-        return this.getScoreRefFromTeamRef(this.getBottomTeamRefFromBracketAndGame(bracketName, gameNumber));
+        return this.getScoreRefFromTeamRef(this.getBottomTeamRefFromBracketAndGame(bracketName, gameId));
     }
 
     static getShowTeamSourcesConditional(outputIfShowing: string): string
@@ -34,28 +36,28 @@ export class FormulaBuilder
         return `IF($A$1="BUILDING",${outputIfShowing},"")`;
     }
 
-    static getWinnerFormulaFromSource(gameNumber: number, bracketName: string): string
+    static getWinnerFormulaFromSource(gameId: GameId, bracketName: string): string
     {
-        const topTeamRef = this.getTopTeamRefFromBracketAndGame(bracketName, gameNumber);
-        const bottomTeamRef = this.getBottomTeamRefFromBracketAndGame(bracketName, gameNumber);
+        const topTeamRef = this.getTopTeamRefFromBracketAndGame(bracketName, gameId);
+        const bottomTeamRef = this.getBottomTeamRefFromBracketAndGame(bracketName, gameId);
 
         const topScoreRef = this.getScoreRefFromTeamRef(topTeamRef);
         const bottomScoreRef = this.getScoreRefFromTeamRef(bottomTeamRef);
 
-        const noWinnerString = this.getShowTeamSourcesConditional(`"W${gameNumber}"`);
+        const noWinnerString = this.getShowTeamSourcesConditional(`"W${gameId.Value}"`);
 
         return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}>${bottomScoreRef},${topTeamRef},${bottomTeamRef}))`;
     }
 
-    static getLoserFormulaFromSource(gameNumber: number, bracketName: string): string
+    static getLoserFormulaFromSource(gameId: GameId, bracketName: string): string
     {
-        const topTeamRef = this.getTopTeamRefFromBracketAndGame(bracketName, gameNumber);
-        const bottomTeamRef = this.getBottomTeamRefFromBracketAndGame(bracketName, gameNumber);
+        const topTeamRef = this.getTopTeamRefFromBracketAndGame(bracketName, gameId);
+        const bottomTeamRef = this.getBottomTeamRefFromBracketAndGame(bracketName, gameId);
 
         const topScoreRef = this.getScoreRefFromTeamRef(topTeamRef);
         const bottomScoreRef = this.getScoreRefFromTeamRef(bottomTeamRef);
 
-        const noWinnerString = this.getShowTeamSourcesConditional(`"L${gameNumber}"`);
+        const noWinnerString = this.getShowTeamSourcesConditional(`"L${gameId.Value}"`);
 
         return `=IF(${topScoreRef} = ${bottomScoreRef}, ${noWinnerString}, IF(${topScoreRef}<${bottomScoreRef},${
             topTeamRef},${bottomTeamRef}))`;
@@ -70,9 +72,9 @@ export class FormulaBuilder
             return this.getTeamNameLookup(source);
 
         if (source[0] === "W")
-            return this.getWinnerFormulaFromSource(Number(source.substring(1)), bracketName);
+            return this.getWinnerFormulaFromSource(BracketManager.GameIdFromWinnerLoser(source), bracketName);
         if (source[0] === "L")
-            return this.getLoserFormulaFromSource(Number(source.substring(1)), bracketName);
+            return this.getLoserFormulaFromSource(BracketManager.GameIdFromWinnerLoser(source), bracketName);
 
         throw "bad source string";
     }
@@ -84,7 +86,7 @@ export class FormulaBuilder
 
         NOTE: GameNum here is the 0-based game number
     ----------------------------------------------------------------------------*/
-    static getFieldFormulaFromGameNumber(gameNum: number): string
+    static getFieldFormulaFromGameNumber(gameNum: GameNum): string
     {
         return `=${this.getFieldFormulaTextFromGameNumber(gameNum)}`;
     }
@@ -92,42 +94,44 @@ export class FormulaBuilder
     /*----------------------------------------------------------------------------
         %%Function: FormulaBuilder.getFieldFormulaTextFromGameNumber
     ----------------------------------------------------------------------------*/
-    static getFieldFormulaTextFromGameNumber(gameNum: number): string
+    static getFieldFormulaTextFromGameNumber(gameNum: GameNum): string
     {
-        return `INDEX(BracketSourceData[Field],MATCH(${gameNum}, BracketSourceData[GameNum],0))`;
+        return `INDEX(BracketSourceData[Field],MATCH(${gameNum.Value}, BracketSourceData[GameNum],0))`;
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: FormulaBuilder.getTimeFormulaFromGameNumber
-
-        NOTE: GameNum here is the 0-based game number
+        %%Function: FormulaBuilder.getTimeFormulaFromGameId
     ----------------------------------------------------------------------------*/
-    static getTimeFormulaFromGameNumber(gameNum: number): string
+    static getTimeFormulaFromGameId(gameId: GameId): string
     {
-        return `=${this.getTimeFormulaTextFromGameNumber(gameNum)}`;
+        return `=${this.getTimeFormulaTextFromGameId(gameId)}`;
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: FormulaBuilder.getTimeFormulaTextFromGameNumber
+        %%Function: FormulaBuilder.getTimeFormulaTextFromGameId
     ----------------------------------------------------------------------------*/
-    static getTimeFormulaTextFromGameNumber(gameNum: number): string
+    static getTimeFormulaTextFromGameId(gameId: GameId): string
     {
-        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameNum}, BracketSourceData[GameNum],0)), "h:MM AM/PM")`;
+        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameId.GameNum.Value}, BracketSourceData[GameNum],0)), "h:MM AM/PM")`;
     }
+
     /*----------------------------------------------------------------------------
         %%Function: FormulaBuilder.getSourceGameNumberIfWinner
     ----------------------------------------------------------------------------*/
-    static getSourceGameNumberIfWinner(source: string): number
+    static getSourceGameIdIfWinner(source: string): GameId
     {
         if (BracketGame.IsTeamSourceStatic(source))
-            return -1;
+            return null;
 
         if (source[0] === "W")
-            return Number(source.substring(1));
+            return BracketManager.GameIdFromWinnerLoser(source);
 
-        return -1;
+        return null;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getTeamNameLookup
+    ----------------------------------------------------------------------------*/
     static getTeamNameLookup(teamNum: string): string
     {
         return `=INDEX(TeamNames[TeamName],MATCH("${teamNum}", TeamNames[TeamNum],0))`;
