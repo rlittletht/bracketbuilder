@@ -88,13 +88,10 @@ export class GridRanker
                         {
                             gridRank.cDisconnectedSources++;
                         }
-                        else
-                        {
-                            // our top item is not connected. make sure it doesn't have anything
-                            // adjacent
-                            rangesToCheck.push({ range: gameTop.offset(0, 2, -1, 1), delegate: delegateDisqalOverlap });
-                            rangesToCheck.push({ range: gameTop.offset(0, 4, -1, 1), delegate: delegateTooCloseAdjacent });
-                        }
+                        // our top item is not connected. make sure it doesn't have anything
+                        // adjacent
+                        rangesToCheck.push({ range: gameTop.offset(0, 2, -1, 1), delegate: delegateDisqalOverlap });
+                        rangesToCheck.push({ range: gameTop.offset(0, 4, -1, 1), delegate: delegateTooCloseAdjacent });
                     }
                     if (item2 == null)
                     {
@@ -102,13 +99,10 @@ export class GridRanker
                         {
                             gridRank.cDisconnectedSources++;
                         }
-                        else
-                        {
-                            // our top item is not connected. make sure it doesn't have anything
-                            // adjacent
-                            rangesToCheck.push({ range: gameBottom.offset(-1, 2, -1, 1), delegate: delegateDisqalOverlap });
-                            rangesToCheck.push({ range: gameBottom.offset(-1, 4, -1, 1), delegate: delegateTooCloseAdjacent });
-                        }
+                        // our bottom item is not connected. make sure it doesn't have anything
+                        // adjacent
+                        rangesToCheck.push({ range: gameBottom.offset(-1, 2, -1, 1), delegate: delegateDisqalOverlap });
+                        rangesToCheck.push({ range: gameBottom.offset(-1, 4, -1, 1), delegate: delegateTooCloseAdjacent });
                     }
                     grid.enumerateOverlapping(rangesToCheck);
                 }

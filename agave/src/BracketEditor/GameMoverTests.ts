@@ -128,13 +128,63 @@ export class GameMoverTests
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer
 
+        T4
+        Grow game2 by 4 rows, which will grow game 3 by 2 rows because of the
+        outgoing connection between game2 and game3
+    ----------------------------------------------------------------------------*/
+    static testGrowItemDraggingConnectedGameDown(appContext: IAppContext)
+    {
+        appContext;
+        let grid: Grid = new Grid();
+        const bracket: string = "T4";
+
+        grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 2, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 29, 11,), 3, false).inferGameInternals();
+
+
+        // now get the game we want to move
+        let item: GridItem = grid.findGameItem(new GameId(2));
+
+        if (item == null)
+            throw Error("testMoveItemUpPushingOneGameUpMaintainBuffer: can't find expected item");
+
+        let mover: GameMover = new GameMover(grid);
+
+        let gridNew: Grid = mover.moveGame(item, item.clone().growShrink(4), bracket);
+
+        // now verify that the grid was adjusted
+        const gridExpected: Grid = new Grid();
+        gridExpected.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        // setup the expected result
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 37, 8,), 2, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
+
+        const changes: GridChange[] = gridNew.diff(gridExpected, bracket);
+        if (changes.length != 0)
+        {
+            grid.logChanges(changes);
+            throw Error(
+                `testGrowItemPushingOneGameDownMaintainBuffer: ${
+                grid.logChangesToString(changes)
+                }`);
+        }
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer
+
         Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.
     ----------------------------------------------------------------------------*/
     static testGrowItemPushingOneGameDownMaintainBuffer(appContext: IAppContext)
     {
         appContext;
         let grid: Grid = new Grid();
-        const bracket: string = "T3";
+        const bracket: string = "T4";
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
@@ -159,10 +209,10 @@ export class GameMoverTests
         gridExpected.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
         // setup the expected result
-        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
-        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
-        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
-        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37, 9, 47, 11,), 4, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37, 9, 47, 11,), 4, false).inferGameInternals();
 
         const changes: GridChange[] = gridNew.diff(gridExpected, bracket);
         if (changes.length != 0)

@@ -1641,7 +1641,7 @@ export class Grid
             // this means that the feeder line we calculated was 0 width,
             // so the source game is immediately adjacent.
 
-            if (item.GameNumberRange.offset(1, 1, 2, 0).isEqual(range))
+            if (item.OutgoingFeederPoint.offset(0, 1, -1, 0).isEqual(range))
                 return item;
         }
 
@@ -1676,15 +1676,29 @@ export class Grid
             source2 = t;
         }
 
+        const overlapRange1: RangeInfo =
+            source1 != null
+                ? source1.FirstColumn == gridGame.TopTeamRange.FirstColumn
+                  ? new RangeInfo(source1.FirstRow, (gridGame.TopTeamRange.FirstRow + 1) - source1.FirstRow + 1, source1.FirstColumn - 1, 0)
+                  : RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1))
+                : null;
+                
         // now we know where they are supposed to be going...
         const item1: GridItem =
             source1 != null
-                ? this.getGridItemConnectedToRange(RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1)))
+                ? this.getGridItemConnectedToRange(overlapRange1)
+                : null;
+
+        const overlapRange2: RangeInfo =
+            source2 != null
+                ? source2.FirstColumn == gridGame.BottomTeamRange.FirstColumn
+                  ? new RangeInfo(source2.FirstRow, (gridGame.BottomTeamRange.FirstRow - 1) - source2.FirstRow + 1, source2.FirstColumn - 1, 0)
+                  : RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1))
                 : null;
 
         const item2: GridItem =
             source2 != null
-                ? this.getGridItemConnectedToRange(RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1)))
+                ? this.getGridItemConnectedToRange(overlapRange2)
                 : null;
 
         return [item1, item2];

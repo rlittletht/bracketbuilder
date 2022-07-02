@@ -50,7 +50,7 @@ export class RangeInfo
         if (rangeBottomRight == null)
             return this.createFromRangeInfo(rangeTopLeft);
 
-        if (rangeTopLeft.FirstRow < rangeBottomRight.FirstRow)
+        if (rangeTopLeft.FirstRow <= rangeBottomRight.FirstRow)
         {
             return new RangeInfo(
                 rangeTopLeft.FirstRow,

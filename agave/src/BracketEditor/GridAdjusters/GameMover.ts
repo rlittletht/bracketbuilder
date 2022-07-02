@@ -21,6 +21,11 @@ export class GameMover
         this.m_originalGrid = grid;
     }
 
+    createNewGridOption(gridWork: Grid): GridOption
+    {
+        return { grid: gridWork.clone(), rank: 0 };
+    }
+
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid
     {
         const gridNew: Grid = this.m_originalGrid.clone();
@@ -149,6 +154,7 @@ export class GameMover
         const maxItemForOutgoingDrag: number = items.length;
         // be sure to capture the length right now. any items that get added during this work should not be considered
         // in this adjustment...
+
         // (FUTURE: maybe a more robust way to do it? maybe have a "generation" id, so each adjustment gets a new
         // generation, and we only consider options belonging to previous generations? that way we aren't order depended)
         for (let i = -1; i < maxItemForOutgoingDrag; i++)
@@ -181,9 +187,12 @@ export class GameMover
 
             // see if we actually are connected to anyone
             let [connectedItem, kindConnected] = gridWork.getFirstOverlappingItem(outgoingPointOld);
+
+            // if the connected item is already a game, great, pass through
+            // otherwise, figure out who the line is connected to...
             let [connectedGame, kindGame] =
                 (connectedItem == null || kindConnected == RangeOverlapKind.None || !connectedItem.isLineRange)
-                    ? [null, RangeOverlapKind.None]
+                    ? [connectedItem, kindConnected]
                     : gridWork.getFirstOverlappingItem(connectedItem.Range.offset(0, 1, connectedItem.Range.ColumnCount, 1));
 
             if (connectedGame == null || connectedGame.isLineRange || !GameId.compare(connectedGame.GameId, game.WinningTeamAdvancesToGameId))
@@ -197,9 +206,18 @@ export class GameMover
             }
 
             {
-                const newItems: GridOption[] = this.moveGameInternal(gridWork, connectedGame, connectedGame.clone().shiftByRows(dRows), bracket);
+                // now we can either move the connected game, or we can grow/shrink it to make it work
+                // do both and add them to the options. the ranker will figure out which is better
+                const gridOption = this.createNewGridOption(gridWork);
+                const newItems1: GridOption[] = this.moveGameInternal(gridOption.grid, connectedGame, connectedGame.clone().shiftByRows(dRows), bracket);
 
-                for (let item of newItems)
+                items.push(gridOption);
+                for (let item of newItems1)
+                    items.push(item);
+
+                const newItems2: GridOption[] = this.moveGameInternal(gridWork, connectedGame, connectedGame.clone().growShrink(dRows), bracket);
+
+                for (let item of newItems2)
                     items.push(item);
             }
         }
