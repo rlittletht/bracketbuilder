@@ -8,7 +8,7 @@ import { GameId } from "../GameId";
 
 export class FeederDrag
 {
-    static checkAndDragByFeeder(gameMover: GameMover, mover: Mover, gridWork: Grid)
+    static checkAndDragByOutgoingFeeder(gameMover: GameMover, mover: Mover, gridWork: Grid)
     {
         // now, see if our move changed the location of our outgoing feed point
         if (mover.ItemOld.isLineRange)

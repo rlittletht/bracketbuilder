@@ -6,6 +6,12 @@ import { GridOption, GameMover } from "../GridAdjusters/GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 
+// each delegate is responsible for everything related to it
+// for example, if you are going to notice that a connection point has moved,
+// and you are going to move the connected items, you are responsible for BOTH
+// the line (if there is one) AND the game. Move the line with just a shift
+// and move the connected game by using MoveGame (so any of its connections
+// get moved)
 export interface GameMoverDelegate
 {
     (gameMover: GameMover, mover: Mover, gridWork: Grid): void;

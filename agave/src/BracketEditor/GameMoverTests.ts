@@ -176,6 +176,60 @@ export class GameMoverTests
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: GameMoverTests.testGrowItemDraggingConnectedByLineGameDown
+
+        T4
+        Grow game2 by 4 rows, which will grow game 3 by 2 rows because of the
+        outgoing connection between game2 and game3. The game feeders are
+        connected by lines, so the lines have to move as well
+    ----------------------------------------------------------------------------*/
+    static testGrowItemDraggingConnectedByLineGameDown(appContext: IAppContext)
+    {
+        appContext;
+        let grid: Grid = new Grid();
+        const bracket: string = "T4";
+
+        grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 2, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(28, 9, 28, 11,), -1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 29, 14,), 3, false).inferGameInternals();
+
+        // now get the game we want to move
+        let item: GridItem = grid.findGameItem(new GameId(2));
+
+        if (item == null)
+            throw Error("testMoveItemUpPushingOneGameUpMaintainBuffer: can't find expected item");
+
+        let mover: GameMover = new GameMover(grid);
+
+        let gridNew: Grid = mover.moveGame(item, item.clone().growShrink(4), bracket);
+
+        // now verify that the grid was adjusted
+        const gridExpected: Grid = new Grid();
+        gridExpected.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        // setup the expected result
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 37, 8,), 2, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(30, 9, 30, 11,), -1, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 31, 14,), 3, false).inferGameInternals();
+
+        const changes: GridChange[] = gridNew.diff(gridExpected, bracket);
+        if (changes.length != 0)
+        {
+            grid.logChanges(changes);
+            throw Error(
+                `testGrowItemPushingOneGameDownMaintainBuffer: ${
+                grid.logChangesToString(changes)
+                }`);
+        }
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer
 
         Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.

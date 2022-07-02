@@ -99,7 +99,7 @@ export class GameMover
 
         // now, check and apply the "outgoing feeder moved so it will drag the attached game with it")
         // apply this rule to grid and every grid in items
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByFeeder);
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByOutgoingFeeder);
 
         return mover.Items;
     }
