@@ -4,8 +4,11 @@ import { GridRanker } from "../GridRanker";
 import { RangeOverlapKind, RangeInfo } from "../../Interop/Ranges";
 import { BracketGame, IBracketGame } from "../BracketGame";
 import { GameId } from "../GameId";
+import { Mover } from "../GameMovers/Mover";
+import { PushAway } from "../GameMovers/PushAway";
+import { FeederDrag } from "../GameMovers/FeederDrag";
 
-interface GridOption
+export interface GridOption
 {
     grid: Grid,
     rank: number
@@ -21,7 +24,7 @@ export class GameMover
         this.m_originalGrid = grid;
     }
 
-    createNewGridOption(gridWork: Grid): GridOption
+    static createNewGridOption(gridWork: Grid): GridOption
     {
         return { grid: gridWork.clone(), rank: 0 };
     }
@@ -78,12 +81,7 @@ export class GameMover
     ----------------------------------------------------------------------------*/
     moveGameInternal(grid: Grid, itemOld: GridItem, itemNew: GridItem, bracket: string): GridOption[]
     {
-        const items: GridOption[] = [];
-        const shiftTop: number = itemNew.Range.FirstRow - itemOld.Range.FirstRow;
-        const shiftBottom: number = itemNew.Range.LastRow - itemOld.Range.LastRow;
-
-        const fMovedUp: boolean = itemOld.Range.FirstRow > itemNew.Range.FirstRow;
-        const fMovedDown: boolean = itemOld.Range.LastRow < itemNew.Range.LastRow;
+        const mover: Mover = new Mover(grid, itemOld, itemNew, bracket);
 
         if (!GameId.compare(itemOld.GameId, itemNew.GameId))
             throw Error("can't change game while moving");
@@ -97,140 +95,12 @@ export class GameMover
 
         match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange);
 
-        const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
-        {
-            if (item.isEqual(itemNew))
-                return true;
-
-            range;
-            kind;
-            // the given item overlaps with the range. move it away (either up or down)
-            // if we moved up AND we didn't move down, OR we moved down and the lastRow
-            // of this overlapping item at or beyond our new last row. that last part covers
-            // the new item growing up AND down, but this overlapping item was above us so
-            // it should move up.
-            
-            if (fMovedUp && (!fMovedDown || item.Range.LastRow >= itemNew.Range.LastRow))
-            {
-                const newItem: GridItem = item.clone().shiftByRows(shiftTop);
-
-                // don't make an adjustment if its still going to fail.
-                if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                {
-                    const newItems: GridOption[] = this.moveGameInternal(grid, item, newItem, bracket);
-
-                    for (let item of newItems)
-                        items.push(item);
-                }
-            }
-            else if (fMovedDown && (!fMovedUp || item.Range.FirstRow <= itemNew.Range.FirstRow))
-            {
-                const newItem: GridItem = item.clone().shiftByRows(shiftBottom);
-
-                // don't make an adjustment if its still going to fail.
-                if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                {
-                    const newItems: GridOption[] = this.moveGameInternal(grid, item, newItem, bracket);
-
-                    for (let item of newItems)
-                        items.push(item);
-                }
-            }
-
-            return true;
-        }
-
-        // move things away from us that we now collide with (up and down)
-        let rangeOverlapCheck: RangeInfo = new RangeInfo(
-            itemNew.Range.FirstRow - 2,
-            itemNew.Range.RowCount + 4,
-            itemNew.Range.FirstColumn,
-            itemNew.Range.ColumnCount);
-
-        grid.enumerateOverlapping(
-            [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
-
-        const game: IBracketGame = itemNew.isLineRange ? null : BracketGame.CreateFromGameSync(bracket, itemNew.GameId.GameNum);
-        const maxItemForOutgoingDrag: number = items.length;
-        // be sure to capture the length right now. any items that get added during this work should not be considered
-        // in this adjustment...
-
-        // (FUTURE: maybe a more robust way to do it? maybe have a "generation" id, so each adjustment gets a new
-        // generation, and we only consider options belonging to previous generations? that way we aren't order depended)
-        for (let i = -1; i < maxItemForOutgoingDrag; i++)
-        {
-            let gridWork: Grid = i == -1 ? grid : items[i].grid;
-
-            // skip working with disqualified options
-            if (i >= 0 && items[i].rank == -1)
-                continue;
-
-            if (!gridWork.isItemOnGrid(itemNew))
-            {
-                if (i == -1)
-                    throw Error("current grid has been corrupted. itemNew has moved");
-
-                items[i].rank = -1;
-                continue;
-            }
-
-            // now, see if our move changed the location of our outgoing feed point
-            if (itemOld.isLineRange)
-                continue;
-
-            const outgoingPointOld: RangeInfo = itemOld.OutgoingFeederPoint;
-            const outgoingPointNew: RangeInfo = itemNew.OutgoingFeederPoint;
-            const dRows: number = outgoingPointNew.FirstRow - outgoingPointOld.FirstRow;
-
-            if (dRows == 0)
-                continue;
-
-            // see if we actually are connected to anyone
-            let [connectedItem, kindConnected] = gridWork.getFirstOverlappingItem(outgoingPointOld);
-
-            // if the connected item is already a game, great, pass through
-            // otherwise, figure out who the line is connected to...
-            let [connectedGame, kindGame] =
-                (connectedItem == null || kindConnected == RangeOverlapKind.None || !connectedItem.isLineRange)
-                    ? [connectedItem, kindConnected]
-                    : gridWork.getFirstOverlappingItem(connectedItem.Range.offset(0, 1, connectedItem.Range.ColumnCount, 1));
-
-            if (connectedGame == null || connectedGame.isLineRange || !GameId.compare(connectedGame.GameId, game.WinningTeamAdvancesToGameId))
-                continue;
-
-            // we have a game connected to us and we now have to "drag it along"
-            if (connectedItem.isLineRange)
-            {
-                // move the line range
-                connectedItem.shiftByRows(dRows);
-            }
-
-            {
-                // now we can either move the connected game, or we can grow/shrink it to make it work
-                // do both and add them to the options. the ranker will figure out which is better
-                const gridOption = this.createNewGridOption(gridWork);
-                const newItems1: GridOption[] = this.moveGameInternal(gridOption.grid, connectedGame, connectedGame.clone().shiftByRows(dRows), bracket);
-
-                items.push(gridOption);
-                for (let item of newItems1)
-                    items.push(item);
-
-                const newItems2: GridOption[] = this.moveGameInternal(gridWork, connectedGame, connectedGame.clone().growShrink(dRows), bracket);
-
-                for (let item of newItems2)
-                    items.push(item);
-            }
-        }
-
-        // we dont have to move ourselves away in the other items because that list was empty when we started
-        // (later rules WILL have to)
+        mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway);
 
         // now, check and apply the "outgoing feeder moved so it will drag the attached game with it")
         // apply this rule to grid and every grid in items
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByFeeder);
 
-        // before applying it to a grid in items, make sure that itemNew hasn't moved in the
-        // grid. if an option moves the newItem we are working with, its tossed.
-
-        return items;
+        return mover.Items;
     }
 }
