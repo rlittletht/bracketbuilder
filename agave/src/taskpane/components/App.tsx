@@ -116,11 +116,11 @@ export default class App extends React.Component<AppProps, AppState>
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
             Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext, testContext);
-            
+
+            GameMoverTests.testGrowItemDraggingConnectedFeederGameDown(appContext, testContext);
+            GameMoverTests.testGrowItemDraggingConnectedByLineGameDown(appContext, testContext);
             GameMoverTests.testGrowItemDraggingConnectedFeederGameUp(appContext, testContext);
             GameMoverTests.testGrowItemDraggingConnectedByLineFeederGameUp(appContext, testContext);
-            GameMoverTests.testGrowItemDraggingConnectedByLineGameDown(appContext, testContext);
-            GameMoverTests.testGrowItemDraggingConnectedFeederGameDown(appContext, testContext);
             GameMoverTests.testGrowItemDraggingConnectedGameDown(appContext, testContext);
             GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext, testContext);
             GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext, testContext);
