@@ -8,6 +8,7 @@ import { IAppContext } from "../../AppContext";
 import { GridItem } from "../GridItem";
 import { GameNum } from "../GameNum";
 import { GameId } from "../GameId";
+import { UnitTestContext } from "../../taskpane/components/App";
 
 /*----------------------------------------------------------------------------
     Adjuster_WantToGrowUpAtTopOfGrid.Adjuster_WantToGrowUpAtTopOfGrid
@@ -119,9 +120,10 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
 
         
     ----------------------------------------------------------------------------*/
-    static testInsertSpaceAtTopOfGrid(appContext: IAppContext)
+    static testInsertSpaceAtTopOfGrid(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("Adjuster_WantToGrowUpAtTopOfGrid. testInsertSpaceAtTopOfGrid");
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);

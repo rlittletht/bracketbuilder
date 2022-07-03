@@ -7,6 +7,7 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext";
 import { GameNum } from "../GameNum";
+import { UnitTestContext } from "../../taskpane/components/App";
 
 // THIS ADJUSTER IS is for the insert of Game 19 on a 14 team bracket
 // W15 and W13 will overlap game 16.  To fix this (and to fix the next problem
@@ -183,9 +184,11 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         return true;
     }
 
-    static testSwapRegionsForGameOverlap(appContext: IAppContext)
+    static testSwapRegionsForGameOverlap(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("Adjuster_SwapGameRegonsForOverlap. testSwapRegionsForGameOverlap");
+
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 

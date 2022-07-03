@@ -37,6 +37,18 @@ export interface AppProps
     isOfficeInitialized: boolean;
 }
 
+export class UnitTestContext
+{
+    m_testName: string;
+
+    get CurrentTest(): string { return this.m_testName; }
+
+    StartTest(testName: string)
+    {
+        this.m_testName = testName;
+    }
+}
+
 export interface AppState
 {
     heroList: HeroListItem[];
@@ -85,6 +97,9 @@ export default class App extends React.Component<AppProps, AppState>
 
     static async doUnitTests(appContext: IAppContext)
     {
+        let curTest = "";
+        const testContext: UnitTestContext = new UnitTestContext();
+
         try
         {
             // first, dump the grid for the current sheet. this is handy if you are building
@@ -97,22 +112,27 @@ export default class App extends React.Component<AppProps, AppState>
                     grid.logGridCondensed();
                 });
 
-            RegionSwapper_BottomGame.testRegionSwap1(appContext);
-            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext);
-            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext);
-            Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext);
-            GameMoverTests.testGrowItemDraggingConnectedByLineGameDown(appContext);
-            GameMoverTests.testGrowItemDraggingConnectedGameDown(appContext);
-            GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext);
-            GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext);
-            // GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer(appContext);
+            RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
+            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
+            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
+            Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext, testContext);
+
+            GameMoverTests.testGrowItemDraggingConnectedByLineGameDown(appContext, testContext);
+            GameMoverTests.testGrowItemDraggingConnectedFeederGameDown(appContext, testContext);
+            GameMoverTests.testGrowItemDraggingConnectedGameDown(appContext, testContext);
+            GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext, testContext);
+            GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext, testContext);
+            // GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);
 
             appContext.logTimeout("tests complete", 5000);
         }
         catch (e)
         {
-            appContext.log(`caught error; ${e}`);
+            appContext.log(
+                `TEST FAILURE: ${testContext.CurrentTest} (${
+                e
+                })`);
         }
     }
 

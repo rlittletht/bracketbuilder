@@ -7,6 +7,7 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameMover } from "./GridAdjusters/GameMover";
 import { GridChange } from "./GridChange";
 import { GameId } from "./GameId";
+import { UnitTestContext } from "../taskpane/components/App";
 
 export class GameMoverTests
 {
@@ -16,9 +17,11 @@ export class GameMoverTests
         move game 6 down by 2 rows. this should push games 6 and 7 down by 2
         rows.
     ----------------------------------------------------------------------------*/
-    static testMoveItemDownPushingOneGameDownMaintainBuffer(appContext: IAppContext)
+    static testMoveItemDownPushingOneGameDownMaintainBuffer(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("GameMoverTests. testMoveItemDownPushingOneGameDownMaintainBuffer");
+
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -73,9 +76,11 @@ export class GameMoverTests
 
         Move game 7 up by 2 rows. Should also move game 6 up by 2 rows
     ----------------------------------------------------------------------------*/
-    static testMoveItemUpPushingOneGameUpMaintainBuffer(appContext: IAppContext)
+    static testMoveItemUpPushingOneGameUpMaintainBuffer(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("GameMoverTests. testMoveItemUpPushingOneGameUpMaintainBuffer");
+
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -132,9 +137,11 @@ export class GameMoverTests
         Grow game2 by 4 rows, which will grow game 3 by 2 rows because of the
         outgoing connection between game2 and game3
     ----------------------------------------------------------------------------*/
-    static testGrowItemDraggingConnectedGameDown(appContext: IAppContext)
+    static testGrowItemDraggingConnectedGameDown(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("GameMoverTests. testGrowItemPushingOneGameDownMaintainBuffer");
+
         let grid: Grid = new Grid();
         const bracket: string = "T4";
 
@@ -183,9 +190,11 @@ export class GameMoverTests
         outgoing connection between game2 and game3. The game feeders are
         connected by lines, so the lines have to move as well
     ----------------------------------------------------------------------------*/
-    static testGrowItemDraggingConnectedByLineGameDown(appContext: IAppContext)
+    static testGrowItemDraggingConnectedByLineGameDown(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("GameMoverTests. testGrowItemDraggingConnectedByLineGameDown");
+
         let grid: Grid = new Grid();
         const bracket: string = "T4";
 
@@ -229,6 +238,56 @@ export class GameMoverTests
         }
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: GameMoverTests.testGrowItemDraggingConnectedFeederGameDown
+
+        the target game grows, moving the bottom game feed location, dragging
+        the feeding game along...
+    ----------------------------------------------------------------------------*/
+    static testGrowItemDraggingConnectedFeederGameDown(appContext: IAppContext, testContext: UnitTestContext)
+    {
+        appContext;
+        testContext.StartTest("GameMoverTests. testGrowItemDraggingConnectedFeederGameDown");
+
+        let grid: Grid = new Grid();
+        const bracket: string = "T4";
+
+        grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 2, false).inferGameInternals();
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 29, 11,), 3, false).inferGameInternals();
+
+
+        // now get the game we want to move
+        let item: GridItem = grid.findGameItem(new GameId(3));
+
+        if (item == null)
+            throw Error("testMoveItemUpPushingOneGameUpMaintainBuffer: can't find expected item");
+
+        let mover: GameMover = new GameMover(grid);
+
+        let gridNew: Grid = mover.moveGame(item, item.clone().growShrink(2), bracket);
+
+        // now verify that the grid was adjusted
+        const gridExpected: Grid = new Grid();
+        gridExpected.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        // setup the expected result
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 37, 8,), 2, false).inferGameInternals();
+        gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
+
+        const changes: GridChange[] = gridNew.diff(gridExpected, bracket);
+        if (changes.length != 0)
+        {
+            grid.logChanges(changes);
+            throw Error(
+                `testGrowItemPushingOneGameDownMaintainBuffer: ${
+                grid.logChangesToString(changes)
+                }`);
+        }
+    }
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer
 

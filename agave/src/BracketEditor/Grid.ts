@@ -1680,7 +1680,9 @@ export class Grid
             source1 != null
                 ? source1.FirstColumn == gridGame.TopTeamRange.FirstColumn
                   ? new RangeInfo(source1.FirstRow, (gridGame.TopTeamRange.FirstRow + 1) - source1.FirstRow + 1, source1.FirstColumn - 1, 0)
-                  : RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1))
+                  : source1.FirstRow > gridGame.TopTeamRange.FirstRow + 1
+                    ? null
+                    : RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1))
                 : null;
                 
         // now we know where they are supposed to be going...
@@ -1693,7 +1695,9 @@ export class Grid
             source2 != null
                 ? source2.FirstColumn == gridGame.BottomTeamRange.FirstColumn
                   ? new RangeInfo(source2.FirstRow, (gridGame.BottomTeamRange.FirstRow - 1) - source2.FirstRow + 1, source2.FirstColumn - 1, 0)
-                  : RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1))
+                  : source2.FirstRow >= gridGame.BottomTeamRange.FirstRow
+                    ? null
+                    : RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1))
                 : null;
 
         const item2: GridItem =

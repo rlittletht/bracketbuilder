@@ -78,6 +78,22 @@ export class GridItem
             this.m_range.setLastRow(this.m_range.LastRow + rowAdjust);
         if (this.m_range.RowCount > 7)
             this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        else
+            this.m_gameNumberRange = null;
+
+        return this;
+    }
+
+    growShrinkFromTop(rowAdjust: number): GridItem
+    {
+        if (this.m_topTeamRange != null)
+            this.m_topTeamRange.setRow(this.m_topTeamRange.FirstRow - rowAdjust);
+        if (this.m_range != null)
+            this.m_range.setRowResize(this.m_range.FirstRow - rowAdjust);
+        if (this.m_range.RowCount > 7)
+            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        else
+            this.m_gameNumberRange = null;
 
         return this;
     }

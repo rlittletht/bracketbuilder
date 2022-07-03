@@ -7,6 +7,7 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext";
 import { GameNum } from "../GameNum";
+import { UnitTestContext } from "../../taskpane/components/App";
 
 export class RegionSwapper_BottomGame implements IGridAdjuster
 {
@@ -101,8 +102,10 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         and the top game in the grid to combine, which naturally causes a conflict
         and requires a region swap.  Test this.
     ----------------------------------------------------------------------------*/
-    static testRegionSwap1(appContext: IAppContext)
+    static testRegionSwap1(appContext: IAppContext, testContext: UnitTestContext)
     {
+        testContext.StartTest("RegionSwapper_BottomGame. testRegionSwap1");
+
         appContext;
         let grid: Grid = new Grid();
 

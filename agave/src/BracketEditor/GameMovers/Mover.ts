@@ -5,6 +5,7 @@
 import { GridOption, GameMover } from "../GridAdjusters/GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
+import { GameId } from "../GameId";
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,
@@ -14,7 +15,7 @@ import { GridItem } from "../GridItem";
 // get moved)
 export interface GameMoverDelegate
 {
-    (gameMover: GameMover, mover: Mover, gridWork: Grid): void;
+    (gameMover: GameMover, mover: Mover, optionWork: GridOption): void;
 }
 
 export class Mover
@@ -26,8 +27,9 @@ export class Mover
     m_shiftBottom: number;
     m_fMovedUp: boolean;
     m_fMovedDown: boolean;
-    m_grid: Grid;
+    m_option: GridOption;
     m_bracket: string;
+    m_movedGames: Set<GameId>;
 
     get ItemNew(): GridItem { return this.m_itemNew; }
 
@@ -45,10 +47,15 @@ export class Mover
 
     get Items(): GridOption[] { return this.m_items; }
 
-    constructor(grid: Grid, itemOld: GridItem, itemNew: GridItem, bracket: string)
+    get Grid(): Grid { return this.m_option.grid; }
+
+    get MovedGames(): Set<GameId> { return this.m_option.movedGames; }
+
+    constructor(option: GridOption, itemOld: GridItem, itemNew: GridItem, bracket: string)
     {
         this.m_bracket = bracket;
-        this.m_grid = grid;
+
+        this.m_option = option;
         this.m_itemNew = itemNew;
         this.m_itemOld = itemOld;
         this.m_shiftTop = itemNew.Range.FirstRow - itemOld.Range.FirstRow;
@@ -62,6 +69,24 @@ export class Mover
         this.m_items.push(gridOption);
     }
 
+    moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem)
+    {
+        if (this.MovedGames.has(itemNew.GameId))
+            return;
+
+        const gridOption: GridOption =
+            preserveWorking
+                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames)
+                : optionWork;
+
+        const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld, itemNew, this.Bracket);
+        if (preserveWorking)
+            this.pushOption(gridOption);
+
+        for (let item of newItems1)
+            this.pushOption(item);
+    }
+
     invokeSingleMover(gameMover: GameMover, singleMover: GameMoverDelegate)
     {
         // this will prevent us from trying to apply our mover to options
@@ -70,7 +95,7 @@ export class Mover
 
         for (let i = -1; i < maxItemForThisInvocation; i++)
         {
-            let gridWork: Grid = i == -1 ? this.m_grid : this.m_items[i].grid;
+            let optionWork: GridOption = i == -1 ? this.m_option : this.m_items[i];
 
             // skip working with disqualified options
             if (i >= 0 && this.m_items[i].rank == -1)
@@ -78,17 +103,14 @@ export class Mover
 
             // before applying it to a grid in items, make sure that itemNew hasn't moved in the
             // grid. if an option moves the newItem we are working with, its tossed.
-            if (!gridWork.isItemOnGrid(this.m_itemNew))
+            if (!optionWork.grid.isItemOnGrid(this.m_itemNew))
             {
-                if (i == -1)
-                    throw Error("current grid has been corrupted. itemNew has moved");
-
                 // item moved on this grid option. its now disqualified (loop in update)
-                this.m_items[i].rank = -1;
+                optionWork.rank = -1;
                 continue;
             }
 
-            singleMover(gameMover, this, gridWork);
+            singleMover(gameMover, this, optionWork);
         }
     }
 }

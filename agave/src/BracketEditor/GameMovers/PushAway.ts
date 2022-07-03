@@ -6,7 +6,7 @@ import { Grid } from "../Grid";
 
 export class PushAway
 {
-    static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, gridWork: Grid)
+    static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption)
     {
         const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
         {
@@ -28,7 +28,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    const newItems: GridOption[] = gameMover.moveGameInternal(gridWork, item, newItem, mover.Bracket);
+                    const newItems: GridOption[] = gameMover.moveGameInternal(optionWork, item, newItem, mover.Bracket);
 
                     for (let item of newItems)
                         mover.pushOption(item);
@@ -41,7 +41,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    const newItems: GridOption[] = gameMover.moveGameInternal(gridWork, item, newItem, mover.Bracket);
+                    const newItems: GridOption[] = gameMover.moveGameInternal(optionWork, item, newItem, mover.Bracket);
 
                     for (let item of newItems)
                         mover.pushOption(item);
@@ -59,7 +59,7 @@ export class PushAway
             mover.ItemNew.Range.FirstColumn,
             mover.ItemNew.Range.ColumnCount);
 
-        gridWork.enumerateOverlapping(
+        optionWork.grid.enumerateOverlapping(
             [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
     }
 }

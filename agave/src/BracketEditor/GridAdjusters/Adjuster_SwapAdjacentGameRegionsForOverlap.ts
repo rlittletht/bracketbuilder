@@ -7,6 +7,7 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext";
 import { GameNum } from "../GameNum";
+import { UnitTestContext } from "../../taskpane/components/App";
 
 // THIS ADJUSTER IS is for the insert of Game 16 on a 14 team bracket
 // W12 and L10. Since L10 is unanchored, it just needs space to insert into
@@ -190,9 +191,11 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         return true;
     }
 
-    static testSwapAdjacentRegionsForGameOverlap(appContext: IAppContext)
+    static testSwapAdjacentRegionsForGameOverlap(appContext: IAppContext, testContext: UnitTestContext)
     {
         appContext;
+        testContext.StartTest("Adjuster_SwapGameRegonsForOverlap. testSwapAdjacentRegionsForGameOverlap");
+
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 

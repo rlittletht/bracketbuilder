@@ -11,7 +11,8 @@ import { FeederDrag } from "../GameMovers/FeederDrag";
 export interface GridOption
 {
     grid: Grid,
-    rank: number
+    rank: number,
+    movedGames: Set<GameId>
 }
 
 export class GameMover
@@ -24,26 +25,35 @@ export class GameMover
         this.m_originalGrid = grid;
     }
 
-    static createNewGridOption(gridWork: Grid): GridOption
+    static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>): GridOption
     {
-        return { grid: gridWork.clone(), rank: 0 };
+        return {
+            grid: gridWork.clone(),
+            rank: 0,
+            movedGames: movedGames == null ? new Set<GameId>() : new Set<GameId>(movedGames)
+        };
     }
 
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid
     {
-        const gridNew: Grid = this.m_originalGrid.clone();
-        const options: GridOption[] = this.moveGameInternal(gridNew, itemOld, itemNew, bracket);
-        const best: GridOption = { grid: gridNew, rank: GridRanker.getGridRank(gridNew, bracket)};
+        const mainOption = GameMover.createNewGridOption(this.m_originalGrid, null);
+        const options: GridOption[] = this.moveGameInternal(
+            mainOption,
+            itemOld,
+            itemNew,
+            bracket);
+
+        mainOption.rank = GridRanker.getGridRank(mainOption.grid, bracket);
+        let best: GridOption = mainOption;
 
         for (let option of options)
         {
-            option.rank = GridRanker.getGridRank(option.grid, bracket);
+            // don't even try to rank if it was disqualified
+            if (option.rank != -1)
+                option.rank = GridRanker.getGridRank(option.grid, bracket);
 
             if (best.rank == -1 || (option.rank != -1 && option.rank < best.rank))
-            {
-                best.rank = option.rank;
-                best.grid = option.grid;
-            }
+                best = option;
         }
 
         if (best.rank == -1)
@@ -79,27 +89,44 @@ export class GameMover
         On return, all accumulated options are returned (NOT including the
         current grid -- that is always implit)
     ----------------------------------------------------------------------------*/
-    moveGameInternal(grid: Grid, itemOld: GridItem, itemNew: GridItem, bracket: string): GridOption[]
+    moveGameInternal(working: GridOption, itemOld: GridItem, itemNew: GridItem, bracket: string): GridOption[]
     {
-        const mover: Mover = new Mover(grid, itemOld, itemNew, bracket);
-
         if (!GameId.compare(itemOld.GameId, itemNew.GameId))
             throw Error("can't change game while moving");
 
+        // can't move a game that's fixed
+        if (working.movedGames.has(itemNew.GameId))
+            return [];
+
+        const mover: Mover = new Mover(working, itemOld, itemNew, bracket);
+
+        working.movedGames.add(itemNew.GameId);
+
         // make this change
         // get the matching item
-        let [match, kind] = grid.getFirstOverlappingItem(itemOld.Range);
+        let [match, kind] = working.grid.getFirstOverlappingItem(itemOld.Range);
 
         if (kind != RangeOverlapKind.Equal)
             throw Error("old item not found on original grid");
 
         match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange);
 
+        // we had to let it actually move the game, but now if the game is not valid, then invalidate
+        // this option
+        if (!itemNew.isLineRange && itemNew.Range.RowCount <= 7)
+        {
+            working.rank = -1;
+            return [];
+        }
+
         mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway);
 
         // now, check and apply the "outgoing feeder moved so it will drag the attached game with it")
         // apply this rule to grid and every grid in items
         mover.invokeSingleMover(this, FeederDrag.checkAndDragByOutgoingFeeder);
+
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByTopIncomingFeed);
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByBottomIncomingFeed);
 
         return mover.Items;
     }
