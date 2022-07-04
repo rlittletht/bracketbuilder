@@ -170,7 +170,7 @@ export class GameMoverTests
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer
+        %%Function: GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown
 
         T4
         Grow game2 by 4 rows, which will grow game 3 by 2 rows because of the
@@ -567,11 +567,11 @@ export class GameMoverTests
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer
+        %%Function: GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown
 
         Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.
     ----------------------------------------------------------------------------*/
-    static testGrowItemPushingOneGameDownMaintainBuffer(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemDown_PushColumnAdjacentItemDown(appContext: IAppContext, testContext: UnitTestContext)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -585,8 +585,8 @@ export class GameMoverTests
                 const itemNew: GridItem = itemOld.clone().growShrink(2);
 
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 35, 8,), 2, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 29, 11,), 3, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37, 9, 47, 11,), 4, false).inferGameInternals();
 
                 return [itemOld, itemNew];
@@ -595,7 +595,7 @@ export class GameMoverTests
         this.doGameMoverTest(
             appContext,
             testContext,
-            "GameMoverTests. testGrowItemPushingOneGameDownMaintainBuffer",
+            "GameMoverTests. test_GrowItemDown_PushColumnAdjacentItemDown",
             "T4",
             setup);
     }

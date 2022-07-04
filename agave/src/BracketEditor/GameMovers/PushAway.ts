@@ -13,6 +13,22 @@ export class PushAway
             if (item.isEqual(mover.ItemNew))
                 return true;
 
+            // check to see if we are connected to this item
+
+            if (item.isLineRange)
+            {
+                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.Range.offset(0, 1, 0, 1)))
+                    return true;
+            }
+            else
+            {
+                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                    return true;
+
+                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                    return true;
+            }
+
             range;
             kind;
             // the given item overlaps with the range. move it away (either up or down)
@@ -42,6 +58,7 @@ export class PushAway
         }
 
 
+        // first move things away in our own column
         // move things away from us that we now collide with (up and down)
         let rangeOverlapCheck: RangeInfo = new RangeInfo(
             mover.ItemNew.Range.FirstRow - 2,
@@ -51,5 +68,16 @@ export class PushAway
 
         optionWork.grid.enumerateOverlapping(
             [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
+
+        // next things away in adjacent column (we are more tolerant with adjacency)
+        rangeOverlapCheck = new RangeInfo(
+            mover.ItemNew.Range.FirstRow - 2,
+            mover.ItemNew.Range.RowCount + 2,
+            mover.ItemNew.Range.LastColumn + 1,
+            1);
+
+        optionWork.grid.enumerateOverlapping(
+            [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
+
     }
 }
