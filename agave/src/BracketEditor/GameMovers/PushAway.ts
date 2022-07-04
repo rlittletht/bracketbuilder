@@ -27,12 +27,7 @@ export class PushAway
 
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                {
-                    const newItems: GridOption[] = gameMover.moveGameInternal(optionWork, item, newItem, mover.Bracket);
-
-                    for (let item of newItems)
-                        mover.pushOption(item);
-                }
+                    mover.moveRecurse(gameMover, optionWork, false, item, newItem);
             }
             else if (mover.MovedDown && (!mover.MovedUp || item.Range.FirstRow <= mover.ItemNew.Range.FirstRow))
             {
@@ -40,12 +35,7 @@ export class PushAway
 
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                {
-                    const newItems: GridOption[] = gameMover.moveGameInternal(optionWork, item, newItem, mover.Bracket);
-
-                    for (let item of newItems)
-                        mover.pushOption(item);
-                }
+                    mover.moveRecurse(gameMover, optionWork, false, item, newItem);
             }
 
             return true;

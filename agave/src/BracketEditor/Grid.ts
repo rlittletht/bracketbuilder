@@ -1676,29 +1676,37 @@ export class Grid
             source2 = t;
         }
 
-        const overlapRange1: RangeInfo =
-            source1 != null
-                ? source1.FirstColumn == gridGame.TopTeamRange.FirstColumn
-                  ? new RangeInfo(source1.FirstRow, (gridGame.TopTeamRange.FirstRow + 1) - source1.FirstRow + 1, source1.FirstColumn - 1, 0)
-                  : source1.FirstRow > gridGame.TopTeamRange.FirstRow + 1
-                    ? null
-                    : RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1))
-                : null;
-                
+        let overlapRange1: RangeInfo = null;
+
+        if (source1 != null)
+        {
+            if (source1.FirstRow <= gridGame.TopTeamRange.FirstRow + 1)
+            {
+                if (source1.FirstColumn == gridGame.TopTeamRange.FirstColumn)
+                    overlapRange1 = new RangeInfo(source1.FirstRow, (gridGame.TopTeamRange.FirstRow + 1) - source1.FirstRow + 1, source1.FirstColumn - 1, 0);
+                else
+                    overlapRange1 = RangeInfo.createFromCorners(source1, gridGame.TopTeamRange.offset(1, 1, -1, 1));
+            }
+        }
+
         // now we know where they are supposed to be going...
         const item1: GridItem =
             source1 != null
                 ? this.getGridItemConnectedToRange(overlapRange1)
                 : null;
 
-        const overlapRange2: RangeInfo =
-            source2 != null
-                ? source2.FirstColumn == gridGame.BottomTeamRange.FirstColumn
-                  ? new RangeInfo(source2.FirstRow, (gridGame.BottomTeamRange.FirstRow - 1) - source2.FirstRow + 1, source2.FirstColumn - 1, 0)
-                  : source2.FirstRow >= gridGame.BottomTeamRange.FirstRow
-                    ? null
-                    : RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1))
-                : null;
+        let overlapRange2: RangeInfo = null;
+
+        if (source2 != null)
+        {
+            if (source2.FirstRow < gridGame.BottomTeamRange.FirstRow)
+            {
+                if (source2.FirstColumn == gridGame.BottomTeamRange.FirstColumn)
+                    overlapRange2 = new RangeInfo(source2.FirstRow, (gridGame.BottomTeamRange.FirstRow - 1) - source2.FirstRow + 1, source2.FirstColumn - 1, 0);
+                else
+                    overlapRange2 = RangeInfo.createFromCorners(source2, gridGame.BottomTeamRange.offset(-1, 1, -1, 1));
+            }
+        }
 
         const item2: GridItem =
             source2 != null

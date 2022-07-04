@@ -79,7 +79,8 @@ export class Mover
                 ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames)
                 : optionWork;
 
-        const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld, itemNew, this.Bracket);
+        // make sure to clone itemOld -- it might be connected to the grid we are about to modify
+        const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket);
         if (preserveWorking)
             this.pushOption(gridOption);
 

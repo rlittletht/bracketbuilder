@@ -117,13 +117,21 @@ export default class App extends React.Component<AppProps, AppState>
             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
             Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext, testContext);
 
-            GameMoverTests.testGrowItemDraggingConnectedFeederGameDown(appContext, testContext);
-            GameMoverTests.testGrowItemDraggingConnectedByLineGameDown(appContext, testContext);
-            GameMoverTests.testGrowItemDraggingConnectedFeederGameUp(appContext, testContext);
-            GameMoverTests.testGrowItemDraggingConnectedByLineFeederGameUp(appContext, testContext);
-            GameMoverTests.testGrowItemDraggingConnectedGameDown(appContext, testContext);
-            GameMoverTests.testMoveItemDownPushingOneGameDownMaintainBuffer(appContext, testContext);
-            GameMoverTests.testMoveItemUpPushingOneGameUpMaintainBuffer(appContext, testContext);
+            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(appContext, testContext);
+            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(appContext, testContext);
+
+            GameMoverTests.test_GrowItemDown_FitInAvailableSpace(appContext, testContext);
+
+            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext, testContext);
+            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
+            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext, testContext);
+
+            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
+            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
+
+            GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext, testContext);
+            GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp(appContext, testContext);
+
             // GameMoverTests.testGrowItemPushingOneGameDownMaintainBuffer(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);
 
