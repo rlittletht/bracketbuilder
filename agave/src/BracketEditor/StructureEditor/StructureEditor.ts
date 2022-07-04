@@ -2,7 +2,7 @@
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { IAppContext, AppContext } from "../../AppContext";
 import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
-import { Grid } from "../Grid";
+import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
 import { GameFormatting } from "../GameFormatting";
 import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
 import { GridChange, GridChangeOperation } from "../GridChange";
@@ -125,6 +125,18 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             _moveSelection = await Ranges.createRangeInfoForSelection(context);
+            // try to extend the selection
+            let grid: Grid = await this.gridBuildFromBracket(context);
+            const [item, kind] = grid.getFirstOverlappingItem(_moveSelection);
+
+            if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
+            {
+                _moveSelection = item.Range;
+                const range: Excel.Range = Ranges.rangeFromRangeInfo(context.workbook.worksheets.getActiveWorksheet(), _moveSelection);
+                range.select();
+
+                await context.sync();
+            }
             await appContext.invalidateHeroList(context);
         };
 
@@ -321,10 +333,21 @@ export class StructureEditor
         const grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
         const itemOld: GridItem = grid.inferGameItemFromSelection(selection);
         const newSelection: RangeInfo = await await Ranges.createRangeInfoForSelection(ctx);
+
+        grid.adjustRangeForGridAlignment(newSelection, AdjustRangeGrowExtraRow.None);
+        newSelection.setLastColumn(newSelection.FirstColumn + 2);
+
+        // now make the selection a happy selection
         const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(newSelection);
 
         const mover: GameMover = new GameMover(grid);
         const gridNew = mover.moveGame(itemOld, itemNew, bracketName);
+
+        if (gridNew == null)
+        {
+            appContext.logError("I don't know how to move the game to this selection. It would probably break the bracket.", 8000);
+            return;
+        }
 
         if (gridNew != null)
         {

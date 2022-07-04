@@ -43,7 +43,9 @@ export class GameMover
             itemNew,
             bracket);
 
-        mainOption.rank = GridRanker.getGridRank(mainOption.grid, bracket);
+        if (mainOption.rank != -1)
+            mainOption.rank = GridRanker.getGridRank(mainOption.grid, bracket);
+
         console.log(`RANK: ${mainOption.rank}`);
         mainOption.grid.logGridCondensed();
 

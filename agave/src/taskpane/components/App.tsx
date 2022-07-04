@@ -112,8 +112,7 @@ export default class App extends React.Component<AppProps, AppState>
                     grid.logGridCondensed();
                 });
 
-            GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
-
+            
             RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
@@ -140,7 +139,8 @@ export default class App extends React.Component<AppProps, AppState>
 
             GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext, testContext);
             GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp(appContext, testContext);
-            
+            GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
+
             // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);
 
