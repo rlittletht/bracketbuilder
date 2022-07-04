@@ -119,15 +119,15 @@ export default class App extends React.Component<AppProps, AppState>
 
             GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(appContext, testContext);
             GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_FitInAvailableSpace(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext, testContext);
-
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
+
+            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
+
+            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext, testContext);
+            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext, testContext);
+
+            GameMoverTests.test_GrowItemDown_FitInAvailableSpace(appContext, testContext);
 
             GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext, testContext);
             GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp(appContext, testContext);
