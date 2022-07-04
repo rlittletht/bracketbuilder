@@ -44,6 +44,9 @@ export class GameMover
             bracket);
 
         mainOption.rank = GridRanker.getGridRank(mainOption.grid, bracket);
+        console.log(`RANK: ${mainOption.rank}`);
+        mainOption.grid.logGridCondensed();
+
         let best: GridOption = mainOption;
 
         for (let option of options)
@@ -51,6 +54,9 @@ export class GameMover
             // don't even try to rank if it was disqualified
             if (option.rank != -1)
                 option.rank = GridRanker.getGridRank(option.grid, bracket);
+
+            console.log(`RANK: ${option.rank}`);
+            option.grid.logGridCondensed();
 
             if (best.rank == -1 || (option.rank != -1 && option.rank < best.rank))
                 best = option;
@@ -104,7 +110,7 @@ export class GameMover
 
         // make this change
         // get the matching item
-        let [match, kind] = working.grid.getFirstOverlappingItem(itemOld.Range);
+        let [match, kind] = working.grid.getBestOverlappingItem(itemOld.Range);
 
         if (kind != RangeOverlapKind.Equal)
             throw Error("old item not found on original grid");

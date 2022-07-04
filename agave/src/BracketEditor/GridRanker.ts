@@ -125,7 +125,7 @@ export class GridRanker
 
         return gridRank.cAlmostAdjacentFeeder * 50
             + gridRank.cDisconnectedSources * 100
-            + maxHeight
+            + (maxHeight * 1.25)
             + sparsity;
     }
 }

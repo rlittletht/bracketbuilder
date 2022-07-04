@@ -96,6 +96,59 @@ export class Grid
             });
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getBestOverlappingItem
+
+        get the "best" overlapping item. this is the item that overlaps the most,
+        with preferences given to an exact match
+    ----------------------------------------------------------------------------*/
+    getBestOverlappingItem(range: RangeInfo): [GridItem, RangeOverlapKind]
+    {
+        let item: GridItem = null;
+        let pctOverlapBest: number = 0;
+
+        let overlapKind: RangeOverlapKind = RangeOverlapKind.None;
+
+        if (this.enumerateOverlapping(
+            [
+                {
+                    range: range,
+                    delegate: (matchRange: RangeInfo, matchItem: GridItem, matchKind: RangeOverlapKind) =>
+                    {
+                        matchRange;
+                        if (matchKind == RangeOverlapKind.Equal)
+                        {
+                            item = matchItem;
+                            overlapKind = matchKind;
+                            return false;
+                        }
+                        let rangeIntersection =
+                            RangeInfo.createFromCornersCoord(
+                                Math.max(matchItem.Range.FirstRow, range.FirstRow),
+                                Math.max(matchItem.Range.FirstColumn, range.FirstColumn),
+                                Math.min(matchItem.Range.LastRow, range.LastRow),
+                                Math.min(matchItem.Range.LastColumn, range.LastColumn));
+
+                        const pctOverlap: number = (rangeIntersection.Area * 100) / range.Area;
+
+                        if (pctOverlap > pctOverlapBest)
+                        {
+                            pctOverlapBest = pctOverlap;
+                            item = matchItem;
+                            overlapKind = matchKind;
+                        }
+                        return true;
+                    }
+                }
+            ]))
+        {
+            return [null, RangeOverlapKind.None];
+        }
+
+        return [item, overlapKind];
+    }
+
+
     getFirstOverlappingItem(range: RangeInfo): [GridItem, RangeOverlapKind]
     {
         let item: GridItem = null;

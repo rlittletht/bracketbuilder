@@ -20,6 +20,7 @@ export class RangeInfo
     get ColumnCount(): number { return this.m_columnCount; }
     get LastRow(): number { return this.m_rowStart + this.m_rowCount - 1; }
     get LastColumn(): number { return this.m_columnStart + this.m_columnCount - 1; }
+    get Area(): number { return this.m_rowCount * this.m_columnCount; }
 
     constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
     {

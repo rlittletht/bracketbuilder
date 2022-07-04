@@ -123,6 +123,13 @@ export default class App extends React.Component<AppProps, AppState>
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
 
             GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
+            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameAndLineDown(appContext, testContext);
+            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame_BlockedByGameBelow(appContext, testContext);
+            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame(appContext, testContext);
+
+            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp(appContext, testContext);
+            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame(appContext, testContext);
+            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_NoRoomToGrow_ShrinkConnectedGame(appContext, testContext);
 
             GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext, testContext);
             GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext, testContext);

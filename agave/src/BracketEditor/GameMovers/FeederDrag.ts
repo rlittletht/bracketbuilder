@@ -144,7 +144,7 @@ export class FeederDrag
         // we have several options for the connected game. Grow the game down, or move the game
         mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().shiftByRows(dRows));
 
-        mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrinkFromTop(dRows * 2));
+        mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2));
         mover.moveRecurse(gameMover, optionWork, false, connectedGame, connectedGame.clone().growShrink(dRows * 2));
     }
 }
