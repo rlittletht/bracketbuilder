@@ -294,7 +294,7 @@ export class Grid
                     const gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
 
                     itemRight.inferGameInternalsIfNecessary();
-                    const [top, bottom] = gridRight.getFeederConnectionsForGame(itemRight, gameStatic);
+                    const [top, bottom] = gridRight.getConnectedGridItemsForGameFeeders(itemRight, gameStatic);
 
                     connectedTop = top != null;
                     connectedBottom = bottom != null;
@@ -1495,7 +1495,7 @@ export class Grid
         game: IBracketGame,
         requested: RangeInfo): GridGameInsert
     {
-        let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
+        let [source1, source2, outgoing] = this.getRangeInfoForGameFeederItemConnectionPoints(game);
 
         let fSwapTopBottom: boolean = game.SwapTopBottom;
 
@@ -1702,12 +1702,12 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: Grid.getFeederConnectionsForGame
+        %%Function: Grid.getConnectedGridItemsForGameFeeders
 
         This will get the actual grid items for the feeder items for this game
         (if the items aren't on the grid, then null will be returned for it)
 
-        if this game is immediately adjacent to its feeder can and the outgoing
+        if this game is immediately adjacent to its feeder game and the outgoing
         point of the source game matches our incoming feeder, then return that
         game item
 
@@ -1717,9 +1717,9 @@ export class Grid
         lines, which means you might get null even if you are connected but
         adjacent
     ----------------------------------------------------------------------------*/
-    getFeederConnectionsForGame(gridGame: GridItem, game: IBracketGame): [GridItem, GridItem]
+    getConnectedGridItemsForGameFeeders(gridGame: GridItem, game: IBracketGame): [GridItem, GridItem]
     {
-        let [source1, source2, outgoing] = this.getFeederInfoForGame(game);
+        let [source1, source2, outgoing] = this.getRangeInfoForGameFeederItemConnectionPoints(game);
         let fSwap: boolean = false;
 
         if (gridGame.SwapTopBottom)
@@ -1770,11 +1770,17 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: Grid.getFeederInfoForGame
+        %%Function: Grid.getRangeInfoForGameFeederItemConnectionPoints
 
-        figure out where the feeder lines are going to come from for this game
+        this function finds the various connected items (the source game items,
+        if there are any, and the target game item if we have one), then returns
+        the connection point for each of those game items.
+
+        these points tell you one end of the feeder line, or if adjacent, the
+        connection point of the adjacent game item.
     ----------------------------------------------------------------------------*/
-    getFeederInfoForGame(game: IBracketGame): [RangeInfo, RangeInfo, RangeInfo]
+    getRangeInfoForGameFeederItemConnectionPoints(
+        game: IBracketGame): [RangeInfo, RangeInfo, RangeInfo]
     {
         let source1: RangeInfo = null;
         let source2: RangeInfo = null;

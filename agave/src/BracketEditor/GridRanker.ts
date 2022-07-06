@@ -57,8 +57,8 @@ export class GridRanker
                 if (!item.isLineRange)
                 {
                     const game: IBracketGame = BracketGame.CreateFromGameSync(bracket, item.GameId.GameNum);
-                    const [item1, item2] = grid.getFeederConnectionsForGame(item, game);
-                    let [source1, source2, outgoing] = grid.getFeederInfoForGame(game);
+                    const [item1, item2] = grid.getConnectedGridItemsForGameFeeders(item, game);
+                    let [source1, source2, outgoing] = grid.getRangeInfoForGameFeederItemConnectionPoints(game);
                     let fSwap: boolean = false;
                     [source1, source2, fSwap] = Grid.normalizeSources(source1, source2, fSwap);
                     const delegateDisqalOverlap: RangeOverlapDelegate = (matchRange: RangeInfo, matchItem: GridItem, matchKind: RangeOverlapKind) =>

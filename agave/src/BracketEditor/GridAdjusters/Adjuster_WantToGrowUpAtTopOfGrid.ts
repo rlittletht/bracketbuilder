@@ -24,7 +24,7 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         game: IBracketGame,
         column: number): boolean
     {
-        let [source1, source2, outgoing] = gridTry.getFeederInfoForGame(game);
+        let [source1, source2, outgoing] = gridTry.getRangeInfoForGameFeederItemConnectionPoints(game);
 
         if (source1 != null && source2 != null)
             return false;
@@ -91,7 +91,7 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
 
         let gridTry: Grid = grid.clone();
 
-        let [source1, source2, outgoing] = gridTry.getFeederInfoForGame(game);
+        let [source1, source2, outgoing] = gridTry.getRangeInfoForGameFeederItemConnectionPoints(game);
 
         if (source1 == null)
             source1 = source2;
