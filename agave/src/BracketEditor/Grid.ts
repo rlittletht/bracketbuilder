@@ -1859,7 +1859,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            s += `${item.GameId == null ? -1 : item.GameId.Value }: ${item.Range.toString()}`;
+            s += `${item.GameId == null ? -1 : item.GameId.Value}:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}`;
         }
         console.log(s);
     }
@@ -1870,7 +1870,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            console.log(`${item.GameId == null ? -1 : item.GameId.Value }: ${item.Range.toString()}`);
+            console.log(`${item.GameId == null ? -1 : item.GameId.Value }:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}`);
         }
     }
 

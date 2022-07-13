@@ -112,6 +112,8 @@ export default class App extends React.Component<AppProps, AppState>
                     grid.logGridCondensed();
                 });
 
+            GameMoverTests.test_DropItemToSwapHomeAway_Swapped(appContext, testContext);
+
             RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
