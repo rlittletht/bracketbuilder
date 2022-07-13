@@ -128,6 +128,8 @@ export class GameMover
         }
 
         mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway);
+        mover.invokeSingleMover(this, PushAway.checkAndMoveAdjacentItemsAway);
+        // NYI: mover.invokeSingleMover(this, PushAway.checkAndMoveLinesAway);
 
         // now, check and apply the "outgoing feeder moved so it will drag the attached game with it")
         // apply this rule to grid and every grid in items

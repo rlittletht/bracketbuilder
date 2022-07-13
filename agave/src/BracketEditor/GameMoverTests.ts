@@ -599,4 +599,35 @@ export class GameMoverTests
             "T4",
             setup);
     }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown
+
+        Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.
+    ----------------------------------------------------------------------------*/
+    static test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(appContext: IAppContext, testContext: UnitTestContext)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 33, 11,), 3, false).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(1));
+                const itemNew: GridItem = itemOld.clone().growShrink(4);
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 23, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 9, 35, 11,), 3, false).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            appContext,
+            testContext,
+            "GameMoverTests. test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision",
+            "T4",
+            setup);
+    }
 }
