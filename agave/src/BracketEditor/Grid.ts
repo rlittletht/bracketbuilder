@@ -1926,4 +1926,18 @@ export class Grid
     {
         return offsetToInfo * 2 + 5;
     }
+
+    adjustSelectionForGameInsertOrMove(selected: RangeInfo)
+    {
+        if (selected.FirstRow < this.m_firstGridPattern.FirstRow
+            || selected.FirstColumn < this.m_firstGridPattern.FirstColumn)
+        {
+            throw Error("selection is outside bracket grid");
+        }
+
+        if (selected.RowCount == 1)
+            selected.setLastRow(selected.FirstRow + 10);
+
+        this.adjustRangeForGridAlignment(selected, AdjustRangeGrowExtraRow.None);
+    }
 }

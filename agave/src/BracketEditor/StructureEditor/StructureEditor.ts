@@ -334,11 +334,17 @@ export class StructureEditor
         const itemOld: GridItem = grid.inferGameItemFromSelection(selection);
         const newSelection: RangeInfo = await await Ranges.createRangeInfoForSelection(ctx);
 
-        grid.adjustRangeForGridAlignment(newSelection, AdjustRangeGrowExtraRow.None);
+        grid.adjustSelectionForGameInsertOrMove(newSelection);
         newSelection.setLastColumn(newSelection.FirstColumn + 2);
 
+        // let's log some things useful for unit test building
+        console.log("MOVE: Original grid");
+        grid.logGridCondensed();
         // now make the selection a happy selection
         const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(newSelection);
+
+        console.log("MOVE: RequestedTarget:");
+        console.log(`${itemNew.GameId == null ? -1 : itemNew.GameId.Value}:${itemNew.SwapTopBottom ? "S" : ""} ${itemNew.Range.toString()}`);
 
         const mover: GameMover = new GameMover(grid);
         const gridNew = mover.moveGame(itemOld, itemNew, bracketName);

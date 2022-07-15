@@ -43,6 +43,12 @@ export class GridRanker
                 maxColumn = Math.max(maxColumn, item.Range.LastColumn);
 
                 areaCovered += item.Range.RowCount * item.Range.ColumnCount;
+                if (item.Range.FirstRow < grid.FirstGridPattern.FirstRow
+                    || item.Range.FirstColumn < grid.FirstGridPattern.FirstColumn)
+                {
+                    gridRank.fDisqualified = true;
+                    return false;
+                }
 
                 const overlapping: GridItem[] = grid.getOverlappingItems(item.Range);
                 if (overlapping.length > 1)
