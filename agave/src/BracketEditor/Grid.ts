@@ -268,7 +268,8 @@ export class Grid
             [itemRight, kind] = gridRight.getFirstOverlappingItem(itemLeft.Range);
 
             if (kind != RangeOverlapKind.Equal
-                || !GameId.compare(itemLeft.GameId, itemRight.GameId))
+                || !GameId.compare(itemLeft.GameId, itemRight.GameId)
+                || (!itemLeft.isLineRange && itemLeft.SwapTopBottom != itemRight.SwapTopBottom))
             {
                 // any kind of difference means this has to be removed
                 changes.push(new GridChange(GridChangeOperation.Remove, itemLeft));
@@ -284,7 +285,8 @@ export class Grid
             [itemLeft, kind] = this.getFirstOverlappingItem(itemRight.Range);
 
             if (kind != RangeOverlapKind.Equal
-                || !GameId.compare(itemRight.GameId, itemLeft.GameId))
+                || !GameId.compare(itemRight.GameId, itemLeft.GameId)
+                || (!itemRight.isLineRange && itemRight.SwapTopBottom != itemLeft.SwapTopBottom))
             {
                 let connectedTop: boolean = false;
                 let connectedBottom: boolean = false;

@@ -6,6 +6,7 @@ import { GridOption, GameMover } from "../GridAdjusters/GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GameId } from "../GameId";
+import { RangeOverlapKind } from "../../Interop/Ranges";
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,
@@ -67,6 +68,35 @@ export class Mover
     pushOption(gridOption: GridOption)
     {
         this.m_items.push(gridOption);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Mover.doChange
+
+        Change itemOld to itemNew, optionally preserving the working grid as
+        unchanged
+    ----------------------------------------------------------------------------*/
+    doChange(optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem)
+    {
+        const gridOption: GridOption =
+            preserveWorking
+                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames)
+                : optionWork;
+
+        // make this change
+        // get the matching item
+        let [match, kind] = gridOption.grid.getBestOverlappingItem(itemOld.Range);
+
+        if (kind != RangeOverlapKind.Equal)
+            throw Error("old item not found on original grid");
+
+        if (!GameId.compare(match.GameId, itemNew.GameId))
+            throw Error("old item not found on original grid with matching id");
+
+        match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange, itemNew.SwapTopBottom);
+
+        if (preserveWorking)
+            this.pushOption(gridOption);
     }
 
     moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem)

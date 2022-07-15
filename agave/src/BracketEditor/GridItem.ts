@@ -56,6 +56,12 @@ export class GridItem
         return this.m_range;
     }
 
+    doSwapTopBottom(): GridItem
+    {
+        this.m_swapTopBottom = !this.m_swapTopBottom;
+        return this;
+    }
+
     shiftByRows(rowAdjust: number): GridItem
     {
         if (this.m_topTeamRange != null)
@@ -151,7 +157,8 @@ export class GridItem
         range: RangeInfo,
         topTeamRange: RangeInfo,
         bottomTeamRange: RangeInfo,
-        gameNumberRange: RangeInfo)
+        gameNumberRange: RangeInfo,
+        swapTopBottom: boolean)
     {
         this.m_range = RangeInfo.createFromRangeInfo(range);
         if (!this.isLineRange)
@@ -159,6 +166,7 @@ export class GridItem
             this.m_topTeamRange = RangeInfo.createFromRangeInfo(topTeamRange);
             this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(bottomTeamRange);
             this.m_gameNumberRange = RangeInfo.createFromRangeInfo(gameNumberRange);
+            this.m_swapTopBottom = swapTopBottom;
         }
     }
 

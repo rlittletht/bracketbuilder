@@ -37,6 +37,6 @@ export class GridChange
 
     toString(): string
     {
-        return `${this.m_changeOp == GridChangeOperation.Remove ? "<" : ">"} ${this.GameId == null ? -1 : this.GameId.Value}: ${this.Range.toString()}`;
+        return `${this.m_changeOp == GridChangeOperation.Remove ? "<" : ">"} ${this.GameId == null ? -1 : this.GameId.Value}:${this.SwapTopBottom ? "S" : ""} ${this.Range.toString()}`;
     }
 }

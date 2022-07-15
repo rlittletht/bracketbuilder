@@ -7,6 +7,7 @@ import { GameId } from "../GameId";
 import { Mover } from "../GameMovers/Mover";
 import { PushAway } from "../GameMovers/PushAway";
 import { FeederDrag } from "../GameMovers/FeederDrag";
+import { TopBottomSwapper } from "../GameMovers/TopBottomSwapper";
 
 export interface GridOption
 {
@@ -117,7 +118,10 @@ export class GameMover
         if (kind != RangeOverlapKind.Equal)
             throw Error("old item not found on original grid");
 
-        match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange);
+        if (!GameId.compare(match.GameId, itemNew.GameId))
+            throw Error("old item not found on original grid with matching id");
+
+        match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange, itemNew.SwapTopBottom);
 
         // we had to let it actually move the game, but now if the game is not valid, then invalidate
         // this option
@@ -126,6 +130,8 @@ export class GameMover
             working.rank = -1;
             return [];
         }
+
+        mover.invokeSingleMover(this, TopBottomSwapper.checkAndSwapTopBottom);
 
         mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway);
         mover.invokeSingleMover(this, PushAway.checkAndMoveAdjacentItemsAway);

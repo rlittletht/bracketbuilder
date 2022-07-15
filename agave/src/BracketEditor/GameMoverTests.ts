@@ -630,4 +630,32 @@ export class GameMoverTests
             "T4",
             setup);
     }
+
+
+    // the interesting thing here is that the game 2 is swapped home and away -- do we need to 
+    // add that in the addGameRangeByIdValue? probably. 
+    static test_DropItemToSwapHomeAway_Swapped(appContext: IAppContext, testContext: UnitTestContext)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 9, 29, 11,), 2, true).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(2));
+                const itemNew: GridItem = itemOld.clone().shiftByRows(8);
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 9, 37, 11,), 2, false).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            appContext,
+            testContext,
+            "GameMoverTests. test_DropItemToSwapHomeAway_Swapped",
+            "T2",
+            setup);
+    }
 }
