@@ -112,6 +112,7 @@ export default class App extends React.Component<AppProps, AppState>
                     grid.logGridCondensed();
                 });
 
+            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext, testContext);
 
             RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
@@ -144,6 +145,8 @@ export default class App extends React.Component<AppProps, AppState>
             GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
 
             GameMoverTests.test_DropItemToSwapHomeAway_Swapped(appContext, testContext);
+            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext, testContext);
+            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext, testContext);
 
             // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);

@@ -1718,13 +1718,26 @@ export class Grid
         feeder connection point. GetAllGameLines will only return the actual
         lines, which means you might get null even if you are connected but
         adjacent
+
+        This function is tolerant of SwapTopBottom being set on BOTH gridGame
+        AND game, or only on either.
     ----------------------------------------------------------------------------*/
     getConnectedGridItemsForGameFeeders(gridGame: GridItem, game: IBracketGame): [GridItem, GridItem]
     {
         let [source1, source2, outgoing] = this.getRangeInfoForGameFeederItemConnectionPoints(game);
         let fSwap: boolean = false;
 
-        if (gridGame.SwapTopBottom)
+        if (source1 != null && source1.FirstColumn > gridGame.Range.FirstColumn)
+            source1 = null;
+
+        if (source2 != null && source2.FirstColumn > gridGame.Range.FirstColumn)
+            source2 = null;
+
+        // if the GridItem AND the game both say they are swapped, then we have already accounted 
+        // for the swap. otherwise, make sure to obey what the game item has
+
+        // (REVIEW: Maybe we want gridGame.SwapTopBottom != game.SwapTopBottom)
+        if (gridGame.SwapTopBottom && game.SwapTopBottom != true)
         {
             const t = source1;
             source1 = source2;
@@ -1780,6 +1793,8 @@ export class Grid
 
         these points tell you one end of the feeder line, or if adjacent, the
         connection point of the adjacent game item.
+
+        THIS FUNCTION ASSUMES THAT game.SwapTopBottom is properly set!!
     ----------------------------------------------------------------------------*/
     getRangeInfoForGameFeederItemConnectionPoints(
         game: IBracketGame): [RangeInfo, RangeInfo, RangeInfo]
@@ -1855,8 +1870,6 @@ export class Grid
 
     logGridCondensed()
     {
-        console.log(`first repeating: ${this.m_firstGridPattern ? this.m_firstGridPattern.toString(): "unset"}`);
-
         let s: string = "";
 
         for (let item of this.m_gridItems)

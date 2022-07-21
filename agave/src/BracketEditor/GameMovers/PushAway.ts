@@ -84,8 +84,10 @@ export class PushAway
         this does not move any connected items -- that's the responsibility of
         the dragging modules
     ----------------------------------------------------------------------------*/
-    static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption)
+    static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        let changes: boolean = false;
+
         const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
         {
             if (item.isEqual(mover.ItemNew))
@@ -125,7 +127,9 @@ export class PushAway
 
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                    mover.moveRecurse(gameMover, optionWork, false, item, newItem);
+                {
+                    changes = mover.moveRecurse(gameMover, optionWork, false, item, newItem, "checkAndMoveItemsAway_shift", crumbs);
+                }
             }
 
             return true;
@@ -142,6 +146,8 @@ export class PushAway
 
         optionWork.grid.enumerateOverlapping(
             [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
+
+        return changes;
     }
 
     /*----------------------------------------------------------------------------
@@ -153,8 +159,10 @@ export class PushAway
 
         This is currently NYI
     ----------------------------------------------------------------------------*/
-    static checkAndMoveLinesAway(gameMover: GameMover, mover: Mover, optionWork: GridOption)
+    static checkAndMoveLinesAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        let changes: boolean = false;
+
         const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
         {
             if (item.isEqual(mover.ItemNew))
@@ -188,7 +196,9 @@ export class PushAway
 
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                    mover.moveRecurse(gameMover, optionWork, false, item, newItem);
+                {
+                    changes = mover.moveRecurse(gameMover, optionWork, false, item, newItem, "checkAndMoveLinesAway_shift", crumbs);
+                }
             }
 
             return true;
@@ -204,6 +214,8 @@ export class PushAway
 
         optionWork.grid.enumerateOverlapping(
             [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
+
+        return changes;
     }
 
 
@@ -213,8 +225,10 @@ export class PushAway
         This time we are only checking the column adjacent to us to see if we
         should push an item up or down
     ----------------------------------------------------------------------------*/
-    static checkAndMoveAdjacentItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption)
+    static checkAndMoveAdjacentItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        let changes: boolean = false;
+
         const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
         {
             if (item.isEqual(mover.ItemNew))
@@ -251,7 +265,9 @@ export class PushAway
 
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
-                    mover.moveRecurse(gameMover, optionWork, false, item, newItem);
+                {
+                    changes = mover.moveRecurse(gameMover, optionWork, false, item, newItem, "checkAndMoveAdjacentItemsAway_shift", crumbs);
+                }
             }
 
             return true;
@@ -267,6 +283,8 @@ export class PushAway
 
         optionWork.grid.enumerateOverlapping(
             [{ range: rangeOverlapCheck, delegate: moveItemAwayFromItem }]);
+
+        return changes;
     }
 
 }

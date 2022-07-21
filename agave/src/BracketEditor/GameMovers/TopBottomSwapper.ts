@@ -20,9 +20,10 @@ export class TopBottomSwapper
         this does not move any connected items -- that's the responsibility of
         the dragging modules
     ----------------------------------------------------------------------------*/
-    static checkAndSwapTopBottom(gameMover: GameMover, mover: Mover, optionWork: GridOption)
+    static checkAndSwapTopBottom(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
         gameMover;
+        crumbs;
         // check to see if the old and the new linkages work by swapping top and bottom
 
         // get the connected gridItems for the old item location
@@ -39,8 +40,8 @@ export class TopBottomSwapper
                 || (mover.ItemOld.BottomTeamRange.LastRow - 1 == source1.FirstRow
                     && mover.ItemNew.TopTeamRange.FirstRow + 1 == source1.FirstRow))
             {
-                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom());
-                return;
+                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom(), "checkAndSwapTopBottom");
+                return true;
             }
         }
 
@@ -51,9 +52,10 @@ export class TopBottomSwapper
                 || (mover.ItemOld.BottomTeamRange.LastRow - 1 == source2.FirstRow
                     && mover.ItemNew.TopTeamRange.FirstRow + 1 == source2.FirstRow))
             {
-                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom());
-                return;
+                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom(), "checkAndSwapTopBottom");
+                return true;
             }
         }
+        return false;
     }
 }

@@ -42,6 +42,11 @@ export class GameMoverTests
         if (rank == -1)
             throw Error(`starting grid invalid. bad test`);
 
+        console.log(
+            `original (rank=${
+            rank
+            })|`);
+        grid.logGridCondensed();
         // clone the old item to make sure we are disconnected from the grid we are
         // about to change
         let gridResult: Grid = mover.moveGame(itemOld.clone(), itemNew, bracket);
@@ -50,7 +55,8 @@ export class GameMoverTests
         if (changes.length != 0)
         {
             grid.logChanges(changes);
-            throw Error(`${
+            throw Error(
+                `${
                 grid.logChangesToString(changes)
                 }`);
         }
@@ -416,6 +422,7 @@ export class GameMoverTests
             "T4",
             setup);
     }
+
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown
 
@@ -458,16 +465,16 @@ export class GameMoverTests
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
             {
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(11, 6, 21, 8,), 1, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 9, 31, 11,), 3, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 6, 25, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 6, 39, 8,), 2, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 9, 35, 11,), 3, false).inferGameInternals();
 
                 const itemOld: GridItem = grid.findGameItem(new GameId(3));
                 const itemNew: GridItem = itemOld.clone().growShrinkFromTop(2);
 
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(7, 6, 21, 8,), 1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(11, 6, 25, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 6, 39, 8,), 2, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(17, 9, 35, 11,), 3, false).inferGameInternals();
 
                 return [itemOld, itemNew];
             };
@@ -540,20 +547,20 @@ export class GameMoverTests
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
             {
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(11, 6, 21, 8,), 1, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(16, 9, 16, 11,), -1, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(30, 9, 30, 11,), -1, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 12, 31, 14,), 3, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 6, 25, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(20, 9, 20, 11,), -1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 6, 39, 8,), 2, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(34, 9, 34, 11,), -1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 12, 35, 14,), 3, false).inferGameInternals();
 
                 const itemOld: GridItem = grid.findGameItem(new GameId(3));
                 const itemNew: GridItem = itemOld.clone().growShrinkFromTop(2);
 
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(7, 6, 21, 8,), 1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 6, 35, 8,), 2, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(30, 9, 30, 11,), -1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 31, 14,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(11, 6, 25, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(18, 9, 18, 11,), -1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 6, 39, 8,), 2, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(34, 9, 34, 11,), -1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(17, 12, 35, 14,), 3, false).inferGameInternals();
 
                 return [itemOld, itemNew];
             };
@@ -656,6 +663,96 @@ export class GameMoverTests
             testContext,
             "GameMoverTests. test_DropItemToSwapHomeAway_Swapped",
             "T2",
+            setup);
+    }
+
+    // the interesting thing here is that the game 2 is swapped home and away -- do we need to 
+    // add that in the addGameRangeByIdValue? probably. 
+    static test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext: IAppContext, testContext: UnitTestContext)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 2, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37, 6, 47, 8,), 3, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(51, 6, 61, 8,), 4, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 29, 11,), 5, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(20, 12, 20, 14,), -1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 9, 57, 11,), 6, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(48, 12, 48, 14,), -1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63, 9, 73, 11,), 7, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 9, 89, 11,), 8, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14,), 9, true).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 12, 93, 14,), 10, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 15, 49, 17,), 11, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(34, 18, 34, 20,), -1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 15, 89, 17,), 12, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63, 18, 81, 20,), 13, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(33, 21, 73, 23,), 14, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(51, 24, 83, 26,), 15, false).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(13));
+                const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
+                    RangeInfo.createFromCornersCoord(79, 18, 93, 20));
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 2, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37, 6, 47, 8,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(51, 6, 61, 8,), 4, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 29, 11,), 5, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(20, 12, 20, 14,), -1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 9, 57, 11,), 6, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(48, 12, 48, 14,), -1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63, 9, 73, 11,), 7, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 9, 89, 11,), 8, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14,), 9, true).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 12, 93, 14,), 10, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 15, 49, 17,), 11, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(34, 18, 34, 20,), -1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 15, 89, 17,), 12, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 18, 93, 20,), 13, true).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(33, 21, 87, 23,), 14, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 24, 91, 26,), 15, false).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            appContext,
+            testContext,
+            "GameMoverTests. test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped",
+            "T8",
+            setup);
+    }
+
+    static test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext: IAppContext, testContext: UnitTestContext)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+//                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14,), 9, true).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 12, 93, 14,), 10, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 15, 89, 17,), 12, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63, 18, 81, 20,), 13, false).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(13));
+                const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
+                    RangeInfo.createFromCornersCoord(79, 18, 93, 20));
+
+//                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14,), 9, true).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 12, 93, 14,), 10, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 15, 89, 17,), 12, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 18, 93, 20,), 13, true).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            appContext,
+            testContext,
+            "GameMoverTests. test_DropItemToSwapHomeAwayWithConnectedSources_Swapped",
+            "T8",
             setup);
     }
 }

@@ -16,7 +16,7 @@ import { RangeOverlapKind } from "../../Interop/Ranges";
 // get moved)
 export interface GameMoverDelegate
 {
-    (gameMover: GameMover, mover: Mover, optionWork: GridOption): void;
+    (gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean;
 }
 
 export class Mover
@@ -24,33 +24,18 @@ export class Mover
     m_items: GridOption[] = [];
     m_itemNew: GridItem;
     m_itemOld: GridItem;
-    m_shiftTop: number;
-    m_shiftBottom: number;
-    m_fMovedUp: boolean;
-    m_fMovedDown: boolean;
     m_option: GridOption;
     m_bracket: string;
-    m_movedGames: Set<GameId>;
 
     get ItemNew(): GridItem { return this.m_itemNew; }
 
     get ItemOld(): GridItem { return this.m_itemOld; }
-
-    get ShiftTop(): number { return this.m_shiftTop; }
-
-    get ShiftBottom(): number { return this.m_shiftBottom; }
-
-    get MovedUp(): boolean { return this.m_fMovedUp; }
-
-    get MovedDown(): boolean { return this.m_fMovedDown; }
 
     get Bracket(): string { return this.m_bracket; }
 
     get Items(): GridOption[] { return this.m_items; }
 
     get Grid(): Grid { return this.m_option.grid; }
-
-    get MovedGames(): Set<GameId> { return this.m_option.movedGames; }
 
     constructor(option: GridOption, itemOld: GridItem, itemNew: GridItem, bracket: string)
     {
@@ -59,10 +44,6 @@ export class Mover
         this.m_option = option;
         this.m_itemNew = itemNew;
         this.m_itemOld = itemOld;
-        this.m_shiftTop = itemNew.Range.FirstRow - itemOld.Range.FirstRow;
-        this.m_shiftBottom = itemNew.Range.LastRow - itemOld.Range.LastRow;
-        this.m_fMovedUp = itemOld.Range.FirstRow > itemNew.Range.FirstRow;
-        this.m_fMovedDown = itemOld.Range.LastRow < itemNew.Range.LastRow;
     }
 
     pushOption(gridOption: GridOption)
@@ -76,12 +57,14 @@ export class Mover
         Change itemOld to itemNew, optionally preserving the working grid as
         unchanged
     ----------------------------------------------------------------------------*/
-    doChange(optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem)
+    doChange(optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string): boolean
     {
         const gridOption: GridOption =
             preserveWorking
-                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames)
+                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name)
                 : optionWork;
+
+        gridOption.name = `${gridOption.name}:doChange(${name})`;
 
         // make this change
         // get the matching item
@@ -97,28 +80,56 @@ export class Mover
 
         if (preserveWorking)
             this.pushOption(gridOption);
+
+        return true;
     }
 
-    moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem)
+    moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumbs: string): boolean
     {
-        if (this.MovedGames.has(itemNew.GameId))
-            return;
+        if (optionWork.movedGames.has(itemNew.GameId))
+            return false;
 
         const gridOption: GridOption =
             preserveWorking
-                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames)
+                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name)
                 : optionWork;
 
+        gridOption.name = `${gridOption.name}:moveRecurse(${name})`;
+
         // make sure to clone itemOld -- it might be connected to the grid we are about to modify
-        const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket);
+        const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket, crumbs);
         if (preserveWorking)
             this.pushOption(gridOption);
 
         for (let item of newItems1)
             this.pushOption(item);
+
+        return true;
     }
 
-    invokeSingleMover(gameMover: GameMover, singleMover: GameMoverDelegate)
+    logGrids(title: string, dirtyOnly: boolean)
+    {
+        if (!dirtyOnly || this.m_option.logDirty)
+        {
+            console.log(`|gd(main) ${title}: ${this.m_option.name}: mainOption|`);
+            this.m_option.grid.logGridCondensed();
+            if (dirtyOnly)
+                this.m_option.logDirty = false;
+        }
+
+        for (let i = 0; i < this.m_items.length; i++)
+        {
+            if (!dirtyOnly || this.m_items[i].logDirty)
+            {
+                console.log(`|gd(${i}) ${title}: ${this.m_items[i].name}: option[${i}]|`);
+                this.m_items[i].grid.logGridCondensed();
+                if (dirtyOnly)
+                    this.m_items[i].logDirty = false;
+            }
+        }
+    }
+
+    invokeSingleMover(gameMover: GameMover, singleMover: GameMoverDelegate, crumbs: string)
     {
         // this will prevent us from trying to apply our mover to options
         // that we pushed ourselves
@@ -141,7 +152,8 @@ export class Mover
                 continue;
             }
 
-            singleMover(gameMover, this, optionWork);
+            if (singleMover(gameMover, this, optionWork, crumbs))
+                optionWork.logDirty = true;
         }
     }
 }

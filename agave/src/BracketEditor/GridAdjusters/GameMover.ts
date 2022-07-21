@@ -13,7 +13,9 @@ export interface GridOption
 {
     grid: Grid,
     rank: number,
-    movedGames: Set<GameId>
+    movedGames: Set<GameId>,
+    name: string,
+    logDirty: boolean
 }
 
 export class GameMover
@@ -26,31 +28,35 @@ export class GameMover
         this.m_originalGrid = grid;
     }
 
-    static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>): GridOption
+    static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>, name: string): GridOption
     {
         return {
             grid: gridWork.clone(),
             rank: 0,
-            movedGames: movedGames == null ? new Set<GameId>() : new Set<GameId>(movedGames)
+            movedGames: movedGames == null ? new Set<GameId>() : new Set<GameId>(movedGames),
+            name: name,
+            logDirty: true
         };
     }
 
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid
     {
-        const mainOption = GameMover.createNewGridOption(this.m_originalGrid, null);
+        const mainOption = GameMover.createNewGridOption(this.m_originalGrid, null, "root");
         const options: GridOption[] = this.moveGameInternal(
             mainOption,
             itemOld,
             itemNew,
-            bracket);
+            bracket,
+            "");
 
         if (mainOption.rank != -1)
             mainOption.rank = GridRanker.getGridRank(mainOption.grid, bracket);
 
-        console.log(`RANK: ${mainOption.rank}`);
+        console.log(`|option 0 (rank=${mainOption.rank})|`);
         mainOption.grid.logGridCondensed();
 
         let best: GridOption = mainOption;
+        let optionNum = 1;
 
         for (let option of options)
         {
@@ -58,17 +64,43 @@ export class GameMover
             if (option.rank != -1)
                 option.rank = GridRanker.getGridRank(option.grid, bracket);
 
-            console.log(`RANK: ${option.rank}`);
-            option.grid.logGridCondensed();
+            if (option.rank != -1)
+            {
+                console.log(`|option ${optionNum++} (rank=${option.rank})|`);
+                option.grid.logGridCondensed();
+            }
 
             if (best.rank == -1 || (option.rank != -1 && option.rank < best.rank))
                 best = option;
         }
-
+        console.log("|");
         if (best.rank == -1)
             return null;
 
         return best.grid;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameMover.getMatchingItem
+    ----------------------------------------------------------------------------*/
+    static getMatchingItem(working: GridOption, item: GridItem, gameId: GameId): GridItem
+    {
+        // make this change
+        // get the matching item
+        const items: GridItem[] = working.grid.getOverlappingItems(item.Range);
+
+        let match: GridItem = null;
+
+        for (let item of items)
+        {
+            if (item.Range.isEqual(item.Range) && item.GameId == gameId)
+            {
+                match = item;
+                break;
+            }
+        }
+
+        return match;
     }
 
     /*----------------------------------------------------------------------------
@@ -98,7 +130,7 @@ export class GameMover
         On return, all accumulated options are returned (NOT including the
         current grid -- that is always implit)
     ----------------------------------------------------------------------------*/
-    moveGameInternal(working: GridOption, itemOld: GridItem, itemNew: GridItem, bracket: string): GridOption[]
+    moveGameInternal(working: GridOption, itemOld: GridItem, itemNew: GridItem, bracket: string, crumbs: string): GridOption[]
     {
         if (!GameId.compare(itemOld.GameId, itemNew.GameId))
             throw Error("can't change game while moving");
@@ -113,9 +145,20 @@ export class GameMover
 
         // make this change
         // get the matching item
-        let [match, kind] = working.grid.getBestOverlappingItem(itemOld.Range);
+        const items: GridItem[] = working.grid.getOverlappingItems(itemOld.Range);
 
-        if (kind != RangeOverlapKind.Equal)
+        let match: GridItem = null;
+
+        for (let item of items)
+        {
+            if (item.Range.isEqual(itemOld.Range) && item.GameId == itemNew.GameId)
+            {
+                match = item;
+                break;
+            }
+        }
+
+        if (match == null)
             throw Error("old item not found on original grid");
 
         if (!GameId.compare(match.GameId, itemNew.GameId))
@@ -131,18 +174,24 @@ export class GameMover
             return [];
         }
 
-        mover.invokeSingleMover(this, TopBottomSwapper.checkAndSwapTopBottom);
+        mover.invokeSingleMover(this, TopBottomSwapper.checkAndSwapTopBottom, `${crumbs}:CP.1`);
+        mover.logGrids(`${crumbs}:CP.1`, true);
 
-        mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway);
-        mover.invokeSingleMover(this, PushAway.checkAndMoveAdjacentItemsAway);
+        mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway, `${crumbs}:CP.2`);
+        mover.logGrids(`${crumbs}:CP.2`, true);
+
+        mover.invokeSingleMover(this, PushAway.checkAndMoveAdjacentItemsAway, `${crumbs}:CP.3`);
+        mover.logGrids(`${crumbs}:CP.3`, true);
         // NYI: mover.invokeSingleMover(this, PushAway.checkAndMoveLinesAway);
 
         // now, check and apply the "outgoing feeder moved so it will drag the attached game with it")
         // apply this rule to grid and every grid in items
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByOutgoingFeeder);
-
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByTopIncomingFeed);
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByBottomIncomingFeed);
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByOutgoingFeeder, `${crumbs}:CP.4`);
+        mover.logGrids(`${crumbs}:CP.4`, true);
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByTopIncomingFeed, `${crumbs}:CP.5`);
+        mover.logGrids(`${crumbs}:CP.5`, true);
+        mover.invokeSingleMover(this, FeederDrag.checkAndDragByBottomIncomingFeed, `${crumbs}:CP.6`);
+        mover.logGrids(`${crumbs}:CP.6`, true);
 
         return mover.Items;
     }

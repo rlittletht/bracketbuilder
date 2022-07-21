@@ -63,6 +63,7 @@ export class GridRanker
                 if (!item.isLineRange)
                 {
                     const game: IBracketGame = BracketGame.CreateFromGameSync(bracket, item.GameId.GameNum);
+                    game.SetSwapTopBottom(item.SwapTopBottom);
                     const [item1, item2] = grid.getConnectedGridItemsForGameFeeders(item, game);
                     let [source1, source2, outgoing] = grid.getRangeInfoForGameFeederItemConnectionPoints(game);
                     let fSwap: boolean = false;
