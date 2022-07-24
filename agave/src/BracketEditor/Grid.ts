@@ -195,6 +195,30 @@ export class Grid
         return items;
     }
 
+    getMatchingItemOnGrid(range: RangeInfo, gameId: GameId): GridItem
+    {
+        const items: GridItem[] = this.getOverlappingItems(range);
+
+        let match: GridItem = null;
+
+        for (let item of items)
+        {
+            if (item.Range.isEqual(range) && item.GameId.equals(gameId))
+            {
+                match = item;
+                break;
+            }
+        }
+
+        if (match == null)
+            throw Error("old item not found on original grid");
+
+        if (!GameId.compare(match.GameId, gameId))
+            throw Error("old item not found on original grid with matching id");
+
+        return match;
+    }
+    
     /*----------------------------------------------------------------------------
         %%Function: Grid.isItemOnGrid
 
@@ -202,9 +226,9 @@ export class Grid
     ----------------------------------------------------------------------------*/
     isItemOnGrid(item: GridItem): boolean
     {
-        const [itemMatch, kind] = this.getFirstOverlappingItem(item.Range);
+        const match: GridItem = this.getMatchingItemOnGrid(item.Range, item.GameId);
 
-        return kind == RangeOverlapKind.Equal && item.isEqual(itemMatch);
+        return match != null && match.GameId.equals(item.GameId);
     }
 
     doesRangeOverlap(range: RangeInfo): RangeOverlapKind

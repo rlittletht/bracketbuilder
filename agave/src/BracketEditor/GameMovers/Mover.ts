@@ -78,7 +78,7 @@ export class Mover
 
         match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange, itemNew.SwapTopBottom);
 
-        if (preserveWorking)
+        if (preserveWorking && gridOption.rank != -1)
             this.pushOption(gridOption);
 
         return true;
@@ -98,17 +98,22 @@ export class Mover
 
         // make sure to clone itemOld -- it might be connected to the grid we are about to modify
         const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket, crumbs);
-        if (preserveWorking)
+        if (preserveWorking && gridOption.rank != -1)
             this.pushOption(gridOption);
 
         for (let item of newItems1)
-            this.pushOption(item);
+        {
+            if (item.rank != -1)
+                this.pushOption(item);
+        }
 
         return true;
     }
 
     logGrids(title: string, dirtyOnly: boolean)
     {
+        return;
+
         if (!dirtyOnly || this.m_option.logDirty)
         {
             console.log(`|gd(main) ${title}: ${this.m_option.name}: mainOption|`);

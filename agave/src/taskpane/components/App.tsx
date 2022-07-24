@@ -112,7 +112,7 @@ export default class App extends React.Component<AppProps, AppState>
                     grid.logGridCondensed();
                 });
 
-            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext, testContext);
+            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
 
             RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
@@ -121,9 +121,12 @@ export default class App extends React.Component<AppProps, AppState>
 
             GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(appContext, testContext);
 
+            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity(appContext, testContext);
             GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(appContext, testContext);
             GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(appContext, testContext);
+            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity(appContext, testContext);
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
+            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(appContext, testContext);
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
 
             GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
@@ -141,12 +144,17 @@ export default class App extends React.Component<AppProps, AppState>
             GameMoverTests.test_GrowItemDown_FitInAvailableSpace(appContext, testContext);
 
             GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext, testContext);
+            GameMoverTests.test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity(appContext, testContext);
             GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp(appContext, testContext);
+
             GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
 
             GameMoverTests.test_DropItemToSwapHomeAway_Swapped(appContext, testContext);
             GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext, testContext);
             GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext, testContext);
+            GameMoverTests.test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem(appContext, testContext);
+            GameMoverTests.test_MoveItemWithConnectedTopFeeder_MoveConnectedItem(appContext, testContext);
+            GameMoverTests.test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(appContext, testContext);
 
             // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);
