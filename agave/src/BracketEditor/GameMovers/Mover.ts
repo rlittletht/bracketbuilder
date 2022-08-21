@@ -21,6 +21,7 @@ export interface GameMoverDelegate
 
 export class Mover
 {
+    m_logGrids: boolean = true;
     m_items: GridOption[] = [];
     m_itemNew: GridItem;
     m_itemOld: GridItem;
@@ -112,6 +113,9 @@ export class Mover
 
     logGrids(title: string, dirtyOnly: boolean)
     {
+        if (!this.m_logGrids)
+            return;
+
         if (!dirtyOnly || this.m_option.logDirty)
         {
             console.log(`|gd(main) ${title}: ${this.m_option.name}: mainOption|`);

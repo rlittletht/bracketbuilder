@@ -40,6 +40,8 @@ export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
+    m_fLogChanges: boolean = true;
+    m_fLogGrid: boolean = true;
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
 
@@ -625,8 +627,6 @@ export class Grid
 
                     if (overlapKind == RangeOverlapKind.None)
                         this.addLineRange(feederTop);
-//                    else if (overlapKind == RangeOverlapKind.Partial)
-//                        throw `line range overlaps another range`;
                 }
                 if (feederBottom != null)
                 {
@@ -634,8 +634,6 @@ export class Grid
 
                     if (overlapKind == RangeOverlapKind.None)
                         this.addLineRange(feederBottom);
-//                    else if (overlapKind == RangeOverlapKind.Partial)
-//                        throw `line range overlaps another range`;
                 }
                 if (feederWinner != null)
                 {
@@ -643,8 +641,6 @@ export class Grid
 
                     if (overlapKind == RangeOverlapKind.None)
                         this.addLineRange(feederWinner);
-//                    else if (overlapKind == RangeOverlapKind.Partial)
-//                        throw `line range overlaps another range`;
                 }
             }
         }
@@ -1915,6 +1911,9 @@ export class Grid
 
     logGrid()
     {
+        if (!this.m_fLogGrid)
+            return;
+
         console.log(`first repeating: ${this.m_firstGridPattern.toString()}`);
 
         for (let item of this.m_gridItems)
@@ -1935,12 +1934,10 @@ export class Grid
 
     logChanges(changes: GridChange[])
     {
+        if (!this.m_fLogChanges)
+            return;
+
         console.log(this.logChangesToString(changes));
-/*        for (let item of changes)
-        {
-            console.log(`${item.toString()}`);
-        }
-*/
     }
 
 
