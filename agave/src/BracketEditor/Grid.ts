@@ -1310,7 +1310,12 @@ export class Grid
             const [gameItem, kind] = this.getFirstOverlappingItem(source1.offset(0, 1, -1, 1));
 
             if (gameItem != null)
+            {
                 overlapRegion.excludeRangeByRows(gameItem.Range);
+                const connectedItem: GridItem = this.getGridItemConnectedToRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
+                if (connectedItem != null)
+                    overlapRegion.excludeRangeByRows(connectedItem.Range);
+            }
         }
 
         if (source2 != null)
@@ -1318,7 +1323,12 @@ export class Grid
             const [gameItem, kind] = this.getFirstOverlappingItem(source2.offset(0, 1, -1, 1));
 
             if (gameItem != null)
+            {
                 overlapRegion.excludeRangeByRows(gameItem.Range);
+                const connectedItem: GridItem = this.getGridItemConnectedToRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
+                if (connectedItem != null)
+                    overlapRegion.excludeRangeByRows(connectedItem.Range);
+            }
         }
 
         if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)

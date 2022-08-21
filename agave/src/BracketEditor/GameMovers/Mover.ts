@@ -112,8 +112,6 @@ export class Mover
 
     logGrids(title: string, dirtyOnly: boolean)
     {
-        return;
-
         if (!dirtyOnly || this.m_option.logDirty)
         {
             console.log(`|gd(main) ${title}: ${this.m_option.name}: mainOption|`);
