@@ -40,8 +40,8 @@ export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
-    m_fLogChanges: boolean = true;
-    m_fLogGrid: boolean = true;
+    m_fLogChanges: boolean = false;
+    m_fLogGrid: boolean = false;
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
 

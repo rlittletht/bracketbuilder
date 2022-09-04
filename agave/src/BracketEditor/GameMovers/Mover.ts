@@ -21,7 +21,7 @@ export interface GameMoverDelegate
 
 export class Mover
 {
-    m_logGrids: boolean = true;
+    m_logGrids: boolean = false;
     m_items: GridOption[] = [];
     m_itemNew: GridItem;
     m_itemOld: GridItem;
