@@ -19,7 +19,9 @@ export class RangeInfo
     get FirstColumn(): number { return this.m_columnStart; }
     get ColumnCount(): number { return this.m_columnCount; }
     get LastRow(): number { return this.m_rowStart + this.m_rowCount - 1; }
+    get LastRowNotBackwards(): number { return this.m_rowStart + this.m_rowCount - 1 + (this.m_rowCount == 0 ? 1 : 0) ; }
     get LastColumn(): number { return this.m_columnStart + this.m_columnCount - 1; }
+    get LastColumnNotBackwards(): number { return this.m_columnStart + this.m_columnCount - 1 + (this.m_columnCount == 0 ? 1 : 0); }
     get Area(): number { return this.m_rowCount * this.m_columnCount; }
 
     constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
@@ -257,6 +259,16 @@ export class RangeInfo
         return this.isOverlappingSegment(range1.FirstColumn, range1.LastColumn, range2.FirstColumn, range2.LastColumn);
     }
 
+    static isOverlappingRowsNotBackwards(range1: RangeInfo, range2: RangeInfo): boolean
+    {
+        return this.isOverlappingSegment(range1.FirstRow, range1.LastRowNotBackwards, range2.FirstRow, range2.LastRowNotBackwards);
+    }
+
+    static isOverlappingColumnsNotBackwards(range1: RangeInfo, range2: RangeInfo): boolean
+    {
+        return this.isOverlappingSegment(range1.FirstColumn, range1.LastColumnNotBackwards, range2.FirstColumn, range2.LastColumnNotBackwards);
+    }
+
     static isOverlapping(range1: RangeInfo, range2: RangeInfo): RangeOverlapKind
     {
         if (range1 == null && range2 == null)
@@ -266,6 +278,22 @@ export class RangeInfo
             return RangeOverlapKind.None;
 
         if (this.isOverlappingRows(range1, range2) && this.isOverlappingColumns(range1, range2))
+        {
+            return range1.isEqual(range2) ? RangeOverlapKind.Equal : RangeOverlapKind.Partial;
+        }
+
+        return RangeOverlapKind.None;
+    }
+
+    static isOverlappingNotBackwards(range1: RangeInfo, range2: RangeInfo): RangeOverlapKind
+    {
+        if (range1 == null && range2 == null)
+            return RangeOverlapKind.Equal;
+
+        if (range1 == null || range2 == null)
+            return RangeOverlapKind.None;
+
+        if (this.isOverlappingRowsNotBackwards(range1, range2) && this.isOverlappingColumnsNotBackwards(range1, range2))
         {
             return range1.isEqual(range2) ? RangeOverlapKind.Equal : RangeOverlapKind.Partial;
         }

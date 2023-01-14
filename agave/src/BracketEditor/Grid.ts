@@ -13,6 +13,7 @@ import { AppContext } from "../AppContext";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
+import { s_staticConfig } from "../StaticConfig";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -40,8 +41,8 @@ export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
-    m_fLogChanges: boolean = false;
-    m_fLogGrid: boolean = false;
+    m_fLogChanges: boolean = s_staticConfig.logGridChanges;
+    m_fLogGrid: boolean = s_staticConfig.logGrid;
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
 
@@ -86,6 +87,26 @@ export class Grid
                 for (let range of ranges)
                 {
                     const overlapKind: RangeOverlapKind = RangeInfo.isOverlapping(range.range, item.Range);
+
+                    if (overlapKind != RangeOverlapKind.None)
+                    {
+                        if (!range.delegate(range.range, item, overlapKind))
+                            return false;
+                    }
+                }
+
+                return true;
+            });
+    }
+
+    enumerateOverlappingNotBackwards(ranges: RangeOverlapMatch[]): boolean
+    {
+        return this.enumerate(
+            (item: GridItem) =>
+            {
+                for (let range of ranges)
+                {
+                    const overlapKind: RangeOverlapKind = RangeInfo.isOverlappingNotBackwards(range.range, item.Range);
 
                     if (overlapKind != RangeOverlapKind.None)
                     {
@@ -157,6 +178,31 @@ export class Grid
         let overlapKind: RangeOverlapKind;
 
         if (this.enumerateOverlapping(
+            [
+                {
+                    range: range,
+                    delegate: (matchRange: RangeInfo, matchItem: GridItem, matchKind: RangeOverlapKind) =>
+                    {
+                        matchRange;
+                        item = matchItem;
+                        overlapKind = matchKind;
+                        return false;
+                    }
+                }
+            ]))
+        {
+            return [null, RangeOverlapKind.None];
+        }
+
+        return [item, overlapKind];
+    }
+
+    getFirstOverlappingItemNotBackwards(range: RangeInfo): [GridItem, RangeOverlapKind]
+    {
+        let item: GridItem = null;
+        let overlapKind: RangeOverlapKind;
+
+        if (this.enumerateOverlappingNotBackwards(
             [
                 {
                     range: range,
@@ -1308,7 +1354,7 @@ export class Grid
             if (gameItem != null)
             {
                 overlapRegion.excludeRangeByRows(gameItem.Range);
-                const connectedItem: GridItem = this.getGridItemConnectedToRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
+                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
                 if (connectedItem != null)
                     overlapRegion.excludeRangeByRows(connectedItem.Range);
             }
@@ -1321,7 +1367,7 @@ export class Grid
             if (gameItem != null)
             {
                 overlapRegion.excludeRangeByRows(gameItem.Range);
-                const connectedItem: GridItem = this.getGridItemConnectedToRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
+                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
                 if (connectedItem != null)
                     overlapRegion.excludeRangeByRows(connectedItem.Range);
             }
@@ -1709,12 +1755,15 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: Grid.getGridItemConnectedToRange
+        %%Function: Grid.getGridItemConnectedToFeederRange
 
         return the grid item that connects to this feeder range. if that's a game,
         also make sure it lines up with the outgoing item location on the game
+
+        NOTE: If you give the outgoing result range it will return the source
+        game, not the target game.
     ----------------------------------------------------------------------------*/
-    getGridItemConnectedToRange(range: RangeInfo): GridItem
+    getGridItemConnectedToFeederRange(range: RangeInfo): GridItem
     {
         const [item, kind] = this.getFirstOverlappingItem(range);
 
@@ -1728,6 +1777,34 @@ export class Grid
 
             if (item.OutgoingFeederPoint.offset(0, 1, -1, 0).isEqual(range))
                 return item;
+        }
+
+        return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridItemConnectedToFeederRange
+
+        return the grid item that connects to this feeder range. if that's a game,
+        also make sure it lines up with the outgoing item location on the game
+
+        NOTE: If you give the outgoing result range it will return the source
+        game, not the target game.
+    ----------------------------------------------------------------------------*/
+    getGridItemConnectedToOutgoingRange(range: RangeInfo): GridItem
+    {
+        const [item, kind] = this.getFirstOverlappingItemNotBackwards(range);
+
+        if (item != null && kind == RangeOverlapKind.Equal)
+            return item;
+
+        if (kind == RangeOverlapKind.Partial && range.ColumnCount == 0 && !item.isLineRange)
+        {
+            // this means that the feeder line we calculated was 0 width,
+            // so the source game is immediately adjacent.
+            return item;
+//            if (item.OutgoingFeederPoint.offset(0, 1, -1, 0).isEqual(range))
+//                return item;
         }
 
         return null;
@@ -1790,7 +1867,7 @@ export class Grid
         // now we know where they are supposed to be going...
         const item1: GridItem =
             source1 != null
-                ? this.getGridItemConnectedToRange(overlapRange1)
+                ? this.getGridItemConnectedToFeederRange(overlapRange1)
                 : null;
 
         let overlapRange2: RangeInfo = null;
@@ -1808,11 +1885,41 @@ export class Grid
 
         const item2: GridItem =
             source2 != null
-                ? this.getGridItemConnectedToRange(overlapRange2)
+                ? this.getGridItemConnectedToFeederRange(overlapRange2)
                 : null;
 
         return [item1, item2];
     }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getConnectedGridItemForGameResult
+
+        return the gridItem for the result of the given gridGame
+    ----------------------------------------------------------------------------*/
+    getConnectedGridItemForGameResult(game: IBracketGame): GridItem
+    {
+        let [source1, source2, outgoing] = this.getRangeInfoForGameFeederItemConnectionPoints(game);
+        let fSwap: boolean = false;
+
+        let overlapRange1: RangeInfo;
+
+        if (outgoing != null)
+        {
+            // getRangeInfo above returns the connection point *outside* the item, so we have
+            // to move 1 column over to make sure we get the actual item
+            overlapRange1 = new RangeInfo(outgoing.FirstRow, 1, outgoing.FirstColumn + 1, 0);
+        }
+
+        // now we know where they are supposed to be going...
+        const item1: GridItem =
+            overlapRange1 != null
+                ? this.getGridItemConnectedToOutgoingRange(overlapRange1)
+                : null;
+
+        return item1;
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.getRangeInfoForGameFeederItemConnectionPoints

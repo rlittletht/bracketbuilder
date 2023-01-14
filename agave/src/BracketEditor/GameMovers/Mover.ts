@@ -7,6 +7,7 @@ import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GameId } from "../GameId";
 import { RangeOverlapKind } from "../../Interop/Ranges";
+import { s_staticConfig } from "../../StaticConfig";
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,
@@ -21,7 +22,7 @@ export interface GameMoverDelegate
 
 export class Mover
 {
-    m_logGrids: boolean = false;
+    m_logGrids: boolean = s_staticConfig.logMoveSteps;
     m_items: GridOption[] = [];
     m_itemNew: GridItem;
     m_itemOld: GridItem;
@@ -99,16 +100,22 @@ export class Mover
 
         // make sure to clone itemOld -- it might be connected to the grid we are about to modify
         const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket, crumbs);
-        if (preserveWorking && gridOption.rank != -1)
+        if (preserveWorking && gridOption.rank != -1 && !gridOption.clean)
             this.pushOption(gridOption);
 
-        for (let item of newItems1)
+        if (newItems1.length > 0)
         {
-            if (item.rank != -1)
-                this.pushOption(item);
+
+            for (let item of newItems1)
+            {
+                if (item.rank != -1)
+                    this.pushOption(item);
+            }
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     logGrids(title: string, dirtyOnly: boolean)
@@ -118,7 +125,7 @@ export class Mover
 
         if (!dirtyOnly || this.m_option.logDirty)
         {
-            console.log(`|gd(main) ${title}: ${this.m_option.name}: mainOption|`);
+            console.log(`|(${this.m_option.rank}):gd(main) ${title}: ${this.m_option.name}: mainOption|`);
             this.m_option.grid.logGridCondensed();
             if (dirtyOnly)
                 this.m_option.logDirty = false;
@@ -161,6 +168,11 @@ export class Mover
 
             if (singleMover(gameMover, this, optionWork, crumbs))
                 optionWork.logDirty = true;
+
+            if (s_staticConfig.newStepLogger)
+            {
+                this.logGrids(`${crumbs}(ISM)`, true);
+            }
         }
     }
 }

@@ -359,6 +359,8 @@ export class StructureEditor
         {
             _undoManager.setUndoGrid(grid);
             await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
+            if (mover.Warning != "")
+                appContext.logError(mover.Warning, 8000);
         }
     }
 

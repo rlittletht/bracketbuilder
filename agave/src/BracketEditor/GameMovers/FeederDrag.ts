@@ -50,8 +50,13 @@ export class FeederDrag
 
         // now we can either move the connected game, or we can grow/shrink it to make it work
         // do both and add them to the options. the ranker will figure out which is better
+
+        const overMoves: boolean = gameMover.ExceededMoveCount;
         changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByOutgoingFeeder_shift", crumbs) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, false, connectedGame, connectedGame.clone().growShrink(dRows), "checkAndDragByOutgoingFeeder_growShrink", crumbs) || changed;
+        if (!overMoves && gameMover.ExceededMoveCount)
+            gameMover.RequestExtraMoves();
+
+        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrink(dRows), "checkAndDragByOutgoingFeeder_growShrink", crumbs) || changed;
 
         return changed;
     }
@@ -105,7 +110,7 @@ export class FeederDrag
         // we have several options for the connected game. Grow the game down, or move the game
         changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByTopIncomingFeed_shiftDown", crumbs) || changed;
         changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByTopIncomingFeed_growShrinkFromTop", crumbs) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, false, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByTopIncomingFeed_growShrink", crumbs) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByTopIncomingFeed_growShrink", crumbs) || changed;
 
         return changed;
     }
@@ -173,7 +178,7 @@ export class FeederDrag
         // we have several options for the connected game. Grow the game down, or move the game
         changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByBottomIncomingFeed_shift", crumbs) || changed;
         changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByBottomIncomingFeed_growShrinkFromTop", crumbs) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, false, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByBottomIncomingFeed_growShrink", crumbs) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByBottomIncomingFeed_growShrink", crumbs) || changed;
 
         return changed;
     }

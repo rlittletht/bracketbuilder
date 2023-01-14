@@ -872,6 +872,32 @@ export class GameMoverTests
             setup);
     }
 
+    static test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext: IAppContext, testContext: UnitTestContext)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 15, 33, 17,), 13, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 18, 29, 20,), 18, false).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(13));
+                const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
+                    RangeInfo.createFromCornersCoord(11, 15, 21, 17));
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(11, 15, 21, 17,), 13, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 18, 29, 20,), 18, true).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            appContext,
+            testContext,
+            "GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap",
+            "T13",
+            setup);
+    }
+
     static test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext: IAppContext, testContext: UnitTestContext)
     {
         const setup: SetupTestDelegate =

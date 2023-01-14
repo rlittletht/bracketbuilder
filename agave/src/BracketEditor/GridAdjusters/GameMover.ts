@@ -8,6 +8,7 @@ import { Mover } from "../GameMovers/Mover";
 import { PushAway } from "../GameMovers/PushAway";
 import { FeederDrag } from "../GameMovers/FeederDrag";
 import { TopBottomSwapper } from "../GameMovers/TopBottomSwapper";
+import { s_staticConfig } from "../../StaticConfig";
 
 export interface GridOption
 {
@@ -15,13 +16,31 @@ export interface GridOption
     rank: number,
     movedGames: Set<GameId>,
     name: string,
-    logDirty: boolean
+    logDirty: boolean,
+    clean: boolean
 }
 
 export class GameMover
 {
     m_originalGrid: Grid;
     m_grids: Grid[] = [];
+    m_moveCount: number = 0;
+    m_maxMoves: number = s_staticConfig.maxGameMoves;
+    m_warning: string = "";
+
+    get ExceededMoveCount(): boolean{ return this.m_moveCount >= this.m_maxMoves; }
+
+    RequestExtraMoves()
+    {
+        this.m_maxMoves += s_staticConfig.maxGameMoves / 10;
+    }
+
+    SetWarning(warning: string)
+    {
+        this.m_warning = warning;
+    }
+
+    get Warning(): string { return this.m_warning; }
 
     constructor(grid: Grid)
     {
@@ -35,7 +54,8 @@ export class GameMover
             rank: 0,
             movedGames: movedGames == null ? new Set<GameId>() : new Set<GameId>(movedGames),
             name: name,
-            logDirty: true
+            logDirty: true,
+            clean: true
         };
     }
 
@@ -49,12 +69,17 @@ export class GameMover
             bracket,
             "");
 
+        if (this.Warning != "")
+            console.log(`WARNING: ${this.Warning}`);
+
         if (mainOption.rank != -1)
             mainOption.rank = GridRanker.getGridRank(mainOption.grid, bracket);
 
-        console.log(`|option 0 (rank=${mainOption.rank})|`);
-        mainOption.grid.logGridCondensed();
-
+        if (s_staticConfig.logOptions)
+        {
+            console.log(`|option 0 (rank=${mainOption.rank})|`);
+            mainOption.grid.logGridCondensed();
+        }
         let best: GridOption = mainOption;
         let optionNum = 1;
 
@@ -64,7 +89,7 @@ export class GameMover
             if (option.rank != -1)
                 option.rank = GridRanker.getGridRank(option.grid, bracket);
 
-            if (option.rank != -1)
+            if (option.rank != -1 && s_staticConfig.logOptions)
             {
                 console.log(`|option ${optionNum++} (rank=${option.rank})|`);
                 option.grid.logGridCondensed();
@@ -73,7 +98,9 @@ export class GameMover
             if (best.rank == -1 || (option.rank != -1 && option.rank < best.rank))
                 best = option;
         }
-        console.log("|");
+        if (s_staticConfig.logOptions)
+            console.log("|");
+
         if (best.rank == -1)
             return null;
 
@@ -132,6 +159,13 @@ export class GameMover
     ----------------------------------------------------------------------------*/
     moveGameInternal(working: GridOption, itemOld: GridItem, itemNew: GridItem, bracket: string, crumbs: string): GridOption[]
     {
+        if (this.m_moveCount > this.m_maxMoves)
+        {
+            this.SetWarning("Exceeded game move count. Not all options considered.");
+            return [];
+        }
+
+        this.m_moveCount++;
         if (!GameId.compare(itemOld.GameId, itemNew.GameId))
             throw Error("can't change game while moving");
 
@@ -165,15 +199,19 @@ export class GameMover
             throw Error("old item not found on original grid with matching id");
 
         match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange, itemNew.SwapTopBottom);
+        working.logDirty = true;
+        working.clean = false;
 
         // we had to let it actually move the game, but now if the game is not valid, then invalidate
         // this option
-        if (!itemNew.isLineRange && itemNew.Range.RowCount <= 7)
+        if ((!itemNew.isLineRange && itemNew.Range.RowCount <= 7)
+            || itemNew.Range.FirstRow < working.grid.FirstGridPattern.FirstRow)
         {
             working.rank = -1;
             return [];
         }
 
+        mover.logGrids(`${crumbs}:orig`, true);
         mover.invokeSingleMover(this, TopBottomSwapper.checkAndSwapTopBottom, `${crumbs}:CP.1`);
         mover.logGrids(`${crumbs}:CP.1`, true);
 
@@ -193,6 +231,14 @@ export class GameMover
         mover.invokeSingleMover(this, FeederDrag.checkAndDragByBottomIncomingFeed, `${crumbs}:CP.6`);
         mover.logGrids(`${crumbs}:CP.6`, true);
 
+        // still not sure how to make this work when the feeder's above kill the main option before it has a chance
+        // to get here...
+        mover.invokeSingleMover(this, TopBottomSwapper.checkOutgoingFeedAndMaybeSwapTopBottomTarget, `${crumbs}:CP.1S`);
+        mover.logGrids(`${crumbs}:CP.`, true);
+
+        // we have another case where we want to check the outgoing feeder to see if our old location
+        // fed into a game, but our new location would like to not DRAG the connected game but rather
+        // have the connected game swap its home/away to remain connected...
         return mover.Items;
     }
 }

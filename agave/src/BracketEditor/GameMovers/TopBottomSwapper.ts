@@ -8,17 +8,7 @@ import { BracketGame, IBracketGame } from "../BracketGame";
 export class TopBottomSwapper
 {
     /*----------------------------------------------------------------------------
-        %%Function: PushAway.checkAndMoveItemsAway
-
-        This module will determine when the moved item land on (or too close to)
-        another item, and moves that item away.
-
-        this checks only for game items and should be the most aggressive about
-        pushing away since it is checking only direct overlaps in the target
-        column
-
-        this does not move any connected items -- that's the responsibility of
-        the dragging modules
+        %%Function: TopBottomSwapper.checkAndSwapTopBottom
     ----------------------------------------------------------------------------*/
     static checkAndSwapTopBottom(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
@@ -56,6 +46,47 @@ export class TopBottomSwapper
                 return true;
             }
         }
+        return false;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TopBottomSwapper.TopBottomSwapper.
+
+        Check the outgoing feed of the old location. If it is attached to an
+        item, check that item to see if we need to swap top/bottom on that item
+        to keep it correct
+    ----------------------------------------------------------------------------*/
+    static checkOutgoingFeedAndMaybeSwapTopBottomTarget(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
+    {
+        gameMover;
+        crumbs;
+        // check to see if the old and the new linkages work by swapping top and bottom
+
+        // get the connected gridItems for the old item location
+        const game: IBracketGame = BracketGame.CreateFromGameSync(mover.Bracket, mover.ItemOld.GameId.GameNum);
+        const outgoing: GridItem = optionWork.grid.getConnectedGridItemForGameResult(game);
+
+        // now figure out if the new item would continue to be connected if we just swapped top/bottom
+        if (outgoing != null)
+        {
+            const gameOut: IBracketGame = BracketGame.CreateFromGameSync(mover.Bracket, outgoing.GameId.GameNum);
+            const gameOutItem: GridItem = optionWork.grid.findGameItem(gameOut.GameId);
+
+            if (mover.ItemOld.OutgoingFeederPoint.FirstRow == gameOutItem.TopTeamRange.FirstRow + 1
+                && mover.ItemNew.OutgoingFeederPoint.FirstRow == gameOutItem.BottomTeamRange.FirstRow - 1)
+            {
+                mover.doChange(optionWork, true, gameOutItem, gameOutItem.clone().doSwapTopBottom(), "checkOutgoingFeedAndMaybeSwapTopBottomTarget");
+                return true;
+            }
+
+            if (mover.ItemOld.OutgoingFeederPoint.FirstRow == gameOutItem.BottomTeamRange.FirstRow - 1
+                && mover.ItemNew.OutgoingFeederPoint.FirstRow == gameOutItem.TopTeamRange.FirstRow + 1)
+            {
+                mover.doChange(optionWork, true, gameOutItem, gameOutItem.clone().doSwapTopBottom(), "checkOutgoingFeedAndMaybeSwapTopBottomTarget");
+                return true;
+            }
+        }
+
         return false;
     }
 }

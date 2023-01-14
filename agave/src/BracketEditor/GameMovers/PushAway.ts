@@ -262,9 +262,15 @@ export class PushAway
             {
                 // we have an adjustment we could make
                 const newItem: GridItem = item.clone().shiftByRows(shift);
+                const rangeRealToAvoid: RangeInfo =
+                    new RangeInfo(
+                        range.FirstRow + 2,
+                        range.RowCount - 2,
+                        range.LastColumn,
+                        1);
 
                 // don't make an adjustment if its still going to fail.
-                if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
+                if (RangeInfo.isOverlapping(rangeRealToAvoid, newItem.Range) == RangeOverlapKind.None)
                 {
                     changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveAdjacentItemsAway_shift", crumbs);
                 }
