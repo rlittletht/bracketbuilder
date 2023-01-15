@@ -5,7 +5,7 @@ import { BracketDataBuilder } from "./BracketDataBuilder";
 
 export class GlobalDataBuilder
 {
-    static SheetName: string = "TournamentInfo";
+    static SheetName: string = "TeamsAndFields";
 
     static async addGlobalDataToSheet(ctx: any, sheet: Excel.Worksheet, rowStart: number)
     {
@@ -13,7 +13,7 @@ export class GlobalDataBuilder
         rng.values =
         [
             ["Tournament:", "", "TOURNAMENT TITLE"],
-            ["SubTitle:", "", "(SUB-TITLE))"],
+            ["SubTitle:", "", "(sub-title)"],
             ["Location:", "", "FIELD OF DREAMS PARK"],
             ["Address:", "", "123 Strikes Out Place, Williamsport"],
             ["Hosted:", "", "JACKIE ROBINSON"],

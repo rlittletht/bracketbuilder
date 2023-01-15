@@ -15,8 +15,8 @@ export const s_staticConfig: StaticConfig =
     maxGameMoves: 4000,
     globalLogging: true,
     logGridChanges: false,
-    logGrid: true,
-    logMoveSteps: true,
-    newStepLogger: true,
-    logOptions: true
+    logGrid: false,
+    logMoveSteps: false,
+    newStepLogger: false,
+    logOptions: false
 }

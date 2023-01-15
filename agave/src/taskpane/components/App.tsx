@@ -68,7 +68,7 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "1.0.1.0";
+    static version: string = "1.0.3.0";
 
     m_appContext: AppContext;
 
