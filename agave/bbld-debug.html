@@ -1,0 +1,787 @@
+<html>
+    <head>
+        <script>
+
+            const parseState =
+            {
+                LookingForGame: 0,
+                LFG_AfterHyphen: 1,
+                LFG_ParsingNumber: 2,
+                LFG_ParsingNumber_WS: 3, // trailing whitespace after game number
+                LookingForTopLeft: 4,
+                LFTL_AfterOpen: 5,
+                LFTL_FirstNum: 6,
+                LFTL_AfterComma: 7,
+                LFTL_SecondNum: 8,
+                LFTL_AfterSecondNum: 9,
+                LookingForBottomRight: 10,
+                LFBR_AfterOpen: 11,
+                LFBR_FirstNum: 12,
+                LFBR_AfterComma: 13,
+                LFBR_SecondNum: 14,
+                LookingForSwapChars: 15,
+            };
+
+            const parseStateCode =
+            {
+                LookingForCoords: 0,
+                LFC_AfterParensOpen: 1,
+                LFC_ParsingNumber: 2,
+
+                LookingForGameNum: 3,
+                LFGN_ParsingNumber: 4,
+                LookingForSwapHomeAway: 5,
+
+            }
+            const lexCharCat =
+            {
+                other: 0,
+                hyphen: 1,
+                digit: 2,
+                openBracketParens: 3,
+                closeBracketParens: 4,
+                comma: 5,
+                colon: 6,
+                whitespace: 7,
+                swapChars: 8,
+                boolCharsStart: 9,
+                boolCharsOther: 10,
+            };
+
+            function lexChar(ch)
+            {
+                if (ch == '-')
+                    return lexCharCat.hyphen;
+                else if (isDigitChar(ch))
+                    return lexCharCat.digit;
+                else if (ch == '[' || ch == '(')
+                    return lexCharCat.openBracketParens;
+                else if (ch == ']' || ch == ')')
+                    return lexCharCat.closeBracketParens;
+                else if (ch == ',')
+                    return lexCharCat.comma;
+                else if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
+                    return lexCharCat.whitespace;
+                else if (ch == ':')
+                    return lexCharCat.colon;
+                else if (ch == 'N' || ch == 'S')
+                    return lexCharCat.swapChars;
+                else if (ch == 't' || ch == 'f')
+                    return lexCharCat.boolCharsStart;
+                else if (ch == 'r' || ch == 'u' || ch == 'e' || ch == 'a' || ch == 'l' || ch == 's')
+                    return lexCharCat.boolCharsOther;
+
+                return lexCharCat.other;
+            }
+
+            function isDigitChar(ch)
+            {
+                return ch >= '0' && ch <= '9';
+            }
+
+            const transitionsCode =
+            [
+                /*LookingForCoords*/
+                [
+/* other */        null,
+/* hypen */        null,
+/* digit */        null,
+/* [( */           { psNext: parseStateCode.LFC_AfterParensOpen, term: false },
+/* ]) */           null,
+/* , */            null,
+/* : */            null,
+/* WS */           null,
+/* [tf] */         null,
+/* [rueals] */     null,
+                ],
+                /*LFC_AfterParensOpen*/
+                [
+/* other */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* hypen */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* digit */        { psNext: parseStateCode.LFC_ParsingNumber, term: false, production: prodCaptureStart },
+/* [( */           { psNext: parseStateCode.LFC_AfterParensOpen, term: false },
+/* ]) */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* , */            { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* : */            { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* WS */           { psNext: parseStateCode.LFC_AfterParensOpen, term: false },
+/* [NS] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [tf] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [rueals] */     { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+                ],
+                /*LFC_ParsingNumber*/
+                [
+/* other */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* hypen */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* digit */        { psNext: parseStateCode.LFC_ParsingNumber, term: false },
+/* [( */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* ]) */           { psNext: parseStateCode.LookingForGameNum, term: false, production: prodCaptureCountedCompleteNotInclusive, key: "coord" },
+/* , */            { psNext: parseStateCode.LFC_ParsingNumber, term: false, production: prodCaptureCountedCompleteNotInclusiveAndStart, key: "coord" },
+/* : */            { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* WS */           { psNext: parseStateCode.LFC_ParsingNumber, term: false },
+/* [NS] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [tf] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [rueals] */     { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+                ],
+                /*LookingForGameNum*/
+                [
+/* other */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* hypen */        { psNext: parseStateCode.LFGN_ParsingNumber, term: false, production: prodCaptureStart },
+/* digit */        { psNext: parseStateCode.LFGN_ParsingNumber, term: false, production: prodCaptureStart },
+/* [( */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* ]) */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* , */            { psNext: parseStateCode.LookingForGameNum, term: false },
+/* : */            { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* WS */           { psNext: parseStateCode.LookingForGameNum, term: false },
+/* [NS] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [tf] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [rueals] */     { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+                ],
+                /*LFGN_ParsingNumber*/
+                [
+/* other */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* hypen */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* digit */        { psNext: parseStateCode.LFGN_ParsingNumber, term: false, },
+/* [( */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* ]) */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* , */            { psNext: parseStateCode.LookingForSwapHomeAway, term: false, production: prodCaptureEndNotInclusive, key: "gameNum" },
+/* : */            { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* WS */           { psNext: parseStateCode.LookingForSwapHomeAway, term: false, production: prodCaptureEndNotInclusive, key: "gameNum" },
+/* [NS] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [tf] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [rueals] */     { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+                ],
+                /*LookingForSwapHomeAway*/
+                [
+/* other */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* hypen */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* digit */        { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [( */           { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* ]) */           { psNext: parseStateCode.LookingForCoords, term: true, production: prodCaptureEndNotInclusive, key: "swapHomeAway" },
+/* , */            { psNext: parseStateCode.LookingForGameNum, term: false, production: prodTotalReset },
+/* : */            { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* WS */           { psNext: parseStateCode.LookingForSwapHomeAway, term: false },
+/* [NS] */         { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+/* [tf] */         { psNext: parseStateCode.LookingForSwapHomeAway, term: false, production: prodCaptureStart },
+/* [rueals] */     { psNext: parseStateCode.LookingForSwapHomeAway, term: false },
+                ],
+            ];
+
+            const transitionsDump =
+            [
+                [
+                    null, // other
+                    { psNext: parseState.LFG_AfterHyphen, term: false, production: prodCaptureStart }, // hypen
+                    { psNext: parseState.LFG_ParsingNumber, term: false, production: prodCaptureStart }, // digit
+                    null, // [
+                    null, // ]
+                    null, // ,
+                    null, // :
+                    null, // WS
+                    null, // [NS]
+                    null, // [tf]
+                    null, // [rueals]
+                ], /*lookingForGame*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFG_ParsingNumber, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFG_AfterHyphen*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFG_ParsingNumber, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForSwapChars, term: false, production: prodCaptureEndNotInclusive, key: "gameNum" }, // :
+                    { psNext: parseState.LFG_ParsingNumber_WS, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFG_ParsingNumber*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset, unget: true }, // hypen
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset, unget: true }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForTopLeft, term: false, production: prodCaptureEndNotInclusive, key: "gameNum" }, // :
+                    { psNext: parseState.LFG_ParsingNumber, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFG_ParsingNumber_WS*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // digit
+                    { psNext: parseState.LFTL_AfterOpen, term: false }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LookingForTopLeft, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LookingForTopLeft*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFTL_FirstNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFTL_AfterOpen, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFTL_AfterOpen*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFTL_FirstNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LFTL_AfterComma, term: false, production: prodCaptureEndNotInclusive, key: "TopLeftFirstNum" }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFTL_AfterOpen, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFTL_FirstNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFTL_SecondNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFTL_AfterComma, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFTL_AfterComma*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFTL_SecondNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LFTL_AfterSecondNum, term: false, production: prodCaptureEndNotInclusive, key: "TopLeftSecondNum" }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFTL_SecondNum, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFTL_SecondNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForBottomRight, term: false }, // hypen
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFTL_AfterSecondNum, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFTL_AfterSecondNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // digit
+                    { psNext: parseState.LFBR_AfterOpen, term: false }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LookingForBottomRight, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LookingForBottomRight*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFBR_FirstNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFBR_AfterOpen, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFBR_AfterOpen*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFBR_FirstNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LFBR_AfterComma, term: false, production: prodCaptureEndNotInclusive, key: "BottomRightFirstNum" }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFBR_AfterOpen, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFBR_FirstNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFBR_SecondNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFBR_AfterComma, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFBR_AfterComma*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFBR_SecondNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
+                    { psNext: parseState.LookingForGame, term: true, production: prodCaptureEndNotInclusive, key: "BottomRightSecondNum" }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFBR_SecondNum, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFBR_SecondNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // digit
+                    { psNext: parseState.LookingForTopLeft, unget: true, term: false, production: prodCaptureEndNotInclusive, key: "swapHomeAway" }, // [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LookingForTopLeft, term: false, production: prodCaptureEndNotInclusive, key: "swapHomeAway" }, // WS
+                    { psNext: parseState.LookingForSwapChars, term: false, production: prodCaptureStart }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LookingForSwapChars*/
+            ];
+
+            function prodTotalReset(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
+            {
+                return [ichCur, -1, -1, { }];
+            }
+
+            function prodCaptureCountedCompleteNotInclusiveAndStart(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
+            {
+                if (key)
+                {
+                    var keyCounter = key + "Count";
+
+                    if (!tokenBuilding[keyCounter])
+                        tokenBuilding[keyCounter] = 0;
+
+                    tokenBuilding[key + tokenBuilding[keyCounter]] = source.substring(ichFirstMatch, ichCur);
+                    tokenBuilding[keyCounter]++;
+                }
+
+                return [ichCur, ichCur + 1, -1, tokenBuilding];
+            }
+
+            function prodCaptureCountedCompleteNotInclusive(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
+            {
+                if (key)
+                {
+                    var keyCounter = key + "Count";
+
+                    if (!tokenBuilding[keyCounter])
+                        tokenBuilding[keyCounter] = 0;
+
+                    tokenBuilding[key + tokenBuilding[keyCounter]] = source.substring(ichFirstMatch, ichCur);
+                }
+
+                return [ichCur, ichFirstMatch, ichCur, tokenBuilding];
+            }
+
+            function prodCaptureReset(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
+            {
+                return [ichCur, -1, -1, tokenBuilding];
+            }
+            function prodCaptureStart(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
+            {
+                return [ichCur, ichCur, -1, tokenBuilding];
+            }
+
+            function prodCaptureEndNotInclusive(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
+            {
+                if (key)
+                    tokenBuilding[key] = source.substring(ichFirstMatch, ichCur);
+
+                return [ichCur, ichFirstMatch, ichCur - 1, tokenBuilding];
+            }
+
+            function lex(transitionTable, dump, ichCur, ps)
+            {
+                let ichFirstMatch = -1;
+                let ichLastMatch = -1;
+                let tokenBuilding = {};
+
+                while (ichCur < dump.length)
+                {
+                    const lexCh = lexChar(dump[ichCur]);
+                    const transition = transitionTable[ps][lexCh];
+
+                    if (transition)
+                    {
+                        if (transition.production)
+                        {
+                            [ichCur, ichFirstMatch, ichLastMatch, tokenBuilding] = transition.production(dump, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, transition.key);
+                        }
+
+                        ps = transition.psNext;
+                        if (transition.term)
+                            return [ps, ichCur + 1, ichFirstMatch, ichLastMatch, tokenBuilding];
+
+                        if (transition.unget)
+                            ichCur--;
+                    }
+
+                    ichCur++;
+                }
+
+                return [ps, -1, -1, -1]; // we hit EOF
+            }
+
+            function parseCode(dump)
+            {
+                let items = [];
+                let ichCur = 0;
+                let ps = parseStateCode.LookingForCoords;
+                let ichFirst = -1;
+                let ichLast = -1;
+                let token;
+
+                while (ichCur >= 0 && ichCur < dump.length)
+                {
+                    [ps, ichCur, ichFirst, ichLast, token] = lex(transitionsCode, dump, ichCur, ps);
+
+                    if (token && token != null)
+                    {
+                        let item =
+                        {
+                            gameNumber: parseInt(token.gameNum),
+                            topLeft: [parseInt(token.coord0), parseInt(token.coord1)],
+                            bottomRight: [parseInt(token.coord2), parseInt(token.coord3)],
+                            swapped: token.swapHomeAway && token.swapHomeAway === "true"
+                    }
+                        items.push(item);
+                    }
+                }
+                return items;
+            }
+
+            function parseDump(dump)
+            {
+                let items = [];
+                let ichCur = 0;
+                let ps = parseState.LookingForGame;
+                let ichFirst = -1;
+                let ichLast = -1;
+                let token;
+
+                while (ichCur >= 0 && ichCur < dump.length)
+                {
+                    [ps, ichCur, ichFirst, ichLast, token] = lex(transitionsDump, dump, ichCur, ps);
+
+                    if (token && token != null)
+                    {
+                        let item = 
+                        {
+                            gameNumber: parseInt(token.gameNum),
+                            topLeft: [parseInt(token.TopLeftFirstNum), parseInt(token.TopLeftSecondNum)],
+                            bottomRight: [parseInt(token.BottomRightFirstNum), parseInt(token.BottomRightSecondNum)],
+                            swapped: token.swapHomeAway && token.swapHomeAway === "S"
+                        }
+                        items.push(item);
+                    }
+                }
+                return items;
+            }
+
+            const dxSize = 20;
+            const dySize = 5;
+
+            function drawVertLine(ctx, col, maxRow)
+            {
+                ctx.beginPath();
+                ctx.moveTo(col * dxSize, 0);
+                ctx.lineTo(col * dxSize, (maxRow + 1) * dySize);
+                ctx.strokeStyle = "#CCCCCC";
+                ctx.stroke();
+            }
+
+            function drawHorizLine(ctx, row, maxCol)
+            {
+                ctx.beginPath();
+                ctx.moveTo(0, row * dySize);
+                ctx.lineTo((maxCol + 1) * dxSize, row * dySize);
+                ctx.strokeStyle = "#CCCCCC";
+                ctx.stroke();
+            }
+
+            function drawItem(ctx, item)
+            {
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(
+                    item.topLeft[1] * dxSize,
+                    item.topLeft[0] * dySize,
+                    item.bottomRight[1] * dxSize - item.topLeft[1] * dxSize + dxSize,
+                    item.bottomRight[0] * dySize - item.topLeft[0] * dySize + dySize);
+
+                const text1 = "" + item.topLeft[0] + "," + item.topLeft[1];
+
+                ctx.fillStyle = "#ffffff";
+                if (item.gameNumber == -1)
+                {
+                    ctx.font = "6px Arial";
+                    ctx.fillText(
+                        text1,
+                        item.topLeft[1] * dxSize + dxSize / 8,
+                        item.topLeft[0] * dySize + dySize);
+                }
+                else
+                {
+                    ctx.font = "10px Arial";
+                    ctx.fillText(
+                        text1,
+                        item.topLeft[1] * dxSize + dxSize / 8,
+                        item.topLeft[0] * dySize + dySize * 1.5);
+
+                }
+
+                if (item.gameNumber != -1)
+                {
+                    const text2 = "" + item.bottomRight[0] + "," + item.bottomRight[1];
+                    ctx.fillText(
+                        text2,
+                        item.bottomRight[1] * dxSize - dxSize / 4,
+                        item.bottomRight[0] * dySize);
+
+                    const game = "" + item.gameNumber + ((item.swapped && item.swapped == true) ? " (S)" : "");
+                    ctx.fillText(
+                        game,
+                        (item.topLeft[1] + (item.bottomRight[1] - item.topLeft[1]) / 2) * dxSize + dxSize / 4,
+                        (item.topLeft[0] + (item.bottomRight[0] - item.topLeft[0]) / 2) * dySize + dySize);
+                }
+            }
+
+            function visualize()
+            {
+                let dump = document.getElementById("textGridData").value;
+                let items = parseDump(dump);
+
+                visualizeCore(items);
+            }
+
+
+            function convertToCode()
+            {
+                let dump = document.getElementById("textGridData").value;
+                let items = parseDump(dump);
+
+                if (items.length == 0)
+                    return;
+
+                var sCode = "";
+
+                for (const iItem in items)
+                {
+                    const item = items[iItem];
+
+                    sCode += "grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord("
+                        + item.topLeft[0] + ", "
+                        + item.topLeft[1] + ", "
+                        + item.bottomRight[0] + ", "
+                        + item.bottomRight[1] + ", "
+                        + "), " + item.gameNumber + ", " + (item.swapped ? "true" : "false") 
+                        + ").inferGameInternals();\n";
+                }
+
+                document.getElementById("textGridCode").value = sCode;
+            }
+
+            function visualizeCode()
+            {
+                let dump = document.getElementById("textGridCode").value;
+                let items = parseCode(dump);
+
+                visualizeCore(items);
+            }
+
+            function visualizeCore(items)
+            {
+                    // "1: [9,6]-[19,8]  Grid.ts:1342 2: [23,6]-[33,8]  Grid.ts:1342 -1: [28,9]-[28,11]");
+
+                if (items.length == 0)
+                    return;
+
+                let minRow = items[0].topLeft[0];
+                let maxRow = items[0].bottomRight[0];
+                let minCol = items[0].topLeft[1];
+                let maxCol = items[0].bottomRight[1];
+
+                // figure out the extents of the grid
+                for (const iItem in items)
+                {
+                    const item = items[iItem];
+
+                    minRow = Math.min(minRow, item.topLeft[0]);
+                    maxRow = Math.max(maxRow, item.bottomRight[0]);
+                    minCol = Math.min(minCol, item.topLeft[1]);
+                    maxCol = Math.max(maxCol, item.bottomRight[1]);
+                }
+
+                // draw a grid on the canvas
+                let x = 0;
+                let y = 0;
+
+                let can = document.getElementById("canViz");
+                var ctx = can.getContext("2d");
+
+                ctx.clearRect(0, 0, (100 + 1) * dxSize, (100 + 1) * dySize);
+
+                // draw the vertical lines
+                while (x <= maxCol)
+                {
+                    drawVertLine(ctx, x, maxRow);
+                    x++;
+                }
+                while (y <= maxRow)
+                {
+                    drawHorizLine(ctx, y, maxCol);
+                    y++;
+                }
+
+                // and now draw each item
+                for (const iItem in items)
+                {
+                    const item = items[iItem];
+
+                    drawItem(ctx, item);
+                }
+            }
+
+            function doTest()
+            {
+                var batches = [];
+
+                var batch = document.getElementById("textBatch").value
+                var parts = batch.replace(
+                    /([^\|]+)\|([^\|]+)\|/gi,
+                    function(m, title, batchPart)
+                        {
+                            batches.push([title, batchPart]);
+                    });
+
+                alert("Parts: " + batches.length);
+
+                for (var logString of batches)
+                {
+                    var url = window.location.href.replace(/\?.*/, "");
+
+                    window.open(url + "?title=" + logString[0] + "&log=" + logString[1]);
+                }
+//                window.open(window.location.href);
+            }
+
+            function getUrlVars()
+            {
+                var vars = {};
+                var parts = window.location.href.replace(
+                    /[?&]+([^=&]+)=([^&]*)/gi,
+                    function(m, key, value)
+                        {
+                            vars[key] = value;
+                        });
+                return vars;
+            }
+
+            function doPageInit()
+            {
+                var log = getUrlVars()["log"];
+                var title = getUrlVars()["title"];
+
+                if (title)
+                {
+                    document.getElementById("canvasTitle").innerText = decodeURIComponent(title);
+                }
+                if (log)
+                {
+                    document.getElementById("textGridData").value = decodeURIComponent(log);
+                    visualize();
+                }
+                return true;
+            }
+        </script>
+    </head>
+    <body onload="doPageInit()">
+    <p>Debugging visualizations for bbld</p>
+    <table border="0">
+        <tr>
+            <td>
+            <textarea id="textGridData" rows="20" cols="126">
+            1: [9,6]-[19,8]
+Grid.ts:1342 2: [23,6]-[33,8]
+Grid.ts:1342 -1: [28,9]-[28,11]
+Grid.ts:1342 3: [37,6]-[47,8]
+Grid.ts:1342 -1: [42,9]-[42,11]
+Grid.ts:1342 4: [51,6]-[61,8]
+Grid.ts:1342 5: [13,9]-[23,11]
+Grid.ts:1342 6: [63,9]-[73,11]
+Grid.ts:1342 7: [77,9]-[87,11]
+Grid.ts:1342 8: [67,12]-[77,14]
+Grid.ts:1342 9: [27,12]-[43,14]
+        </textarea>
+            <button onclick="visualize()">Visualize Grid!</button>
+            <button onclick="convertToCode()">Convert to Code!</button>
+            <td rowspan="2">
+                <span id="canvasTitle"></span><br/>
+                <canvas id="canViz" width="1200" height="800">
+                </canvas>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <textarea id="textGridCode" rows="20" cols="126">
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9,   6, 19,  8), 1, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23,  6, 33,  8), 2, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(28,  9, 28, 11),-1, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(37,  6, 47,  8), 3, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(42,  9, 42, 11),-1, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(51,  6, 61,  8), 4, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13,  9, 23, 11), 5, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63,  9, 73, 11), 6, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(77,  9, 87, 11), 7, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14), 8, false).inferGameInternals(); 
+grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 12, 43, 14), 9, false).inferGameInternals();
+        </textarea>
+            <button onclick="visualizeCode()">Visualize Code!</button>
+        </tr>
+    </table>
+
+    <textarea id="textBatch" rows="20" cols="126">
+        </textarea>
+        <button onclick="doTest()">Batch Visualize!</button>
+    </body>
+</html>

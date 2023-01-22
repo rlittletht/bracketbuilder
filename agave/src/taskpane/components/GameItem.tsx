@@ -1,0 +1,92 @@
+import * as React from "react";
+import { IAppContext } from "../../AppContext";
+import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
+import { InsertButton } from "./InsertButton";
+import { ActionButton } from "./ActionButton";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
+import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+
+export interface GameItemProps
+{
+    game: IBracketGame;
+    bracketName: string;
+    appContext: IAppContext;
+    linkedToGrid: boolean;
+}
+
+export interface GameItemState
+{
+}
+
+
+export class GameItem extends React.Component<GameItemProps, GameItemState>
+{
+    constructor(props, context) {
+        super(props, context);
+    }
+
+    async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        await StructureEditor.insertGameAtSelectionClick(appContext, bracketGame);
+        return true; // we don't get an error back...
+    }
+
+    async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
+        return true; // we don't get an error back...
+    }
+
+    render() {
+
+//        this.props.bracketOptions.forEach(
+//            (value: BracketOption) => {
+//                options.push({ key: value.key, text: value.name });
+//            });
+        let background = {};
+        if (this.props.linkedToGrid)
+            background = { background: "#cccccc" };
+
+        const gameTitle: string =
+            this.props.game.IsChampionship
+                ? "Champion"
+                : `${this.props.game.TopTeamName} vs ${this.props.game.BottomTeamName}`;
+
+        return (
+            <div className="singleGameItem" style={background}>
+                <Stack horizontal gap={8}>
+                    <Stack.Item align="center" grow={0}>
+                        ({this.props.game.GameId.Value})
+                    </Stack.Item>
+                    <Stack.Item align="center" grow={2}>
+                        {gameTitle}
+                    </Stack.Item>
+                    <Stack.Item align="center" grow={0}>
+                        <Stack horizontal horizontalAlign="end">
+                            <Stack.Item grow={0}>
+                                <ActionButton
+                                    appContext={this.props.appContext}
+                                    tooltip="Insert Game"
+                                    tooltipId={`gid-${this.props.game.GameId.Value}`}
+                                    bracketGame={this.props.game}
+                                    delegate={this.DoInsertGame}
+                                    disabled={false}
+                                    icon="Add"/>
+                            </Stack.Item>
+                            <Stack.Item grow={0}>
+                                <ActionButton
+                                    appContext={this.props.appContext}
+                                    tooltip="Remove Game"
+                                    tooltipId={`gid-${this.props.game.GameId.Value}`}
+                                    bracketGame={this.props.game}
+                                    delegate={this.DoRemoveGame.bind(this)}
+                                    disabled={false}
+                                    icon="Remove"/>
+                            </Stack.Item>
+                        </Stack>
+                    </Stack.Item>
+                </Stack>
+            </div>
+        );
+    }
+}

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>TwBracketBuilder Help</title>
+    <style>
+      img.ScreenClip
+      {
+        margin-left: 5pt;
+        border: 1pt solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1> TwBracketBuilder </h1>
+    <img src="ChooseSize.png" alt="SetupExample" class="ScreenClip" style="width: 256px; height: 271px"
+      align="right">
+    <p> Making tournament brackets can be tedious, mostly because you get bogged
+      down in making sure the formatting works and you don't <i>cross the lines</i>.
+      TwBracketBuilder tries to help here. </p>
+    <h2>Quick Start</h2>
+    <p>Ok, there's a lot of details we could go into, but let's just do a quick
+      walk-through to get you used to it.</p>
+    <ul>
+      <li>Create a new workbook and insert the adding (Insert Tab, Get Add-ins,
+        My Organization, TwBracketBuilder)</li>
+      <li>Choose "9 Team" and click Build a bracket to setup your workbook.</li>
+      <li>Select G6 and type "6/25/22" - this is the start of our tournament
+        (notice that all the dates changed for the rest of the tournament)</li>
+      <li>Select cell G7 (because we want to insert on Saturday 8/21)</li>
+      <li>Insert game 1 (Click "+" for game 1<img src="Game1.png" alt="game 1 picture"
+          style="width: 136px; height: 25px;">)</li>
+      <li>Insert game 2</li>
+      <li>Insert game 3</li>
+      <li>Insert game 4</li>
+      <li>Select cell J7 (so we insert games on 8/22 now)</li>
+      <li>Insert game 5 (notice that the grid adjusted to make space for the
+        game)</li>
+      <li>Insert game 9 (since G2 and G3 played on Saturday)</li>
+    </ul>
+    <p>At this point, we can't fit any more games on Sunday because G8 requires
+      G6, and G10 required G5 &amp; G4</p>
+    <ul>
+      <li>Select M7 (for Monday)</li>
+      <li>Insert game 8</li>
+      <li>Insert game 10</li>
+    </ul>
+    Ok, that looks a little funky. Maybe we could do better. <br>
+    <ul>
+      <li>Click Undo <img src="UndoIcon.png" alt="Undo Icon" style="width: 22px; height: 25px;">twice.
+        Game 10 and game 8 should be gone now</li>
+      <li>(Make sure M7 is still selected)</li>
+      <li>Insert game 10</li>
+      <li>Insert game 8</li>
+    </ul>
+    Ok, that looks better...
+    <ul>
+      <li>Select P7 (for Tuesday)</li>
+      <li>Insert game 11</li>
+      <li>Insert game 12</li>
+      <li>Select S7</li>
+      <li>Insert game 13</li>
+      <li>Insert game 14</li>
+      <li>Select V7</li>
+      <li>Insert game 15</li>
+      <li>Select Y7</li>
+      <li>Insert game 16</li>
+      <li>Select AB7</li>
+      <li>Insert game 17</li>
+      <li>Select AE 7</li>
+      <li>Insert champion (game 18)</li>
+    </ul>
+    <p>At this point, the bracket is done. Now let's go back and fix the team
+      names. Go to the TeamsAndFields sheet. Fill out the team names for the
+      bracket (fill in cells B23 to B31with team names).</p>
+    <p>Now back on the Games sheet, you can click on each "Field #1" or "6:00
+      PM" and put the correct field and time. (You could also do this on the
+      TeamsAndFields sheet).</p>
+    <p>Lastly, let's fill in some tournament information. Go to the
+      "TournamentInfo" sheet:</p>
+    <ul>
+      <li>Select B1, enter "9 Team Tournament"</li>
+      <li>Select B2, enter "Sample Walkthrough"</li>
+      <li>Select B3, enter "Al Houghton Stadium"</li>
+      <li>Select B4, enter "Little League Dr, San Bernardino, CA"</li>
+      <li>Select B5, enter "Hosted by Little League"</li>
+    </ul>
+    And there you go... A completed bracket!<br>
+    <h2>Detailed Instructions</h2>
+    <p></p>
+    <h2> Compatibility </h2>
+    <p> This add-in creates double-elimination tournament brackets that conform
+      to Little League's tournament brackets. If you intend to use these for a
+      Little League tournament, remember they must be approved before they are
+      used. </p>
+    <h2>Getting Started</h2>
+    <p>First you will have to select the size of your bracket and build the
+      bracket. </p>
+    <p>Once you click "Build a bracket",your workbook will be setup to start
+      building out your bracket.</p>
+    <img src="GridAndTaskpane.png" alt="Grid and taskpane screen clipping" class="ScreenClip"
+      style="width: 701px; height: 295px;" align="right"> <br clear="right">
+    <p>Let's get familiar with the bracket and how it's built.</p>
+    <h3>BUILDING</h3>
+    <p>The cell at the top (A1) is the "BUILDING" cell. When "BUILDING" is in
+      the cell, then every game will show the source for the game (W1 or L3, for
+      example). Otherwise, it will be blank until the bracket starts filling in
+      to that game. Play with it.</p>
+    <h3>Header Text</h3>
+    <p>The name of the tournament, description, address, etc, are all at the top
+      of the bracket grid. Eventually you will want to merge and center this
+      text across your entire bracket. Since we don't know how many days the
+      tournament will run (yet),we just let this be a single cell for now.</p>
+    <p>All of this text can be filled out on the TournamentInfo sheet. Just go
+      there and fill in the details for your tournament.&nbsp; NOTE: if you want
+      a field to be blank,then enter a single ' in the field.</p>
+    <h3>Grid Pattern</h3>
+    <p>This grid is carefully constructed to allow lines to connect games and
+      create visual affects. You can change things like row height and column
+      widths, but don't change the pattern.</p>
+    <ul>
+      <li>Rows are in pairs: a full height row for text, and a 1 pixel row for
+        lines. You can see this when you look at the row numbers on the left
+        side -- they seem to count by twos in the grid (10, 12, 14, 16). The odd
+        number rows aren't missing, they are just really short. Those short rows
+        give us the lines.</li>
+      <li>Columns are in threes:&nbsp; A wide column for team names, a narrow
+        column for game score, and a 1 pixel column for lines. Notice that the
+        column with "Team 1" in it is wider than the score column next to it.
+        The line column is even smaller.</li>
+    </ul>
+    <img src="GameStructure.png" alt="Game structure screen clipping" style="width: 245px; height: 208px;"
+      class="ScreenClip" align="right">
+    <h3>Games on the Grid</h3>
+    <p>Each game has several components.</p>
+    <h4>Team Names</h4>
+    <p>All games have a top and bottom team name. If these are first round
+      games, then the seeded team name will be entered. By default these will
+      say "Team 1", etc. You can either type in the correct team name, or you
+      can go to the "TeamsAndFields" sheet and fill in the team names there.
+      Either way, the team names will automatically update throughout the
+      bracket as you enter scores into the bracket.</p>
+    <h4>Game Info Block</h4>
+    <p>The Game Info Block has the field number, game time, and any special text
+      (like "Loser to T6"). To change the field or time of the game, you can
+      either type the correct information directly into the block, or you can go
+      to the "TeamsAndFields" sheet and fill in the game information there (just
+      look up the game number). Either way, the actual game information on the
+      "BracketInfo" sheet will automatically update to match what the grid says.
+      (This makes it easy to bulk-upload the games to something like
+      ArbiterSports when the bracket has been constructed).</p>
+    <h4>Game Number Block</h4>
+    <p>The game number block is just a merged set of cells with the game number
+      in it ("G2", "G3", etc.)</p>
+    <h3>Selecting<img src="GameSelected.png" alt="Selected Game structure screen clipping"
+        style="width: 152px; height: 129px;" class="ScreenClip" align="right"></h3>
+    <p>When we talk about choosing a place to insert a game, or choosing a day
+      to insert a game into, you should always be putting your selection in the
+      widest column -- the one that the team names go into.</p>
+    <p>When we talk about selecting a game,you should select the top and bottom
+      team names, AND include the line on the right (it is tricky to select
+      without using Shift+Right Arrow</p>
+    <p></p>
+    <h2> Placing Games </h2>
+    <h3><img src="Taskpane.png" alt="Selected Game structure screen clipping" style="width: 140px; height: 312px;"
+        class="ScreenClip" align="right"></h3>
+    <p> Once you have chosen the size of your bracket, you will see a list of
+      games that need to be placed in your bracket. The games that are shaded
+      gray are already in your bracket, but you can still remove them by
+      clicking the "-" button. The games that are not shaded still need to be
+      placed in your grid. </p>
+    <p> In many cases, the add-in can automagically place the game for you. For
+      first-round games, it will choose the next available spot on the day you
+      choose. As you get further in the bracket it will place games where they
+      have to go in order for the lines to work. In some cases, where the grid
+      has to be reorganized, it will even fixup the grid to make things work. </p>
+    <p> To insert a game <i>automagically</i>, just select a cell in the day
+      where you want the game. Its usually best to select a cell close to the
+      top of the column so its clear you aren't trying to manually place the
+      game. Then just click the "+" next to the game you want to insert. </p>
+    <h3> Ok, it screwed up </h3>
+    <p> Well, its not perfect. If you catch the mistake early (before you insert
+      other games), you can just <i>undo</i> what you just did. <b>Don't use
+        Excel's undo</b>. Use the undo button in the task pane: <img src="UndoIcon.png"
+        alt="Undo Icon" style="width: 22px; height: 25px;"> (You can also use
+      redo to undo what you undid). You should be able to undo multiple things
+      by clicking undo again. If clicking undo doesn't do anything, then you
+      will have to remove the games manually </p>
+    <p> To remove a game manually, first try just clicking the "-" next to the
+      game you are trying to remove. If that doesn't work, then select the game
+      in the grid and click the "Remove Game" button: <img src="RemoveGameIcon.png"
+        alt="Remove Game Icon" style="width: 22px; height: 25px;"></p>
+  </body>
+</html>
