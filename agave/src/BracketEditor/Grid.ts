@@ -1969,8 +1969,15 @@ export class Grid
         let gridNew: Grid = this.clone();
         let gameInsert: GridGameInsert;
 
-        // first, try to do some adjustments...
-        GridAdjust.rearrangeGridForCommonConflicts(gridNew, game, requested.FirstColumn);
+        // before we do any clever readjustments of the grid for common conflicts,
+        // first see if they are requesting a speciric range for insertion. if they
+        // are, then we don't want to try to second guess them...
+
+        if (requested.RowCount <= 8)
+        {
+            // first, try to do some adjustments...
+            GridAdjust.rearrangeGridForCommonConflicts(gridNew, game, requested.FirstColumn);
+        }
 
         let fAdjusted: boolean;
 
