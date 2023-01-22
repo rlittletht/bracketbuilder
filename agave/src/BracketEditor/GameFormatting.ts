@@ -36,6 +36,17 @@ export class GameFormatting
         range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
     }
 
+    static formatChampionshipText(range: Excel.Range)
+    {
+        range.format.font.name = "Calibri";
+        range.format.font.size = 12;
+        range.format.font.bold = true;
+        range.format.font.italic = true;
+        range.format.font.color = "#ff0000";
+        range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
+        range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatGameInfoTimeText
     ----------------------------------------------------------------------------*/
@@ -56,6 +67,7 @@ export class GameFormatting
         range.format.font.name = "Calibri";
         range.format.font.size = 8;
         range.format.font.bold = true;
+        range.format.font.italic = true;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         range.format.verticalAlignment = align;
         range.format.font.color = "#ff0000";

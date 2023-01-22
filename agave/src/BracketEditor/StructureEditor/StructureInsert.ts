@@ -63,7 +63,7 @@ export class StructureInsert
         GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
         await Ranges.createOrReplaceNamedRange(ctx, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        GameFormatting.formatGameInfoBodyTextRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+        GameFormatting.formatChampionshipText(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
 
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
 
@@ -105,6 +105,14 @@ export class StructureInsert
             bottomString = game.BottomSource;
             if (bottomString != "" && bottomString[0] != 'L')
                 bottomString = "";
+        }
+
+        if (game.IsIfNecessaryGame)
+        {
+            if (game.SwapTopBottom)
+                bottomString = "(if first loss)";
+            else
+                topString = "(if first loss)";
         }
 
         const fCompressGame = gameInfoRangeInfo.FirstRow - gameInfoRange.FirstRow - 1 < 0;

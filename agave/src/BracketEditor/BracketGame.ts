@@ -34,6 +34,7 @@ export interface IBracketGame
     get BottomTeamName(): string; // if this is the bottom game, this is the team name
     get StartTime(): number; // this is the number of minutes since the start of the day
     get IsChampionship(): boolean;
+    get IsIfNecessaryGame(): boolean; // this is true if this game is the 'what-if' game before the championship
     get WinningTeamAdvancesToGameId(): GameId;
 
     FormatTime(): string;
@@ -70,6 +71,24 @@ export class BracketGame implements IBracketGame
     m_topTeamLocation: RangeInfo;
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
+    m_isIfNecessaryGame: boolean;
+
+    get IsIfNecessaryGame(): boolean
+    {
+        if (this.m_bracketGameDefinition == null)
+            throw Error("no BracketGameDefinition available for IsIfNecessaryGame()");
+
+        if (this.m_bracketGameDefinition.topSource.length <= 1
+            || this.m_bracketGameDefinition.bottomSource.length <= 1)
+        {
+            return false;
+        }
+
+        if (this.m_bracketGameDefinition.topSource.substring(1) == this.m_bracketGameDefinition.bottomSource.substring(1))
+            return true;
+
+        return false;
+    }
 
     get IsChampionship(): boolean
     {
@@ -245,9 +264,13 @@ export class BracketGame implements IBracketGame
     FormatLoser(): string
     {
         if (this.m_bracketGameDefinition.loser == "")
+        {
             return "";
+        }
         else
+        {
             return `L to ${this.m_bracketGameDefinition.loser.substring(1)}`;
+        }
     }
 
     /*----------------------------------------------------------------------------
