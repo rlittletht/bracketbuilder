@@ -85,7 +85,13 @@ export class BracketGame implements IBracketGame
         }
 
         if (this.m_bracketGameDefinition.topSource.substring(1) == this.m_bracketGameDefinition.bottomSource.substring(1))
+        {
+            // a two team bracket can fool our logic here since game 2's sources are both game 1...
+            if (this.m_bracketName == "T2" && this.GameId.equals(new GameId(2)))
+                return false;
+
             return true;
+        }
 
         return false;
     }
