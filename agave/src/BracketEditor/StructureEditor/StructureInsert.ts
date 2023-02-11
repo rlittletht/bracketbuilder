@@ -6,7 +6,7 @@ import { GameFormatting } from "../GameFormatting";
 import { Grid } from "../Grid";
 import { StructureRemove } from "./StructureRemove";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { _undoManager } from "../Undo";
+import { _undoManager, UndoGameDataItem } from "../Undo";
 import { StructureEditor } from "./StructureEditor";
 
 export class StructureInsert
@@ -347,7 +347,9 @@ export class StructureInsert
             return;
         }
 
-        _undoManager.setUndoGrid(grid);
-        await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
+        let undoGameDataItems: UndoGameDataItem[] =
+            await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
+
+        _undoManager.setUndoGrid(grid, undoGameDataItems);
     }
 }

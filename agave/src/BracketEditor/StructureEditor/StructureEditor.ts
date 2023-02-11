@@ -386,7 +386,8 @@ export class StructureEditor
 
         if (gridNew != null)
         {
-            _undoManager.setUndoGrid(grid);
+            // move isn't going to change any field/times
+            _undoManager.setUndoGrid(grid, []);
             await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
             if (mover.Warning != "")
                 appContext.logError(mover.Warning, 8000);

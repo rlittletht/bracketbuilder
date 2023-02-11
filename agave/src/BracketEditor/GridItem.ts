@@ -238,6 +238,8 @@ export class GridItem
         itemNew.m_bottomTeamRange = RangeInfo.createFromRangeInfo(item.BottomTeamRange);
         itemNew.m_gameNumberRange = RangeInfo.createFromRangeInfo(item.GameNumberRange);
         itemNew.m_swapTopBottom = item.m_swapTopBottom;
+        itemNew.m_field = item.m_field;
+        itemNew.m_startTime = item.m_startTime;
 
         return itemNew;
     }

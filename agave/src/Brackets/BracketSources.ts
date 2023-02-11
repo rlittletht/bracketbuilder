@@ -8,6 +8,7 @@ import { Tables } from "../Interop/Tables";
 import { GridBuilder } from "./GridBuilder";
 import { GameNum } from "../BracketEditor/GameNum";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
+import { UndoGameDataItem } from "../BracketEditor/Undo";
 
 export interface TeamNameMap
 {
@@ -75,8 +76,11 @@ export class BracketSources
         ctx: any,
         gameNum: GameNum,
         field: any,
-        time: any)
+        time: any,
+        alwaysOverwriteIfGiven: boolean): Promise<UndoGameDataItem>
     {
+        let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(gameNum, undefined, undefined, undefined, undefined);
+
         // find the team names table
         let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
 
@@ -92,15 +96,29 @@ export class BracketSources
                 let newField: string;
                 let newTime: number;
 
-                if (range.values[i][1] == GlobalDataBuilder.DefaultField)
-                    newField = field[0] == "=" ? range.values[i][1] : field;
+                if ((alwaysOverwriteIfGiven || range.values[i][1] == GlobalDataBuilder.DefaultField)
+                    && field[0] != "=")
+                {
+                    newField = field;
+                    undoGameDataItem.fieldNew = field;
+                    undoGameDataItem.fieldOriginal = range.values[i][1];
+                }
                 else
+                {
                     newField = range.values[i][1];
+                }
 
-                if (range.values[i][2] == GlobalDataBuilder.DefaultStartTime)
-                    newTime = typeof time !== "number" ? range.values[i][2] : time;
+                if ((alwaysOverwriteIfGiven || range.values[i][2] == GlobalDataBuilder.DefaultStartTime)
+                    && typeof time === "number")
+                {
+                    newTime = time;
+                    undoGameDataItem.startTimeNew = time;
+                    undoGameDataItem.startTimeOriginal = range.values[i][2];
+                }
                 else
+                {
                     newTime = range.values[i][2];
+                }
 
                 newValues.push(
                     [
@@ -109,6 +127,8 @@ export class BracketSources
                         newTime,
                         range.values[i][3]
                     ]);
+                // don't try to be clever and break here -- we still have to push all the
+                // other non-matching values
             }
             else
             {
@@ -118,6 +138,7 @@ export class BracketSources
 
         range.values = newValues;
         await ctx.sync();
+        return undoGameDataItem;
     }
 
     /*----------------------------------------------------------------------------

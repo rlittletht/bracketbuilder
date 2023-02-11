@@ -8,6 +8,7 @@ import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { OADate } from "../../Interop/Dates";
+import { UndoGameDataItem, UndoManager } from "../Undo";
 
 export class ApplyGridChange
 {
@@ -16,14 +17,14 @@ export class ApplyGridChange
 
         Take two grids, diff them, and apply the changes
     ----------------------------------------------------------------------------*/
-    static async diffAndApplyChanges(appContext: IAppContext, ctx: any, grid: Grid, gridNew: Grid, bracketName: string)
+    static async diffAndApplyChanges(appContext: IAppContext, ctx: any, grid: Grid, gridNew: Grid, bracketName: string): Promise<UndoGameDataItem[]>
     {
         // now, diff the grids
         const changes: GridChange[] = grid.diff(gridNew, bracketName);
 
         grid.logChanges(changes);
 
-        await this.applyChanges(appContext, ctx, changes, bracketName);
+        return await this.applyChanges(appContext, ctx, changes, bracketName);
     }
 
     /*----------------------------------------------------------------------------
@@ -69,7 +70,7 @@ export class ApplyGridChange
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.executeAddChange
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext2, ctx: any, change: GridChange, bracketName: string)
+    static async executeAddChange(appContext: IAppContext2, ctx: any, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
     {
         AppContext.checkpoint("appc.14");
         if (change.IsLine)
@@ -83,8 +84,9 @@ export class ApplyGridChange
                     change.Range));
 
             AppContext.checkpoint("appc.14.2");
-            return;
+            return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
         }
+
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("appc.15");
@@ -98,7 +100,9 @@ export class ApplyGridChange
         game.SetField(change.Field);
 
         AppContext.checkpoint("appc.17");
-        await BracketSources.updateGameInfoIfNotSet(ctx, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime));
+
+        const undoGameDataItem: UndoGameDataItem =
+            await BracketSources.updateGameInfoIfNotSet(ctx, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
 
         if (game.IsChampionship)
             await StructureInsert.insertChampionshipGameAtRange(appContext, ctx, game, change.Range);
@@ -106,6 +110,8 @@ export class ApplyGridChange
             await StructureInsert.insertGameAtRange(appContext, ctx, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
 
         AppContext.checkpoint("appc.18");
+
+        return undoGameDataItem;
     }
 
     /*----------------------------------------------------------------------------
@@ -113,8 +119,10 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext3, ctx: any, changes: GridChange[], bracketName: string)
+    static async applyChanges(appContext: IAppContext3, ctx: any, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
     {
+        let undoGameDataItems: UndoGameDataItem[] = [];
+
         AppContext.checkpoint("appc.1");
 
         // do all the removes first
@@ -136,7 +144,13 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Remove)
                 continue;
 
-            await this.executeAddChange(appContext, ctx, item, bracketName);
+            let undoGameDataItem: UndoGameDataItem =
+                await this.executeAddChange(appContext, ctx, item, bracketName);
+
+            if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
+                undoGameDataItems.push(undoGameDataItem);
         }
+
+        return undoGameDataItems;
     }
 }

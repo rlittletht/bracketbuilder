@@ -304,7 +304,9 @@ export class StructureRemove
             let gridNew: Grid = grid.clone();
 
             gridNew.removeItems(items);
-            _undoManager.setUndoGrid(grid);
+
+            // remove won't change any field/times
+            _undoManager.setUndoGrid(grid, []);
             await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
             return;
         }
