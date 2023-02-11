@@ -30,6 +30,7 @@ import { Grid } from "../../BracketEditor/Grid";
 import { GameNum } from "../../BracketEditor/GameNum";
 import { GridTests } from "../../BracketEditor/GridTests";
 import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
+import { OADate } from "../../Interop/Dates";
 
 /* global console, Excel, require  */
 
@@ -104,6 +105,8 @@ export default class App extends React.Component<AppProps, AppState>
 
         try
         {
+            OADate.TestFromOADateTests();
+
             // first, dump the grid for the current sheet. this is handy if you are building
             // unit tests since it gives you a way to generate a grid...
             await Excel.run(
@@ -114,6 +117,8 @@ export default class App extends React.Component<AppProps, AppState>
                     grid.logGridCondensed();
                 });
 
+
+            OADate.TestMinutesFromTimeStringTests();
 
             GridRankerTests.test_danglingFeeder_vs_swappedGame(appContext, testContext);
             GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext, testContext);
