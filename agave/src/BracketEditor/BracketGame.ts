@@ -1,12 +1,13 @@
 
 import { BracketDefinition, GameDefinition, s_brackets, BracketManager } from "../Brackets/BracketDefinitions";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { RangeInfo } from "../Interop/Ranges";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { Grid } from "./Grid";
 import { AppContext } from "../AppContext";
 import { BracketSources } from "../Brackets/BracketSources";
 import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
+import { OADate } from "../Interop/Dates";
 
 export interface IBracketGame
 {
@@ -363,6 +364,24 @@ export class BracketGame implements IBracketGame
                         }
                     }
                 }
+            }
+
+            if (this.m_gameNumberLocation != null)
+            {
+                const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
+
+                const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
+                const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
+                range.load("values");
+
+                await ctx.sync();
+
+                const data: any[][] = range.values;
+                this.m_field = data[0][0];
+                const time: string = data[2][0];
+                const mins = OADate.MinutesFromTimeString(time);
+                console.log(`mins = ${mins}`);
+                // convert m_time
             }
         }
 
