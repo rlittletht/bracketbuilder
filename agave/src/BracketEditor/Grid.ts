@@ -14,6 +14,7 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { s_staticConfig } from "../StaticConfig";
+import { OADate } from "../Interop/Dates";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -41,10 +42,19 @@ export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
+    m_datesForGrid: Date[];
+
     m_fLogChanges: boolean = s_staticConfig.logGridChanges;
     m_fLogGrid: boolean = s_staticConfig.logGrid;
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
+
+    getDateFromGridItem(item: GridItem): Date
+    {
+        const column: number = item.Range.FirstColumn - this.m_firstGridPattern.FirstColumn;
+
+        return this.m_datesForGrid[column];
+    }
 
     setInternalGridItems(items: GridItem[])
     {
@@ -525,6 +535,106 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridColumnDateValues
+
+        This requires thet m_firstGridPattern is already loaded (we will use the
+        first repeating column as the first column we need a date for)
+    ----------------------------------------------------------------------------*/
+    async getGridColumnDateValues(ctx: any): Promise<Date[]>
+    {
+        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
+        ctx.trackedObjects.add(sheet);
+
+        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
+        const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
+
+        rngColumns.load("values");
+        await ctx.sync();
+
+        // walk backwards up the column to find the first non-empty cell. This is the date row
+        const colData: any[][] = rngColumns.values;
+        let rowDates: number = -1;
+
+        for (let i = this.m_firstGridPattern.FirstRow - 1; i >= 0; i--)
+        {
+            if (colData[i][0] != null && colData[i][0] != "")
+            {
+                rowDates = i;
+                break;
+            }
+        }
+
+        if (rowDates == -1)
+        {
+            ctx.trackedObjects.remove(sheet);
+            throw new Error("couldn't find date for column");
+        }
+
+        let range: RangeInfo = new RangeInfo(rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
+        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
+        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+
+        areas.load("areaCount");
+        areas.load("rowIndex");
+        areas.load("columnIndex");
+        areas.load("columnCount");
+        areas.load("areas");
+        rng.load("values");
+        await ctx.sync();
+
+        // build an array of merged area mappings
+        const data: any[][] = rng.values;
+
+        let merges: number[] = Array.from({ length: data[0].length }, () => 0);
+
+        if (!areas.isNullObject)
+        {
+            for (let i = 0; i < areas.areaCount; i++)
+            {
+                const rangeAreas: Excel.RangeCollection = areas.areas;
+                const rangeArea: Excel.Range = rangeAreas.items[i];
+
+                let iMerge = rangeArea.columnIndex - range.FirstColumn;
+
+                if (iMerge < merges.length)
+                {
+                    let count = rangeArea.columnCount + 1;
+                    while (count > 0)
+                        merges[iMerge--] = count--;
+                }
+            }
+        }
+
+        let dates: Date[] = [];
+
+        let i = 0;
+        while (i < data[0].length)
+        {
+            let item = data[0][i];
+            if (item == null || item == "")
+            {
+                i++;
+                dates.push(null);
+                continue;
+            }
+
+            const date: Date = OADate.FromOADate(item);
+            dates.push(date);
+            const mergeCount = merges[i];
+            i++;
+            for (let i2 = mergeCount - 1; i2 > 0; i2--)
+            {
+                dates.push(date);
+                i++;
+            }
+        }
+
+        // now 
+        ctx.trackedObjects.remove(sheet);
+        return dates;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Grid.getFirstGridPatternCell
 
         we rely on a regular pattern of cell formatting to make the bracket work.
@@ -634,6 +744,7 @@ export class Grid
     {
         AppContext.checkpoint("lgfb.1");
         this.m_firstGridPattern = await this.getFirstGridPatternCell(ctx);
+        this.m_datesForGrid = await this.getGridColumnDateValues(ctx);
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
