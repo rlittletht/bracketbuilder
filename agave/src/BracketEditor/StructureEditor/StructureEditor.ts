@@ -298,6 +298,30 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.getNextFieldName
+    ----------------------------------------------------------------------------*/
+    static getNextFieldName(fields: string[], fieldCount: number): string
+    {
+        if (fields == null)
+            return "Field #1";
+
+        let lastFieldNum: number = 0;
+
+        for (let field of fields)
+        {
+            const fieldNumCur: number = parseInt(field[field.length - 1]);
+
+            if (fieldNumCur > lastFieldNum)
+                lastFieldNum = fieldNumCur;
+        }
+
+        if (lastFieldNum >= fieldCount)
+            return "Field #1";
+
+        return `Field #${lastFieldNum + 1}`;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.gridBuildFromBracket
     ----------------------------------------------------------------------------*/
     static async gridBuildFromBracket(context: any): Promise<Grid>

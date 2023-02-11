@@ -3,6 +3,7 @@ import { IBracketGame } from "./BracketGame";
 import { Grid } from "./Grid";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
+import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 
 export class GridItem
 {
@@ -12,7 +13,22 @@ export class GridItem
     m_gameNumberRange: RangeInfo = null;
     m_swapTopBottom: boolean = false; // we will save this from the bound game - allows us to find connecting lines
 
+    // these two values will only be set if this was created from a bracket
+    // (not inferred)
+    m_startTime: number = GlobalDataBuilder.DefaultStartTime;
+    m_field: string = GlobalDataBuilder.DefaultField;
+
     m_gameId: GameId = null;
+
+    get StartTime(): number
+    {
+        return this.m_startTime;
+    }
+
+    get Field(): string
+    {
+        return this.m_field;
+    }
 
     get isLineRange(): boolean
     {
@@ -170,6 +186,16 @@ export class GridItem
         }
     }
 
+    setStartTime(time: number)
+    {
+        this.m_startTime = time;
+    }
+
+    setField(field: string)
+    {
+        this.m_field = field;
+    }
+
     attachGame(game: IBracketGame)
     {
         if (!game.IsLinkedToBracket)
@@ -179,6 +205,8 @@ export class GridItem
         this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(game.BottomTeamRange);
         this.m_gameNumberRange = RangeInfo.createFromRangeInfo(game.GameIdRange);
         this.m_swapTopBottom = game.SwapTopBottom;
+        this.m_startTime = game.StartTime;
+        this.m_field = game.Field;
     }
 
     isEqual(item: GridItem): boolean

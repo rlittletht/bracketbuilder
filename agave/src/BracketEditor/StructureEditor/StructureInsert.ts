@@ -257,6 +257,28 @@ export class StructureInsert
         ctx.trackedObjects.remove(sheet);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: StructureInsert.getNextTimeAndFieldForDate
+    ----------------------------------------------------------------------------*/
+    static getNextTimeAndFieldForDate(
+        grid: Grid,
+        date: Date,
+        maxTime: number,
+        fields: string[],
+        count: number,
+        fieldCount: number): [number, string]
+    {
+        if (maxTime != 0 && count < fieldCount)
+            return [maxTime, StructureEditor.getNextFieldName(fields, fieldCount)];
+
+        if (maxTime != 0)
+        {
+            // skip ahead 3 hours
+            return [maxTime + 60 * 3, StructureEditor.getNextFieldName(null, fieldCount)];
+        }
+
+        return [grid.getFirstSlotForDate(date), StructureEditor.getNextFieldName(null, fieldCount)];
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
@@ -303,6 +325,19 @@ export class StructureInsert
 
         let gridNew: Grid = null;
         let failReason: string = null;
+
+        // before we insert the game, let's figure out field and start time info
+        const date: Date = grid.getDateFromGridColumn(requested.FirstColumn);
+        let maxTime: number = 0;
+        let count: number = 0;
+        let fields: string[] = [];
+
+        [maxTime, count, fields] = grid.getLatestTimeForDate(date);
+        let nextTime: number;
+        let field: string;
+        [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
+        game.SetStartTime(nextTime);
+        game.SetField(field);
 
         [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
 

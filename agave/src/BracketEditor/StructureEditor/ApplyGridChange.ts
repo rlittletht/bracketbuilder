@@ -6,6 +6,8 @@ import { Ranges } from "../../Interop/Ranges";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
+import { BracketSources } from "../../Brackets/BracketSources";
+import { OADate } from "../../Interop/Dates";
 
 export class ApplyGridChange
 {
@@ -92,11 +94,17 @@ export class ApplyGridChange
             throw "game can't be linked - we should have already removed it from the bracket";
 
         game.SetSwapTopBottom(change.SwapTopBottom);
+        game.SetStartTime(change.StartTime);
+        game.SetField(change.Field);
+
         AppContext.checkpoint("appc.17");
+        await BracketSources.updateGameInfoIfNotSet(ctx, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime));
+
         if (game.IsChampionship)
             await StructureInsert.insertChampionshipGameAtRange(appContext, ctx, game, change.Range);
         else
             await StructureInsert.insertGameAtRange(appContext, ctx, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
+
         AppContext.checkpoint("appc.18");
     }
 

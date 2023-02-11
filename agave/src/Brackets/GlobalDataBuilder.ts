@@ -7,6 +7,9 @@ export class GlobalDataBuilder
 {
     static SheetName: string = "TeamsAndFields";
 
+    static DefaultField: string = "Ballfield";
+    static DefaultStartTime: number = 0;
+
     static async addGlobalDataToSheet(ctx: any, sheet: Excel.Worksheet, rowStart: number)
     {
         let rng: Excel.Range = sheet.getRangeByIndexes(rowStart, 0, 7, 3);

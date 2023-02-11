@@ -8,6 +8,7 @@ import { BracketSources } from "../Brackets/BracketSources";
 import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
 import { OADate } from "../Interop/Dates";
+import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 
 export interface IBracketGame
 {
@@ -43,6 +44,8 @@ export interface IBracketGame
     Bind(ctx: any): Promise<IBracketGame>;
     Unbind();
     SetSwapTopBottom(swapped: boolean);
+    SetStartTime(time: number);
+    SetField(field: string);
 
     get Field(): string;
 
@@ -67,12 +70,22 @@ export class BracketGame implements IBracketGame
     m_gameNum: GameNum;
     m_teamNameTop: string = null;
     m_teamNameBottom: string = null;
-    m_startTime: number = 18 * 60; // 6pm
-    m_field: string = "Field #1";
+    m_startTime: number = GlobalDataBuilder.DefaultStartTime;
+    m_field: string = GlobalDataBuilder.DefaultField;
     m_topTeamLocation: RangeInfo;
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
     m_isIfNecessaryGame: boolean;
+
+    SetStartTime(time: number)
+    {
+        this.m_startTime = time;
+    }
+
+    SetField(field: string)
+    {
+        this.m_field = field;
+    }
 
     get IsIfNecessaryGame(): boolean
     {
@@ -380,8 +393,7 @@ export class BracketGame implements IBracketGame
                 this.m_field = data[0][0];
                 const time: string = data[2][0];
                 const mins = OADate.MinutesFromTimeString(time);
-                console.log(`mins = ${mins}`);
-                // convert m_time
+                this.m_startTime = mins;
             }
         }
 

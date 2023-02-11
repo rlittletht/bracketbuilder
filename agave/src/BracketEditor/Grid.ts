@@ -43,17 +43,69 @@ export class Grid
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
     m_datesForGrid: Date[];
-
+    m_fieldsToUse: number = 2;
     m_fLogChanges: boolean = s_staticConfig.logGridChanges;
     m_fLogGrid: boolean = s_staticConfig.logGrid;
+    m_startingSlots: number[] = [10 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 9 * 60];
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
+    get FieldsToUse(): number { return this.m_fieldsToUse; }
+
+    getFirstSlotForDate(date: Date): number
+    {
+        return this.m_startingSlots[date.getDay()];
+    }
+
+    getDateFromGridColumn(column: number): Date
+    {
+        column = column - this.m_firstGridPattern.FirstColumn;
+
+        return this.m_datesForGrid[column];
+    }
 
     getDateFromGridItem(item: GridItem): Date
     {
-        const column: number = item.Range.FirstColumn - this.m_firstGridPattern.FirstColumn;
+        return this.getDateFromGridColumn(item.Range.FirstColumn);
+    }
 
-        return this.m_datesForGrid[column];
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getLatestTimeForDate
+
+        get the latest time used on this date (and how many times it is used) and
+        the fields used for that time slot
+
+        time is returned in minutes since 00:00
+    ----------------------------------------------------------------------------*/
+    getLatestTimeForDate(date: Date): [number, number, string[]]
+    {
+        let maxTime: number = 0;
+        let count: number = 0;
+        let fields: string[] = [];
+
+        this.enumerateMatching(
+            (item: GridItem) =>
+            {
+                if (item.StartTime > maxTime)
+                {
+                    maxTime = item.StartTime;
+                    fields = [item.Field];
+                    count = 1;
+                }
+                else if (item.StartTime == maxTime)
+                {
+                    fields.push(item.Field);
+                    count++;
+                }
+                return true;
+            },
+            (item: GridItem) =>
+            {
+                const itemDate = this.getDateFromGridItem(item);
+
+                return itemDate.valueOf() == date.valueOf();
+            });
+
+        return [maxTime, count, fields];
     }
 
     setInternalGridItems(items: GridItem[])
@@ -66,6 +118,16 @@ export class Grid
         for (let item of this.m_gridItems)
             if (!fun(item))
                 return false;
+
+        return true;
+    }
+
+    enumerateMatching(fun: (item: GridItem) => boolean, matchFun: (item: GridItem) => boolean): boolean
+    {
+        for (let item of this.m_gridItems)
+            if (matchFun(item))
+                if (!fun(item))
+                    return false;
 
         return true;
     }
@@ -375,7 +437,7 @@ export class Grid
 
                 if (!itemRight.isLineRange)
                 {
-                    const gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
+                    let gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
 
                     itemRight.inferGameInternalsIfNecessary();
                     const [top, bottom] = gridRight.getConnectedGridItemsForGameFeeders(itemRight, gameStatic);
@@ -745,6 +807,7 @@ export class Grid
         AppContext.checkpoint("lgfb.1");
         this.m_firstGridPattern = await this.getFirstGridPatternCell(ctx);
         this.m_datesForGrid = await this.getGridColumnDateValues(ctx);
+        this.m_fieldsToUse = await StructureEditor.getFieldCount(ctx);
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
@@ -2118,7 +2181,11 @@ export class Grid
         // we *could* try to read the swap data during that load.  but that might be overkill
         // it might be better to just let the game insert handle the swap setting
         game.SetSwapTopBottom(gameInsert.m_swapTopBottom);
-        gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom).inferGameInternals();
+        let newItem: GridItem = gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom);
+
+        newItem.inferGameInternals();
+        newItem.setStartTime(game.StartTime);
+        newItem.setField(game.Field);
 
         return [gridNew, null];
     }

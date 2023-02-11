@@ -7,6 +7,7 @@ import { IFastTables } from "../Interop/FastTables";
 import { Tables } from "../Interop/Tables";
 import { GridBuilder } from "./GridBuilder";
 import { GameNum } from "../BracketEditor/GameNum";
+import { GlobalDataBuilder } from "./GlobalDataBuilder";
 
 export interface TeamNameMap
 {
@@ -33,7 +34,12 @@ export class BracketSources
 
         update the given game information in the bracketsourcedata table
     ----------------------------------------------------------------------------*/
-    static async updateGameInfo(ctx: any, gameNum: GameNum, field: any, time: any, swapHomeAway: boolean)
+    static async updateGameInfo(
+        ctx: any,
+        gameNum: GameNum,
+        field: any,
+        time: any,
+        swapHomeAway: any)
     {
         // find the team names table
         let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
@@ -49,8 +55,59 @@ export class BracketSources
             {
                 newValues.push(
                     [
-                        gameNum.Value, field[0] == "=" ? range.values[i][1] : field,
-                        typeof time !== "number" ? range.values[i][2] : time, swapHomeAway
+                        gameNum.Value,
+                        field[0] == "=" ? range.values[i][1] : field,
+                        typeof time !== "number" ? range.values[i][2] : time,
+                        typeof swapHomeAway !== "boolean" ? range.values[i][3] : swapHomeAway
+                    ]);
+            }
+            else
+            {
+                newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
+            }
+        }
+
+        range.values = newValues;
+        await ctx.sync();
+    }
+
+    static async updateGameInfoIfNotSet(
+        ctx: any,
+        gameNum: GameNum,
+        field: any,
+        time: any)
+    {
+        // find the team names table
+        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
+
+        let range: Excel.Range = table.getDataBodyRange();
+        range.load("values, rowCount");
+        await ctx.sync();
+
+        let newValues: any[][] = [];
+        for (let i = 0; i < range.rowCount; i++)
+        {
+            if (range.values[i][0] == gameNum.Value)
+            {
+                let newField: string;
+                let newTime: number;
+
+                if (range.values[i][1] == GlobalDataBuilder.DefaultField)
+                    newField = field[0] == "=" ? range.values[i][1] : field;
+                else
+                    newField = range.values[i][1];
+
+                if (range.values[i][2] == GlobalDataBuilder.DefaultStartTime)
+                    newTime = typeof time !== "number" ? range.values[i][2] : time;
+                else
+                    newTime = range.values[i][2];
+
+                newValues.push(
+                    [
+                        gameNum.Value,
+                        newField,
+                        newTime,
+                        range.values[i][3]
                     ]);
             }
             else
@@ -143,7 +200,13 @@ export class BracketSources
         // we get a line for each game
         for (let i: number = 0; i < bracketDefinition.games.length; i++)
         {
-            formulasGameInfo.push([i, "Field #1", OADate.OATimeFromMinutes(18 * 60), false]);
+            formulasGameInfo.push(
+                [
+                    i,
+                    GlobalDataBuilder.DefaultField,
+                    OADate.OATimeFromMinutes(GlobalDataBuilder.DefaultStartTime),
+                    false
+                ]);
         }
 
         let range: Excel.Range = sheet.getRangeByIndexes(0, 0, formulasGameInfo.length, 4);
