@@ -284,12 +284,17 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async getBracketName(ctx: any): Promise<string>
     {
-        // get the bracket choice
-        const bracketChoice: Excel.Range = await Ranges.getRangeForNamedCell(ctx, "BracketChoice");
-        bracketChoice.load("values");
-        await ctx.sync();
+        const values: any[][] = await Ranges.getValuesFromNamedCellRange(ctx, "BracketChoice");
+        return values[0][0];
+    }
 
-        return bracketChoice.values[0][0];
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.getFieldCount
+    ----------------------------------------------------------------------------*/
+    static async getFieldCount(ctx: any): Promise<number>
+    {
+        const values: any[][] = await Ranges.getValuesFromNamedCellRange(ctx, "FieldCount");
+        return values[0][0];
     }
 
     /*----------------------------------------------------------------------------

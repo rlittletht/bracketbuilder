@@ -212,7 +212,7 @@ export class GridBuilder
         this.formatColumns(sheet, ["F:F"], 48);
         this.addDayGridFormulas(sheet, 4, 6, GridBuilder.maxDays);
 
-        await GlobalDataBuilder.addGlobalDataToSheet(ctx, sheet, 4);
+        await GlobalDataBuilder.addGlobalDataToSheet(ctx, sheet, 3);
 //        await this.addTipsAndDirections(ctx, sheet);
 
         sheet.showGridlines = false;

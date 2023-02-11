@@ -477,6 +477,20 @@ export class Ranges
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Ranges.getValuesFromNamedCellRange
+
+        Get the values array (any[][]) for the given named range
+    ----------------------------------------------------------------------------*/
+    static async getValuesFromNamedCellRange(ctx: any, name: string): Promise<any[][]>
+    {
+        const range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, name);
+        range.load("values");
+        await ctx.sync();
+
+        return range.values;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Ranges.createRangeInfoForSelection
     ----------------------------------------------------------------------------*/
     static async createRangeInfoForSelection(ctx: any): Promise<RangeInfo>
