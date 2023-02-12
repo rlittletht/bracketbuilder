@@ -1,10 +1,12 @@
 import { IBracketGame } from "./BracketEditor/BracketGame";
+import { PerfTimer } from "./PerfTimer";
 
 export interface IAppContext
 {
     log(message: string);
     logTimeout(message: string, msecVisible: number);
-    logError(message:string, msecVisible: number);
+    logError(message: string, msecVisible: number);
+    get Timer(): PerfTimer;
     /*async*/ invalidateHeroList(ctx: any);
     getSelectedBracket();
     getGames();
@@ -36,6 +38,9 @@ export class AppContext implements IAppContext
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
     m_getSelectedBracket: GetSelectedBracketDelegate;
     m_getGames: GetGamesDelegate;
+    m_perfTimer: PerfTimer = new PerfTimer();
+
+    get Timer(): PerfTimer { return this.m_perfTimer; }
 
     log(message: string, msecVisible: number = 0)
     {

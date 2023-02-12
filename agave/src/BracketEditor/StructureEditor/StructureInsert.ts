@@ -70,7 +70,7 @@ export class StructureInsert
         ctx.trackedObjects.remove(rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(ctx);
+        await game.Bind(ctx, appContext, null);
         ctx.trackedObjects.remove(rngTarget);
         ctx.trackedObjects.remove(rng);
         ctx.trackedObjects.remove(sheet);
@@ -251,7 +251,7 @@ export class StructureInsert
         await Ranges.createOrReplaceNamedRange(ctx, game.GameNumberCellName, rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(ctx);
+        await game.Bind(ctx, appContext, null);
         ctx.trackedObjects.remove(rngTarget);
         ctx.trackedObjects.remove(rng);
         ctx.trackedObjects.remove(sheet);
@@ -288,7 +288,7 @@ export class StructureInsert
         game.Unbind();
 
         // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(ctx);
+        await game.Bind(ctx, appContext, null);
 
         if (game.IsLinkedToBracket)
             await StructureRemove.findAndRemoveGame(appContext, ctx, game, game.BracketName);

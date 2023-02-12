@@ -32,7 +32,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
+            await gameSource.Load(ctx, null, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -41,7 +41,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
+            await gameSource.Load(ctx, null, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -50,7 +50,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
+            await gameSource.Load(ctx, null, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
             if (winner.substring(0) === "T")
             {
                 winnerTarget = new RangeInfo(gameSource.TopTeamRange.FirstRow + 1, 1, gameSource.TopTeamRange.FirstColumn - 1, 1);
@@ -76,7 +76,7 @@ export class GameLines
         let feederWinner: RangeInfo = null;
 
         AppContext.checkpoint("giaolfg.1");
-        await game.Bind(ctx);
+        await game.Bind(ctx, null, null);
         AppContext.checkpoint("giaolfg.2");
         if (!game.IsLinkedToBracket)
         {

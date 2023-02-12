@@ -276,7 +276,7 @@ export class StructureRemove
             }
         }
 
-        await game.Bind(ctx);
+        await game.Bind(ctx, appContext, null);
 
         // if we can't bind to the game, and if the selection is a single cell, then
         // we can't do anything

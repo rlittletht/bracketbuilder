@@ -31,6 +31,8 @@ import { GameNum } from "../../BracketEditor/GameNum";
 import { GridTests } from "../../BracketEditor/GridTests";
 import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
 import { OADate } from "../../Interop/Dates";
+import { TrackingCache } from "../../Interop/TrackingCache";
+import { BracketSources } from "../../Brackets/BracketSources";
 
 /* global console, Excel, require  */
 
@@ -69,7 +71,7 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "1.0.4.1";
+    static version: string = "1.0.5.0";
 
     m_appContext: AppContext;
 
@@ -343,7 +345,7 @@ export default class App extends React.Component<AppProps, AppState>
             bracketChoice = this.state.selectedBracket;
 
         AppContext.checkpoint("ihl.5");
-        let games: IBracketGame[] = await this.getGamesList(ctx, bracketChoice);
+        let games: IBracketGame[] = await this.getGamesList(ctx, this.m_appContext, bracketChoice);
         AppContext.checkpoint("ihl.6");
 
 
@@ -406,7 +408,7 @@ export default class App extends React.Component<AppProps, AppState>
     }
 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
-    async getGamesList(ctx: any, bracket: string): Promise<IBracketGame[]>
+    async getGamesList(ctx: any, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
         await this.ensureBracketLoadedFromSheet(ctx, `${bracket}Bracket`);
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
@@ -416,12 +418,18 @@ export default class App extends React.Component<AppProps, AppState>
 
         let games: IBracketGame[] = [];
 
+        let cache: TrackingCache = new TrackingCache();
+
+        appContext.Timer.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
-            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, bracket, new GameNum(i));
+            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, appContext, cache, bracket, new GameNum(i));
             games.push(temp);
         }
 
+        cache.ReleaseAll(ctx);
+        appContext.Timer.stopAllAggregatedTimers();
+        appContext.Timer.popTimer();
         return games;
     }
 

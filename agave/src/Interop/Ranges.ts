@@ -1,3 +1,4 @@
+import { TrackingCache } from "./TrackingCache";
 
 export enum RangeOverlapKind
 {
@@ -335,6 +336,37 @@ export class RangeInfo
         }
     }
 
+    static async getRangeInfoForNamedCellFaster(ctx: any, cache: TrackingCache, name: string): Promise<RangeInfo>
+    {
+        try
+        {
+            let names: Excel.NamedItemCollection = cache.getTrackedItemOrNull("workbookNames");
+
+            if (names == null)
+            {
+
+            }
+            const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
+            await ctx.sync();
+
+            if (nameObject.isNullObject)
+                return null;
+
+            const range: Excel.Range = nameObject.getRange();
+            range.load("rowIndex");
+            range.load("rowCount");
+            range.load("columnIndex");
+            range.load("columnCount");
+
+            await ctx.sync();
+
+            return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+        }
+        catch (e)
+        {
+            return null;
+        }
+    }
     get IsSingleCell() { return this.m_rowCount <= 1 && this.m_columnCount <= 1; }
 }
 
