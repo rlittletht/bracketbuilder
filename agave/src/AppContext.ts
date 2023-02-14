@@ -1,5 +1,6 @@
 import { IBracketGame } from "./BracketEditor/BracketGame";
 import { PerfTimer } from "./PerfTimer";
+import { JsCtx } from "./Interop/JsCtx";
 
 export interface IAppContext
 {
@@ -7,7 +8,7 @@ export interface IAppContext
     logTimeout(message: string, msecVisible: number);
     logError(message: string, msecVisible: number);
     get Timer(): PerfTimer;
-    /*async*/ invalidateHeroList(ctx: any);
+    /*async*/ invalidateHeroList(context: JsCtx);
     getSelectedBracket();
     getGames();
 }
@@ -19,7 +20,7 @@ export interface AddLogMessageDelegate
 
 export interface InvalidateHeroListDelegate
 {
-    (ctx: any): void;
+    (context: JsCtx): void;
 }
 
 export interface GetSelectedBracketDelegate
@@ -60,10 +61,10 @@ export class AppContext implements IAppContext
             this.m_addLogMessageDelegate(message, msecVisible);
     }
 
-    async invalidateHeroList(ctx: any)
+    async invalidateHeroList(context: JsCtx)
     {
         if (this.m_invalidateHeroListDelegate)
-            await this.m_invalidateHeroListDelegate(ctx);
+            await this.m_invalidateHeroListDelegate(context);
     }
 
     getSelectedBracket(): string

@@ -1,7 +1,8 @@
+import { JsCtx } from "./JsCtx";
 
 export interface PopulateCacheDelegate
 {
-    (ctx: any): Promise<any>;
+    (context: JsCtx): Promise<any>;
 }
 
 export class TrackingCache
@@ -9,12 +10,12 @@ export class TrackingCache
     m_trackedItems: Map<string, any> = new Map<string, any>();
     m_order: string[] = [];
 
-    AddTrackedItem(ctx: any, key: string, item: any)
+    AddTrackedItem(context: JsCtx, key: string, item: any)
     {
         console.log(`adding tracked item key ${key}, type ${typeof (item)}`);
         try
         {
-            ctx.trackedObjects.add(item);
+            context.Ctx.trackedObjects.add(item);
         }
         catch (e)
         {
@@ -25,7 +26,7 @@ export class TrackingCache
         this.m_order.push(key);
     }
 
-    ReleaseAll(ctx: any)
+    ReleaseAll(context: JsCtx)
     {
         while (this.m_order.length > 0)
         {
@@ -33,7 +34,7 @@ export class TrackingCache
             const item: any = this.m_trackedItems.get(key);
 
             console.log(`releasing tracked item key ${key}, type ${typeof (item)}`);
-            ctx.trackedObjects.remove(item);
+            context.Ctx.trackedObjects.remove(item);
         }
 
         this.m_trackedItems.clear();
@@ -47,17 +48,17 @@ export class TrackingCache
         return null;
     }
 
-    async getTrackedItem(ctx: any, key: string, del: PopulateCacheDelegate): Promise<any>
+    async getTrackedItem(context: JsCtx, key: string, del: PopulateCacheDelegate): Promise<any>
     {
         let val: any = this.getTrackedItemOrNull(key);
 
         if (val != null)
             return val;
 
-        val = await del(ctx);
+        val = await del(context);
 
         if (val != null)
-            this.AddTrackedItem(ctx, key, val);
+            this.AddTrackedItem(context, key, val);
 
         return val;
     }
@@ -70,11 +71,11 @@ export class TrackingCache
         return cache.getTrackedItemOrNull(key);
     }
 
-    static async getTrackedItemFromCache(cache: TrackingCache, ctx: any, key: string, del: PopulateCacheDelegate): Promise<any>
+    static async getTrackedItemFromCache(cache: TrackingCache, context: JsCtx, key: string, del: PopulateCacheDelegate): Promise<any>
     {
         if (cache == null)
             return null;
 
-        return await cache.getTrackedItem(ctx, key, del);
+        return await cache.getTrackedItem(context, key, del);
     }
 }

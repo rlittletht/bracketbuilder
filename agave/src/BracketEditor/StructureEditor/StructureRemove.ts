@@ -9,6 +9,7 @@ import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { TrackingCache } from "../../Interop/TrackingCache";
+import { JsCtx } from "../../Interop/JsCtx";
 
 export class StructureRemove
 {
@@ -29,41 +30,41 @@ export class StructureRemove
         (there doesn't appear to be an API for this in javascript, so we will
         rely on the caller to cleanup the names)
     ----------------------------------------------------------------------------*/
-    static async obliterateGameRangeFromSheet(ctx: any, appContext: IAppContext, rangeInfo: RangeInfo, removeConnections: boolean)
+    static async obliterateGameRangeFromSheet(context: JsCtx, appContext: IAppContext, rangeInfo: RangeInfo, removeConnections: boolean)
     {
         appContext;
-        let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
+        let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
 
         if (removeConnections)
         {
             // now go looking for connecting lines
             let feederLine: RangeInfo;
 
-            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
+            feederLine = await GameLines.getFeedingLineRangeInfo(context, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
             GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
 
-            feederLine = await GameLines.getFeedingLineRangeInfo(ctx, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
+            feederLine = await GameLines.getFeedingLineRangeInfo(context, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
             GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
         }
 
         let range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfo);
-        ctx.trackedObjects.add(range);
+        context.Ctx.trackedObjects.add(range);
         GameFormatting.removeAllGameFormatting(range);
 
-        //        await this.removeAllGameFormatting(ctx, range);
+        //        await this.removeAllGameFormatting(context, range);
         range.load("rowIndex");
         range.load("columnIndex");
 
         // and now look for merged regions so we can find the outgoing line
         let areas: Excel.RangeAreas = range.getMergedAreasOrNullObject();
 
-        await ctx.sync();
+        await context.sync();
 
         if (!areas.isNullObject)
         {
             let mergedRange: Excel.Range = areas.areas.getItemAt(0);
-            ctx.trackedObjects.add(mergedRange);
+            context.Ctx.trackedObjects.add(mergedRange);
 
             GameFormatting.removeAllGameFormatting(mergedRange);
 
@@ -71,7 +72,7 @@ export class StructureRemove
             mergedRange.load("rowIndex");
             mergedRange.load("columnIndex");
 
-            await ctx.sync();
+            await context.sync();
             if (removeConnections)
             {
                 // the middle row is the outgoing row
@@ -81,10 +82,10 @@ export class StructureRemove
                 rangeLine.load("rowIndex");
                 rangeLine.load("columnIndex");
 
-                if (await GameFormatting.isCellInLineColumn(ctx, rangeLine))
+                if (await GameFormatting.isCellInLineColumn(context, rangeLine))
                 {
                     let feederLine: RangeInfo = await GameLines.getOutgoingLineRange(
-                        ctx,
+                        context,
                         sheet,
                         new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
 
@@ -93,29 +94,29 @@ export class StructureRemove
             }
 
             mergedRange.unmerge();
-            await ctx.sync();
+            await context.sync();
 
-            ctx.trackedObjects.remove(range);
-            ctx.trackedObjects.remove(mergedRange);
-            ctx.trackedObjects.remove(sheet);
+            context.Ctx.trackedObjects.remove(range);
+            context.Ctx.trackedObjects.remove(mergedRange);
+            context.Ctx.trackedObjects.remove(sheet);
         }
     }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.removeNamedRangeAndUpdateBracketSource
     ----------------------------------------------------------------------------*/
-    static async removeNamedRangeAndUpdateBracketSource(ctx: any, cellName: string, gameTeamName: string): Promise<[string, string]>
+    static async removeNamedRangeAndUpdateBracketSource(context: JsCtx, cellName: string, gameTeamName: string): Promise<[string, string]>
     {
-        let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
+        let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
         if (range == null)
             return [null, null];
 
         range.load("formulas");
-        await ctx.sync();
+        await context.sync();
 
         const value: string = range.formulas[0][0];
-        await Ranges.ensureGlobalNameDeleted(ctx, cellName);
+        await Ranges.ensureGlobalNameDeleted(context, cellName);
 
         // if this team name is not static, then we don't propagate any direct typing
         if (!BracketGame.IsTeamSourceStatic(gameTeamName))
@@ -136,15 +137,15 @@ export class StructureRemove
         Given the name of the gameinfo cell, remove the named range and return
         the values for the field# and the time
     ----------------------------------------------------------------------------*/
-    static async removeGameInfoNamedRangeAndUpdateBracketSource(ctx: any, cellName: string): Promise<[any, any]>
+    static async removeGameInfoNamedRangeAndUpdateBracketSource(context: JsCtx, cellName: string): Promise<[any, any]>
     {
-        let range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, cellName);
+        let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
         if (range == null)
             return [null, 0];
 
         range.load("address, rowIndex, rowCount, columnIndex, columnCount");
-        await ctx.sync();
+        await context.sync();
         const gameNumRange: RangeInfo = RangeInfo.createFromRange(range);
 
         range = Ranges.rangeFromRangeInfo(
@@ -152,12 +153,12 @@ export class StructureRemove
             gameNumRange.offset(0, 3, -1, 1));
 
         range.load("formulas");
-        await ctx.sync();
+        await context.sync();
 
         const field: any = range.formulas[0][0];
         const time: any = range.formulas[2][0];
 
-        await Ranges.ensureGlobalNameDeleted(ctx, cellName);
+        await Ranges.ensureGlobalNameDeleted(context, cellName);
 
         return [field, time];
     }
@@ -169,7 +170,7 @@ export class StructureRemove
         remove the named ranges for this game. also, get any direct edits from
         these ranges and propagate these edits to the bracket sources table
     ----------------------------------------------------------------------------*/
-    static async removeNamedRangesAndUpdateBracketSources(ctx: any, game: IBracketGame)
+    static async removeNamedRangesAndUpdateBracketSources(context: JsCtx, game: IBracketGame)
     {
         let gameTeamName1: string;
         let overrideText1: string;
@@ -178,14 +179,14 @@ export class StructureRemove
         let field: string;
         let time: number;
 
-        [gameTeamName1, overrideText1] = await this.removeNamedRangeAndUpdateBracketSource(ctx, game.TopTeamCellName, game.TopTeamName);
+        [gameTeamName1, overrideText1] = await this.removeNamedRangeAndUpdateBracketSource(context, game.TopTeamCellName, game.TopTeamName);
 
         if (game.IsChampionship)
             return;
 
-        [gameTeamName2, overrideText2] = await this.removeNamedRangeAndUpdateBracketSource(ctx, game.BottomTeamCellName, game.BottomTeamName);
+        [gameTeamName2, overrideText2] = await this.removeNamedRangeAndUpdateBracketSource(context, game.BottomTeamCellName, game.BottomTeamName);
 
-        [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(ctx, game.GameNumberCellName);
+        [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(context, game.GameNumberCellName);
 
         let map: TeamNameMap[] = [];
 
@@ -202,9 +203,9 @@ export class StructureRemove
                     name: overrideText2
                 });
 
-        await BracketSources.updateBracketSourcesTeamNames(ctx, map);
+        await BracketSources.updateBracketSourcesTeamNames(context, map);
         if (field && field != null && field != "")
-            await BracketSources.updateGameInfo(ctx, game.GameId.GameNum, field, time, game.SwapTopBottom);
+            await BracketSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom);
 
         console.log(`saved: ${gameTeamName1}=${overrideText1}, ${gameTeamName2}=${overrideText2}, field=${field}, time=${time}`);
     }
@@ -216,7 +217,7 @@ export class StructureRemove
         If only the rangeinfo is provided, then use that as the range to remove.
         If both are provided, they must be consistent.
     ----------------------------------------------------------------------------*/
-    static async removeGame(appContext: IAppContext1, ctx: any, game: IBracketGame, range: RangeInfo, removeConnections: boolean)
+    static async removeGame(appContext: IAppContext1, context: JsCtx, game: IBracketGame, range: RangeInfo, removeConnections: boolean)
     {
         AppContext.checkpoint("remgm.1");
 
@@ -230,21 +231,21 @@ export class StructureRemove
 
         if (game != null && game.IsLinkedToBracket)
         {
-            await this.removeNamedRangesAndUpdateBracketSources(ctx, game);
+            await this.removeNamedRangesAndUpdateBracketSources(context, game);
             /*
                         // obliterate can't deal with the named ranges (there's no way to map
                         // range back to named item), but we know the names, so we can delete them
                         AppContext.checkpoint("remgm.6");
-                        await Ranges.ensureGlobalNameDeleted(ctx, game.TopTeamCellName);
+                        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
                         AppContext.checkpoint("remgm.7");
-                        await Ranges.ensureGlobalNameDeleted(ctx, game.BottomTeamCellName);
+                        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
                         AppContext.checkpoint("remgm.8");
-                        await Ranges.ensureGlobalNameDeleted(ctx, game.GameNumberCellName);
+                        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
                         AppContext.checkpoint("remgm.9");*/
         }
 
         AppContext.checkpoint("remgm.4");
-        await this.obliterateGameRangeFromSheet(ctx, appContext, range == null ? game.FullGameRange : range, removeConnections);
+        await this.obliterateGameRangeFromSheet(context, appContext, range == null ? game.FullGameRange : range, removeConnections);
 
         AppContext.checkpoint("remgm.5");
     }
@@ -260,13 +261,13 @@ export class StructureRemove
         If there is no selected range, then find the given game and remove it.
 
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGame(appContext: IAppContext2, ctx: any, game: IBracketGame, bracketName: string)
+    static async findAndRemoveGame(appContext: IAppContext2, context: JsCtx, game: IBracketGame, bracketName: string)
     {
         let cache: TrackingCache = new TrackingCache();
 
         // load the grid
-        let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
-        const rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+        const rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
         if (game == null && rangeSelected.IsSingleCell)
         {
@@ -275,14 +276,14 @@ export class StructureRemove
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
             {
-                game = await BracketGame.CreateFromGameId(ctx, cache, bracketName, item.GameId);
+                game = await BracketGame.CreateFromGameId(context, cache, bracketName, item.GameId);
             }
         }
 
-        await game.Bind(ctx, appContext, cache);
-        cache.ReleaseAll(ctx);
+        await game.Bind(context, appContext, cache);
+        cache.ReleaseAll(context);
         cache = null;
-        await ctx.sync();
+        await context.sync();
 
         // if we can't bind to the game, and if the selection is a single cell, then
         // we can't do anything
@@ -297,7 +298,7 @@ export class StructureRemove
         {
             if (grid.doesRangeOverlap(rangeSelected) == RangeOverlapKind.None)
             {
-                await this.removeGame(appContext, ctx, null, rangeSelected, true);
+                await this.removeGame(appContext, context, null, rangeSelected, true);
                 return;
             }
         }
@@ -313,13 +314,13 @@ export class StructureRemove
 
             // remove won't change any field/times
             _undoManager.setUndoGrid(grid, []);
-            await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
             return;
         }
 
         // we're linked to a game, so we can go straight to it and obliterate it
-        //        await this.removeGame(appContext, ctx, game, rangeSelected);
+        //        await this.removeGame(appContext, context, game, rangeSelected);
 
-        //        await game.Bind(ctx);
+        //        await game.Bind(context);
     }
 }

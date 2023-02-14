@@ -15,6 +15,7 @@ import { GridBuilder } from "../../Brackets/GridBuilder";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
+import { JsCtx } from "../../Interop/JsCtx";
 
 let _moveSelection: RangeInfo = null;
 
@@ -132,7 +133,7 @@ export class StructureEditor
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
             {
                 _moveSelection = item.Range;
-                const range: Excel.Range = Ranges.rangeFromRangeInfo(context.workbook.worksheets.getActiveWorksheet(), _moveSelection);
+                const range: Excel.Range = Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), _moveSelection);
                 range.select();
 
                 await context.sync();
@@ -198,78 +199,78 @@ export class StructureEditor
 
         Show or hide all the supporting sheets.
     ----------------------------------------------------------------------------*/
-    static async toggleShowDataSheets(appContext: IAppContext, ctx: any)
+    static async toggleShowDataSheets(appContext: IAppContext, context: JsCtx)
     {
         appContext;
 
         // first, determine if we are hiding or showing -- based on whether
         // the global data sheet is hidden
-        const dataSheet: Excel.Worksheet = ctx.workbook.worksheets.getItem(GlobalDataBuilder.SheetName);
+        const dataSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GlobalDataBuilder.SheetName);
 
         dataSheet.load("visibility");
-        await ctx.sync();
+        await context.sync();
 
         const visibility: Excel.SheetVisibility =
             dataSheet.visibility == Excel.SheetVisibility.hidden
                 ? Excel.SheetVisibility.visible
                 : Excel.SheetVisibility.hidden;
 
-        ctx.workbook.worksheets.load("items");
-        await ctx.sync();
-        ctx.workbook.worksheets.items.forEach(
+        context.Ctx.workbook.worksheets.load("items");
+        await context.sync();
+        context.Ctx.workbook.worksheets.items.forEach(
             async sheet =>
             {
                 sheet.load("name");
-                await ctx.sync();
+                await context.sync();
                 if (sheet.name != GridBuilder.SheetName)
                     sheet.visibility = visibility;
             });
 
-        await ctx.sync();
+        await context.sync();
     }
 
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.isRangeValidForAnyGame
     ----------------------------------------------------------------------------*/
-    static async isRangeValidForAnyGame(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isRangeValidForAnyGame(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        return await GameFormatting.isCellInGameTitleColumn(ctx, range)
-            && await GameFormatting.isCellInGameScoreColumn(ctx, range.getOffsetRange(0, 1))
-            && await GameFormatting.isCellInLineColumn(ctx, range.getOffsetRange(0, 2));
+        return await GameFormatting.isCellInGameTitleColumn(context, range)
+            && await GameFormatting.isCellInGameScoreColumn(context, range.getOffsetRange(0, 1))
+            && await GameFormatting.isCellInLineColumn(context, range.getOffsetRange(0, 2));
     }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.isRangeValidForTopOrBottomGame
     ----------------------------------------------------------------------------*/
-    static async isRangeValidForTopOrBottomGame(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isRangeValidForTopOrBottomGame(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
         range.load("address");
-        await ctx.sync();
+        await context.sync();
 
-        if (!await GameFormatting.isCellInLineRow(ctx, range.getOffsetRange(-1, 0)) || !await GameFormatting.isCellInLineRow(ctx, range.getOffsetRange(1, 0)))
+        if (!await GameFormatting.isCellInLineRow(context, range.getOffsetRange(-1, 0)) || !await GameFormatting.isCellInLineRow(context, range.getOffsetRange(1, 0)))
         {
             return false;
         }
 
-        return await StructureEditor.isRangeValidForAnyGame(ctx, range);
+        return await StructureEditor.isRangeValidForAnyGame(context, range);
     }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.getValidRangeInfoForGameInsert
     ----------------------------------------------------------------------------*/
-    static async getValidRangeInfoForGameInsert(ctx: any, range: Excel.Range): Promise<RangeInfo>
+    static async getValidRangeInfoForGameInsert(context: JsCtx, range: Excel.Range): Promise<RangeInfo>
     {
         range.load("rowIndex");
         range.load("rowCount");
         range.load("columnIndex");
-        await ctx.sync();
+        await context.sync();
 
         const rowCount: number = range.rowCount == 1 ? 11 : range.rowCount;
 
         if (rowCount >= 9
-            && await StructureEditor.isRangeValidForTopOrBottomGame(ctx, range.getCell(0, 0))
-            && await StructureEditor.isRangeValidForTopOrBottomGame(ctx, range.getCell(rowCount - 1, 0)))
+            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(0, 0))
+            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(rowCount - 1, 0)))
         {
             return new RangeInfo(range.rowIndex, rowCount, range.columnIndex, 3);
         }
@@ -282,18 +283,18 @@ export class StructureEditor
 
         get the bracketName from the workbook
     ----------------------------------------------------------------------------*/
-    static async getBracketName(ctx: any): Promise<string>
+    static async getBracketName(context: JsCtx): Promise<string>
     {
-        const values: any[][] = await Ranges.getValuesFromNamedCellRange(ctx, "BracketChoice");
+        const values: any[][] = await Ranges.getValuesFromNamedCellRange(context, "BracketChoice");
         return values[0][0];
     }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.getFieldCount
     ----------------------------------------------------------------------------*/
-    static async getFieldCount(ctx: any): Promise<number>
+    static async getFieldCount(context: JsCtx): Promise<number>
     {
-        const values: any[][] = await Ranges.getValuesFromNamedCellRange(ctx, "FieldCount");
+        const values: any[][] = await Ranges.getValuesFromNamedCellRange(context, "FieldCount");
         return values[0][0];
     }
 
@@ -334,11 +335,11 @@ export class StructureEditor
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.repairGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async repairGameAtSelection(appContext: IAppContext, ctx: any, bracketName: string)
+    static async repairGameAtSelection(appContext: IAppContext, context: JsCtx, bracketName: string)
     {
-        let selection: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
+        let selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
-        let grid: Grid = await this.gridBuildFromBracket(ctx);
+        let grid: Grid = await this.gridBuildFromBracket(context);
         const [item, kind] = grid.getFirstOverlappingItem(selection);
 
         if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
@@ -354,14 +355,14 @@ export class StructureEditor
         changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
         changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
 
-        await ApplyGridChange.applyChanges(appContext, ctx, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
     }
 
-    static async doGameMoveToSelection(appContext: IAppContext, ctx: any, selection: RangeInfo, bracketName: string)
+    static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
     {
-        const grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         const itemOld: GridItem = grid.inferGameItemFromSelection(selection);
-        const newSelection: RangeInfo = await await Ranges.createRangeInfoForSelection(ctx);
+        const newSelection: RangeInfo = await await Ranges.createRangeInfoForSelection(context);
 
         grid.adjustSelectionForGameInsertOrMove(newSelection);
         newSelection.setLastColumn(newSelection.FirstColumn + 2);
@@ -388,7 +389,7 @@ export class StructureEditor
         {
             // move isn't going to change any field/times
             _undoManager.setUndoGrid(grid, []);
-            await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, bracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName);
             if (mover.Warning != "")
                 appContext.logError(mover.Warning, 8000);
         }
@@ -409,11 +410,11 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
-    static async applyFinalFormatting(appContext: IAppContext, ctx: any, bracketName: string)
+    static async applyFinalFormatting(appContext: IAppContext, context: JsCtx, bracketName: string)
     {
         appContext;
 
-        const grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         const gridArea: RangeInfo = grid.getPrintArea(4);
 
         const printArea: RangeInfo = RangeInfo.createFromCorners(
@@ -422,7 +423,7 @@ export class StructureEditor
 
         console.log(`gridArea: ${gridArea.toString()}`);
 
-        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         sheet.pageLayout.centerHorizontally = true;
         sheet.pageLayout.centerVertically = true;
         sheet.pageLayout.orientation = Excel.PageOrientation.landscape;
@@ -526,6 +527,6 @@ export class StructureEditor
             scale: null
         };
 
-        await ctx.sync();
+        await context.sync();
     }
 }

@@ -1,3 +1,4 @@
+import { JsCtx } from "../Interop/JsCtx";
 
 export class GameFormatting
 {
@@ -102,11 +103,11 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineRow
     ----------------------------------------------------------------------------*/
-    static async isCellInLineRow(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInLineRow(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
         range.load("height");
         range.load("address");
-        await ctx.sync();
+        await context.sync();
 
         return range.height <= 1;
     }
@@ -114,10 +115,10 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineColumn
     ----------------------------------------------------------------------------*/
-    static async isCellInLineColumn(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInLineColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
         range.load("width");
-        await ctx.sync();
+        await context.sync();
 
         return range.width < 5;
     }
@@ -125,10 +126,10 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInGameTitleColumn
     ----------------------------------------------------------------------------*/
-    static async isCellInGameTitleColumn(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInGameTitleColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
         range.load("width");
-        await ctx.sync();
+        await context.sync();
 
         return range.width > 20;
     }
@@ -136,10 +137,10 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInGameScoreColumn
     ----------------------------------------------------------------------------*/
-    static async isCellInGameScoreColumn(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInGameScoreColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
         range.load("width");
-        await ctx.sync();
+        await context.sync();
 
         return range.width <= 20;
     }

@@ -3,6 +3,7 @@ import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 import { GameFormatting } from "../BracketEditor/GameFormatting";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
+import { JsCtx } from "../Interop/JsCtx";
 
 export class GridBuilder
 {
@@ -185,11 +186,11 @@ export class GridBuilder
 
         build the actual bracket grid sheet
     ----------------------------------------------------------------------------*/
-    static async buildGridSheet(ctx: any)
+    static async buildGridSheet(context: JsCtx)
     {
         const colFirstGridColumn: number = 6;
 
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
         let rngHeader: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
 
         rngHeader.formulas = [["=TournamentTitle"], ["=TournamentSubTitle"], ["=TournamentLocation"]]
@@ -212,16 +213,16 @@ export class GridBuilder
         this.formatColumns(sheet, ["F:F"], 48);
         this.addDayGridFormulas(sheet, 4, 6, GridBuilder.maxDays);
 
-        await GlobalDataBuilder.addGlobalDataToSheet(ctx, sheet, 3);
-//        await this.addTipsAndDirections(ctx, sheet);
+        await GlobalDataBuilder.addGlobalDataToSheet(context, sheet, 3);
+//        await this.addTipsAndDirections(context, sheet);
 
         sheet.showGridlines = false;
         sheet.activate();
-        await ctx.sync();
+        await context.sync();
     }
 
 
-    static async addTipsAndDirections(ctx: any, sheet: Excel.Worksheet)
+    static async addTipsAndDirections(context: JsCtx, sheet: Excel.Worksheet)
     {
         const tips: any[][] =
         [
@@ -313,6 +314,6 @@ export class GridBuilder
         rng.values = tips;
         rng.format.font.size = 9;
         rng.format.font.name = "Segoe UI";
-        await ctx.sync();
+        await context.sync();
     }
 }

@@ -9,6 +9,7 @@ import { ApplyGridChange } from "./ApplyGridChange";
 import { _undoManager, UndoGameDataItem } from "../Undo";
 import { StructureEditor } from "./StructureEditor";
 import { TrackingCache } from "../../Interop/TrackingCache";
+import { JsCtx } from "../../Interop/JsCtx";
 
 export class StructureInsert
 {
@@ -26,7 +27,7 @@ export class StructureInsert
         }
     }
 
-    static async insertChampionshipGameAtRange(appContext: IAppContext, ctx: any, game: IBracketGame, insertRangeInfo: RangeInfo)
+    static async insertChampionshipGameAtRange(appContext: IAppContext, context: JsCtx, game: IBracketGame, insertRangeInfo: RangeInfo)
     {
         const cache: TrackingCache = new TrackingCache();
 
@@ -36,11 +37,11 @@ export class StructureInsert
             return;
         }
 
-        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
 
         const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-        ctx.trackedObjects.add(rng);
+        context.Ctx.trackedObjects.add(rng);
 
         // figure out how big the game will be (width,height)
         let formulas: any[][] = [];
@@ -57,29 +58,29 @@ export class StructureInsert
             insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
 
         rngTarget.formulas = formulas;
-        ctx.trackedObjects.add(rngTarget);
+        context.Ctx.trackedObjects.add(rngTarget);
 
         // if there are any existing global names for this game, they will get deleted -- 
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
         GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(ctx, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+        await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
 
         GameFormatting.formatChampionshipText(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
 
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
 
-        ctx.trackedObjects.remove(rngTarget);
+        context.Ctx.trackedObjects.remove(rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(ctx, appContext, cache);
-        ctx.trackedObjects.remove(rngTarget);
-        ctx.trackedObjects.remove(rng);
-        ctx.trackedObjects.remove(sheet);
+        await game.Bind(context, appContext, cache);
+        context.Ctx.trackedObjects.remove(rngTarget);
+        context.Ctx.trackedObjects.remove(rng);
+        context.Ctx.trackedObjects.remove(sheet);
 
-        cache.ReleaseAll(ctx);
-        await ctx.sync();
+        cache.ReleaseAll(context);
+        await context.sync();
 
     }
 
@@ -167,7 +168,7 @@ export class StructureInsert
     ----------------------------------------------------------------------------*/
     static async insertGameAtRange(
         appContext: IAppContext1,
-        ctx: any,
+        context: JsCtx,
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
@@ -180,10 +181,10 @@ export class StructureInsert
 
         /*
         // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(ctx);
+        await game.Bind(context);
 
         if (game.IsLinkedToBracket)
-            await this.findAndRemoveGame(appContext, ctx, game);
+            await this.findAndRemoveGame(appContext, context, game);
         */
 
         if (insertRangeInfo == null)
@@ -192,11 +193,11 @@ export class StructureInsert
             return;
         }
 
-        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
 
         const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-        ctx.trackedObjects.add(rng);
+        context.Ctx.trackedObjects.add(rng);
 
         const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
@@ -236,36 +237,36 @@ export class StructureInsert
             connectedTop,
             connectedBottom);
 
-        ctx.trackedObjects.add(rngTarget);
+        context.Ctx.trackedObjects.add(rngTarget);
 
         // if there are any existing global names for this game, they will get deleted -- 
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
         GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(ctx, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+        await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
 
         GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(ctx, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
+        await Ranges.createOrReplaceNamedRange(context, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
 
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
         GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
 
-        ctx.trackedObjects.remove(rngTarget);
+        context.Ctx.trackedObjects.remove(rngTarget);
         rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
-        ctx.trackedObjects.add(rngTarget);
+        context.Ctx.trackedObjects.add(rngTarget);
 
         GameFormatting.formatGameInfoGameNumberRequest(rngTarget);
-        await Ranges.createOrReplaceNamedRange(ctx, game.GameNumberCellName, rngTarget);
+        await Ranges.createOrReplaceNamedRange(context, game.GameNumberCellName, rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(ctx, appContext, cache);
-        ctx.trackedObjects.remove(rngTarget);
-        ctx.trackedObjects.remove(rng);
-        ctx.trackedObjects.remove(sheet);
-        cache.ReleaseAll(ctx);
-        await ctx.sync();
+        await game.Bind(context, appContext, cache);
+        context.Ctx.trackedObjects.remove(rngTarget);
+        context.Ctx.trackedObjects.remove(rng);
+        context.Ctx.trackedObjects.remove(sheet);
+        cache.ReleaseAll(context);
+        await context.sync();
 
     }
 
@@ -295,27 +296,27 @@ export class StructureInsert
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext2, ctx: any, game: IBracketGame)
+    static async insertGameAtSelection(appContext: IAppContext2, context: JsCtx, game: IBracketGame)
     {
         let cache: TrackingCache = new TrackingCache();
         game.Unbind();
 
         // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(ctx, appContext, cache);
+        await game.Bind(context, appContext, cache);
 
-        cache.ReleaseAll(ctx);
+        cache.ReleaseAll(context);
         cache = null;
         console.log('after release all');
-        await ctx.sync();
+        await context.sync();
 
         if (game.IsLinkedToBracket)
-            await StructureRemove.findAndRemoveGame(appContext, ctx, game, game.BracketName);
+            await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
 
         // first make sure we have a complete grid for the bracket
-        let grid: Grid = await StructureEditor.gridBuildFromBracket(ctx);
+        let grid: Grid = await StructureEditor.gridBuildFromBracket(context);
 
         // now let's figure out where we want to insert the game
-        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
+        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
         {
@@ -366,7 +367,7 @@ export class StructureInsert
         }
 
         let undoGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, gridNew, game.BracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);
     }

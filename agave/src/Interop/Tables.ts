@@ -2,6 +2,7 @@
 import { IFastTables } from "./FastTables";
 import { Arrays } from "./Arrays";
 import { Ranges } from "./Ranges";
+import { JsCtx } from "./JsCtx";
 
 export class Tables
 {
@@ -21,9 +22,10 @@ export class Tables
 
         await Excel.run(async (ctx) =>
         {
-            let table: Excel.Table = ctx.workbook.tables.getItem(sTable);
+            const context: JsCtx = new JsCtx(ctx);
+            let table: Excel.Table = context.Ctx.workbook.tables.getItem(sTable);
             table.load("worksheet");
-            await ctx.sync();
+            await context.sync();
 
             let sheet: Excel.Worksheet = table.worksheet;
             let mapNew: Map<string, number> = null;
@@ -32,7 +34,7 @@ export class Tables
             // first, see if the table headers need to be updated
             if (header != null)
             {
-                [mapNew, rgNewToOld, rgColsToPreserve] = await this.matchTableHeader(ctx, table, header);
+                [mapNew, rgNewToOld, rgColsToPreserve] = await this.matchTableHeader(context, table, header);
 
                 dataToInsert = new Array<Array<string>>();
 
@@ -42,21 +44,22 @@ export class Tables
                 }
             }
 
-            rgFormulasPreserve = await this.GetFormulasToSave(ctx, table, rgColsToPreserve);
+            rgFormulasPreserve = await this.GetFormulasToSave(context, table, rgColsToPreserve);
         });
 
         await fastTables.appendTableFast(sTable, dataToInsert);
 
         await Excel.run(async (ctx) =>
         {
-            let table: Excel.Table = ctx.workbook.tables.getItem(sTable);
+            const context: JsCtx = new JsCtx(ctx);
+            let table: Excel.Table = context.Ctx.workbook.tables.getItem(sTable);
 
-            await this.RestoreFormulas(ctx, table, rgColsToPreserve, rgFormulasPreserve);
+            await this.RestoreFormulas(context, table, rgColsToPreserve, rgFormulasPreserve);
         });
     }
 
     static async appendArrayToTableSlow(
-        ctx: Excel.RequestContext,
+        context: JsCtx,
         sTable: string,
         data: Array<Array<string>>,
         header: Array<string>)
@@ -68,10 +71,10 @@ export class Tables
         if (dataToInsert.length == 0)
             return;
 
-        let table: Excel.Table = ctx.workbook.tables.getItem(sTable);
+        let table: Excel.Table = context.Ctx.workbook.tables.getItem(sTable);
 
         table.load("worksheet");
-        await ctx.sync();
+        await context.sync();
 
         let sheet: Excel.Worksheet = table.worksheet;
         let mapNew: Map<string, number> = null;
@@ -80,7 +83,7 @@ export class Tables
         // first, see if the table headers need to be updated
         if (header != null)
         {
-            [mapNew, rgNewToOld, rgColsToPreserve] = await this.matchTableHeader(ctx, table, header);
+            [mapNew, rgNewToOld, rgColsToPreserve] = await this.matchTableHeader(context, table, header);
 
             dataToInsert = new Array<Array<string>>();
 
@@ -90,14 +93,14 @@ export class Tables
             }
         }
 
-        rgFormulasPreserve = await this.GetFormulasToSave(ctx, table, rgColsToPreserve);
+        rgFormulasPreserve = await this.GetFormulasToSave(context, table, rgColsToPreserve);
         let range: Excel.Range = table.getDataBodyRange().getLastRow();
 
         range.load("address");
         range.load("rowIndex");
         range.load("columnIndex");
 
-        await ctx.sync();
+        await context.sync();
 
         let sAddress: string = Ranges.addressFromCoordinates_1Based(
             [range.rowIndex + 1, range.columnIndex + 1],
@@ -105,17 +108,17 @@ export class Tables
 
         range = sheet.getRange(sAddress);
         range.load("values");
-        await ctx.sync();
+        await context.sync();
 
         // no need to require this since it doesn't speed anything up...
-        // (<any>ctx.workbook.application).suspendApiCalculationUntilNextSync();
+        // (<any>context.Ctx.workbook.application).suspendApiCalculationUntilNextSync();
         range.values = dataToInsert;
-        await ctx.sync();
+        await context.sync();
 
-        table = ctx.workbook.tables.getItem(sTable);
+        table = context.Ctx.workbook.tables.getItem(sTable);
 
-        await this.RestoreFormulas(ctx, table, rgColsToPreserve, rgFormulasPreserve);
-        await ctx.sync();
+        await this.RestoreFormulas(context, table, rgColsToPreserve, rgFormulasPreserve);
+        await context.sync();
 
         return;
     }
@@ -128,7 +131,7 @@ export class Tables
     //      mapping of new columns to old (just as an array of the new columns) -- (-1) means there is now given header column name for the existing excel table
     //      array of column indexes that aren't present in the new data, and should have their formulas preserved... (this list is ZERO BASED. if you use this to index into the column collection, it needs to be ONE BASED)
     static async matchTableHeader(
-        ctx: any,
+        context: JsCtx,
         table: Excel.Table,
         rgsHeaderRequested: string[]): Promise<[Map<string, number>, number[], number[]]>
     {
@@ -136,7 +139,7 @@ export class Tables
         rngExcelHeader.load("values");
         rngExcelHeader.load("columnCount");
 
-        await ctx.sync();
+        await context.sync();
 
         let rgExcelHeader: string[] = rngExcelHeader.values[0]; // get the first row (there's only one row anyway)
         let mapRequestedToExcelCurrent: Map<string, number> = new Map<string, number>();
@@ -207,16 +210,16 @@ export class Tables
             iColMissing++;
         }
 
-        await ctx.sync();
+        await context.sync();
         return [mapRequestedToExcelNew, rgMapExcelToRequested, rgColsToPreserve];
     }
 
-    static async isEmptyTable(ctx: any, table: Excel.Table): Promise<boolean>
+    static async isEmptyTable(context: JsCtx, table: Excel.Table): Promise<boolean>
     {
         let rows = table.rows;
 
         rows.load("count");
-        await ctx.sync();
+        await context.sync();
 
         if (rows.count == 0)
             return true;
@@ -224,35 +227,35 @@ export class Tables
             return false;
     }
 
-    static async emptyTable(ctx: any, table: Excel.Table): Promise<Excel.Table>
+    static async emptyTable(context: JsCtx, table: Excel.Table): Promise<Excel.Table>
     {
         let range = table.getDataBodyRange();
         let rows = table.rows;
 
         rows.load("count");
-        await ctx.sync();
+        await context.sync();
 
         if (rows.count == 0)
             return table;
 
         range = range.getEntireRow();
         range.delete("Up");
-        await ctx.sync();
+        await context.sync();
 
         return table;
     }
 
-    static async emptyTableSlow(ctx: any, table: Excel.Table): Promise<Excel.Table>
+    static async emptyTableSlow(context: JsCtx, table: Excel.Table): Promise<Excel.Table>
     {
         let range = table.getDataBodyRange();
         range.load("rowCount");
-        await ctx.sync();
+        await context.sync();
 
         let cRows = range.rowCount;
 
         let rows: any = table.rows;
 
-        await ctx.sync();
+        await context.sync();
 
         if (cRows == 1)
         {
@@ -261,7 +264,7 @@ export class Tables
             {
                 let row = rows.getItemAt(0);
                 row.load("index");
-                await ctx.sync();
+                await context.sync();
             }
             catch (e)
             {
@@ -273,14 +276,14 @@ export class Tables
         {
             let row = rows.getItemAt(cRows);
             row.delete();
-            await ctx.sync();
+            await context.sync();
         }
-        await ctx.sync();
+        await context.sync();
 
         return table;
     }
 
-    static async appendTableSlow(ctx: Excel.RequestContext,
+    static async appendTableSlow(context: JsCtx,
                                  sheet: Excel.Worksheet,
                                  table: Excel.Table,
                                  dataToInsert: Array<Array<string>>): Promise<Excel.Table>
@@ -296,32 +299,32 @@ export class Tables
         range.load("rowIndex");
         range.load("columnIndex");
 
-        await ctx.sync();
+        await context.sync();
 
         let sAddress: string = Ranges.addressFromCoordinates_1Based([range.rowIndex + 1, range.columnIndex + 1],
             [range.rowIndex + dataToInsert.length, range.columnIndex + dataToInsert[0].length]);
 
         range = sheet.getRange(sAddress);
         range.load("values");
-        await ctx.sync();
+        await context.sync();
 
         // no need to require this since it doesn't speed anything up...
-        // (<any>ctx.workbook.application).suspendApiCalculationUntilNextSync();
+        // (<any>context.Ctx.workbook.application).suspendApiCalculationUntilNextSync();
         range.values = dataToInsert;
-        await ctx.sync();
+        await context.sync();
         return table;
     }
 
 
     static async GetFormulasToSave(
-        ctx: Excel.RequestContext,
+        context: JsCtx,
         table: Excel.Table,
         rgColsToPreserve: number[]): Promise<string[]>
     {
         let rgFormulasPreserve: Array<string> = new Array<string>();
         let fEmptyTable: boolean;
 
-        fEmptyTable = await this.isEmptyTable(ctx, table);
+        fEmptyTable = await this.isEmptyTable(context, table);
 
         // if its an empty table, then we have extra work to do -- we have to first populate at least a single row to get
         // the calculated columns to fill in their formulas
@@ -331,7 +334,7 @@ export class Tables
             let iColToUse: number = Arrays.GetFirstValueNotInList(rgColsToPreserve);
 
             table.getDataBodyRange().getCell(0, iColToUse).values = [[0]];
-            await ctx.sync;
+            await context.Ctx.sync;
 
             // at this point, all the formula values should be populated
         }
@@ -341,7 +344,7 @@ export class Tables
             let r: Excel.Range = table.columns.getItemAt(colIndex).getDataBodyRange().getCell(0, 0);
 
             r.load("formulas");
-            await ctx.sync();
+            await context.sync();
 
             rgFormulasPreserve.push(r.formulas[0][0]);
         }
@@ -349,13 +352,13 @@ export class Tables
         if (fEmptyTable)
         {
             // better empty the table again...
-            await this.emptyTable(ctx, table);
-            await ctx.sync();
+            await this.emptyTable(context, table);
+            await context.sync();
         }
         return rgFormulasPreserve;
     }
 
-    static async getTableOrNull(ctx: any, sheet: Excel.Worksheet = null, tableName: string): Promise<Excel.Table>
+    static async getTableOrNull(context: JsCtx, sheet: Excel.Worksheet = null, tableName: string): Promise<Excel.Table>
     {
         let table: Excel.Table = null;
 
@@ -364,9 +367,9 @@ export class Tables
             if (sheet != null)
                 table = sheet.tables.getItem(tableName);
             else
-                table = ctx.workbook.tables.getItem(tableName);
+                table = context.Ctx.workbook.tables.getItem(tableName);
 
-            await ctx.sync();
+            await context.sync();
             return table;
         }
         catch (e)
@@ -376,14 +379,14 @@ export class Tables
     }
 
     static async ensureTableExists(
-        ctx: any,
+        context: JsCtx,
         sheet: any,
         fastTables: IFastTables,
         sTable: string,
         sShape: string,
         header: string[]): Promise<Excel.Table>
     {
-        let table: Excel.Table = await this.getTableOrNull(ctx, sheet, sTable);
+        let table: Excel.Table = await this.getTableOrNull(context, sheet, sTable);
 
         if (table == null)
         {
@@ -393,19 +396,19 @@ export class Tables
                 fastTables.abandonTableBinding(sTable);
 
             table = sheet.tables.add(sShape);
-            await ctx.sync();
+            await context.sync();
 
             table.name = sTable;
             table.getHeaderRowRange().values = [header];
 
-            await ctx.sync();
+            await context.sync();
         }
 
         return table;
     }
 
     static async RestoreFormulas(
-        ctx: Excel.RequestContext,
+        context: JsCtx,
         table: Excel.Table,
         rgColsToPreserve: number[],
         rgFormulasPreserve: string[])
@@ -417,7 +420,7 @@ export class Tables
             let r: Excel.Range = table.columns.getItemAt(colIndex).getDataBodyRange();
 
             r.formulas = <any>rgFormulasPreserve[iPreserve++];
-            await ctx.sync();
+            await context.sync();
         }
     }
 }

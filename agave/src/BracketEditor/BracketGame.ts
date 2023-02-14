@@ -10,6 +10,7 @@ import { GameId } from "./GameId";
 import { OADate } from "../Interop/Dates";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { TrackingCache } from "../Interop/TrackingCache";
+import { JsCtx } from "../Interop/JsCtx";
 
 export interface IBracketGame
 {
@@ -42,7 +43,7 @@ export interface IBracketGame
 
     FormatTime(): string;
     FormatLoser(): string;
-    Bind(ctx: any, appContext: IAppContext, cache: TrackingCache): Promise<IBracketGame>;
+    Bind(context: JsCtx, appContext: IAppContext, cache: TrackingCache): Promise<IBracketGame>;
     Unbind();
     SetSwapTopBottom(swapped: boolean);
     SetStartTime(time: number);
@@ -128,19 +129,19 @@ export class BracketGame implements IBracketGame
         return game.LoadSync(bracket, gameNumber);
     }
 
-    static async CreateFromGameNumber(ctx: any, appContext: IAppContext, cache: TrackingCache, bracket: string, gameNumber: GameNum): Promise<IBracketGame>
+    static async CreateFromGameNumber(context: JsCtx, appContext: IAppContext, cache: TrackingCache, bracket: string, gameNumber: GameNum): Promise<IBracketGame>
     {
         AppContext.checkpoint("cfg.1");
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("cfg.2");
-        return await game.Load(ctx, appContext, cache, bracket, gameNumber);
+        return await game.Load(context, appContext, cache, bracket, gameNumber);
     }
 
 
-    static async CreateFromGameId(ctx: any, cache: TrackingCache, bracket: string, gameId: GameId): Promise<IBracketGame>
+    static async CreateFromGameId(context: JsCtx, cache: TrackingCache, bracket: string, gameId: GameId): Promise<IBracketGame>
     {
-        return await this.CreateFromGameNumber(ctx, null, cache, bracket, gameId.GameNum);
+        return await this.CreateFromGameNumber(context, null, cache, bracket, gameId.GameNum);
     }
 
     // getters
@@ -312,7 +313,7 @@ export class BracketGame implements IBracketGame
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.Bind
     ----------------------------------------------------------------------------*/
-    async Bind(ctx: any, appContext: IAppContext, cache: TrackingCache): Promise<IBracketGame>
+    async Bind(context: JsCtx, appContext: IAppContext, cache: TrackingCache): Promise<IBracketGame>
     {
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
@@ -322,15 +323,15 @@ export class BracketGame implements IBracketGame
             appContext.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
 
         AppContext.checkpoint("b.2");
-        const test: RangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.BottomTeamCellName);
+        const test: RangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cache, this.BottomTeamCellName);
 
         console.log("got here!");
 
-        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.BottomTeamCellName);
+        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, cache, this.BottomTeamCellName);
         AppContext.checkpoint("b.3");
-        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.TopTeamCellName);
+        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, cache, this.TopTeamCellName);
         AppContext.checkpoint("b.4");
-        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.GameNumberCellName);
+        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, cache, this.GameNumberCellName);
         AppContext.checkpoint("b.5");
 
         if (appContext != null)
@@ -362,19 +363,19 @@ export class BracketGame implements IBracketGame
                 AppContext.checkpoint("b.7");
                 const sheet: Excel.Worksheet =
                     await cache.getTrackedItem(
-                        ctx,
+                        context,
                         BracketSources.SheetName,
-                        async (ctx): Promise<any> =>
+                        async (context): Promise<any> =>
                         {
-                            const sheetGet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                            await ctx.sync();
+                            const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                            await context.sync();
                             return sheetGet;
                         });
 
 //                if (sheet == null)
 //                {
-//                    sheet = ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-//                    await ctx.sync();
+//                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+//                    await context.sync();
 //                }
 
                 AppContext.checkpoint("b.8");
@@ -385,12 +386,12 @@ export class BracketGame implements IBracketGame
 
                     const table: Excel.Table =
                         await cache.getTrackedItem(
-                            ctx,
+                            context,
                             tableName,
-                            async (ctx): Promise<any> =>
+                            async (context): Promise<any> =>
                             {
                                 const tableGet = sheet.tables.getItemOrNullObject(tableName);
-                                await ctx.sync();
+                                await context.sync();
                                 return tableGet;
                             }
                         );
@@ -399,13 +400,13 @@ export class BracketGame implements IBracketGame
                     {
                         const range: Excel.Range =
                             await cache.getTrackedItem(
-                                ctx,
+                                context,
                                 "tableBodyRange",
-                                async (ctx): Promise<any> =>
+                                async (context): Promise<any> =>
                                 {
                                     const rangeGet: Excel.Range = table.getDataBodyRange();
                                     rangeGet.load("values");
-                                    await ctx.sync();
+                                    await context.sync();
                                     return rangeGet;
                                 });
 
@@ -432,11 +433,11 @@ export class BracketGame implements IBracketGame
 
                 const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
 
-                const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
+                const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
                 const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
                 range.load("values");
 
-                await ctx.sync();
+                await context.sync();
 
                 const data: any[][] = range.values;
                 this.m_field = data[0][0];
@@ -454,19 +455,19 @@ export class BracketGame implements IBracketGame
         return this;
     }
 
-    async Load(ctx: any, appContext: IAppContext, cache: TrackingCache, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
+    async Load(context: JsCtx, appContext: IAppContext, cache: TrackingCache, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
     {
         this.LoadSync(bracketName, gameNum);
 
         // if we don't have a context, then we aren't async and we aren't going to fetch anything from the sheet
-        if (ctx == null)
+        if (context == null)
             return this;
 
         // ok, try to load the linkage. do this by finding the named ranges
         // for the parts of this game
 
         AppContext.checkpoint("l.4");
-        return await this.Bind(ctx, appContext, cache);
+        return await this.Bind(context, appContext, cache);
     }
 
     /*----------------------------------------------------------------------------

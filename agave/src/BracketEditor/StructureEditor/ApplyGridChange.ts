@@ -10,6 +10,7 @@ import { BracketSources } from "../../Brackets/BracketSources";
 import { OADate } from "../../Interop/Dates";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { TrackingCache } from "../../Interop/TrackingCache";
+import { JsCtx } from "../../Interop/JsCtx";
 
 export class ApplyGridChange
 {
@@ -18,30 +19,30 @@ export class ApplyGridChange
 
         Take two grids, diff them, and apply the changes
     ----------------------------------------------------------------------------*/
-    static async diffAndApplyChanges(appContext: IAppContext, ctx: any, grid: Grid, gridNew: Grid, bracketName: string): Promise<UndoGameDataItem[]>
+    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string): Promise<UndoGameDataItem[]>
     {
         // now, diff the grids
         const changes: GridChange[] = grid.diff(gridNew, bracketName);
 
         grid.logChanges(changes);
 
-        return await this.applyChanges(appContext, ctx, changes, bracketName);
+        return await this.applyChanges(appContext, context, changes, bracketName);
     }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.executeRemoveChange
     ----------------------------------------------------------------------------*/
-    static async executeRemoveChange(appContext: IAppContext1, ctx: any, change: GridChange, bracketName: string)
+    static async executeRemoveChange(appContext: IAppContext1, context: JsCtx, change: GridChange, bracketName: string)
     {
         if (change.IsLine)
         {
             AppContext.checkpoint("appc.3");
             // simple, just remove the line formatting
             GameFormatting.removeAllGameFormatting(
-                Ranges.rangeFromRangeInfo(ctx.workbook.worksheets.getActiveWorksheet(), change.Range));
+                Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), change.Range));
 
             AppContext.checkpoint("appc.4");
-            await ctx.sync();
+            await context.sync();
             AppContext.checkpoint("appc.5");
             return;
         }
@@ -50,10 +51,10 @@ export class ApplyGridChange
         // if its a game, then we have to completely remove it, including its
         // named ranges
         let cache: TrackingCache = new TrackingCache();
-        let game: IBracketGame = await BracketGame.CreateFromGameId(ctx, cache, bracketName, change.GameId);
-        cache.ReleaseAll(ctx);
+        let game: IBracketGame = await BracketGame.CreateFromGameId(context, cache, bracketName, change.GameId);
+        cache.ReleaseAll(context);
         cache = null;
-        await ctx.sync();
+        await context.sync();
 
         AppContext.checkpoint("appc.7");
         // if we couldn't create the game, or if its not linked to the bracket, then
@@ -61,13 +62,13 @@ export class ApplyGridChange
         if (game == null || !game.IsLinkedToBracket)
         {
             AppContext.checkpoint("appc.8");
-            await StructureRemove.removeGame(appContext, ctx, null, change.Range, false);
+            await StructureRemove.removeGame(appContext, context, null, change.Range, false);
             AppContext.checkpoint("appc.9");
         }
         else
         {
             AppContext.checkpoint("appc.10");
-            await StructureRemove.removeGame(appContext, ctx, game, change.Range, false);
+            await StructureRemove.removeGame(appContext, context, game, change.Range, false);
             AppContext.checkpoint("appc.11");
         }
     }
@@ -75,7 +76,7 @@ export class ApplyGridChange
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.executeAddChange
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext2, ctx: any, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
+    static async executeAddChange(appContext: IAppContext2, context: JsCtx, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
     {
         const cache: TrackingCache = new TrackingCache();
 
@@ -87,7 +88,7 @@ export class ApplyGridChange
             // just format the range as an underline
             GameFormatting.formatConnectingLineRangeRequest(
                 Ranges.rangeFromRangeInfo(
-                    ctx.workbook.worksheets.getActiveWorksheet(),
+                    context.Ctx.workbook.worksheets.getActiveWorksheet(),
                     change.Range));
 
             AppContext.checkpoint("appc.14.2");
@@ -97,7 +98,7 @@ export class ApplyGridChange
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("appc.15");
-        await game.Load(ctx, appContext, cache, bracketName, change.GameId.GameNum);
+        await game.Load(context, appContext, cache, bracketName, change.GameId.GameNum);
         AppContext.checkpoint("appc.16");
         if (game.IsLinkedToBracket)
             throw "game can't be linked - we should have already removed it from the bracket";
@@ -109,17 +110,17 @@ export class ApplyGridChange
         AppContext.checkpoint("appc.17");
 
         const undoGameDataItem: UndoGameDataItem =
-            await BracketSources.updateGameInfoIfNotSet(ctx, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+            await BracketSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
 
         if (game.IsChampionship)
-            await StructureInsert.insertChampionshipGameAtRange(appContext, ctx, game, change.Range);
+            await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range);
         else
-            await StructureInsert.insertGameAtRange(appContext, ctx, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
+            await StructureInsert.insertGameAtRange(appContext, context, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
 
         AppContext.checkpoint("appc.18");
 
-        cache.ReleaseAll(ctx);
-        await ctx.sync();
+        cache.ReleaseAll(context);
+        await context.sync();
 
         return undoGameDataItem;
     }
@@ -129,7 +130,7 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext3, ctx: any, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
+    static async applyChanges(appContext: IAppContext3, context: JsCtx, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
     {
         let undoGameDataItems: UndoGameDataItem[] = [];
 
@@ -142,7 +143,7 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Insert)
                 continue;
 
-            await this.executeRemoveChange(appContext, ctx, item, bracketName);
+            await this.executeRemoveChange(appContext, context, item, bracketName);
         }
 
         // and now do all the adds
@@ -155,7 +156,7 @@ export class ApplyGridChange
                 continue;
 
             let undoGameDataItem: UndoGameDataItem =
-                await this.executeAddChange(appContext, ctx, item, bracketName);
+                await this.executeAddChange(appContext, context, item, bracketName);
 
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);

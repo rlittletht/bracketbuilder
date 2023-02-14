@@ -16,6 +16,7 @@ import { GameNum } from "./GameNum";
 import { s_staticConfig } from "../StaticConfig";
 import { OADate } from "../Interop/Dates";
 import { TrackingCache } from "../Interop/TrackingCache";
+import { JsCtx } from "../Interop/JsCtx";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -588,12 +589,12 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.createGridFromBracket
     ----------------------------------------------------------------------------*/
-    static async createGridFromBracket(ctx: any, bracketName: string): Promise<Grid>
+    static async createGridFromBracket(context: JsCtx, bracketName: string): Promise<Grid>
     {
         let grid: Grid = new Grid();
 
         AppContext.checkpoint("cgfb.1");
-        await grid.loadGridFromBracket(ctx, bracketName);
+        await grid.loadGridFromBracket(context, bracketName);
         return grid;
     }
 
@@ -603,16 +604,16 @@ export class Grid
         This requires thet m_firstGridPattern is already loaded (we will use the
         first repeating column as the first column we need a date for)
     ----------------------------------------------------------------------------*/
-    async getGridColumnDateValues(ctx: any): Promise<Date[]>
+    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
     {
-        const sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
 
         const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
         const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
 
         rngColumns.load("values");
-        await ctx.sync();
+        await context.sync();
 
         // walk backwards up the column to find the first non-empty cell. This is the date row
         const colData: any[][] = rngColumns.values;
@@ -629,7 +630,7 @@ export class Grid
 
         if (rowDates == -1)
         {
-            ctx.trackedObjects.remove(sheet);
+            context.Ctx.trackedObjects.remove(sheet);
             throw new Error("couldn't find date for column");
         }
 
@@ -643,7 +644,7 @@ export class Grid
         areas.load("columnCount");
         areas.load("areas");
         rng.load("values");
-        await ctx.sync();
+        await context.sync();
 
         // build an array of merged area mappings
         const data: any[][] = rng.values;
@@ -693,7 +694,7 @@ export class Grid
         }
 
         // now 
-        ctx.trackedObjects.remove(sheet);
+        context.Ctx.trackedObjects.remove(sheet);
         return dates;
     }
 
@@ -715,18 +716,18 @@ export class Grid
             Title | Score | Line | Title | Score | Line
 
     ----------------------------------------------------------------------------*/
-    async getFirstGridPatternCell(ctx: any): Promise<RangeInfo>
+    async getFirstGridPatternCell(context: JsCtx): Promise<RangeInfo>
     {
         let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
-        let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
+        let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
 
         while (range.FirstRow < 20 && matchedPatterns < 3)
         {
-            if (await GameFormatting.isCellInLineRow(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (await GameFormatting.isCellInLineRow(context, Ranges.rangeFromRangeInfo(sheet, range)))
             {
                 firstMatchedRow = -1;
                 matchedPatterns = 0;
@@ -738,7 +739,7 @@ export class Grid
                 firstMatchedRow = range.FirstRow;
 
             range = range.offset(1, 1, 0, 1);
-            if (!await GameFormatting.isCellInLineRow(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!await GameFormatting.isCellInLineRow(context, Ranges.rangeFromRangeInfo(sheet, range)))
             {
                 firstMatchedRow = -1;
                 matchedPatterns = 0;
@@ -750,7 +751,7 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            ctx.trackedObjects.remove(sheet);
+            context.Ctx.trackedObjects.remove(sheet);
             return null;
         }
 
@@ -760,7 +761,7 @@ export class Grid
 
         while (range.FirstColumn < 25 && matchedPatterns < 3)
         {
-            if (!await GameFormatting.isCellInGameTitleColumn(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!await GameFormatting.isCellInGameTitleColumn(context, Ranges.rangeFromRangeInfo(sheet, range)))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -772,7 +773,7 @@ export class Grid
                 firstMatchedColumn = range.FirstColumn;
 
             range = range.offset(0, 1, 1, 1);
-            if (!await GameFormatting.isCellInGameScoreColumn(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!await GameFormatting.isCellInGameScoreColumn(context, Ranges.rangeFromRangeInfo(sheet, range)))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -781,7 +782,7 @@ export class Grid
             }
 
             range = range.offset(0, 1, 1, 1);
-            if (!await GameFormatting.isCellInLineColumn(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!await GameFormatting.isCellInLineColumn(context, Ranges.rangeFromRangeInfo(sheet, range)))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -792,7 +793,7 @@ export class Grid
             matchedPatterns++;
         }
 
-        ctx.trackedObjects.remove(sheet);
+        context.Ctx.trackedObjects.remove(sheet);
         if (matchedPatterns < 3)
             return null;
 
@@ -803,14 +804,14 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.loadGridFromBracket
     ----------------------------------------------------------------------------*/
-    async loadGridFromBracket(ctx: any, bracketName: string)
+    async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
         const cache: TrackingCache = new TrackingCache();
 
         AppContext.checkpoint("lgfb.1");
-        this.m_firstGridPattern = await this.getFirstGridPatternCell(ctx);
-        this.m_datesForGrid = await this.getGridColumnDateValues(ctx);
-        this.m_fieldsToUse = await StructureEditor.getFieldCount(ctx);
+        this.m_firstGridPattern = await this.getFirstGridPatternCell(context);
+        this.m_datesForGrid = await this.getGridColumnDateValues(context);
+        this.m_fieldsToUse = await StructureEditor.getFieldCount(context);
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
@@ -824,7 +825,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(ctx, null, cache, bracketName, new GameNum(i));
+            await game.Load(context, null, cache, bracketName, new GameNum(i));
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
@@ -838,7 +839,7 @@ export class Grid
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(ctx, cache, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, cache, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -869,8 +870,8 @@ export class Grid
         }
         this.logGrid();
 
-        cache.ReleaseAll(ctx);
-        await ctx.sync();
+        cache.ReleaseAll(context);
+        await context.sync();
 
     }
 

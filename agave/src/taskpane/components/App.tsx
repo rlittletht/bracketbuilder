@@ -34,6 +34,7 @@ import { OADate } from "../../Interop/Dates";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { ParserTests } from "../../Interop/Parser";
+import { JsCtx } from "../../Interop/JsCtx";
 
 /* global console, Excel, require  */
 
@@ -119,7 +120,7 @@ export default class App extends React.Component<AppProps, AppState>
             await Excel.run(
                 async (ctx) =>
                 {
-                    const grid: Grid = await Grid.createGridFromBracket(ctx, appContext.getSelectedBracket());
+                    const grid: Grid = await Grid.createGridFromBracket(new JsCtx(ctx), appContext.getSelectedBracket());
 
                     grid.logGridCondensed();
                 });
@@ -335,22 +336,22 @@ export default class App extends React.Component<AppProps, AppState>
         Invalidate the top level hero list (and maybe supporting parameters
         below in the UI)
     ----------------------------------------------------------------------------*/
-    async invalidateHeroList(ctx: any)
+    async invalidateHeroList(context: JsCtx)
     {
         AppContext.checkpoint("ihl.1");
-        let setupState: SetupState = await(this.getSetupState(ctx));
+        let setupState: SetupState = await(this.getSetupState(context));
         AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
         AppContext.checkpoint("ihl.3");
-        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(ctx);
+        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
         AppContext.checkpoint("ihl.4");
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
         AppContext.checkpoint("ihl.5");
-        let games: IBracketGame[] = await this.getGamesList(ctx, this.m_appContext, bracketChoice);
+        let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
         AppContext.checkpoint("ihl.6");
 
 
@@ -379,7 +380,7 @@ export default class App extends React.Component<AppProps, AppState>
             });
     }
 
-    async ensureBracketLoadedFromSheet(ctx: any, bracketTableName: string)
+    async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
     {
         if (!_bracketManager.IsCached(bracketTableName))
         {
@@ -393,7 +394,7 @@ export default class App extends React.Component<AppProps, AppState>
             };
 
             let gameDefs: any[] = await TableIO.readDataFromExcelTable(
-                ctx,
+                context,
                 bracketDef.tableName,
                 ["Game", "Winner", "Loser", "Top", "Bottom"],
                 true);
@@ -413,9 +414,9 @@ export default class App extends React.Component<AppProps, AppState>
     }
 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
-    async getGamesList(ctx: any, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
+    async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        await this.ensureBracketLoadedFromSheet(ctx, `${bracket}Bracket`);
+        await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
 
         if (bracketDef == null)
@@ -428,12 +429,12 @@ export default class App extends React.Component<AppProps, AppState>
         appContext.Timer.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
-            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, appContext, cache, bracket, new GameNum(i));
+            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, cache, bracket, new GameNum(i));
             games.push(temp);
         }
 
-        cache.ReleaseAll(ctx);
-        await ctx.sync();
+        cache.ReleaseAll(context);
+        context.sync();
         appContext.Timer.stopAllAggregatedTimers();
         appContext.Timer.popTimer();
 
@@ -445,15 +446,15 @@ export default class App extends React.Component<AppProps, AppState>
 
         Get the setup state of the workbook
     ----------------------------------------------------------------------------*/
-    async getSetupState(ctx: any): Promise<SetupState>
+    async getSetupState(context: JsCtx): Promise<SetupState>
     {
         AppContext.checkpoint("gss.1");
         let setupState: SetupState;
 
-        if (ctx != null)
-            setupState = await SetupBook.getWorkbookSetupState(ctx);
+        if (context != null)
+            setupState = await SetupBook.getWorkbookSetupState(context);
         else
-            setupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
+            setupState = await Excel.run(async (ctx) => SetupBook.getWorkbookSetupState(new JsCtx(ctx)));
         AppContext.checkpoint("gss.2");
 
         return setupState;
@@ -490,9 +491,9 @@ export default class App extends React.Component<AppProps, AppState>
 
         // now grab the games async and have it update
         Excel.run(
-            async (context) =>
+            async (ctx) =>
             {
-                await this.invalidateHeroList(context);
+                await this.invalidateHeroList(new JsCtx(ctx));
             });
     }
 
@@ -501,13 +502,15 @@ export default class App extends React.Component<AppProps, AppState>
         try
         {
             AppContext.checkpoint("testing");
-            await Excel.run(async (context) =>
+            await Excel.run(async (ctx) =>
             {
-                AppContext.checkpoint("state: " + await(SetupBook.getWorkbookSetupState(context)));
+                const context: JsCtx = new JsCtx(ctx);
+
+                AppContext.checkpoint("state: " + await(SetupBook.getWorkbookSetupState(new JsCtx(ctx))));
                 /**
                  * Insert your Excel code here
                  */
-                const range = context.workbook.getSelectedRange();
+                const range = context.Ctx.workbook.getSelectedRange();
 
                 // Read the range address
                 range.load("address");

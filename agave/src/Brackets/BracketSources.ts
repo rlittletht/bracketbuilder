@@ -9,6 +9,7 @@ import { GridBuilder } from "./GridBuilder";
 import { GameNum } from "../BracketEditor/GameNum";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { UndoGameDataItem } from "../BracketEditor/Undo";
+import { JsCtx } from "../Interop/JsCtx";
 
 export interface TeamNameMap
 {
@@ -20,14 +21,14 @@ export class BracketSources
 {
     static SheetName: string = "TeamsAndFields";
 
-    static async getTeamNameTable(ctx: any): Promise<Excel.Table>
+    static async getTeamNameTable(context: JsCtx): Promise<Excel.Table>
     {
-        return await Tables.getTableOrNull(ctx, null, "TeamNames");
+        return await Tables.getTableOrNull(context, null, "TeamNames");
     }
 
-    static async getGameInfoTable(ctx: any): Promise<Excel.Table>
+    static async getGameInfoTable(context: JsCtx): Promise<Excel.Table>
     {
-        return await Tables.getTableOrNull(ctx, null, "BracketSourceData");
+        return await Tables.getTableOrNull(context, null, "BracketSourceData");
     }
 
     /*----------------------------------------------------------------------------
@@ -36,18 +37,18 @@ export class BracketSources
         update the given game information in the bracketsourcedata table
     ----------------------------------------------------------------------------*/
     static async updateGameInfo(
-        ctx: any,
+        context: JsCtx,
         gameNum: GameNum,
         field: any,
         time: any,
         swapHomeAway: any)
     {
         // find the team names table
-        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
+        let table: Excel.Table = await BracketSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await ctx.sync();
+        await context.sync();
 
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
@@ -69,11 +70,11 @@ export class BracketSources
         }
 
         range.values = newValues;
-        await ctx.sync();
+        await context.sync();
     }
 
     static async updateGameInfoIfNotSet(
-        ctx: any,
+        context: JsCtx,
         gameNum: GameNum,
         field: any,
         time: any,
@@ -82,11 +83,11 @@ export class BracketSources
         let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(gameNum, undefined, undefined, undefined, undefined);
 
         // find the team names table
-        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
+        let table: Excel.Table = await BracketSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await ctx.sync();
+        await context.sync();
 
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
@@ -137,7 +138,7 @@ export class BracketSources
         }
 
         range.values = newValues;
-        await ctx.sync();
+        await context.sync();
         return undoGameDataItem;
     }
 
@@ -147,14 +148,14 @@ export class BracketSources
         Update the given team names in the bracket sources team names. Its an
         array of maps (and array of [][])
     ----------------------------------------------------------------------------*/
-    static async updateBracketSourcesTeamNames(ctx: any, teamNames: TeamNameMap[])
+    static async updateBracketSourcesTeamNames(context: JsCtx, teamNames: TeamNameMap[])
     {
         // find the team names table
-        let table: Excel.Table = await BracketSources.getTeamNameTable(ctx);
+        let table: Excel.Table = await BracketSources.getTeamNameTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await ctx.sync();
+        await context.sync();
 
         // now update the values
         for (let nameMap of teamNames)
@@ -182,7 +183,7 @@ export class BracketSources
 
         range.values = newValues; // this is what will get picked up
 
-        await ctx.sync();
+        await context.sync();
     }
 
     /*----------------------------------------------------------------------------
@@ -211,9 +212,9 @@ export class BracketSources
         most up-to-date info, even if it hasn't been pushed back to this bracket
         source sheet.
     ----------------------------------------------------------------------------*/
-    static async buildBracketSourcesSheet(ctx: any, fastTables: IFastTables, bracketDefinition: BracketDefinition)
+    static async buildBracketSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let formulasGameInfo: any[][] = [];
         const gameInfoHeader: any[] = ["GameNum", "Field", "Time", "SwapTopBottom"];
@@ -232,14 +233,14 @@ export class BracketSources
 
         let range: Excel.Range = sheet.getRangeByIndexes(0, 0, formulasGameInfo.length, 4);
         range.formulas = formulasGameInfo;
-        await ctx.sync();
+        await context.sync();
 
         range = sheet.getRangeByIndexes(0, 2, formulasGameInfo.length, 1);
         range.numberFormat = [["h:mm AM/PM"]];
-        await ctx.sync();
+        await context.sync();
 
         await Tables.ensureTableExists(
-            ctx,
+            context,
             sheet,
             fastTables,
             "BracketSourceData",
@@ -256,10 +257,10 @@ export class BracketSources
 
         range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 2);
         range.formulas = formulasTeamNames;
-        await ctx.sync();
+        await context.sync();
 
         await Tables.ensureTableExists(
-            ctx,
+            context,
             sheet,
             fastTables,
             "TeamNames",

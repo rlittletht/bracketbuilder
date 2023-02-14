@@ -1,5 +1,6 @@
 import { TrackingCache } from "./TrackingCache";
 import { Parser, Quoting, TrimType, ParseStringAccepts } from "./Parser";
+import { JsCtx } from "./JsCtx";
 
 export enum RangeOverlapKind
 {
@@ -311,12 +312,12 @@ export class RangeInfo
         moved, etc). We are robust to rebuild them when we insert games, so we 
         also have to be robustin getting ranges for them here
     ----------------------------------------------------------------------------*/
-    static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
+    static async getRangeInfoForNamedCell(context: JsCtx, name: string): Promise<RangeInfo>
     {
         try
         {
-            const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-            await ctx.sync();
+            const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+            await context.sync();
 
             if (nameObject.isNullObject)
                 return null;
@@ -327,7 +328,7 @@ export class RangeInfo
             range.load("columnIndex");
             range.load("columnCount");
 
-            await ctx.sync();
+            await context.sync();
 
             return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
         }
@@ -337,17 +338,17 @@ export class RangeInfo
         }
     }
 
-    static async getRangeInfoForNamedCellFaster(ctx: any, cache: TrackingCache, name: string): Promise<RangeInfo>
+    static async getRangeInfoForNamedCellFaster(context: JsCtx, cache: TrackingCache, name: string): Promise<RangeInfo>
     {
         const names: Excel.NamedItemCollection =
             await cache.getTrackedItem(
-                ctx,
+                context,
                 "workbookNames",
-                async (ctx): Promise<any> =>
+                async (context): Promise<any> =>
                 {
-                    ctx.workbook.load("names");
-                    await ctx.sync();
-                    return ctx.workbook.names;
+                    context.Ctx.workbook.load("names");
+                    await context.sync();
+                    return context.Ctx.workbook.names;
                 });
 
         let i: number = 0;
@@ -471,29 +472,29 @@ export class Ranges
     /*----------------------------------------------------------------------------
         %%Function: Ranges.ensureGlobalNameDeleted
     ----------------------------------------------------------------------------*/
-    static async ensureGlobalNameDeleted(ctx: any, name: string)
+    static async ensureGlobalNameDeleted(context: JsCtx, name: string)
     {
-        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-        await ctx.sync();
+        const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+        await context.sync();
 
         if (nameObject.isNullObject)
             return;
 
         nameObject.delete();
-        await ctx.sync();
+        await context.sync();
     }
 
 
     /*----------------------------------------------------------------------------
         %%Function: Ranges.createOrReplaceNamedRange
     ----------------------------------------------------------------------------*/
-    static async createOrReplaceNamedRange(ctx: any, name: string, rng: Excel.Range)
+    static async createOrReplaceNamedRange(context: JsCtx, name: string, rng: Excel.Range)
     {
-        ctx.trackedObjects.add(rng);
-        await Ranges.ensureGlobalNameDeleted(ctx, name);
-        ctx.workbook.names.add(name, rng);
-        await ctx.sync();
-        ctx.trackedObjects.remove(rng);
+        context.Ctx.trackedObjects.add(rng);
+        await Ranges.ensureGlobalNameDeleted(context, name);
+        context.Ctx.workbook.names.add(name, rng);
+        await context.sync();
+        context.Ctx.trackedObjects.remove(rng);
     }
 
 
@@ -501,7 +502,7 @@ export class Ranges
         %%Function: Ranges.createOrReplaceNamedRangeByIndex
     ----------------------------------------------------------------------------*/
     static async createOrReplaceNamedRangeByIndex(
-        ctx: any,
+        context: JsCtx,
         sheet: Excel.Worksheet,
         name: string,
         from: [number, number],
@@ -511,7 +512,7 @@ export class Ranges
         const cols: number = to ? to[1] - from[1] + 1 : 1;
 
         let rng: Excel.Range = sheet.getRangeByIndexes(from[0], from[1], rows, cols);
-        await this.createOrReplaceNamedRange(ctx, name, rng);
+        await this.createOrReplaceNamedRange(context, name, rng);
     }
 
     /*----------------------------------------------------------------------------
@@ -531,10 +532,10 @@ export class Ranges
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.getRangeInfoForNamedCell
     ----------------------------------------------------------------------------*/
-    static async getRangeForNamedCell(ctx: any, name: string): Promise<Excel.Range>
+    static async getRangeForNamedCell(context: JsCtx, name: string): Promise<Excel.Range>
     {
-        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-        await ctx.sync();
+        const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+        await context.sync();
 
         if (nameObject.isNullObject)
             return null;
@@ -547,11 +548,11 @@ export class Ranges
 
         Get the values array (any[][]) for the given named range
     ----------------------------------------------------------------------------*/
-    static async getValuesFromNamedCellRange(ctx: any, name: string): Promise<any[][]>
+    static async getValuesFromNamedCellRange(context: JsCtx, name: string): Promise<any[][]>
     {
-        const range: Excel.Range = await Ranges.getRangeForNamedCell(ctx, name);
+        const range: Excel.Range = await Ranges.getRangeForNamedCell(context, name);
         range.load("values");
-        await ctx.sync();
+        await context.sync();
 
         return range.values;
     }
@@ -559,15 +560,15 @@ export class Ranges
     /*----------------------------------------------------------------------------
         %%Function: Ranges.createRangeInfoForSelection
     ----------------------------------------------------------------------------*/
-    static async createRangeInfoForSelection(ctx: any): Promise<RangeInfo>
+    static async createRangeInfoForSelection(context: JsCtx): Promise<RangeInfo>
     {
-        const rng: Excel.Range = ctx.workbook.getSelectedRange();
+        const rng: Excel.Range = context.Ctx.workbook.getSelectedRange();
 
         rng.load("rowIndex");
         rng.load("rowCount");
         rng.load("columnIndex");
         rng.load("columnCount");
-        await ctx.sync();
+        await context.sync();
 
         return RangeInfo.createFromRange(rng);
     }

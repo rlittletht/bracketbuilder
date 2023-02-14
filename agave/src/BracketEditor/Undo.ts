@@ -4,6 +4,7 @@ import { IAppContext } from "../AppContext";
 import { ApplyGridChange } from "./StructureEditor/ApplyGridChange";
 import { GameNum } from "./GameNum";
 import { BracketSources } from "../Brackets/BracketSources";
+import { JsCtx } from "../Interop/JsCtx";
 
 export class UndoGameDataItem
 {
@@ -83,14 +84,14 @@ export class UndoManager
         this.m_redoStack = [];
     }
 
-    static async applyUndoGameDataItems(ctx: any, items: UndoGameDataItem[]): Promise<UndoGameDataItem[]>
+    static async applyUndoGameDataItems(context: JsCtx, items: UndoGameDataItem[]): Promise<UndoGameDataItem[]>
     {
         let undoneGameDataItems: UndoGameDataItem[] = [];
 
         for (let item of items)
         {
             let undoneGameDataItem: UndoGameDataItem =
-                await BracketSources.updateGameInfoIfNotSet(ctx, item.gameNum, item.fieldOriginal, item.startTimeOriginal, true);
+                await BracketSources.updateGameInfoIfNotSet(context, item.gameNum, item.fieldOriginal, item.startTimeOriginal, true);
 
             if (UndoManager.shouldPushGameDataItems(undoneGameDataItem))
                 undoneGameDataItems.push(undoneGameDataItem);
@@ -99,45 +100,45 @@ export class UndoManager
         return undoneGameDataItems;
     }
 
-    async undo(appContext: IAppContext, ctx: any)
+    async undo(appContext: IAppContext, context: JsCtx)
     {
         if (this.m_undoStack.length == 0)
             return;
 
-        let bracketName: string = await StructureEditor.getBracketName(ctx);
-        let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
+        let bracketName: string = await StructureEditor.getBracketName(context);
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         let undoItem: UndoItem = this.m_undoStack.pop();
 
         // this diff and apply shouldn't change any field/time data (since any changes
         // we are undoing would just be returning to defaults and by definition, we don't
         // change non-default values))
         let undoneGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, undoItem.grid, bracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, undoItem.grid, bracketName);
 
         if (undoneGameDataItems.length != 0)
             throw Error("apply undo changes should not result in UndoGameDataItems!");
 
-        undoneGameDataItems = await UndoManager.applyUndoGameDataItems(ctx, undoItem.gameData);
+        undoneGameDataItems = await UndoManager.applyUndoGameDataItems(context, undoItem.gameData);
 
         this.m_redoStack.push(this.createUndoItem(grid.clone(), undoneGameDataItems));
     }
 
-    async redo(appContext: IAppContext, ctx: any)
+    async redo(appContext: IAppContext, context: JsCtx)
     {
         if (this.m_redoStack.length == 0)
             return;
 
-        let bracketName: string = await StructureEditor.getBracketName(ctx);
-        let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
+        let bracketName: string = await StructureEditor.getBracketName(context);
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         let undoItem: UndoItem = this.m_redoStack.pop();
 
         let undoneGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, ctx, grid, undoItem.grid, bracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, undoItem.grid, bracketName);
 
         if (undoneGameDataItems.length != 0)
             throw Error("apply undo changes should not result in UndoGameDataItems!");
 
-        undoneGameDataItems = await UndoManager.applyUndoGameDataItems(ctx, undoItem.gameData);
+        undoneGameDataItems = await UndoManager.applyUndoGameDataItems(context, undoItem.gameData);
 
         this.m_undoStack.push(this.createUndoItem(grid.clone(), undoneGameDataItems));
     }
