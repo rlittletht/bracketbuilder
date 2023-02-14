@@ -138,9 +138,9 @@ export class BracketGame implements IBracketGame
     }
 
 
-    static async CreateFromGameId(ctx: any, bracket: string, gameId: GameId): Promise<IBracketGame>
+    static async CreateFromGameId(ctx: any, cache: TrackingCache, bracket: string, gameId: GameId): Promise<IBracketGame>
     {
-        return await this.CreateFromGameNumber(ctx, null, null, bracket, gameId.GameNum);
+        return await this.CreateFromGameNumber(ctx, null, cache, bracket, gameId.GameNum);
     }
 
     // getters
@@ -322,11 +322,15 @@ export class BracketGame implements IBracketGame
             appContext.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
 
         AppContext.checkpoint("b.2");
-        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
+        const test: RangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.BottomTeamCellName);
+
+        console.log("got here!");
+
+        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.BottomTeamCellName);
         AppContext.checkpoint("b.3");
-        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
+        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.TopTeamCellName);
         AppContext.checkpoint("b.4");
-        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
+        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCellFaster(ctx, cache, this.GameNumberCellName);
         AppContext.checkpoint("b.5");
 
         if (appContext != null)
@@ -357,8 +361,7 @@ export class BracketGame implements IBracketGame
 
                 AppContext.checkpoint("b.7");
                 const sheet: Excel.Worksheet =
-                    await TrackingCache.getTrackedItemFromCache(
-                        cache,
+                    await cache.getTrackedItem(
                         ctx,
                         BracketSources.SheetName,
                         async (ctx): Promise<any> =>
@@ -381,8 +384,7 @@ export class BracketGame implements IBracketGame
                     const tableName: string = "BracketSourceData";
 
                     const table: Excel.Table =
-                        await TrackingCache.getTrackedItemFromCache(
-                            cache,
+                        await cache.getTrackedItem(
                             ctx,
                             tableName,
                             async (ctx): Promise<any> =>
@@ -396,8 +398,7 @@ export class BracketGame implements IBracketGame
                     if (!table.isNullObject)
                     {
                         const range: Excel.Range =
-                            await TrackingCache.getTrackedItemFromCache(
-                                cache,
+                            await cache.getTrackedItem(
                                 ctx,
                                 "tableBodyRange",
                                 async (ctx): Promise<any> =>

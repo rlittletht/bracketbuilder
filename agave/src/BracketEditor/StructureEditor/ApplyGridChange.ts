@@ -9,6 +9,7 @@ import { StructureInsert } from "./StructureInsert";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { OADate } from "../../Interop/Dates";
 import { UndoGameDataItem, UndoManager } from "../Undo";
+import { TrackingCache } from "../../Interop/TrackingCache";
 
 export class ApplyGridChange
 {
@@ -48,7 +49,11 @@ export class ApplyGridChange
         AppContext.checkpoint("appc.6");
         // if its a game, then we have to completely remove it, including its
         // named ranges
-        let game: IBracketGame = await BracketGame.CreateFromGameId(ctx, bracketName, change.GameId);
+        let cache: TrackingCache = new TrackingCache();
+        let game: IBracketGame = await BracketGame.CreateFromGameId(ctx, cache, bracketName, change.GameId);
+        cache.ReleaseAll(ctx);
+        cache = null;
+        await ctx.sync();
 
         AppContext.checkpoint("appc.7");
         // if we couldn't create the game, or if its not linked to the bracket, then
@@ -72,6 +77,8 @@ export class ApplyGridChange
     ----------------------------------------------------------------------------*/
     static async executeAddChange(appContext: IAppContext2, ctx: any, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
     {
+        const cache: TrackingCache = new TrackingCache();
+
         AppContext.checkpoint("appc.14");
         if (change.IsLine)
         {
@@ -90,7 +97,7 @@ export class ApplyGridChange
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("appc.15");
-        await game.Load(ctx, appContext, null, bracketName, change.GameId.GameNum);
+        await game.Load(ctx, appContext, cache, bracketName, change.GameId.GameNum);
         AppContext.checkpoint("appc.16");
         if (game.IsLinkedToBracket)
             throw "game can't be linked - we should have already removed it from the bracket";
@@ -110,6 +117,9 @@ export class ApplyGridChange
             await StructureInsert.insertGameAtRange(appContext, ctx, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
 
         AppContext.checkpoint("appc.18");
+
+        cache.ReleaseAll(ctx);
+        await ctx.sync();
 
         return undoGameDataItem;
     }

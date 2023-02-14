@@ -8,6 +8,7 @@ import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
+import { TrackingCache } from "../../Interop/TrackingCache";
 
 export class StructureRemove
 {
@@ -261,6 +262,8 @@ export class StructureRemove
     ----------------------------------------------------------------------------*/
     static async findAndRemoveGame(appContext: IAppContext2, ctx: any, game: IBracketGame, bracketName: string)
     {
+        let cache: TrackingCache = new TrackingCache();
+
         // load the grid
         let grid: Grid = await Grid.createGridFromBracket(ctx, bracketName);
         const rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(ctx);
@@ -272,11 +275,14 @@ export class StructureRemove
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
             {
-                game = await BracketGame.CreateFromGameId(ctx, bracketName, item.GameId);
+                game = await BracketGame.CreateFromGameId(ctx, cache, bracketName, item.GameId);
             }
         }
 
-        await game.Bind(ctx, appContext, null);
+        await game.Bind(ctx, appContext, cache);
+        cache.ReleaseAll(ctx);
+        cache = null;
+        await ctx.sync();
 
         // if we can't bind to the game, and if the selection is a single cell, then
         // we can't do anything

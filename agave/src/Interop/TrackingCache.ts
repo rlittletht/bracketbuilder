@@ -11,7 +11,16 @@ export class TrackingCache
 
     AddTrackedItem(ctx: any, key: string, item: any)
     {
-        ctx.trackedObjects.add(item);
+        console.log(`adding tracked item key ${key}, type ${typeof (item)}`);
+        try
+        {
+            ctx.trackedObjects.add(item);
+        }
+        catch (e)
+        {
+            console.log(`caught ${e} trying to track ${key}`);
+            return; // don't record this as tracked...'
+        }
         this.m_trackedItems.set(key, item);
         this.m_order.push(key);
     }
@@ -21,7 +30,10 @@ export class TrackingCache
         while (this.m_order.length > 0)
         {
             const key: string = this.m_order.pop();
-            ctx.trackedObjects.remove(this.m_trackedItems.get(key));
+            const item: any = this.m_trackedItems.get(key);
+
+            console.log(`releasing tracked item key ${key}, type ${typeof (item)}`);
+            ctx.trackedObjects.remove(item);
         }
 
         this.m_trackedItems.clear();

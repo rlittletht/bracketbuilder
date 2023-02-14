@@ -1,4 +1,5 @@
 import { TrackingCache } from "./TrackingCache";
+import { Parser, Quoting, TrimType, ParseStringAccepts } from "./Parser";
 
 export enum RangeOverlapKind
 {
@@ -338,35 +339,52 @@ export class RangeInfo
 
     static async getRangeInfoForNamedCellFaster(ctx: any, cache: TrackingCache, name: string): Promise<RangeInfo>
     {
-        try
+        const names: Excel.NamedItemCollection =
+            await cache.getTrackedItem(
+                ctx,
+                "workbookNames",
+                async (ctx): Promise<any> =>
+                {
+                    ctx.workbook.load("names");
+                    await ctx.sync();
+                    return ctx.workbook.names;
+                });
+
+        let i: number = 0;
+
+        for (; i < names.items.length; i++)
         {
-            let names: Excel.NamedItemCollection = cache.getTrackedItemOrNull("workbookNames");
-
-            if (names == null)
-            {
-
-            }
-            const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-            await ctx.sync();
-
-            if (nameObject.isNullObject)
-                return null;
-
-            const range: Excel.Range = nameObject.getRange();
-            range.load("rowIndex");
-            range.load("rowCount");
-            range.load("columnIndex");
-            range.load("columnCount");
-
-            await ctx.sync();
-
-            return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
+            if (names.items[i].name == name)
+                break;
         }
-        catch (e)
+
+        if (i >= names.items.length)
+            return null;
+
+        const formula: string = names.items[i].formula;
+
+        if (formula == null || formula[0] != "=")
         {
+            console.log("bad formula in named reference");
             return null;
         }
+
+        let [sheetName, colRef1, fColAbsolute1, rowRef1, fRowAbsolute1, colRef2, fColAbsolute2, rowRef2, fRowAbsolute2, ichCurAfter] =
+            Parser.parseExcelFullAddress(TrimType.LeadingSpace, formula, 1, formula.length);
+
+        if (!colRef1 || !rowRef1)
+        {
+            console.log("bad formula in named reference");
+            return null;
+        }
+
+        return new RangeInfo(
+            rowRef1 - 1,
+            rowRef2 ? rowRef2 - rowRef1 : 1,
+            Ranges.getCoordFromColName_1Based(colRef1) - 1,
+            colRef2 ? Ranges.getCoordFromColName_1Based(colRef2) - Ranges.getCoordFromColName_1Based(colRef2) : 1);
     }
+
     get IsSingleCell() { return this.m_rowCount <= 1 && this.m_columnCount <= 1; }
 }
 
@@ -380,6 +398,22 @@ export class Ranges
         "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX",
         "BY", "BZ",
     ];
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.getCoordFromColName_1Based
+    ----------------------------------------------------------------------------*/
+    static getCoordFromColName_1Based(colRef: string)
+    {
+        colRef = colRef.toUpperCase();
+
+        for (let i = 0; i < Ranges.colsMap.length; i++)
+        {
+            if (Ranges.colsMap[i] == colRef)
+                return i + 1;
+        }
+
+        throw Error("out of bounds colName");
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Ranges.getColName_1Based
@@ -536,5 +570,33 @@ export class Ranges
         await ctx.sync();
 
         return RangeInfo.createFromRange(rng);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.createRangeInfoFromFormula
+
+        formula in this context refers to the object formula in excel.js
+        (to avoid having to load the range information from excel).
+
+        It looks like 
+            =Sheet1!$A$1
+        or 
+            ='sheet name'!$A$1
+    ----------------------------------------------------------------------------*/
+    static createRangeInfoFromFormula(formula: string): RangeInfo
+    {
+        let ichCur: number = 0;
+        let ichMax: number = formula.length;
+        let s: string;
+
+        ichCur = Parser.parseWhitespace(formula, ichCur, ichMax);
+        [s, ichCur] = Parser.parseGetChar(formula, ichCur, ichMax);
+
+        if (s !== "=")
+            return null;
+
+        [s, ichCur] = Parser.parseString(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, formula, ichCur, ichMax);
+        return null;
+
     }
 }

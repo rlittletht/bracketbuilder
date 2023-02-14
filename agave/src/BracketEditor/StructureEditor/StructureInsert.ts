@@ -8,6 +8,7 @@ import { StructureRemove } from "./StructureRemove";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { _undoManager, UndoGameDataItem } from "../Undo";
 import { StructureEditor } from "./StructureEditor";
+import { TrackingCache } from "../../Interop/TrackingCache";
 
 export class StructureInsert
 {
@@ -27,6 +28,8 @@ export class StructureInsert
 
     static async insertChampionshipGameAtRange(appContext: IAppContext, ctx: any, game: IBracketGame, insertRangeInfo: RangeInfo)
     {
+        const cache: TrackingCache = new TrackingCache();
+
         if (insertRangeInfo == null)
         {
             appContext.log("Selection is invalid for a game insert");
@@ -70,10 +73,14 @@ export class StructureInsert
         ctx.trackedObjects.remove(rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(ctx, appContext, null);
+        await game.Bind(ctx, appContext, cache);
         ctx.trackedObjects.remove(rngTarget);
         ctx.trackedObjects.remove(rng);
         ctx.trackedObjects.remove(sheet);
+
+        cache.ReleaseAll(ctx);
+        await ctx.sync();
+
     }
 
     /*----------------------------------------------------------------------------
@@ -166,6 +173,8 @@ export class StructureInsert
         connectedTop: boolean,
         connectedBottom: boolean)
     {
+        const cache: TrackingCache = new TrackingCache();
+
         // don't automatically remove games anymore in this function -- callers need to
         // take care of that now
 
@@ -251,10 +260,13 @@ export class StructureInsert
         await Ranges.createOrReplaceNamedRange(ctx, game.GameNumberCellName, rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(ctx, appContext, null);
+        await game.Bind(ctx, appContext, cache);
         ctx.trackedObjects.remove(rngTarget);
         ctx.trackedObjects.remove(rng);
         ctx.trackedObjects.remove(sheet);
+        cache.ReleaseAll(ctx);
+        await ctx.sync();
+
     }
 
     /*----------------------------------------------------------------------------
@@ -285,10 +297,16 @@ export class StructureInsert
     ----------------------------------------------------------------------------*/
     static async insertGameAtSelection(appContext: IAppContext2, ctx: any, game: IBracketGame)
     {
+        let cache: TrackingCache = new TrackingCache();
         game.Unbind();
 
         // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(ctx, appContext, null);
+        await game.Bind(ctx, appContext, cache);
+
+        cache.ReleaseAll(ctx);
+        cache = null;
+        console.log('after release all');
+        await ctx.sync();
 
         if (game.IsLinkedToBracket)
             await StructureRemove.findAndRemoveGame(appContext, ctx, game, game.BracketName);

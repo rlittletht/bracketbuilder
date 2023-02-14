@@ -102,7 +102,7 @@ export class AppContext implements IAppContext
 
     static checkpoint(log: string)
     {
-        log;
-        // console.log(log);
+//        log;
+        console.log(log);
     }
 }

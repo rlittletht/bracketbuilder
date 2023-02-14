@@ -1,10 +1,4 @@
-
-class AmPmDecoration
-{
-    static readonly None = 0;
-    static readonly AM = 1;
-    static readonly PM = 2;
-}
+import { AmPmDecoration, Parser, TrimType } from "./Parser";
 
 export class OADate
 {
@@ -48,47 +42,6 @@ export class OADate
         return minutes / (60 * 24);
     }
 
-    static parseNumber(s: string, ichCur: number, ichMax: number): [number, number]
-    {
-        while (ichCur < ichMax && s[ichCur] == ' ')
-            ichCur++;
-
-        if (ichCur == ichMax)
-            return [-1, -1];
-
-        const ichDigitStart: number = ichCur;
-
-        while (ichCur < ichMax && s[ichCur] >= '0' && s[ichCur] <= '9')
-            ichCur++;
-
-        if (ichCur == ichDigitStart)
-            return [0, ichCur];
-
-        const num: number = parseInt(s.substring(ichDigitStart, ichCur));
-        return [num, ichCur];
-    }
-
-    // return 0 for am or none, 1 for pm, 2 for nothing
-    static parseAmPm(s: string, ichCur: number, ichMax: number): AmPmDecoration
-    {
-        while (ichCur < ichMax && s[ichCur] == ' ')
-            ichCur++;
-
-        // check if enough room for AM or PM
-        if (ichCur + 1 >= ichMax)
-            return AmPmDecoration.None;
-
-        if (s[ichCur + 1] != 'm' && s[ichCur + 1] != 'M')
-            return AmPmDecoration.None;
-
-        if (s[ichCur] == 'p' || s[ichCur] == 'P')
-            return AmPmDecoration.PM;
-
-        if (s[ichCur] == 'a' || s[ichCur] == 'A')
-            return AmPmDecoration.AM;
-
-        return AmPmDecoration.None;
-    }
 
     static MinutesFromTimeString(timeString: string): number
     {
@@ -99,7 +52,7 @@ export class OADate
         let min: number = 0;
         let amPm: AmPmDecoration;
 
-        [hour, ichCur] = OADate.parseNumber(timeString, ichCur, ichMax);
+        [hour, ichCur] = Parser.parseNumber(TrimType.LeadingSpace, timeString, ichCur, ichMax);
         if (hour == -1)
             return -1;
 
@@ -108,11 +61,11 @@ export class OADate
 
         ichCur++;
 
-        [min, ichCur] = OADate.parseNumber(timeString, ichCur, ichMax);
+        [min, ichCur] = Parser.parseNumber(TrimType.LeadingSpace, timeString, ichCur, ichMax);
         if (min == -1)
             return -1;
 
-        amPm = OADate.parseAmPm(timeString, ichCur, ichMax);
+        amPm = Parser.parseAmPm(TrimType.LeadingSpace, timeString, ichCur, ichMax);
 
         // special case
         if (amPm != AmPmDecoration.None && hour == 12)

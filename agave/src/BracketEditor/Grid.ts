@@ -15,6 +15,7 @@ import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { s_staticConfig } from "../StaticConfig";
 import { OADate } from "../Interop/Dates";
+import { TrackingCache } from "../Interop/TrackingCache";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -804,6 +805,8 @@ export class Grid
     ----------------------------------------------------------------------------*/
     async loadGridFromBracket(ctx: any, bracketName: string)
     {
+        const cache: TrackingCache = new TrackingCache();
+
         AppContext.checkpoint("lgfb.1");
         this.m_firstGridPattern = await this.getFirstGridPatternCell(ctx);
         this.m_datesForGrid = await this.getGridColumnDateValues(ctx);
@@ -821,7 +824,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(ctx, null, null, bracketName, new GameNum(i));
+            await game.Load(ctx, null, cache, bracketName, new GameNum(i));
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
@@ -835,7 +838,7 @@ export class Grid
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(ctx, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(ctx, cache, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -865,6 +868,10 @@ export class Grid
             }
         }
         this.logGrid();
+
+        cache.ReleaseAll(ctx);
+        await ctx.sync();
+
     }
 
     getOutgoingConnectionForGameResult(gameId: GameId): RangeInfo

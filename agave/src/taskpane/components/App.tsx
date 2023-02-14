@@ -33,6 +33,7 @@ import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
 import { OADate } from "../../Interop/Dates";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { BracketSources } from "../../Brackets/BracketSources";
+import { ParserTests } from "../../Interop/Parser";
 
 /* global console, Excel, require  */
 
@@ -107,7 +108,11 @@ export default class App extends React.Component<AppProps, AppState>
 
         try
         {
+            ParserTests.testParseStringTests();
+            ParserTests.testParseExcelColumnRowReferenceTests();
+            ParserTests.testParseExcelAddressTests();
             OADate.TestFromOADateTests();
+
 
             // first, dump the grid for the current sheet. this is handy if you are building
             // unit tests since it gives you a way to generate a grid...
@@ -428,8 +433,10 @@ export default class App extends React.Component<AppProps, AppState>
         }
 
         cache.ReleaseAll(ctx);
+        await ctx.sync();
         appContext.Timer.stopAllAggregatedTimers();
         appContext.Timer.popTimer();
+
         return games;
     }
 
