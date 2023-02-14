@@ -97,7 +97,11 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            const bookmark: string = "insertGameAtSelection";
+            context.pushTrackingBookmark(bookmark);
             await StructureInsert.insertGameAtSelection(appContext, context, game);
+            context.releaseTrackedItemsUntil(bookmark);
+
             await appContext.invalidateHeroList(context);
         };
 
@@ -170,7 +174,11 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            const bookmark: string = "removeGameAtSelectionClick";
+            context.pushTrackingBookmark(bookmark);
             await StructureRemove.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
+            context.releaseTrackedItemsUntil(bookmark);
+
             await appContext.invalidateHeroList(context);
         };
 
@@ -187,7 +195,12 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            const bookmark: string = "removeGameAtSelectionClick";
+            context.pushTrackingBookmark(bookmark);
+
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
+            context.releaseTrackedItemsUntil(bookmark);
+
             await appContext.invalidateHeroList(context);
         };
 

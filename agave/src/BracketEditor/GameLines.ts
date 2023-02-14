@@ -27,7 +27,9 @@ export class GameLines
         let topSource: RangeInfo = null;
         let bottomSource: RangeInfo = null;
         let winnerTarget: RangeInfo = null;
-        const cache: TrackingCache = new TrackingCache();
+        const bookmark: string = "findMatchingGameConnections";
+
+        context.pushTrackingBookmark(bookmark);
 
         const top: string = game.BracketGameDefinition.topSource;
 
@@ -35,7 +37,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(context, null, cache, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
+            await gameSource.Load(context, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -44,7 +46,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(context, null, cache, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
+            await gameSource.Load(context, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -53,7 +55,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(context, null, cache, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
+            await gameSource.Load(context, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
             if (winner.substring(0) === "T")
             {
                 winnerTarget = new RangeInfo(gameSource.TopTeamRange.FirstRow + 1, 1, gameSource.TopTeamRange.FirstColumn - 1, 1);
@@ -64,7 +66,7 @@ export class GameLines
             }
         }
 
-        cache.ReleaseAll(context);
+        context.releaseTrackedItemsUntil(bookmark);
         await context.sync();
 
         return [topSource, bottomSource, winnerTarget];
@@ -76,13 +78,13 @@ export class GameLines
         Simiar tofindMatchingGameConnections, but this function finds the already
         existing lines feeding into and out of this game
     ----------------------------------------------------------------------------*/
-    static async getInAndOutLinesForGame(context: JsCtx, cache: TrackingCache, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]> {
+    static async getInAndOutLinesForGame(context: JsCtx, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]> {
         let feederTop: RangeInfo = null;
         let feederBottom: RangeInfo = null;
         let feederWinner: RangeInfo = null;
 
         AppContext.checkpoint("giaolfg.1");
-        await game.Bind(context, null, cache);
+        await game.Bind(context, null);
         AppContext.checkpoint("giaolfg.2");
         if (!game.IsLinkedToBracket)
         {

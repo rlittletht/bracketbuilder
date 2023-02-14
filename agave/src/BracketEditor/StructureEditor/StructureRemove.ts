@@ -263,7 +263,9 @@ export class StructureRemove
     ----------------------------------------------------------------------------*/
     static async findAndRemoveGame(appContext: IAppContext2, context: JsCtx, game: IBracketGame, bracketName: string)
     {
-        let cache: TrackingCache = new TrackingCache();
+        const bookmark: string = "insertGameAtSelection";
+
+        context.pushTrackingBookmark(bookmark);
 
         // load the grid
         let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
@@ -276,13 +278,12 @@ export class StructureRemove
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
             {
-                game = await BracketGame.CreateFromGameId(context, cache, bracketName, item.GameId);
+                game = await BracketGame.CreateFromGameId(context, bracketName, item.GameId);
             }
         }
 
-        await game.Bind(context, appContext, cache);
-        cache.ReleaseAll(context);
-        cache = null;
+        await game.Bind(context, appContext);
+        context.releaseTrackedItemsUntil(bookmark)
         await context.sync();
 
         // if we can't bind to the game, and if the selection is a single cell, then

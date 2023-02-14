@@ -35,6 +35,7 @@ import { TrackingCache } from "../../Interop/TrackingCache";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { ParserTests } from "../../Interop/Parser";
 import { JsCtx } from "../../Interop/JsCtx";
+import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
 
 /* global console, Excel, require  */
 
@@ -109,6 +110,7 @@ export default class App extends React.Component<AppProps, AppState>
 
         try
         {
+            FastRangeAreasTest.buildCellListForRangeInfoTests();
             ParserTests.testParseStringTests();
             ParserTests.testParseExcelColumnRowReferenceTests();
             ParserTests.testParseExcelAddressTests();
@@ -120,9 +122,11 @@ export default class App extends React.Component<AppProps, AppState>
             await Excel.run(
                 async (ctx) =>
                 {
-                    const grid: Grid = await Grid.createGridFromBracket(new JsCtx(ctx), appContext.getSelectedBracket());
+                    const context: JsCtx = new JsCtx(ctx);
+                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
 
                     grid.logGridCondensed();
+                    context.releaseAllTrackedItems();
                 });
 
 
@@ -424,17 +428,19 @@ export default class App extends React.Component<AppProps, AppState>
 
         let games: IBracketGame[] = [];
 
-        let cache: TrackingCache = new TrackingCache();
+        const bookmark: string = "getGamesList";
+
+        context.pushTrackingBookmark(bookmark);
 
         appContext.Timer.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
-            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, cache, bracket, new GameNum(i));
+            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, bracket, new GameNum(i));
             games.push(temp);
         }
 
-        cache.ReleaseAll(context);
-        context.sync();
+        context.releaseTrackedItemsUntil(bookmark);
+        await context.sync();
         appContext.Timer.stopAllAggregatedTimers();
         appContext.Timer.popTimer();
 
@@ -454,7 +460,13 @@ export default class App extends React.Component<AppProps, AppState>
         if (context != null)
             setupState = await SetupBook.getWorkbookSetupState(context);
         else
-            setupState = await Excel.run(async (ctx) => SetupBook.getWorkbookSetupState(new JsCtx(ctx)));
+            await Excel.run(async (ctx) =>
+            {
+                const context: JsCtx = new JsCtx(ctx);
+
+                setupState = await SetupBook.getWorkbookSetupState(context)
+                context.releaseAllTrackedItems();
+            });
         AppContext.checkpoint("gss.2");
 
         return setupState;
@@ -493,7 +505,10 @@ export default class App extends React.Component<AppProps, AppState>
         Excel.run(
             async (ctx) =>
             {
-                await this.invalidateHeroList(new JsCtx(ctx));
+                const context: JsCtx = new JsCtx(ctx);
+
+                await this.invalidateHeroList(context);
+                context.releaseAllTrackedItems();
             });
     }
 
@@ -506,7 +521,7 @@ export default class App extends React.Component<AppProps, AppState>
             {
                 const context: JsCtx = new JsCtx(ctx);
 
-                AppContext.checkpoint("state: " + await(SetupBook.getWorkbookSetupState(new JsCtx(ctx))));
+                AppContext.checkpoint("state: " + await SetupBook.getWorkbookSetupState(context));
                 /**
                  * Insert your Excel code here
                  */
@@ -526,6 +541,7 @@ export default class App extends React.Component<AppProps, AppState>
 
                 await context.sync();
                 AppContext.checkpoint(`The range address was ${range.address}.`);
+                context.releaseAllTrackedItems();
             });
         }
         catch (error)

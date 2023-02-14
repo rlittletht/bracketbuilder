@@ -45,6 +45,7 @@ export class Tables
             }
 
             rgFormulasPreserve = await this.GetFormulasToSave(context, table, rgColsToPreserve);
+            context.releaseAllTrackedItems();
         });
 
         await fastTables.appendTableFast(sTable, dataToInsert);
@@ -55,6 +56,7 @@ export class Tables
             let table: Excel.Table = context.Ctx.workbook.tables.getItem(sTable);
 
             await this.RestoreFormulas(context, table, rgColsToPreserve, rgFormulasPreserve);
+            context.releaseAllTrackedItems();
         });
     }
 

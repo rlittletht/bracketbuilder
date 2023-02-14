@@ -27,13 +27,17 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
     async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
+        appContext.Timer.pushTimer("DoInsertGame");
         await StructureEditor.insertGameAtSelectionClick(appContext, bracketGame);
+        appContext.Timer.popTimer();
         return true; // we don't get an error back...
     }
 
     async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
+        appContext.Timer.pushTimer("DoRemoveGame");
         await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
+        appContext.Timer.popTimer();
         return true; // we don't get an error back...
     }
 

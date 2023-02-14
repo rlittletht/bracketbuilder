@@ -338,31 +338,30 @@ export class RangeInfo
         }
     }
 
-    static async getRangeInfoForNamedCellFaster(context: JsCtx, cache: TrackingCache, name: string): Promise<RangeInfo>
+    static async getRangeInfoForNamedCellFaster(context: JsCtx, name: string): Promise<RangeInfo>
     {
-        const names: Excel.NamedItemCollection =
-            await cache.getTrackedItem(
-                context,
-                "workbookNames",
+        const items: Excel.NamedItem[] =
+            await context.getTrackedItem(
+                "workbookNamesItems",
                 async (context): Promise<any> =>
                 {
                     context.Ctx.workbook.load("names");
                     await context.sync();
-                    return context.Ctx.workbook.names;
+                    return context.Ctx.workbook.names.items;
                 });
 
         let i: number = 0;
 
-        for (; i < names.items.length; i++)
+        for (; i < items.length; i++)
         {
-            if (names.items[i].name == name)
+            if (items[i].name == name)
                 break;
         }
 
-        if (i >= names.items.length)
+        if (i >= items.length)
             return null;
 
-        const formula: string = names.items[i].formula;
+        const formula: string = items[i].formula;
 
         if (formula == null || formula[0] != "=")
         {

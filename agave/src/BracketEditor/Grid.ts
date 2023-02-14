@@ -17,6 +17,7 @@ import { s_staticConfig } from "../StaticConfig";
 import { OADate } from "../Interop/Dates";
 import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
+import { PerfTimer } from "../PerfTimer";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -806,12 +807,18 @@ export class Grid
     ----------------------------------------------------------------------------*/
     async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
-        const cache: TrackingCache = new TrackingCache();
+        const timer: PerfTimer = new PerfTimer();
 
         AppContext.checkpoint("lgfb.1");
+        timer.pushTimer("getFirstGridPatternCell");
         this.m_firstGridPattern = await this.getFirstGridPatternCell(context);
+        timer.popTimer();
+        timer.pushTimer("getGridColumnDateValues");
         this.m_datesForGrid = await this.getGridColumnDateValues(context);
+        timer.popTimer();
+        timer.pushTimer("getFieldCount");
         this.m_fieldsToUse = await StructureEditor.getFieldCount(context);
+        timer.popTimer();
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
@@ -825,7 +832,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(context, null, cache, bracketName, new GameNum(i));
+            await game.Load(context, null, bracketName, new GameNum(i));
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
@@ -839,7 +846,7 @@ export class Grid
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, cache, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -869,10 +876,6 @@ export class Grid
             }
         }
         this.logGrid();
-
-        cache.ReleaseAll(context);
-        await context.sync();
-
     }
 
     getOutgoingConnectionForGameResult(gameId: GameId): RangeInfo

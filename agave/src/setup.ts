@@ -188,6 +188,7 @@ export class SetupBook
 
                 await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
                 await appContext.invalidateHeroList(context);
+                context.releaseAllTrackedItems();
             });
         }
         catch (error)
@@ -216,6 +217,7 @@ export class SetupBook
 
                 await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
                 await appContext.invalidateHeroList(context);
+                context.releaseAllTrackedItems();
             });
         }
         catch (error)

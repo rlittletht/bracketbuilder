@@ -29,7 +29,9 @@ export class StructureInsert
 
     static async insertChampionshipGameAtRange(appContext: IAppContext, context: JsCtx, game: IBracketGame, insertRangeInfo: RangeInfo)
     {
-        const cache: TrackingCache = new TrackingCache();
+        const bookmark: string = "insertChampionshipGameAtRange";
+
+        context.pushTrackingBookmark(bookmark);
 
         if (insertRangeInfo == null)
         {
@@ -74,12 +76,12 @@ export class StructureInsert
         context.Ctx.trackedObjects.remove(rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(context, appContext, cache);
+        await game.Bind(context, appContext);
         context.Ctx.trackedObjects.remove(rngTarget);
         context.Ctx.trackedObjects.remove(rng);
         context.Ctx.trackedObjects.remove(sheet);
 
-        cache.ReleaseAll(context);
+        context.releaseTrackedItemsUntil(bookmark);
         await context.sync();
 
     }
@@ -174,8 +176,9 @@ export class StructureInsert
         connectedTop: boolean,
         connectedBottom: boolean)
     {
-        const cache: TrackingCache = new TrackingCache();
+        const bookmark: string = "insertGameAtRange";
 
+        context.pushTrackingBookmark(bookmark);
         // don't automatically remove games anymore in this function -- callers need to
         // take care of that now
 
@@ -261,11 +264,11 @@ export class StructureInsert
         await Ranges.createOrReplaceNamedRange(context, game.GameNumberCellName, rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(context, appContext, cache);
+        await game.Bind(context, appContext);
         context.Ctx.trackedObjects.remove(rngTarget);
         context.Ctx.trackedObjects.remove(rng);
         context.Ctx.trackedObjects.remove(sheet);
-        cache.ReleaseAll(context);
+        context.releaseTrackedItemsUntil(bookmark);
         await context.sync();
 
     }
@@ -298,22 +301,25 @@ export class StructureInsert
     ----------------------------------------------------------------------------*/
     static async insertGameAtSelection(appContext: IAppContext2, context: JsCtx, game: IBracketGame)
     {
-        let cache: TrackingCache = new TrackingCache();
+        const bookmark: string = "insertGameAtSelection";
+
         game.Unbind();
 
         // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(context, appContext, cache);
-
-        cache.ReleaseAll(context);
-        cache = null;
-        console.log('after release all');
-        await context.sync();
+        await game.Bind(context, appContext);
 
         if (game.IsLinkedToBracket)
+        {
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
+            // need to release any of our cached items since we just edited the book
+            context.releaseTrackedItemsUntil(bookmark);
+            context.pushTrackingBookmark(bookmark);
+        }
 
+        appContext.Timer.pushTimer("insertGameAtSelection:gridBuildFromBracket");
         // first make sure we have a complete grid for the bracket
         let grid: Grid = await StructureEditor.gridBuildFromBracket(context);
+        appContext.Timer.popTimer();
 
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);

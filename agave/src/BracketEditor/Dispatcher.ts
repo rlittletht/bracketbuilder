@@ -58,10 +58,17 @@ export class Dispatcher
             async () =>
             {
                 await Excel.run(
-                    async (ctx) => this.DispatchWithCatch(
-                        delegate,
-                        appContext,
-                        new JsCtx(ctx)));
+                    async (ctx) =>
+                    {
+                        const context: JsCtx = new JsCtx(ctx);
+
+                        await this.DispatchWithCatch(
+                            delegate,
+                            appContext,
+                            context);
+
+                        context.releaseAllTrackedItems();
+                    })
             });
     }
 
