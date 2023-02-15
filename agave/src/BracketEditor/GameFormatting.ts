@@ -1,4 +1,6 @@
 import { JsCtx } from "../Interop/JsCtx";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { RangeInfo } from "../Interop/Ranges";
 
 export class GameFormatting
 {
@@ -112,6 +114,13 @@ export class GameFormatting
         return range.height <= 1;
     }
 
+    static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return format.rowHeight <= 1;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineColumn
     ----------------------------------------------------------------------------*/
@@ -121,6 +130,13 @@ export class GameFormatting
         await context.sync();
 
         return range.width < 5;
+    }
+
+    static isCellInLineColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return format.columnWidth < 5;
     }
 
     /*----------------------------------------------------------------------------
@@ -134,6 +150,13 @@ export class GameFormatting
         return range.width > 20;
     }
 
+    static isCellInGameTitleColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return format.columnWidth > 20;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInGameScoreColumn
     ----------------------------------------------------------------------------*/
@@ -143,6 +166,13 @@ export class GameFormatting
         await context.sync();
 
         return range.width <= 20;
+    }
+
+    static isCellInGameScoreColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return format.columnWidth <= 20 && format.columnWidth >= 5;
     }
 
     /*----------------------------------------------------------------------------

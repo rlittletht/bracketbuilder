@@ -45,7 +45,10 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            context.pushTrackingBookmark('undo');
             await _undoManager.undo(appContext, context);
+            context.releaseTrackedItemsUntil('undo');
+
             await appContext.invalidateHeroList(context);
         };
 
@@ -78,7 +81,10 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            context.pushTrackingBookmark('redo');
             await _undoManager.redo(appContext, context);
+            context.releaseTrackedItemsUntil('redo');
+
             await appContext.invalidateHeroList(context);
         };
 
@@ -117,7 +123,11 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            const bookmark: string = "repairGameAtSelectionClick";
+            context.pushTrackingBookmark(bookmark);
             await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
+            context.releaseTrackedItemsUntil(bookmark);
+
             await appContext.invalidateHeroList(context);
         };
 

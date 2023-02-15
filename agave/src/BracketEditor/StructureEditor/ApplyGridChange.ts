@@ -151,6 +151,8 @@ export class ApplyGridChange
             await this.executeRemoveChange(appContext, context, item, bracketName);
         }
 
+        // must invalidate all of our caches
+        context.releaseAllTrackedItems();
         // and now do all the adds
 
         AppContext.checkpoint("appc.12");

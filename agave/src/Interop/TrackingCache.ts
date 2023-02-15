@@ -12,7 +12,10 @@ export class TrackingCache
 
     pushBookmark(bookmark: string)
     {
-        this.m_order.push(`__bkmk:${bookmark}`);
+        const bkmk: string = `__bkmk:${bookmark}`;
+
+        this.m_order.push(bkmk);
+        console.log(`push bookmark: ${bkmk}`);
     }
 
     addTrackedItem(context: JsCtx, key: string, item: any)
@@ -45,7 +48,10 @@ export class TrackingCache
             const key: string = this.m_order.pop();
 
             if (bookmark != null && bookmark == key)
+            {
+                console.log(`released until: ${bookmark}`);
                 return;
+            }
 
             if (key.startsWith("__bkmk"))
             {

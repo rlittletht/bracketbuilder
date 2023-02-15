@@ -8,6 +8,30 @@ export class FastRangeAreas
 
     get RangeAreas(): Excel.RangeAreas { return this.m_rangeAreas; }
 
+    getFormatForRangeInfo(range: RangeInfo): Excel.RangeFormat
+    {
+        if (range.ColumnCount != 1 || range.RowCount != 1)
+            throw Error('range areas only works with single cells');
+
+        if (range.FirstColumn < this.m_rangeInfo.FirstColumn || range.FirstColumn > this.m_rangeInfo.LastColumn)
+            throw Error('column out of range');
+
+        if (range.FirstRow < this.m_rangeInfo.FirstRow || range.LastRow > this.m_rangeInfo.LastRow)
+            throw Error('row out of range');
+
+        // figure out the offset into the items...
+        const colOffset: number = range.FirstColumn - this.m_rangeInfo.FirstColumn;
+        const rowOffset: number = range.FirstRow - this.m_rangeInfo.FirstRow;
+
+        const idx: number = colOffset * this.m_rangeInfo.RowCount + rowOffset;
+
+        const addrExpected: string = Ranges.getColName(range.FirstColumn) + (range.FirstRow + 1)
+        if (!this.m_rangeAreas.areas.items[idx].address.endsWith(addrExpected))
+            throw Error(`addresses don't match`);
+
+        return this.m_rangeAreas.areas.items[idx].format;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: RangeInfo.getRangeAreasGridForRangeInfo
 
@@ -24,7 +48,7 @@ export class FastRangeAreas
             {
                 const addr: string = this.buildCellListForRangeInfo(range);
                 const rangeAreas: Excel.RangeAreas = sheet.getRanges(addr);
-                rangeAreas.load('format, areaCount, areas, areas.items, areas.items.format');
+                rangeAreas.load('format, areaCount, areas, areas.items, areas.items.format, address, areas.items.address');
                 await context.sync();
                 return rangeAreas;
         })

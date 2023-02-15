@@ -18,6 +18,7 @@ import { OADate } from "../Interop/Dates";
 import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { PerfTimer } from "../PerfTimer";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -719,16 +720,23 @@ export class Grid
     ----------------------------------------------------------------------------*/
     async getFirstGridPatternCell(context: JsCtx): Promise<RangeInfo>
     {
-        let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
+        const fastRangeAreas: FastRangeAreas =
+            await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                context,
+                "getGridPattern",
+                sheet,
+                new RangeInfo(8, 20, 0, 25));
+
+        let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
+        // context.Ctx.trackedObjects.add(sheet);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
 
         while (range.FirstRow < 20 && matchedPatterns < 3)
         {
-            if (await GameFormatting.isCellInLineRow(context, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (GameFormatting.isCellInLineRowFaster(fastRangeAreas, range))
             {
                 firstMatchedRow = -1;
                 matchedPatterns = 0;
@@ -740,7 +748,7 @@ export class Grid
                 firstMatchedRow = range.FirstRow;
 
             range = range.offset(1, 1, 0, 1);
-            if (!await GameFormatting.isCellInLineRow(context, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInLineRowFaster(fastRangeAreas, range))
             {
                 firstMatchedRow = -1;
                 matchedPatterns = 0;
@@ -753,6 +761,7 @@ export class Grid
         if (matchedPatterns < 3)
         {
             context.Ctx.trackedObjects.remove(sheet);
+            console.log('returning null for gridPattern');
             return null;
         }
 
@@ -760,9 +769,9 @@ export class Grid
         let firstMatchedColumn = -1;
         range = new RangeInfo(firstMatchedRow, 1, 6, 1);
 
-        while (range.FirstColumn < 25 && matchedPatterns < 3)
+        while (range.FirstColumn + 3 < 25 && matchedPatterns < 3)
         {
-            if (!await GameFormatting.isCellInGameTitleColumn(context, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInGameTitleColumnFaster(fastRangeAreas, range))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -774,16 +783,17 @@ export class Grid
                 firstMatchedColumn = range.FirstColumn;
 
             range = range.offset(0, 1, 1, 1);
-            if (!await GameFormatting.isCellInGameScoreColumn(context, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInGameScoreColumnFaster(fastRangeAreas, range))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
-                range = range.offset(0, 1, 1, 1);
+                // don't advance -- we want to consider the current column
+                // as a title column
                 continue;
             }
 
             range = range.offset(0, 1, 1, 1);
-            if (!await GameFormatting.isCellInLineColumn(context, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInLineColumnFaster(fastRangeAreas, range))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -794,11 +804,17 @@ export class Grid
             matchedPatterns++;
         }
 
-        context.Ctx.trackedObjects.remove(sheet);
+//        context.Ctx.trackedObjects.remove(sheet);
         if (matchedPatterns < 3)
+        {
+            console.log('returning null for gridPattern');
             return null;
+        }
 
-        return new RangeInfo(firstMatchedRow, 1, firstMatchedColumn, 1);
+        const rangeReturn: RangeInfo = new RangeInfo(firstMatchedRow, 1, firstMatchedColumn, 1);
+        console.log(`returning ${rangeReturn.toString()} for gridPattern`);
+
+        return rangeReturn;
     }
 
 
@@ -812,6 +828,9 @@ export class Grid
         AppContext.checkpoint("lgfb.1");
         timer.pushTimer("getFirstGridPatternCell");
         this.m_firstGridPattern = await this.getFirstGridPatternCell(context);
+        if (this.m_firstGridPattern == null)
+            throw Error("could not load grid pattern");
+
         timer.popTimer();
         timer.pushTimer("getGridColumnDateValues");
         this.m_datesForGrid = await this.getGridColumnDateValues(context);
@@ -2169,6 +2188,9 @@ export class Grid
         do
         {
             gameInsert = gridNew.gridGameFromConstraints(game, requested);
+            if (!gameInsert.Range)
+                break;
+
             fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert, [requested]);
         } while (fAdjusted);
 
