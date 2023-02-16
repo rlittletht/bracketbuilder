@@ -16,6 +16,7 @@ import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
 import { JsCtx } from "../../Interop/JsCtx";
+import { PerfTimer } from "../../PerfTimer";
 
 let _moveSelection: RangeInfo = null;
 
@@ -103,12 +104,18 @@ export class StructureEditor
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            const timer: PerfTimer = new PerfTimer();
+
+            timer.pushTimer("insertGameAtSelectionClick PART 1");
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
             await StructureInsert.insertGameAtSelection(appContext, context, game);
             context.releaseTrackedItemsUntil(bookmark);
+            timer.popTimer();
 
+            timer.pushTimer("insertGameAtSelectionClick PART 2");
             await appContext.invalidateHeroList(context);
+            timer.popTimer();
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

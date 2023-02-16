@@ -136,13 +136,13 @@ export class SetupBook
         get the current state of the workbook (does it have bracket definitions,
         a chosen bracket, etc)
     ----------------------------------------------------------------------------*/
-    static async getWorkbookSetupState(context: JsCtx): Promise<SetupState>
+    static async getWorkbookSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
         // any bracket workbook has to have a BracketStructure sheet
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(context);
 
         if (bracketStructureSheet ==  null)
-            return SetupState.NoBracketStructure;
+            return [SetupState.NoBracketStructure, null]
 
         const bracketChoice: string = await this.getBracketChoiceOrNull(context);
 
@@ -151,12 +151,12 @@ export class SetupBook
             const bracketTable: Excel.Table = await this.getBracketTableOrNull(context, bracketStructureSheet, bracketChoice);
 
             if (bracketTable.isNullObject)
-                return SetupState.NoBracketData;
+                return [SetupState.NoBracketData, bracketChoice];
 
             if (await this.getBracketsDataSheetOrNull(context) == null)
-                return SetupState.NoBracketData;
+                return [SetupState.NoBracketData, bracketChoice];
 
-            return SetupState.Ready;
+            return [SetupState.Ready, bracketChoice];
         }
 
 /* We don't support prepopulating brackets into the workbook and choosing from them -- it was too confusing of a paradigm
@@ -172,7 +172,7 @@ export class SetupBook
         if (brackets.length > 0)
             return SetupState.NoBracketChoice;
 */
-        return SetupState.NoBracketStructure;
+        return [SetupState.NoBracketStructure, bracketChoice];
     }
 
     /*----------------------------------------------------------------------------

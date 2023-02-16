@@ -718,18 +718,9 @@ export class Grid
             Title | Score | Line | Title | Score | Line
 
     ----------------------------------------------------------------------------*/
-    async getFirstGridPatternCell(context: JsCtx): Promise<RangeInfo>
+    getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
     {
-        let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        const fastRangeAreas: FastRangeAreas =
-            await FastRangeAreas.getRangeAreasGridForRangeInfo(
-                context,
-                "getGridPattern",
-                sheet,
-                new RangeInfo(8, 20, 0, 25));
-
         let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
-        // context.Ctx.trackedObjects.add(sheet);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
@@ -760,7 +751,6 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            context.Ctx.trackedObjects.remove(sheet);
             console.log('returning null for gridPattern');
             return null;
         }
@@ -804,7 +794,6 @@ export class Grid
             matchedPatterns++;
         }
 
-//        context.Ctx.trackedObjects.remove(sheet);
         if (matchedPatterns < 3)
         {
             console.log('returning null for gridPattern');
@@ -825,9 +814,20 @@ export class Grid
     {
         const timer: PerfTimer = new PerfTimer();
 
+        timer.pushTimer("buld fastRangeAreas");
+        let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        const fastRangeAreas: FastRangeAreas =
+            await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                context,
+                "bigGridCache",
+                sheet,
+                new RangeInfo(8, 150, 0, 50));
+
+        timer.popTimer();
+
         AppContext.checkpoint("lgfb.1");
         timer.pushTimer("getFirstGridPatternCell");
-        this.m_firstGridPattern = await this.getFirstGridPatternCell(context);
+        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreas);
         if (this.m_firstGridPattern == null)
             throw Error("could not load grid pattern");
 
@@ -843,6 +843,7 @@ export class Grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("lgfb.2");
+        timer.pushTimer("loadGridFromBracket::loop");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
             let game: BracketGame = new BracketGame()
@@ -865,7 +866,7 @@ export class Grid
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -893,7 +894,9 @@ export class Grid
                         this.addLineRange(feederWinner);
                 }
             }
+            timer.stopAllAggregatedTimers();
         }
+        timer.popTimer();
         this.logGrid();
     }
 

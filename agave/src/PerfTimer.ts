@@ -25,7 +25,7 @@ export class PerfTimer
         PerfTimer.startTimer(timer);
         this.m_perfTimerStack.push(timer);
 
-        console.log(`Timer Start: ${message}`);
+        console.log(`++++ START: Timer Start: ${message}`);
     }
 
     static startTimer(timer: PerfTimerItem)
@@ -109,7 +109,7 @@ export class PerfTimer
         }
         else
         {
-            console.log(`Timer ${item.timerName}: ${item.msecCumulative}`);
+            console.log(`----- STOP: Timer ${item.timerName}: ${item.msecCumulative}`);
         }
     }
 

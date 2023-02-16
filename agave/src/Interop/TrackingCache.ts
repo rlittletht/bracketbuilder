@@ -131,7 +131,14 @@ export class TrackingCache
     getTrackedItemOrNull(key: string): any
     {
         if (this.m_trackedItems.has(key))
-            return this.m_trackedItems.get(key).Objects[0];
+        {
+            const item: CacheItem = this.m_trackedItems.get(key);
+
+            if (item == null)
+                return null;
+
+            return item.Objects[0];
+        }
 
         return null;
     }
@@ -139,8 +146,15 @@ export class TrackingCache
     getTrackedItemsOrNull(key: string): any[]
     {
         if (this.m_trackedItems.has(key))
-            return this.m_trackedItems.get(key).Objects;
+        {
+            const item:CacheItem = this.m_trackedItems.get(key);
 
+            if (item == null)
+                return null;
+
+            return item.Objects;
+        }
+            
         return null;
     }
 

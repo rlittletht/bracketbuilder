@@ -102,41 +102,55 @@ export class GameFormatting
         range.format.verticalAlignment = Excel.VerticalAlignment.top;
     }
 
+    static isRangeFormatInLineRow(format: Excel.RangeFormat): boolean
+    {
+        return format.rowHeight <= 1;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineRow
     ----------------------------------------------------------------------------*/
     static async isCellInLineRow(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("height");
-        range.load("address");
+        range.load("format");
         await context.sync();
 
-        return range.height <= 1;
+        return this.isRangeFormatInLineRow(range.format);
     }
 
     static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean
     {
         const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
 
-        return format.rowHeight <= 1;
+        return this.isRangeFormatInLineRow(format);
     }
 
+    static isRangeFormatInLineColumn(format: Excel.RangeFormat): boolean
+    {
+        return format.columnWidth < 5;
+
+    }
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineColumn
     ----------------------------------------------------------------------------*/
     static async isCellInLineColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("width");
+        range.load("format");
         await context.sync();
 
-        return range.width < 5;
+        return this.isRangeFormatInLineColumn(range.format);
     }
 
     static isCellInLineColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
     {
         const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
 
-        return format.columnWidth < 5;
+        return this.isRangeFormatInLineColumn(format);
+    }
+
+    static isRangeFormatInGameTitleColumn(format: Excel.RangeFormat): boolean
+    {
+        return format.columnWidth > 20;
     }
 
     /*----------------------------------------------------------------------------
@@ -144,17 +158,22 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static async isCellInGameTitleColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("width");
+        range.load("format");
         await context.sync();
 
-        return range.width > 20;
+        return this.isRangeFormatInGameTitleColumn(range.format);
     }
 
     static isCellInGameTitleColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
     {
         const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
 
-        return format.columnWidth > 20;
+        return this.isRangeFormatInGameTitleColumn(format);
+    }
+
+    static isRangeFormatInGameScoreColumn(format: Excel.RangeFormat): boolean
+    {
+        return format.columnWidth <= 20 && format.columnWidth >= 5;
     }
 
     /*----------------------------------------------------------------------------
@@ -162,17 +181,17 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static async isCellInGameScoreColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("width");
+        range.load("format");
         await context.sync();
 
-        return range.width <= 20;
+        return this.isRangeFormatInGameScoreColumn(range.format);
     }
 
     static isCellInGameScoreColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
     {
         const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
 
-        return format.columnWidth <= 20 && format.columnWidth >= 5;
+        return this.isRangeFormatInGameScoreColumn(format);
     }
 
     /*----------------------------------------------------------------------------

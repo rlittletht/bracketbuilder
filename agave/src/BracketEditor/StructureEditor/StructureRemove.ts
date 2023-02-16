@@ -41,10 +41,10 @@ export class StructureRemove
             // now go looking for connecting lines
             let feederLine: RangeInfo;
 
-            feederLine = await GameLines.getFeedingLineRangeInfo(context, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
+            feederLine = await GameLines.getFeedingLineRangeInfoNoCache(context, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
             GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
 
-            feederLine = await GameLines.getFeedingLineRangeInfo(context, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
+            feederLine = await GameLines.getFeedingLineRangeInfoNoCache(context, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
             GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
         }
 
@@ -84,7 +84,7 @@ export class StructureRemove
 
                 if (await GameFormatting.isCellInLineColumn(context, rangeLine))
                 {
-                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRange(
+                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRangeNoCache(
                         context,
                         sheet,
                         new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));

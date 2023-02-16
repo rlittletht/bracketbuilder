@@ -343,13 +343,16 @@ export default class App extends React.Component<AppProps, AppState>
     async invalidateHeroList(context: JsCtx)
     {
         AppContext.checkpoint("ihl.1");
-        let setupState: SetupState = await(this.getSetupState(context));
+        let setupState: SetupState;
+        let bracketChoice: string;
+
+        [setupState, bracketChoice] = await (this.getSetupState(context));
         AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
         AppContext.checkpoint("ihl.3");
-        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
+//        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
         AppContext.checkpoint("ihl.4");
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
@@ -450,26 +453,28 @@ export default class App extends React.Component<AppProps, AppState>
     /*----------------------------------------------------------------------------
         %%Function: App.getSetupState
 
-        Get the setup state of the workbook
+        Get the setup state of the workbook and opportunistically return the
+        bracket choice as well
     ----------------------------------------------------------------------------*/
-    async getSetupState(context: JsCtx): Promise<SetupState>
+    async getSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
         AppContext.checkpoint("gss.1");
         let setupState: SetupState;
+        let bracketChoice: string;
 
         if (context != null)
-            setupState = await SetupBook.getWorkbookSetupState(context);
+            [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context);
         else
             await Excel.run(async (ctx) =>
             {
                 const context: JsCtx = new JsCtx(ctx);
 
-                setupState = await SetupBook.getWorkbookSetupState(context)
+                [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context)
                 context.releaseAllTrackedItems();
             });
         AppContext.checkpoint("gss.2");
 
-        return setupState;
+        return [setupState, bracketChoice];
     }
 
     /*----------------------------------------------------------------------------
@@ -484,7 +489,10 @@ export default class App extends React.Component<AppProps, AppState>
 
     async componentDidMount()
     {
-        let setupState: SetupState = await (this.getSetupState(null));
+        let setupState: SetupState;
+        let bracketChoice: string;
+
+        [setupState, bracketChoice] = await (this.getSetupState(null));
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;

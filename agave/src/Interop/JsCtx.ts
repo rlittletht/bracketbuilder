@@ -1,4 +1,4 @@
-import { TrackingCache, PopulateCacheDelegate } from "./TrackingCache";
+import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate } from "./TrackingCache";
 
 export class JsCtx
 {
@@ -29,6 +29,11 @@ export class JsCtx
         this.m_cache.addTrackedItem(this, key, item);
     }
 
+    addTrackedItems(key: string, items: any[])
+    {
+        this.m_cache.addTrackedItems(this, key, items);
+    }
+
     releaseTrackedItemsUntil(bookmark: string)
     {
         this.m_cache.releaseUntil(this, bookmark);
@@ -44,9 +49,19 @@ export class JsCtx
         return await this.m_cache.getTrackedItem(this, key, del);
     }
 
+    async getTrackedItems(key: string, del: PopulateCacheWithArrayDelegate): Promise<any[]>
+    {
+        return await this.m_cache.getTrackedItems(this, key, del);
+    }
+
     getTrackedItemOrNull(key: string): any
     {
         return this.m_cache.getTrackedItemOrNull(key);
+    }
+
+    getTrackedItemsOrNull(key: string): any[]
+    {
+        return this.m_cache.getTrackedItemsOrNull(key);
     }
 }
 
