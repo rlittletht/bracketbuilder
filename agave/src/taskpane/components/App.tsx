@@ -514,10 +514,17 @@ export default class App extends React.Component<AppProps, AppState>
             async (ctx) =>
             {
                 this.m_appContext.setProgressVisible(true);
-                const context: JsCtx = new JsCtx(ctx);
+                try
+                {
+                    const context: JsCtx = new JsCtx(ctx);
 
-                await this.invalidateHeroList(context);
-                context.releaseAllTrackedItems();
+                    await this.invalidateHeroList(context);
+                    context.releaseAllTrackedItems();
+                }
+                catch (e)
+                {
+
+                }
                 this.m_appContext.setProgressVisible(false);
             });
     }
