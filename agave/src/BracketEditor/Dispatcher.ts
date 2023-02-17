@@ -33,12 +33,15 @@ export class Dispatcher
     {
         try
         {
+            appContext.setProgressVisible(true);
             await delegate(context);
         }
         catch (error)
         {
             appContext.log(`Caught: ${error}`);
         }
+
+        appContext.setProgressVisible(false);
     }
 
     /*----------------------------------------------------------------------------

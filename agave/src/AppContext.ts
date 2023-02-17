@@ -11,6 +11,7 @@ export interface IAppContext
     /*async*/ invalidateHeroList(context: JsCtx);
     getSelectedBracket();
     getGames();
+    setProgressVisible(visible: boolean);
 }
 
 export interface AddLogMessageDelegate
@@ -33,15 +34,27 @@ export interface GetGamesDelegate
     (): IBracketGame[];
 }
 
+export interface ProgressVisibilityDelegate
+{
+    (visible: boolean): void;
+}
+
 export class AppContext implements IAppContext
 {
     m_addLogMessageDelegate: AddLogMessageDelegate;
+    m_progressVisibilityDelegate: ProgressVisibilityDelegate;
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
     m_getSelectedBracket: GetSelectedBracketDelegate;
     m_getGames: GetGamesDelegate;
     m_perfTimer: PerfTimer = new PerfTimer();
 
     get Timer(): PerfTimer { return this.m_perfTimer; }
+
+    setProgressVisible(visible: boolean)
+    {
+        if (this.m_progressVisibilityDelegate != null)
+            this.m_progressVisibilityDelegate(visible);
+    }
 
     log(message: string, msecVisible: number = 0)
     {
@@ -99,6 +112,11 @@ export class AppContext implements IAppContext
     setLogMessageDelegate(addMessageDelegate: AddLogMessageDelegate)
     {
         this.m_addLogMessageDelegate = addMessageDelegate;
+    }
+
+    setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)
+    {
+        this.m_progressVisibilityDelegate = progressVisibilityDelegate;
     }
 
     static checkpoint(log: string)

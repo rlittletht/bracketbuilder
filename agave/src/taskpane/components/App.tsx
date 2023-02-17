@@ -513,10 +513,12 @@ export default class App extends React.Component<AppProps, AppState>
         Excel.run(
             async (ctx) =>
             {
+                this.m_appContext.setProgressVisible(true);
                 const context: JsCtx = new JsCtx(ctx);
 
                 await this.invalidateHeroList(context);
                 context.releaseAllTrackedItems();
+                this.m_appContext.setProgressVisible(false);
             });
     }
 
@@ -581,7 +583,9 @@ export default class App extends React.Component<AppProps, AppState>
                 <Progress
                     title={title}
                     logo={require("./../../../assets/TW-Logo.png")}
-                    message="Please sideload your addin to see app body."/>
+                    message="Please sideload your addin to see app body."
+                    appContext={this.m_appContext}
+                    initialVisibility={true}/>
             );
         }
 
@@ -640,6 +644,13 @@ export default class App extends React.Component<AppProps, AppState>
                         <LogoHeader/>
                         <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
                     </Stack.Item>
+                    <Progress
+                        title=""
+                        logo={null}
+                        message="Working on it..."
+                        initialVisibility={false}
+                        appContext={this.m_appContext}
+                    />
                     <Stack.Item styles={bodyHeaderItemStyle}>
                         <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
                             {insertBracketChooserMaybe()}
