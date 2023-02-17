@@ -1,12 +1,16 @@
 
 import { BracketDefinition, GameDefinition, s_brackets, BracketManager } from "../Brackets/BracketDefinitions";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { RangeInfo } from "../Interop/Ranges";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { Grid } from "./Grid";
-import { AppContext } from "../AppContext";
+import { AppContext, IAppContext } from "../AppContext";
 import { BracketSources } from "../Brackets/BracketSources";
 import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
+import { OADate } from "../Interop/Dates";
+import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
+import { TrackingCache } from "../Interop/TrackingCache";
+import { JsCtx } from "../Interop/JsCtx";
 
 export interface IBracketGame
 {
@@ -39,9 +43,11 @@ export interface IBracketGame
 
     FormatTime(): string;
     FormatLoser(): string;
-    Bind(ctx: any): Promise<IBracketGame>;
+    Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>;
     Unbind();
     SetSwapTopBottom(swapped: boolean);
+    SetStartTime(time: number);
+    SetField(field: string);
 
     get Field(): string;
 
@@ -66,12 +72,22 @@ export class BracketGame implements IBracketGame
     m_gameNum: GameNum;
     m_teamNameTop: string = null;
     m_teamNameBottom: string = null;
-    m_startTime: number = 18 * 60; // 6pm
-    m_field: string = "Field #1";
+    m_startTime: number = GlobalDataBuilder.DefaultStartTime;
+    m_field: string = GlobalDataBuilder.DefaultField;
     m_topTeamLocation: RangeInfo;
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
     m_isIfNecessaryGame: boolean;
+
+    SetStartTime(time: number)
+    {
+        this.m_startTime = time;
+    }
+
+    SetField(field: string)
+    {
+        this.m_field = field;
+    }
 
     get IsIfNecessaryGame(): boolean
     {
@@ -113,19 +129,19 @@ export class BracketGame implements IBracketGame
         return game.LoadSync(bracket, gameNumber);
     }
 
-    static async CreateFromGameNumber(ctx: any, bracket: string, gameNumber: GameNum): Promise<IBracketGame>
+    static async CreateFromGameNumber(context: JsCtx, appContext: IAppContext, bracket: string, gameNumber: GameNum): Promise<IBracketGame>
     {
         AppContext.checkpoint("cfg.1");
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("cfg.2");
-        return await game.Load(ctx, bracket, gameNumber);
+        return await game.Load(context, appContext, bracket, gameNumber);
     }
 
 
-    static async CreateFromGameId(ctx: any, bracket: string, gameId: GameId): Promise<IBracketGame>
+    static async CreateFromGameId(context: JsCtx, bracket: string, gameId: GameId): Promise<IBracketGame>
     {
-        return await this.CreateFromGameNumber(ctx, bracket, gameId.GameNum);
+        return await this.CreateFromGameNumber(context, null, bracket, gameId.GameNum);
     }
 
     // getters
@@ -297,19 +313,29 @@ export class BracketGame implements IBracketGame
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.Bind
     ----------------------------------------------------------------------------*/
-    async Bind(ctx: any): Promise<IBracketGame>
+    async Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
     {
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
             return this;
 
+        if (appContext != null)
+            appContext.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
+
         AppContext.checkpoint("b.2");
-        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.BottomTeamCellName);
+        const test: RangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.BottomTeamCellName);
+
+        console.log("got here!");
+
+        this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.BottomTeamCellName);
         AppContext.checkpoint("b.3");
-        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.TopTeamCellName);
+        this.m_topTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.TopTeamCellName);
         AppContext.checkpoint("b.4");
-        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCell(ctx, this.GameNumberCellName);
+        this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.GameNumberCellName);
         AppContext.checkpoint("b.5");
+
+        if (appContext != null)
+            appContext.Timer.pauseAggregatedTimer("namedInner");
 
         if (!this.IsChampionship)
         {
@@ -331,25 +357,55 @@ export class BracketGame implements IBracketGame
                 // we didn't bind to a game in the bracket. get the swap state from the source data
                 // table
 
+                if (appContext != null)
+                    appContext.Timer.startAggregatedTimer("innerBind", "inner bind");
+
                 AppContext.checkpoint("b.7");
-                const sheet: Excel.Worksheet = ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                await ctx.sync();
+                const sheet: Excel.Worksheet =
+                    await context.getTrackedItem(
+                        BracketSources.SheetName,
+                        async (context): Promise<any> =>
+                        {
+                            const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                            await context.sync();
+                            return sheetGet;
+                        });
+
+//                if (sheet == null)
+//                {
+//                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+//                    await context.sync();
+//                }
+
                 AppContext.checkpoint("b.8");
 
                 if (!sheet.isNullObject)
                 {
-                    const table: Excel.Table = sheet.tables.getItemOrNullObject("BracketSourceData");
-                    AppContext.checkpoint("b.9");
-                    await ctx.sync();
-                    AppContext.checkpoint("b.10");
+                    const tableName: string = "BracketSourceData";
+
+                    const table: Excel.Table =
+                        await context.getTrackedItem(
+                            tableName,
+                            async (context): Promise<any> =>
+                            {
+                                const tableGet = sheet.tables.getItemOrNullObject(tableName);
+                                await context.sync();
+                                return tableGet;
+                            }
+                        );
 
                     if (!table.isNullObject)
                     {
-                        const range: Excel.Range = table.getDataBodyRange();
-                        range.load("values");
-                        AppContext.checkpoint("b.11");
-                        await ctx.sync();
-                        AppContext.checkpoint("b.12");
+                        const range: Excel.Range =
+                            await context.getTrackedItem(
+                                "tableBodyRange",
+                                async (context): Promise<any> =>
+                                {
+                                    const rangeGet: Excel.Range = table.getDataBodyRange();
+                                    rangeGet.load("values");
+                                    await context.sync();
+                                    return rangeGet;
+                                });
 
                         const data: any[][] = range.values;
 
@@ -363,26 +419,52 @@ export class BracketGame implements IBracketGame
                         }
                     }
                 }
+                if (appContext != null)
+                    appContext.Timer.pauseAggregatedTimer("innerBind");
             }
+
+            if (this.m_gameNumberLocation != null)
+            {
+                if (appContext != null)
+                    appContext.Timer.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
+
+                const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
+
+                const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+                const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
+                range.load("values");
+
+                await context.sync();
+
+                const data: any[][] = range.values;
+                this.m_field = data[0][0];
+                const time: string = data[2][0];
+                const mins = OADate.MinutesFromTimeString(time);
+                this.m_startTime = mins;
+
+                if (appContext != null)
+                    appContext.Timer.pauseAggregatedTimer("innerGameNum");
+            }
+
         }
 
         AppContext.checkpoint("b.13");
         return this;
     }
 
-    async Load(ctx: any, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
+    async Load(context: JsCtx, appContext: IAppContext, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
     {
         this.LoadSync(bracketName, gameNum);
 
         // if we don't have a context, then we aren't async and we aren't going to fetch anything from the sheet
-        if (ctx == null)
+        if (context == null)
             return this;
 
         // ok, try to load the linkage. do this by finding the named ranges
         // for the parts of this game
 
         AppContext.checkpoint("l.4");
-        return await this.Bind(ctx);
+        return await this.Bind(context, appContext);
     }
 
     /*----------------------------------------------------------------------------

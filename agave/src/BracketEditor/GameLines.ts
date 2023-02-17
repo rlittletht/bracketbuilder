@@ -3,6 +3,9 @@ import { GameFormatting } from "./GameFormatting";
 import { IBracketGame, IBracketGame as IBracketGame1, BracketGame } from "./BracketGame";
 import { AppContext } from "../AppContext";
 import { BracketManager } from "../Brackets/BracketDefinitions";
+import { TrackingCache } from "../Interop/TrackingCache";
+import { JsCtx } from "../Interop/JsCtx";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
 
 export class GameLines
 {
@@ -20,11 +23,14 @@ export class GameLines
         included in the connection line (or it might be the underline portion of
         the next game)
     ----------------------------------------------------------------------------*/
-    static async findMatchingGameConnections(ctx: any, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    static async findMatchingGameConnections(context: JsCtx, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]>
     {
         let topSource: RangeInfo = null;
         let bottomSource: RangeInfo = null;
         let winnerTarget: RangeInfo = null;
+        const bookmark: string = "findMatchingGameConnections";
+
+        context.pushTrackingBookmark(bookmark);
 
         const top: string = game.BracketGameDefinition.topSource;
 
@@ -32,7 +38,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
+            await gameSource.Load(context, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(top).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -41,7 +47,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
+            await gameSource.Load(context, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(bottom).GameNum);
             topSource = new RangeInfo(gameSource.GameIdRange.FirstRow + 1, 1, gameSource.GameIdRange.FirstColumn + 2, 1);
         }
 
@@ -50,7 +56,7 @@ export class GameLines
         {
             let gameSource: BracketGame = new BracketGame();
 
-            await gameSource.Load(ctx, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
+            await gameSource.Load(context, null, game.BracketName, BracketManager.GameIdFromWinnerLoser(winner).GameNum);
             if (winner.substring(0) === "T")
             {
                 winnerTarget = new RangeInfo(gameSource.TopTeamRange.FirstRow + 1, 1, gameSource.TopTeamRange.FirstColumn - 1, 1);
@@ -61,22 +67,28 @@ export class GameLines
             }
         }
 
+        context.releaseTrackedItemsUntil(bookmark);
+        await context.sync();
+
         return [topSource, bottomSource, winnerTarget];
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameLines.getInAndOutLinesForGame
+        %%Function: GameLines.getInAndOutLinesForGameNoCache
 
         Simiar tofindMatchingGameConnections, but this function finds the already
         existing lines feeding into and out of this game
+
+        This is the uncached version (not used by anyone currently)
     ----------------------------------------------------------------------------*/
-    static async getInAndOutLinesForGame(ctx: any, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]> {
+    static async getInAndOutLinesForGameNoCache(context: JsCtx, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    {
         let feederTop: RangeInfo = null;
         let feederBottom: RangeInfo = null;
         let feederWinner: RangeInfo = null;
 
         AppContext.checkpoint("giaolfg.1");
-        await game.Bind(ctx);
+        await game.Bind(context, null);
         AppContext.checkpoint("giaolfg.2");
         if (!game.IsLinkedToBracket)
         {
@@ -85,32 +97,88 @@ export class GameLines
         }
 
         AppContext.checkpoint("giaolfg.4");
-        let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
+        let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
         let feederLine: RangeInfo;
 
         AppContext.checkpoint("giaolfg.5");
-        feederTop = await this.getFeedingLineRangeInfo(ctx, sheet, game.TopTeamRange.offset(1, 1, 0, 1), true);
+        feederTop = await GameLines.getFeedingLineRangeInfoNoCache(context, sheet, game.TopTeamRange.offset(1, 1, 0, 1), true);
         AppContext.checkpoint("giaolfg.6");
 
         if (!game.IsChampionship)
         {
-            feederBottom = await this.getFeedingLineRangeInfo(ctx, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
+            feederBottom = await GameLines.getFeedingLineRangeInfoNoCache(context, sheet, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
             AppContext.checkpoint("giaolfg.7");
-            feederWinner = await this.getOutgoingLineRange(ctx, sheet, game.GameIdRange.offset(1, 1, 1, 1));
+            feederWinner = await GameLines.getOutgoingLineRangeNoCache(context, sheet, game.GameIdRange.offset(1, 1, 1, 1));
             AppContext.checkpoint("giaolfg.8");
         }
 
-        ctx.trackedObjects.remove(sheet);
+        context.Ctx.trackedObjects.remove(sheet);
         AppContext.checkpoint("giaolfg.10");
         return [feederTop, feederBottom, feederWinner];
     }
 
-    static async isCellEmpty(ctx: any, sheet: Excel.Worksheet, rangeCheck: RangeInfo): Promise<boolean>
+    /*----------------------------------------------------------------------------
+        %%Function: GameLines.getInAndOutLinesForGame
+
+        Simiar tofindMatchingGameConnections, but this function finds the already
+        existing lines feeding into and out of this game
+    ----------------------------------------------------------------------------*/
+    static async getInAndOutLinesForGame(context: JsCtx, fastRangeAreas: FastRangeAreas, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    {
+        let feederTop: RangeInfo = null;
+        let feederBottom: RangeInfo = null;
+        let feederWinner: RangeInfo = null;
+
+        AppContext.checkpoint("giaolfg.1");
+        await game.Bind(context, null);
+        AppContext.checkpoint("giaolfg.2");
+        if (!game.IsLinkedToBracket)
+        {
+            AppContext.checkpoint("giaolfg.3");
+            return [feederTop, feederBottom, feederWinner];
+        }
+
+        AppContext.checkpoint("giaolfg.4");
+        let feederLine: RangeInfo;
+
+        AppContext.checkpoint("giaolfg.5");
+        feederTop = GameLines.getFeedingLineRangeInfo(fastRangeAreas, game.TopTeamRange.offset(1, 1, 0, 1), true);
+        AppContext.checkpoint("giaolfg.6");
+
+        if (!game.IsChampionship)
+        {
+            feederBottom = GameLines.getFeedingLineRangeInfo(fastRangeAreas, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
+            AppContext.checkpoint("giaolfg.7");
+            feederWinner = GameLines.getOutgoingLineRange(fastRangeAreas, game.GameIdRange.offset(1, 1, 1, 1));
+            AppContext.checkpoint("giaolfg.8");
+        }
+
+        AppContext.checkpoint("giaolfg.10");
+        return [feederTop, feederBottom, feederWinner];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameLines.isCellEmptyNoCache
+    ----------------------------------------------------------------------------*/
+    static async isCellEmptyNoCache(context: JsCtx, sheet: Excel.Worksheet, rangeCheck: RangeInfo): Promise<boolean>
     {
         let range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeCheck);
         range.load("values");
-        await ctx.sync();
+        await context.sync();
+
+        if (range.values[0][0] != "")
+            return false;
+
+        return true;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameLines.isCellEmpty
+    ----------------------------------------------------------------------------*/
+    static isCellEmpty(fastRangeAreas: FastRangeAreas, rangeCheck: RangeInfo): boolean
+    {
+        let range: Excel.Range = fastRangeAreas.getRangeForRangeInfo(rangeCheck);
 
         if (range.values[0][0] != "")
             return false;
@@ -120,15 +188,12 @@ export class GameLines
 
 
     /*----------------------------------------------------------------------------
-        %%Function: GameLines.getFeedingLineRangeInfo
+        %%Function: GameLines.getFeedingLineRangeInfoNoCache
 
-        Given a range for the line on a game (under the top team or over the
-        bottom team), return a range for any feeding line
-
-        return null if there is no feeder line
+        version that doesn't use the cache
     ----------------------------------------------------------------------------*/
-    static async getFeedingLineRangeInfo(
-        ctx: any,
+    static async getFeedingLineRangeInfoNoCache(
+        context: JsCtx,
         sheet: Excel.Worksheet,
         rangeGameLine: RangeInfo,
         topTeam: boolean): Promise<RangeInfo>
@@ -139,25 +204,25 @@ export class GameLines
         while (curColumn > 0)
         {
             let range: Excel.Range = sheet.getRangeByIndexes(rangeGameLine.FirstRow, curColumn, 1, 1);
-            ctx.trackedObjects.add(range);
+            context.Ctx.trackedObjects.add(range);
 
             range.format.load("fill");
             range.load("width");
-            await ctx.sync();
+            await context.sync();
 
             if ((range.format.fill.color !== "black" && range.format.fill.color !== "#000000")
-                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow + (topTeam ? -1 : 1), 1, curColumn, 1)))
+                || !await GameLines.isCellEmptyNoCache(context, sheet, new RangeInfo(rangeGameLine.FirstRow + (topTeam ? -1 : 1), 1, curColumn, 1)))
             {
-                ctx.trackedObjects.remove(range);
+                context.Ctx.trackedObjects.remove(range);
                 break;
             }
 
             // we don't want to include this cell quite yet -- only if the
             // next cell beyond is also filled...
-            if (!(await GameFormatting.isCellInLineColumn(ctx, range)))
+            if (!(await GameFormatting.isCellInLineColumn(context, range)))
             {
                 outColumn = curColumn;
-                ctx.trackedObjects.remove(range);
+                context.Ctx.trackedObjects.remove(range);
             }
 
             curColumn--;
@@ -170,20 +235,52 @@ export class GameLines
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameLines.getOutgoingLineRange
+        %%Function: GameLines.getFeedingLineRangeInfo
 
-        Build a rangeInfo for the outgoing line for the given rangeInfo that
-        represents the verticalLine cell on the outgoing line.
+        Given a range for the line on a game (under the top team or over the
+        bottom team), return a range for any feeding line
 
-        The returned range will not include the underline underneath (or over)
-        the team name. So, we will only consider a cell that is NOT followed by
-        only 3 filled cells (must have more that 4 filled cells).
-
-        this means that if the outgoing line does not actually join with a game,
-        then 3 filled cells will be left around
+        return null if there is no feeder line
     ----------------------------------------------------------------------------*/
-    static async getOutgoingLineRange(
-        ctx: any,
+    static getFeedingLineRangeInfo(
+        fastRangeAreas: FastRangeAreas,
+        rangeGameLine: RangeInfo,
+        topTeam: boolean): RangeInfo
+    {
+        let curColumn: number = rangeGameLine.FirstColumn - 1;
+        let outColumn: number = -1;
+
+        while (curColumn > 0)
+        {
+            const format: Excel.RangeFormat = fastRangeAreas.getFormatForRangeInfo(new RangeInfo(rangeGameLine.FirstRow, 1, curColumn, 1));
+
+            if ((format.fill.color !== "black" && format.fill.color !== "#000000")
+                || !GameLines.isCellEmpty(fastRangeAreas, new RangeInfo(rangeGameLine.FirstRow + (topTeam ? -1 : 1), 1, curColumn, 1)))
+            {
+                break;
+            }
+
+            // we don't want to include this cell quite yet -- only if the
+            // next cell beyond is also filled...
+            if (!(GameFormatting.isRangeFormatInLineColumn(format)))
+                outColumn = curColumn;
+
+            curColumn--;
+        }
+
+        if (outColumn == -1)
+            return null;
+
+        return new RangeInfo(rangeGameLine.FirstRow, 1, outColumn, rangeGameLine.FirstColumn - outColumn);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameLines.getOutgoingLineRangeNoCache
+
+        version that doesn't use the cache
+    ----------------------------------------------------------------------------*/
+    static async getOutgoingLineRangeNoCache(
+        context: JsCtx,
         sheet: Excel.Worksheet,
         rangeGameLine: RangeInfo): Promise<RangeInfo>
     {
@@ -196,16 +293,16 @@ export class GameLines
         while (curColumn < 10000) // just an arbitrarily large number
         {
             range = sheet.getRangeByIndexes(rangeGameLine.FirstRow, curColumn, 1, 1);
-            ctx.trackedObjects.add(range);
+            context.Ctx.trackedObjects.add(range);
 
             range.format.load("fill");
-            await ctx.sync();
+            await context.sync();
 
             // an unfilled range marks the end of a title range, which means that the
             // 3 previous filled cells should be discounted
             if ((range.format.fill.color !== "black" && range.format.fill.color !== "#000000"))
             {
-                ctx.trackedObjects.remove(range);
+                context.Ctx.trackedObjects.remove(range);
                 break;
             }
 
@@ -217,15 +314,76 @@ export class GameLines
                 fLastWasLineColumn = false;
             }
 
-            if ((await GameFormatting.isCellInLineColumn(ctx, range)))
+            if ((await GameFormatting.isCellInLineColumn(context, range)))
                 fLastWasLineColumn = true;
 
-            ctx.trackedObjects.remove(range);
+            context.Ctx.trackedObjects.remove(range);
 
             // if there is text above or below us, this means we are in the first cell
             // of a title range. which means this cell should be discounted
-            if (!await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
-                || !await this.isCellEmpty(ctx, sheet, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
+            if (!await GameLines.isCellEmptyNoCache(context, sheet, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
+                || !await GameLines.isCellEmptyNoCache(context, sheet, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
+            {
+                break;
+            }
+
+            curColumn++;
+        }
+
+        if (outColumn == -1 || outColumn <= rangeGameLine.FirstColumn + 1)
+            return null;
+
+        return new RangeInfo(rangeGameLine.FirstRow, 1, rangeGameLine.FirstColumn + 1, outColumn - rangeGameLine.FirstColumn);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameLines.getOutgoingLineRange
+
+        
+        Build a rangeInfo for the outgoing line for the given rangeInfo that
+        represents the verticalLine cell on the outgoing line.
+
+        The returned range will not include the underline underneath (or over)
+        the team name. So, we will only consider a cell that is NOT followed by
+        only 3 filled cells (must have more that 4 filled cells).
+
+        this means that if the outgoing line does not actually join with a game,
+        then 3 filled cells will be left around
+    ----------------------------------------------------------------------------*/
+    static getOutgoingLineRange(
+        fastRangeAreas: FastRangeAreas,
+        rangeGameLine: RangeInfo): RangeInfo
+    {
+        let curColumn: number = rangeGameLine.FirstColumn + 1;
+        let outColumn: number = -1;
+
+        let fLastWasLineColumn: boolean = true;
+
+        while (curColumn < 10000) // just an arbitrarily large number
+        {
+            const range: RangeInfo = new RangeInfo(rangeGameLine.FirstRow, 1, curColumn, 1);
+            const format: Excel.RangeFormat = fastRangeAreas.getFormatForRangeInfo(range);
+
+            // an unfilled range marks the end of a title range, which means that the
+            // 3 previous filled cells should be discounted
+            if ((format.fill.color !== "black" && format.fill.color !== "#000000"))
+                break;
+
+            if (fLastWasLineColumn)
+            {
+                // everything up to and including the line column is part of the outgoing
+                // line range
+                outColumn = curColumn - 1;
+                fLastWasLineColumn = false;
+            }
+
+            if ((GameFormatting.isRangeFormatInLineColumn(format)))
+                fLastWasLineColumn = true;
+
+            // if there is text above or below us, this means we are in the first cell
+            // of a title range. which means this cell should be discounted
+            if (!GameLines.isCellEmpty(fastRangeAreas, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
+                || !GameLines.isCellEmpty(fastRangeAreas, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
             {
                 break;
             }

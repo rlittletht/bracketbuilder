@@ -1,3 +1,6 @@
+import { TrackingCache } from "./TrackingCache";
+import { Parser, Quoting, TrimType, ParseStringAccepts } from "./Parser";
+import { JsCtx } from "./JsCtx";
 
 export enum RangeOverlapKind
 {
@@ -309,12 +312,12 @@ export class RangeInfo
         moved, etc). We are robust to rebuild them when we insert games, so we 
         also have to be robustin getting ranges for them here
     ----------------------------------------------------------------------------*/
-    static async getRangeInfoForNamedCell(ctx: any, name: string): Promise<RangeInfo>
+    static async getRangeInfoForNamedCell(context: JsCtx, name: string): Promise<RangeInfo>
     {
         try
         {
-            const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-            await ctx.sync();
+            const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+            await context.sync();
 
             if (nameObject.isNullObject)
                 return null;
@@ -325,7 +328,7 @@ export class RangeInfo
             range.load("columnIndex");
             range.load("columnCount");
 
-            await ctx.sync();
+            await context.sync();
 
             return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
         }
@@ -333,6 +336,53 @@ export class RangeInfo
         {
             return null;
         }
+    }
+
+    static async getRangeInfoForNamedCellFaster(context: JsCtx, name: string): Promise<RangeInfo>
+    {
+        const items: Excel.NamedItem[] =
+            await context.getTrackedItem(
+                "workbookNamesItems",
+                async (context): Promise<any> =>
+                {
+                    context.Ctx.workbook.load("names");
+                    await context.sync();
+                    return context.Ctx.workbook.names.items;
+                });
+
+        let i: number = 0;
+
+        for (; i < items.length; i++)
+        {
+            if (items[i].name == name)
+                break;
+        }
+
+        if (i >= items.length)
+            return null;
+
+        const formula: string = items[i].formula;
+
+        if (formula == null || formula[0] != "=")
+        {
+            console.log("bad formula in named reference");
+            return null;
+        }
+
+        let [sheetName, colRef1, fColAbsolute1, rowRef1, fRowAbsolute1, colRef2, fColAbsolute2, rowRef2, fRowAbsolute2, ichCurAfter] =
+            Parser.parseExcelFullAddress(TrimType.LeadingSpace, formula, 1, formula.length);
+
+        if (!colRef1 || !rowRef1)
+        {
+            console.log("bad formula in named reference");
+            return null;
+        }
+
+        return new RangeInfo(
+            rowRef1 - 1,
+            rowRef2 ? rowRef2 - rowRef1 : 1,
+            Ranges.getCoordFromColName_1Based(colRef1) - 1,
+            colRef2 ? Ranges.getCoordFromColName_1Based(colRef2) - Ranges.getCoordFromColName_1Based(colRef2) : 1);
     }
 
     get IsSingleCell() { return this.m_rowCount <= 1 && this.m_columnCount <= 1; }
@@ -348,6 +398,22 @@ export class Ranges
         "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX",
         "BY", "BZ",
     ];
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.getCoordFromColName_1Based
+    ----------------------------------------------------------------------------*/
+    static getCoordFromColName_1Based(colRef: string)
+    {
+        colRef = colRef.toUpperCase();
+
+        for (let i = 0; i < Ranges.colsMap.length; i++)
+        {
+            if (Ranges.colsMap[i] == colRef)
+                return i + 1;
+        }
+
+        throw Error("out of bounds colName");
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Ranges.getColName_1Based
@@ -405,29 +471,29 @@ export class Ranges
     /*----------------------------------------------------------------------------
         %%Function: Ranges.ensureGlobalNameDeleted
     ----------------------------------------------------------------------------*/
-    static async ensureGlobalNameDeleted(ctx: any, name: string)
+    static async ensureGlobalNameDeleted(context: JsCtx, name: string)
     {
-        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-        await ctx.sync();
+        const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+        await context.sync();
 
         if (nameObject.isNullObject)
             return;
 
         nameObject.delete();
-        await ctx.sync();
+        await context.sync();
     }
 
 
     /*----------------------------------------------------------------------------
         %%Function: Ranges.createOrReplaceNamedRange
     ----------------------------------------------------------------------------*/
-    static async createOrReplaceNamedRange(ctx: any, name: string, rng: Excel.Range)
+    static async createOrReplaceNamedRange(context: JsCtx, name: string, rng: Excel.Range)
     {
-        ctx.trackedObjects.add(rng);
-        await Ranges.ensureGlobalNameDeleted(ctx, name);
-        ctx.workbook.names.add(name, rng);
-        await ctx.sync();
-        ctx.trackedObjects.remove(rng);
+        context.Ctx.trackedObjects.add(rng);
+        await Ranges.ensureGlobalNameDeleted(context, name);
+        context.Ctx.workbook.names.add(name, rng);
+        await context.sync();
+        context.Ctx.trackedObjects.remove(rng);
     }
 
 
@@ -435,7 +501,7 @@ export class Ranges
         %%Function: Ranges.createOrReplaceNamedRangeByIndex
     ----------------------------------------------------------------------------*/
     static async createOrReplaceNamedRangeByIndex(
-        ctx: any,
+        context: JsCtx,
         sheet: Excel.Worksheet,
         name: string,
         from: [number, number],
@@ -445,7 +511,7 @@ export class Ranges
         const cols: number = to ? to[1] - from[1] + 1 : 1;
 
         let rng: Excel.Range = sheet.getRangeByIndexes(from[0], from[1], rows, cols);
-        await this.createOrReplaceNamedRange(ctx, name, rng);
+        await this.createOrReplaceNamedRange(context, name, rng);
     }
 
     /*----------------------------------------------------------------------------
@@ -465,10 +531,10 @@ export class Ranges
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.getRangeInfoForNamedCell
     ----------------------------------------------------------------------------*/
-    static async getRangeForNamedCell(ctx: any, name: string): Promise<Excel.Range>
+    static async getRangeForNamedCell(context: JsCtx, name: string): Promise<Excel.Range>
     {
-        const nameObject: Excel.NamedItem = ctx.workbook.names.getItemOrNullObject(name);
-        await ctx.sync();
+        const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+        await context.sync();
 
         if (nameObject.isNullObject)
             return null;
@@ -477,18 +543,60 @@ export class Ranges
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Ranges.getValuesFromNamedCellRange
+
+        Get the values array (any[][]) for the given named range
+    ----------------------------------------------------------------------------*/
+    static async getValuesFromNamedCellRange(context: JsCtx, name: string): Promise<any[][]>
+    {
+        const range: Excel.Range = await Ranges.getRangeForNamedCell(context, name);
+        range.load("values");
+        await context.sync();
+
+        return range.values;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Ranges.createRangeInfoForSelection
     ----------------------------------------------------------------------------*/
-    static async createRangeInfoForSelection(ctx: any): Promise<RangeInfo>
+    static async createRangeInfoForSelection(context: JsCtx): Promise<RangeInfo>
     {
-        const rng: Excel.Range = ctx.workbook.getSelectedRange();
+        const rng: Excel.Range = context.Ctx.workbook.getSelectedRange();
 
         rng.load("rowIndex");
         rng.load("rowCount");
         rng.load("columnIndex");
         rng.load("columnCount");
-        await ctx.sync();
+        await context.sync();
 
         return RangeInfo.createFromRange(rng);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.createRangeInfoFromFormula
+
+        formula in this context refers to the object formula in excel.js
+        (to avoid having to load the range information from excel).
+
+        It looks like 
+            =Sheet1!$A$1
+        or 
+            ='sheet name'!$A$1
+    ----------------------------------------------------------------------------*/
+    static createRangeInfoFromFormula(formula: string): RangeInfo
+    {
+        let ichCur: number = 0;
+        let ichMax: number = formula.length;
+        let s: string;
+
+        ichCur = Parser.parseWhitespace(formula, ichCur, ichMax);
+        [s, ichCur] = Parser.parseGetChar(formula, ichCur, ichMax);
+
+        if (s !== "=")
+            return null;
+
+        [s, ichCur] = Parser.parseString(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, formula, ichCur, ichMax);
+        return null;
+
     }
 }

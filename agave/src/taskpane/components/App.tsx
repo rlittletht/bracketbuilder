@@ -30,6 +30,12 @@ import { Grid } from "../../BracketEditor/Grid";
 import { GameNum } from "../../BracketEditor/GameNum";
 import { GridTests } from "../../BracketEditor/GridTests";
 import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
+import { OADate } from "../../Interop/Dates";
+import { TrackingCache } from "../../Interop/TrackingCache";
+import { BracketSources } from "../../Brackets/BracketSources";
+import { ParserTests } from "../../Interop/Parser";
+import { JsCtx } from "../../Interop/JsCtx";
+import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
 
 /* global console, Excel, require  */
 
@@ -68,7 +74,7 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "1.0.4.1";
+    static version: string = "1.0.5.0";
 
     m_appContext: AppContext;
 
@@ -104,16 +110,27 @@ export default class App extends React.Component<AppProps, AppState>
 
         try
         {
+            FastRangeAreasTest.buildCellListForRangeInfoTests();
+            ParserTests.testParseStringTests();
+            ParserTests.testParseExcelColumnRowReferenceTests();
+            ParserTests.testParseExcelAddressTests();
+            OADate.TestFromOADateTests();
+
+
             // first, dump the grid for the current sheet. this is handy if you are building
             // unit tests since it gives you a way to generate a grid...
             await Excel.run(
                 async (ctx) =>
                 {
-                    const grid: Grid = await Grid.createGridFromBracket(ctx, appContext.getSelectedBracket());
+                    const context: JsCtx = new JsCtx(ctx);
+                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
 
                     grid.logGridCondensed();
+                    context.releaseAllTrackedItems();
                 });
 
+
+            OADate.TestMinutesFromTimeStringTests();
 
             GridRankerTests.test_danglingFeeder_vs_swappedGame(appContext, testContext);
             GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext, testContext);
@@ -323,22 +340,25 @@ export default class App extends React.Component<AppProps, AppState>
         Invalidate the top level hero list (and maybe supporting parameters
         below in the UI)
     ----------------------------------------------------------------------------*/
-    async invalidateHeroList(ctx: any)
+    async invalidateHeroList(context: JsCtx)
     {
         AppContext.checkpoint("ihl.1");
-        let setupState: SetupState = await(this.getSetupState(ctx));
+        let setupState: SetupState;
+        let bracketChoice: string;
+
+        [setupState, bracketChoice] = await (this.getSetupState(context));
         AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
         AppContext.checkpoint("ihl.3");
-        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(ctx);
+//        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
         AppContext.checkpoint("ihl.4");
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
         AppContext.checkpoint("ihl.5");
-        let games: IBracketGame[] = await this.getGamesList(ctx, bracketChoice);
+        let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
         AppContext.checkpoint("ihl.6");
 
 
@@ -367,7 +387,7 @@ export default class App extends React.Component<AppProps, AppState>
             });
     }
 
-    async ensureBracketLoadedFromSheet(ctx: any, bracketTableName: string)
+    async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
     {
         if (!_bracketManager.IsCached(bracketTableName))
         {
@@ -381,7 +401,7 @@ export default class App extends React.Component<AppProps, AppState>
             };
 
             let gameDefs: any[] = await TableIO.readDataFromExcelTable(
-                ctx,
+                context,
                 bracketDef.tableName,
                 ["Game", "Winner", "Loser", "Top", "Bottom"],
                 true);
@@ -401,9 +421,9 @@ export default class App extends React.Component<AppProps, AppState>
     }
 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
-    async getGamesList(ctx: any, bracket: string): Promise<IBracketGame[]>
+    async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        await this.ensureBracketLoadedFromSheet(ctx, `${bracket}Bracket`);
+        await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
 
         if (bracketDef == null)
@@ -411,11 +431,21 @@ export default class App extends React.Component<AppProps, AppState>
 
         let games: IBracketGame[] = [];
 
+        const bookmark: string = "getGamesList";
+
+        context.pushTrackingBookmark(bookmark);
+
+        appContext.Timer.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
-            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(ctx, bracket, new GameNum(i));
+            let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, bracket, new GameNum(i));
             games.push(temp);
         }
+
+        context.releaseTrackedItemsUntil(bookmark);
+        await context.sync();
+        appContext.Timer.stopAllAggregatedTimers();
+        appContext.Timer.popTimer();
 
         return games;
     }
@@ -423,20 +453,28 @@ export default class App extends React.Component<AppProps, AppState>
     /*----------------------------------------------------------------------------
         %%Function: App.getSetupState
 
-        Get the setup state of the workbook
+        Get the setup state of the workbook and opportunistically return the
+        bracket choice as well
     ----------------------------------------------------------------------------*/
-    async getSetupState(ctx: any): Promise<SetupState>
+    async getSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
         AppContext.checkpoint("gss.1");
         let setupState: SetupState;
+        let bracketChoice: string;
 
-        if (ctx != null)
-            setupState = await SetupBook.getWorkbookSetupState(ctx);
+        if (context != null)
+            [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context);
         else
-            setupState = await Excel.run(async (context) => SetupBook.getWorkbookSetupState(context));
+            await Excel.run(async (ctx) =>
+            {
+                const context: JsCtx = new JsCtx(ctx);
+
+                [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context)
+                context.releaseAllTrackedItems();
+            });
         AppContext.checkpoint("gss.2");
 
-        return setupState;
+        return [setupState, bracketChoice];
     }
 
     /*----------------------------------------------------------------------------
@@ -451,7 +489,10 @@ export default class App extends React.Component<AppProps, AppState>
 
     async componentDidMount()
     {
-        let setupState: SetupState = await (this.getSetupState(null));
+        let setupState: SetupState;
+        let bracketChoice: string;
+
+        [setupState, bracketChoice] = await (this.getSetupState(null));
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
@@ -470,9 +511,14 @@ export default class App extends React.Component<AppProps, AppState>
 
         // now grab the games async and have it update
         Excel.run(
-            async (context) =>
+            async (ctx) =>
             {
+                this.m_appContext.setProgressVisible(true);
+                const context: JsCtx = new JsCtx(ctx);
+
                 await this.invalidateHeroList(context);
+                context.releaseAllTrackedItems();
+                this.m_appContext.setProgressVisible(false);
             });
     }
 
@@ -481,13 +527,15 @@ export default class App extends React.Component<AppProps, AppState>
         try
         {
             AppContext.checkpoint("testing");
-            await Excel.run(async (context) =>
+            await Excel.run(async (ctx) =>
             {
-                AppContext.checkpoint("state: " + await(SetupBook.getWorkbookSetupState(context)));
+                const context: JsCtx = new JsCtx(ctx);
+
+                AppContext.checkpoint("state: " + await SetupBook.getWorkbookSetupState(context));
                 /**
                  * Insert your Excel code here
                  */
-                const range = context.workbook.getSelectedRange();
+                const range = context.Ctx.workbook.getSelectedRange();
 
                 // Read the range address
                 range.load("address");
@@ -503,6 +551,7 @@ export default class App extends React.Component<AppProps, AppState>
 
                 await context.sync();
                 AppContext.checkpoint(`The range address was ${range.address}.`);
+                context.releaseAllTrackedItems();
             });
         }
         catch (error)
@@ -534,7 +583,9 @@ export default class App extends React.Component<AppProps, AppState>
                 <Progress
                     title={title}
                     logo={require("./../../../assets/TW-Logo.png")}
-                    message="Please sideload your addin to see app body."/>
+                    message="Please sideload your addin to see app body."
+                    appContext={this.m_appContext}
+                    initialVisibility={true}/>
             );
         }
 
@@ -593,6 +644,13 @@ export default class App extends React.Component<AppProps, AppState>
                         <LogoHeader/>
                         <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
                     </Stack.Item>
+                    <Progress
+                        title=""
+                        logo={null}
+                        message="Working on it..."
+                        initialVisibility={false}
+                        appContext={this.m_appContext}
+                    />
                     <Stack.Item styles={bodyHeaderItemStyle}>
                         <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
                             {insertBracketChooserMaybe()}

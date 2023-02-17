@@ -1,3 +1,4 @@
+import { JsCtx } from "./JsCtx";
 
 export class TableIO
 {
@@ -6,7 +7,7 @@ export class TableIO
     // go on to the next one in the list of headers to try.  if the last one doesn't succeed,
     // then fail
     static async readDataFromExcelTableWithFallback(
-        ctx: any,
+        context: JsCtx,
         sTable: string,
         rgsHeaders: string[][]): Promise<Array<any>>
     {
@@ -18,7 +19,7 @@ export class TableIO
         {
             try
             {
-                data = await TableIO.readDataFromExcelTable(ctx, sTable, rgsHeaders[iHeader], true);
+                data = await TableIO.readDataFromExcelTable(context, sTable, rgsHeaders[iHeader], true);
             }
             catch (e)
             {
@@ -39,19 +40,19 @@ export class TableIO
     // if fRequired is true, then throw if all the header fields are not present in the excel table.
     // returns null if there is no table in the workbook matching sTable
     static async readDataFromExcelTable(
-        ctx: any,
+        context: JsCtx,
         sTable: string,
         sHeaders: string[],
         fRequired: boolean): Promise<Array<any>>
     {
-        let workbook: Excel.Workbook = ctx.workbook;
+        let workbook: Excel.Workbook = context.Ctx.workbook;
         let table: Excel.Table;
         let data: Array<any> = new Array<any>();
 
         try
         {
             table = workbook.tables.getItem(sTable);
-            await ctx.sync();
+            await context.sync();
         }
         catch (e)
         {
@@ -62,7 +63,7 @@ export class TableIO
         rngExcelHeader.load("values");
         rngExcelHeader.load("columnCount");
 
-        await ctx.sync();
+        await context.sync();
 
         let rgExcelHeader: string[] = rngExcelHeader.values[0]; // get the first row (there's only one row anyway)
         let mapRequestedToExcelCurrent: Map<string, number> = new Map<string, number>();
@@ -98,14 +99,14 @@ export class TableIO
 
         let rowCollection: Excel.TableRowCollection = table.rows;
         rowCollection.load("count");
-        await ctx.sync();
+        await context.sync();
 
         let rowCount: number = rowCollection.count;
         // make sure there's something to load...
         if (rowCount != 0)
         {
             rangeValues.load("values");
-            await ctx.sync();
+            await context.sync();
 
             for (let rgRow of rangeValues.values)
             {

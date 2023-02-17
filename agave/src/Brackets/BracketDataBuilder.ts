@@ -3,6 +3,7 @@ import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { GridBuilder } from "./GridBuilder";
+import { JsCtx } from "../Interop/JsCtx";
 
 export class BracketDataBuilder
 {
@@ -14,16 +15,16 @@ export class BracketDataBuilder
         Build the Bracket Data sheet (which has results and field schedule times
         in it)
     ----------------------------------------------------------------------------*/
-    static async buildBracketDataSheet(ctx: any, bracketChoice: string, bracketDefinition: BracketDefinition)
+    static async buildBracketDataSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketDataBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDataBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
-        await ctx.sync();
+        await context.sync();
 
         rng.values = [[bracketChoice]];
-        await ctx.sync();
+        await context.sync();
 
-        await Ranges.createOrReplaceNamedRange(ctx, "BracketChoice", rng);
+        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", rng);
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading
@@ -78,6 +79,6 @@ export class BracketDataBuilder
         rngFieldsHeader.format.font.bold = true;
         rngFieldsHeader.format.font.size = 22;
 
-        await ctx.sync();
+        await context.sync();
     }
 }

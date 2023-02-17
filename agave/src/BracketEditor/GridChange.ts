@@ -20,6 +20,8 @@ export class GridChange
     get GameId() { return this.m_gridItem.GameId; }
 
     get SwapTopBottom() { return this.m_gridItem.SwapTopBottom; }
+    get StartTime() { return this.m_gridItem.StartTime; }
+    get Field() { return this.m_gridItem.Field; }
 
     get IsLine() { return this.m_gridItem.isLineRange; }
 
