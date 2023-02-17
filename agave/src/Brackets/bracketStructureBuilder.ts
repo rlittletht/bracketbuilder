@@ -10,6 +10,7 @@ import { BracketDataBuilder } from "./BracketDataBuilder";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { GridBuilder } from "./GridBuilder";
 import { BracketSources } from "./BracketSources";
+import { JsCtx } from "../Interop/JsCtx";
 
 export interface BracketOption
 {
@@ -88,7 +89,7 @@ export class BracketStructureBuilder
         this will insert the validation formulas as well
     ----------------------------------------------------------------------------*/
     static async insertBracketDefinitionAtRow(
-        ctx: any,
+        context: JsCtx,
         sheet: Excel.Worksheet,
         fastTables: IFastTables,
         row: number,
@@ -101,11 +102,11 @@ export class BracketStructureBuilder
 
         let rng: Excel.Range = sheet.getCell(row, 1);
         rng.values = [[bracketDefinition.name]];
-        await ctx.sync();
+        await context.sync();
 
         // create an empty table for the bracket
         let table: Excel.Table = await Tables.ensureTableExists(
-            ctx,
+            context,
             sheet,
             fastTables,
             bracketDefinition.tableName,
@@ -113,7 +114,7 @@ export class BracketStructureBuilder
             ["Game", "Winner", "Loser", "Top", "Bottom", "CountTopCheck", "CountBottomCheck"]);
 
         await Tables.appendArrayToTableSlow(
-            ctx,
+            context,
             bracketDefinition.tableName,
             this.getArrayValuesFromBracketDefinition(bracketDefinition),
             ["Game", "Winner", "Loser", "Top", "Bottom"]);
@@ -127,13 +128,13 @@ export class BracketStructureBuilder
                     `=COUNTIF(${bracketDefinition.tableName}[[Winner]:[Loser]], "B" & [@Game])`
                 ]
             ];
-        await ctx.sync();
+        await context.sync();
 
         // and now fill in the formulas for the checks
         rng = sheet.getRangeByIndexes(rowCheckLines, 0, 4, 1);
         rng.values = [["Total Games"], ["Team Check"], ["LoseCheck"], ["WinCheck"]];
 
-        await ctx.sync();
+        await context.sync();
 
         rng = sheet.getRangeByIndexes(rowCheckLines, 1, 4, 2);
         rng.formulas =
@@ -156,7 +157,7 @@ export class BracketStructureBuilder
                 `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"W*")`
             ]
             ];
-        await ctx.sync();
+        await context.sync();
 
         return rowCheckLines + 6;
     }
@@ -167,16 +168,16 @@ export class BracketStructureBuilder
         build the brackets structure sheet, populating with all of the brackets
         we know about
     ----------------------------------------------------------------------------*/
-    static async buildBracketsSheet(ctx: any, fastTables: IFastTables, appContext: IAppContext)
+    static async buildBracketsSheet(context: JsCtx, fastTables: IFastTables, appContext: IAppContext)
     {
         try
         {
-            let sheetBrackets: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketStructureBuilder.SheetName);
+            let sheetBrackets: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketStructureBuilder.SheetName);
             let row: number = 1;
 
             for (const bracketNum in s_brackets)
             {
-                row = await this.insertBracketDefinitionAtRow(ctx, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
+                row = await this.insertBracketDefinitionAtRow(context, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
             }
         }
         catch (error)
@@ -192,13 +193,13 @@ export class BracketStructureBuilder
         Build a specific bracket, including making the bracket grid, data sheet,
         etc.
     ----------------------------------------------------------------------------*/
-    static async buildSpecificBracketCore(ctx: any, appContext: IAppContext, fastTables: IFastTables)
+    static async buildSpecificBracketCore(context: JsCtx, appContext: IAppContext, fastTables: IFastTables)
     {
         const bracketChoice: string = appContext.getSelectedBracket();
-        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketStructureBuilder.SheetName, null, EnsureSheetPlacement.Last);
+        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketStructureBuilder.SheetName, null, EnsureSheetPlacement.Last);
 
         let bracketTable: Excel.Table =
-            await SetupBook.getBracketTableOrNull(ctx, bracketsSheet, bracketChoice);
+            await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketChoice);
 
         const bracketDefinition: BracketDefinition = this.getBracketDefinition(`${bracketChoice}Bracket`);
 
@@ -210,14 +211,14 @@ export class BracketStructureBuilder
                 return;
             }
 
-            const rowFirst: number = await Sheets.findFirstEmptyRowAfterAllData(ctx, bracketsSheet, 35);
+            const rowFirst: number = await Sheets.findFirstEmptyRowAfterAllData(context, bracketsSheet, 35);
 
-            await this.insertBracketDefinitionAtRow(ctx, bracketsSheet, fastTables, rowFirst + 2, bracketDefinition);
+            await this.insertBracketDefinitionAtRow(context, bracketsSheet, fastTables, rowFirst + 2, bracketDefinition);
         }
 
-        await GridBuilder.buildGridSheet(ctx);
-        await BracketDataBuilder.buildBracketDataSheet(ctx, bracketChoice, bracketDefinition);
-        await BracketSources.buildBracketSourcesSheet(ctx, fastTables, bracketDefinition);
+        await GridBuilder.buildGridSheet(context);
+        await BracketDataBuilder.buildBracketDataSheet(context, bracketChoice, bracketDefinition);
+        await BracketSources.buildBracketSourcesSheet(context, fastTables, bracketDefinition);
     }
 
 }

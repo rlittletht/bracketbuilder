@@ -1,4 +1,4 @@
-
+import { JsCtx } from "./JsCtx";
 
 export enum EnsureSheetPlacement
 {
@@ -11,13 +11,13 @@ export enum EnsureSheetPlacement
 export class Sheets
 {
     static async ensureSheetExists(
-        ctx: any,
+        context: JsCtx,
         sSheetName: string,
         sheetRelativeToName: string = null,
         placement: EnsureSheetPlacement = EnsureSheetPlacement.Last): Promise<Excel.Worksheet>
     {
         // have to use any here because we don't have type information that knows about getItemOrNullObject.
-        let worksheets: Excel.WorksheetCollection = ctx.workbook.worksheets;
+        let worksheets: Excel.WorksheetCollection = context.Ctx.workbook.worksheets;
         let sheet: Excel.Worksheet = null;
         let sheetRelative: Excel.Worksheet = null;
 
@@ -27,7 +27,7 @@ export class Sheets
             sheetRelative = worksheets.getItemOrNullObject(sheetRelativeToName);
         }
 
-        await ctx.sync();
+        await context.sync();
 
         if (sheet.isNullObject)
         {
@@ -38,7 +38,7 @@ export class Sheets
                     && placement != EnsureSheetPlacement.Last)
             {
                 sheetRelative.load("position");
-                await ctx.sync();
+                await context.sync();
 
                 sheet.position = sheetRelative.position + EnsureSheetPlacement.AfterGiven ? 1 : 0;
             }
@@ -46,7 +46,7 @@ export class Sheets
             if (placement == EnsureSheetPlacement.First)
                 sheet.position = 0;
 
-            await ctx.sync();
+            await context.sync();
 
         }
         return sheet;
@@ -64,7 +64,7 @@ export class Sheets
         (you can err on too large a number here, it just means we will scan
         farther down to make sure there is no data)
     ----------------------------------------------------------------------------*/
-    static async findFirstEmptyRowAfterAllData(ctx: any, sheet: Excel.Worksheet, maxPossibleEmptyInterimRows: number): Promise<number>
+    static async findFirstEmptyRowAfterAllData(context: JsCtx, sheet: Excel.Worksheet, maxPossibleEmptyInterimRows: number): Promise<number>
     {
         let row: number = 0;
         let rowLast: number;
@@ -77,7 +77,7 @@ export class Sheets
             rowLast = row + maxPossibleEmptyInterimRows;
 
             rng.load("values");
-            await ctx.sync();
+            await context.sync();
 
             let rowFirst: number = row;
 

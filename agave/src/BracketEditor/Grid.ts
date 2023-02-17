@@ -14,6 +14,11 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { s_staticConfig } from "../StaticConfig";
+import { OADate } from "../Interop/Dates";
+import { TrackingCache } from "../Interop/TrackingCache";
+import { JsCtx } from "../Interop/JsCtx";
+import { PerfTimer } from "../PerfTimer";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -41,10 +46,71 @@ export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
+    m_datesForGrid: Date[];
+    m_fieldsToUse: number = 2;
     m_fLogChanges: boolean = s_staticConfig.logGridChanges;
     m_fLogGrid: boolean = s_staticConfig.logGrid;
+    m_startingSlots: number[] = [10 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 9 * 60];
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
+    get FieldsToUse(): number { return this.m_fieldsToUse; }
+
+    getFirstSlotForDate(date: Date): number
+    {
+        return this.m_startingSlots[date.getDay()];
+    }
+
+    getDateFromGridColumn(column: number): Date
+    {
+        column = column - this.m_firstGridPattern.FirstColumn;
+
+        return this.m_datesForGrid[column];
+    }
+
+    getDateFromGridItem(item: GridItem): Date
+    {
+        return this.getDateFromGridColumn(item.Range.FirstColumn);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getLatestTimeForDate
+
+        get the latest time used on this date (and how many times it is used) and
+        the fields used for that time slot
+
+        time is returned in minutes since 00:00
+    ----------------------------------------------------------------------------*/
+    getLatestTimeForDate(date: Date): [number, number, string[]]
+    {
+        let maxTime: number = 0;
+        let count: number = 0;
+        let fields: string[] = [];
+
+        this.enumerateMatching(
+            (item: GridItem) =>
+            {
+                if (item.StartTime > maxTime)
+                {
+                    maxTime = item.StartTime;
+                    fields = [item.Field];
+                    count = 1;
+                }
+                else if (item.StartTime == maxTime)
+                {
+                    fields.push(item.Field);
+                    count++;
+                }
+                return true;
+            },
+            (item: GridItem) =>
+            {
+                const itemDate = this.getDateFromGridItem(item);
+
+                return itemDate.valueOf() == date.valueOf();
+            });
+
+        return [maxTime, count, fields];
+    }
 
     setInternalGridItems(items: GridItem[])
     {
@@ -56,6 +122,16 @@ export class Grid
         for (let item of this.m_gridItems)
             if (!fun(item))
                 return false;
+
+        return true;
+    }
+
+    enumerateMatching(fun: (item: GridItem) => boolean, matchFun: (item: GridItem) => boolean): boolean
+    {
+        for (let item of this.m_gridItems)
+            if (matchFun(item))
+                if (!fun(item))
+                    return false;
 
         return true;
     }
@@ -365,7 +441,7 @@ export class Grid
 
                 if (!itemRight.isLineRange)
                 {
-                    const gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
+                    let gameStatic: IBracketGame = BracketGame.CreateFromGameSync(bracket, itemRight.GameNumber);
 
                     itemRight.inferGameInternalsIfNecessary();
                     const [top, bottom] = gridRight.getConnectedGridItemsForGameFeeders(itemRight, gameStatic);
@@ -515,13 +591,113 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.createGridFromBracket
     ----------------------------------------------------------------------------*/
-    static async createGridFromBracket(ctx: any, bracketName: string): Promise<Grid>
+    static async createGridFromBracket(context: JsCtx, bracketName: string): Promise<Grid>
     {
         let grid: Grid = new Grid();
 
         AppContext.checkpoint("cgfb.1");
-        await grid.loadGridFromBracket(ctx, bracketName);
+        await grid.loadGridFromBracket(context, bracketName);
         return grid;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridColumnDateValues
+
+        This requires thet m_firstGridPattern is already loaded (we will use the
+        first repeating column as the first column we need a date for)
+    ----------------------------------------------------------------------------*/
+    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    {
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        context.Ctx.trackedObjects.add(sheet);
+
+        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
+        const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
+
+        rngColumns.load("values");
+        await context.sync();
+
+        // walk backwards up the column to find the first non-empty cell. This is the date row
+        const colData: any[][] = rngColumns.values;
+        let rowDates: number = -1;
+
+        for (let i = this.m_firstGridPattern.FirstRow - 1; i >= 0; i--)
+        {
+            if (colData[i][0] != null && colData[i][0] != "")
+            {
+                rowDates = i;
+                break;
+            }
+        }
+
+        if (rowDates == -1)
+        {
+            context.Ctx.trackedObjects.remove(sheet);
+            throw new Error("couldn't find date for column");
+        }
+
+        let range: RangeInfo = new RangeInfo(rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
+        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
+        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+
+        areas.load("areaCount");
+        areas.load("rowIndex");
+        areas.load("columnIndex");
+        areas.load("columnCount");
+        areas.load("areas");
+        rng.load("values");
+        await context.sync();
+
+        // build an array of merged area mappings
+        const data: any[][] = rng.values;
+
+        let merges: number[] = Array.from({ length: data[0].length }, () => 0);
+
+        if (!areas.isNullObject)
+        {
+            for (let i = 0; i < areas.areaCount; i++)
+            {
+                const rangeAreas: Excel.RangeCollection = areas.areas;
+                const rangeArea: Excel.Range = rangeAreas.items[i];
+
+                let iMerge = rangeArea.columnIndex - range.FirstColumn;
+
+                if (iMerge < merges.length)
+                {
+                    let count = rangeArea.columnCount + 1;
+                    while (count > 0)
+                        merges[iMerge--] = count--;
+                }
+            }
+        }
+
+        let dates: Date[] = [];
+
+        let i = 0;
+        while (i < data[0].length)
+        {
+            let item = data[0][i];
+            if (item == null || item == "")
+            {
+                i++;
+                dates.push(null);
+                continue;
+            }
+
+            const date: Date = OADate.FromOADate(item);
+            dates.push(date);
+            const mergeCount = merges[i];
+            i++;
+            for (let i2 = mergeCount - 1; i2 > 0; i2--)
+            {
+                dates.push(date);
+                i++;
+            }
+        }
+
+        // now 
+        context.Ctx.trackedObjects.remove(sheet);
+        return dates;
     }
 
     /*----------------------------------------------------------------------------
@@ -542,18 +718,16 @@ export class Grid
             Title | Score | Line | Title | Score | Line
 
     ----------------------------------------------------------------------------*/
-    async getFirstGridPatternCell(ctx: any): Promise<RangeInfo>
+    getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
     {
         let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
-        let sheet: Excel.Worksheet = ctx.workbook.worksheets.getActiveWorksheet();
-        ctx.trackedObjects.add(sheet);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
 
         while (range.FirstRow < 20 && matchedPatterns < 3)
         {
-            if (await GameFormatting.isCellInLineRow(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (GameFormatting.isCellInLineRowFaster(fastRangeAreas, range))
             {
                 firstMatchedRow = -1;
                 matchedPatterns = 0;
@@ -565,7 +739,7 @@ export class Grid
                 firstMatchedRow = range.FirstRow;
 
             range = range.offset(1, 1, 0, 1);
-            if (!await GameFormatting.isCellInLineRow(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInLineRowFaster(fastRangeAreas, range))
             {
                 firstMatchedRow = -1;
                 matchedPatterns = 0;
@@ -577,7 +751,7 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            ctx.trackedObjects.remove(sheet);
+            console.log('returning null for gridPattern');
             return null;
         }
 
@@ -585,9 +759,9 @@ export class Grid
         let firstMatchedColumn = -1;
         range = new RangeInfo(firstMatchedRow, 1, 6, 1);
 
-        while (range.FirstColumn < 25 && matchedPatterns < 3)
+        while (range.FirstColumn + 3 < 25 && matchedPatterns < 3)
         {
-            if (!await GameFormatting.isCellInGameTitleColumn(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInGameTitleColumnFaster(fastRangeAreas, range))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -599,16 +773,17 @@ export class Grid
                 firstMatchedColumn = range.FirstColumn;
 
             range = range.offset(0, 1, 1, 1);
-            if (!await GameFormatting.isCellInGameScoreColumn(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInGameScoreColumnFaster(fastRangeAreas, range))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
-                range = range.offset(0, 1, 1, 1);
+                // don't advance -- we want to consider the current column
+                // as a title column
                 continue;
             }
 
             range = range.offset(0, 1, 1, 1);
-            if (!await GameFormatting.isCellInLineColumn(ctx, Ranges.rangeFromRangeInfo(sheet, range)))
+            if (!GameFormatting.isCellInLineColumnFaster(fastRangeAreas, range))
             {
                 firstMatchedColumn = -1;
                 matchedPatterns = 0;
@@ -619,26 +794,56 @@ export class Grid
             matchedPatterns++;
         }
 
-        ctx.trackedObjects.remove(sheet);
         if (matchedPatterns < 3)
+        {
+            console.log('returning null for gridPattern');
             return null;
+        }
 
-        return new RangeInfo(firstMatchedRow, 1, firstMatchedColumn, 1);
+        const rangeReturn: RangeInfo = new RangeInfo(firstMatchedRow, 1, firstMatchedColumn, 1);
+        console.log(`returning ${rangeReturn.toString()} for gridPattern`);
+
+        return rangeReturn;
     }
 
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.loadGridFromBracket
     ----------------------------------------------------------------------------*/
-    async loadGridFromBracket(ctx: any, bracketName: string)
+    async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
+        const timer: PerfTimer = new PerfTimer();
+
+        timer.pushTimer("buld fastRangeAreas");
+        let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        const fastRangeAreas: FastRangeAreas =
+            await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                context,
+                "bigGridCache",
+                sheet,
+                new RangeInfo(8, 150, 0, 50));
+
+        timer.popTimer();
+
         AppContext.checkpoint("lgfb.1");
-        this.m_firstGridPattern = await this.getFirstGridPatternCell(ctx);
+        timer.pushTimer("getFirstGridPatternCell");
+        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreas);
+        if (this.m_firstGridPattern == null)
+            throw Error("could not load grid pattern");
+
+        timer.popTimer();
+        timer.pushTimer("getGridColumnDateValues");
+        this.m_datesForGrid = await this.getGridColumnDateValues(context);
+        timer.popTimer();
+        timer.pushTimer("getFieldCount");
+        this.m_fieldsToUse = await StructureEditor.getFieldCount(context);
+        timer.popTimer();
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("lgfb.2");
+        timer.pushTimer("loadGridFromBracket::loop");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
             let game: BracketGame = new BracketGame()
@@ -647,7 +852,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(ctx, bracketName, new GameNum(i));
+            await game.Load(context, null, bracketName, new GameNum(i));
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
@@ -661,7 +866,7 @@ export class Grid
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(ctx, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -689,7 +894,9 @@ export class Grid
                         this.addLineRange(feederWinner);
                 }
             }
+            timer.stopAllAggregatedTimers();
         }
+        timer.popTimer();
         this.logGrid();
     }
 
@@ -1984,6 +2191,9 @@ export class Grid
         do
         {
             gameInsert = gridNew.gridGameFromConstraints(game, requested);
+            if (!gameInsert.Range)
+                break;
+
             fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert, [requested]);
         } while (fAdjusted);
 
@@ -2007,7 +2217,11 @@ export class Grid
         // we *could* try to read the swap data during that load.  but that might be overkill
         // it might be better to just let the game insert handle the swap setting
         game.SetSwapTopBottom(gameInsert.m_swapTopBottom);
-        gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom).inferGameInternals();
+        let newItem: GridItem = gridNew.addGameRange(gameInsert.m_rangeGame, game.GameId, gameInsert.m_swapTopBottom);
+
+        newItem.inferGameInternals();
+        newItem.setStartTime(game.StartTime);
+        newItem.setField(game.Field);
 
         return [gridNew, null];
     }

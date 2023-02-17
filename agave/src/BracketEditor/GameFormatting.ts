@@ -1,3 +1,6 @@
+import { JsCtx } from "../Interop/JsCtx";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { RangeInfo } from "../Interop/Ranges";
 
 export class GameFormatting
 {
@@ -99,49 +102,96 @@ export class GameFormatting
         range.format.verticalAlignment = Excel.VerticalAlignment.top;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: GameFormatting.isCellInLineRow
-    ----------------------------------------------------------------------------*/
-    static async isCellInLineRow(ctx: any, range: Excel.Range): Promise<boolean>
+    static isRangeFormatInLineRow(format: Excel.RangeFormat): boolean
     {
-        range.load("height");
-        range.load("address");
-        await ctx.sync();
-
-        return range.height <= 1;
+        return format.rowHeight <= 1;
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.isCellInLineRow
+    ----------------------------------------------------------------------------*/
+    static async isCellInLineRow(context: JsCtx, range: Excel.Range): Promise<boolean>
+    {
+        range.load("format");
+        await context.sync();
+
+        return this.isRangeFormatInLineRow(range.format);
+    }
+
+    static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return this.isRangeFormatInLineRow(format);
+    }
+
+    static isRangeFormatInLineColumn(format: Excel.RangeFormat): boolean
+    {
+        return format.columnWidth < 5;
+
+    }
+    /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineColumn
     ----------------------------------------------------------------------------*/
-    static async isCellInLineColumn(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInLineColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("width");
-        await ctx.sync();
+        range.load("format");
+        await context.sync();
 
-        return range.width < 5;
+        return this.isRangeFormatInLineColumn(range.format);
+    }
+
+    static isCellInLineColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return this.isRangeFormatInLineColumn(format);
+    }
+
+    static isRangeFormatInGameTitleColumn(format: Excel.RangeFormat): boolean
+    {
+        return format.columnWidth > 20;
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInGameTitleColumn
     ----------------------------------------------------------------------------*/
-    static async isCellInGameTitleColumn(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInGameTitleColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("width");
-        await ctx.sync();
+        range.load("format");
+        await context.sync();
 
-        return range.width > 20;
+        return this.isRangeFormatInGameTitleColumn(range.format);
+    }
+
+    static isCellInGameTitleColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return this.isRangeFormatInGameTitleColumn(format);
+    }
+
+    static isRangeFormatInGameScoreColumn(format: Excel.RangeFormat): boolean
+    {
+        return format.columnWidth <= 20 && format.columnWidth >= 5;
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInGameScoreColumn
     ----------------------------------------------------------------------------*/
-    static async isCellInGameScoreColumn(ctx: any, range: Excel.Range): Promise<boolean>
+    static async isCellInGameScoreColumn(context: JsCtx, range: Excel.Range): Promise<boolean>
     {
-        range.load("width");
-        await ctx.sync();
+        range.load("format");
+        await context.sync();
 
-        return range.width <= 20;
+        return this.isRangeFormatInGameScoreColumn(range.format);
+    }
+
+    static isCellInGameScoreColumnFaster(areas: FastRangeAreas, range: RangeInfo): boolean
+    {
+        const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
+
+        return this.isRangeFormatInGameScoreColumn(format);
     }
 
     /*----------------------------------------------------------------------------

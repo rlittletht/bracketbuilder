@@ -1,6 +1,7 @@
 
 import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
 import { IAppContext } from "../AppContext";
+import { JsCtx } from "../Interop/JsCtx";
 
 
 // NOTE on mutex use. Most of the stuff we do is asynchronous, and while
@@ -17,7 +18,7 @@ export const _mutex = new Mutex();
 
 export interface DispatchWithCatchDelegate
 {
-    (ctx: any): void;
+    (context: JsCtx): void;
 }
 
 export class Dispatcher
@@ -28,16 +29,19 @@ export class Dispatcher
         This dispatches the given delegate and catches any exceptions, then
         reports them in the log (or output)
     ----------------------------------------------------------------------------*/
-    static async DispatchWithCatch(delegate: DispatchWithCatchDelegate, appContext: IAppContext, ctx: any)
+    static async DispatchWithCatch(delegate: DispatchWithCatchDelegate, appContext: IAppContext, context: JsCtx)
     {
         try
         {
-            await delegate(ctx);
+            appContext.setProgressVisible(true);
+            await delegate(context);
         }
         catch (error)
         {
             appContext.log(`Caught: ${error}`);
         }
+
+        appContext.setProgressVisible(false);
     }
 
     /*----------------------------------------------------------------------------
@@ -57,10 +61,17 @@ export class Dispatcher
             async () =>
             {
                 await Excel.run(
-                    async (context) => this.DispatchWithCatch(
-                        delegate,
-                        appContext,
-                        context));
+                    async (ctx) =>
+                    {
+                        const context: JsCtx = new JsCtx(ctx);
+
+                        await this.DispatchWithCatch(
+                            delegate,
+                            appContext,
+                            context);
+
+                        context.releaseAllTrackedItems();
+                    })
             });
     }
 

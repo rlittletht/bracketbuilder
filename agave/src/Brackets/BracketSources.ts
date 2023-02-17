@@ -7,6 +7,9 @@ import { IFastTables } from "../Interop/FastTables";
 import { Tables } from "../Interop/Tables";
 import { GridBuilder } from "./GridBuilder";
 import { GameNum } from "../BracketEditor/GameNum";
+import { GlobalDataBuilder } from "./GlobalDataBuilder";
+import { UndoGameDataItem } from "../BracketEditor/Undo";
+import { JsCtx } from "../Interop/JsCtx";
 
 export interface TeamNameMap
 {
@@ -18,14 +21,14 @@ export class BracketSources
 {
     static SheetName: string = "TeamsAndFields";
 
-    static async getTeamNameTable(ctx: any): Promise<Excel.Table>
+    static async getTeamNameTable(context: JsCtx): Promise<Excel.Table>
     {
-        return await Tables.getTableOrNull(ctx, null, "TeamNames");
+        return await Tables.getTableOrNull(context, null, "TeamNames");
     }
 
-    static async getGameInfoTable(ctx: any): Promise<Excel.Table>
+    static async getGameInfoTable(context: JsCtx): Promise<Excel.Table>
     {
-        return await Tables.getTableOrNull(ctx, null, "BracketSourceData");
+        return await Tables.getTableOrNull(context, null, "BracketSourceData");
     }
 
     /*----------------------------------------------------------------------------
@@ -33,14 +36,19 @@ export class BracketSources
 
         update the given game information in the bracketsourcedata table
     ----------------------------------------------------------------------------*/
-    static async updateGameInfo(ctx: any, gameNum: GameNum, field: any, time: any, swapHomeAway: boolean)
+    static async updateGameInfo(
+        context: JsCtx,
+        gameNum: GameNum,
+        field: any,
+        time: any,
+        swapHomeAway: any)
     {
         // find the team names table
-        let table: Excel.Table = await BracketSources.getGameInfoTable(ctx);
+        let table: Excel.Table = await BracketSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await ctx.sync();
+        await context.sync();
 
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
@@ -49,8 +57,10 @@ export class BracketSources
             {
                 newValues.push(
                     [
-                        gameNum.Value, field[0] == "=" ? range.values[i][1] : field,
-                        typeof time !== "number" ? range.values[i][2] : time, swapHomeAway
+                        gameNum.Value,
+                        field[0] == "=" ? range.values[i][1] : field,
+                        typeof time !== "number" ? range.values[i][2] : time,
+                        typeof swapHomeAway !== "boolean" ? range.values[i][3] : swapHomeAway
                     ]);
             }
             else
@@ -60,7 +70,76 @@ export class BracketSources
         }
 
         range.values = newValues;
-        await ctx.sync();
+        await context.sync();
+    }
+
+    static async updateGameInfoIfNotSet(
+        context: JsCtx,
+        gameNum: GameNum,
+        field: any,
+        time: any,
+        alwaysOverwriteIfGiven: boolean): Promise<UndoGameDataItem>
+    {
+        let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(gameNum, undefined, undefined, undefined, undefined);
+
+        // find the team names table
+        let table: Excel.Table = await BracketSources.getGameInfoTable(context);
+
+        let range: Excel.Range = table.getDataBodyRange();
+        range.load("values, rowCount");
+        await context.sync();
+
+        let newValues: any[][] = [];
+        for (let i = 0; i < range.rowCount; i++)
+        {
+            if (range.values[i][0] == gameNum.Value)
+            {
+                let newField: string;
+                let newTime: number;
+
+                if ((alwaysOverwriteIfGiven || range.values[i][1] == GlobalDataBuilder.DefaultField)
+                    && field[0] != "=")
+                {
+                    newField = field;
+                    undoGameDataItem.fieldNew = field;
+                    undoGameDataItem.fieldOriginal = range.values[i][1];
+                }
+                else
+                {
+                    newField = range.values[i][1];
+                }
+
+                if ((alwaysOverwriteIfGiven || range.values[i][2] == GlobalDataBuilder.DefaultStartTime)
+                    && typeof time === "number")
+                {
+                    newTime = time;
+                    undoGameDataItem.startTimeNew = time;
+                    undoGameDataItem.startTimeOriginal = range.values[i][2];
+                }
+                else
+                {
+                    newTime = range.values[i][2];
+                }
+
+                newValues.push(
+                    [
+                        gameNum.Value,
+                        newField,
+                        newTime,
+                        range.values[i][3]
+                    ]);
+                // don't try to be clever and break here -- we still have to push all the
+                // other non-matching values
+            }
+            else
+            {
+                newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
+            }
+        }
+
+        range.values = newValues;
+        await context.sync();
+        return undoGameDataItem;
     }
 
     /*----------------------------------------------------------------------------
@@ -69,14 +148,14 @@ export class BracketSources
         Update the given team names in the bracket sources team names. Its an
         array of maps (and array of [][])
     ----------------------------------------------------------------------------*/
-    static async updateBracketSourcesTeamNames(ctx: any, teamNames: TeamNameMap[])
+    static async updateBracketSourcesTeamNames(context: JsCtx, teamNames: TeamNameMap[])
     {
         // find the team names table
-        let table: Excel.Table = await BracketSources.getTeamNameTable(ctx);
+        let table: Excel.Table = await BracketSources.getTeamNameTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await ctx.sync();
+        await context.sync();
 
         // now update the values
         for (let nameMap of teamNames)
@@ -104,7 +183,7 @@ export class BracketSources
 
         range.values = newValues; // this is what will get picked up
 
-        await ctx.sync();
+        await context.sync();
     }
 
     /*----------------------------------------------------------------------------
@@ -133,9 +212,9 @@ export class BracketSources
         most up-to-date info, even if it hasn't been pushed back to this bracket
         source sheet.
     ----------------------------------------------------------------------------*/
-    static async buildBracketSourcesSheet(ctx: any, fastTables: IFastTables, bracketDefinition: BracketDefinition)
+    static async buildBracketSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(ctx, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let formulasGameInfo: any[][] = [];
         const gameInfoHeader: any[] = ["GameNum", "Field", "Time", "SwapTopBottom"];
@@ -143,19 +222,25 @@ export class BracketSources
         // we get a line for each game
         for (let i: number = 0; i < bracketDefinition.games.length; i++)
         {
-            formulasGameInfo.push([i, "Field #1", OADate.OATimeFromMinutes(18 * 60), false]);
+            formulasGameInfo.push(
+                [
+                    i,
+                    GlobalDataBuilder.DefaultField,
+                    OADate.OATimeFromMinutes(GlobalDataBuilder.DefaultStartTime),
+                    false
+                ]);
         }
 
         let range: Excel.Range = sheet.getRangeByIndexes(0, 0, formulasGameInfo.length, 4);
         range.formulas = formulasGameInfo;
-        await ctx.sync();
+        await context.sync();
 
         range = sheet.getRangeByIndexes(0, 2, formulasGameInfo.length, 1);
         range.numberFormat = [["h:mm AM/PM"]];
-        await ctx.sync();
+        await context.sync();
 
         await Tables.ensureTableExists(
-            ctx,
+            context,
             sheet,
             fastTables,
             "BracketSourceData",
@@ -172,10 +257,10 @@ export class BracketSources
 
         range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 2);
         range.formulas = formulasTeamNames;
-        await ctx.sync();
+        await context.sync();
 
         await Tables.ensureTableExists(
-            ctx,
+            context,
             sheet,
             fastTables,
             "TeamNames",
