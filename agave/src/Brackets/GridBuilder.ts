@@ -173,7 +173,7 @@ export class GridBuilder
     ----------------------------------------------------------------------------*/
     static formatGridSheetDays(sheet: Excel.Worksheet, colStart: number, days: number)
     {
-        this.formatRepeatingColumns(sheet, colStart, 3, 0, 104, days);
+        this.formatRepeatingColumns(sheet, colStart, 3, 0, 113, days);
         this.formatRepeatingColumns(sheet, colStart, 3, 1, 17.28, days);
         this.formatRepeatingColumns(sheet, colStart, 3, 2, 0.9, days);
 
