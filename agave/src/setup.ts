@@ -209,12 +209,13 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async buildSpecificBracket(appContext: IAppContext): Promise<boolean>
     {
+        appContext.setProgressVisible(true);
+
         try
         {
             await Excel.run(async (ctx) =>
             {
                 const context: JsCtx = new JsCtx(ctx);
-
                 await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
                 await appContext.invalidateHeroList(context);
                 context.releaseAllTrackedItems();
@@ -225,6 +226,7 @@ export class SetupBook
             appContext.log(`Exception caught: ${error.message}`);
         }
 
+        appContext.setProgressVisible(false);
         return false;
     }
 }
