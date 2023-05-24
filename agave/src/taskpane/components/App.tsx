@@ -227,7 +227,18 @@ export default class App extends React.Component<AppProps, AppState>
                     return true;
                 }
             });
-
+        listItems.push(
+            {
+                icon: "Hide3",
+                primaryText: "Toggle showing data sheets",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.toggleShowDataSheetsClick(appContext);
+                    return true;
+                }
+            });
         listItems.push(
             {
                 icon: "AlertSolid",
@@ -289,17 +300,6 @@ export default class App extends React.Component<AppProps, AppState>
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> => {
                     await StructureEditor.repairGameAtSelectionClick(appContext);
-                    return true;
-                }
-            });
-        listItems.push(
-            {
-                icon: "Hide3",
-                primaryText: "Toggle showing data sheets",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
-                    await StructureEditor.toggleShowDataSheetsClick(appContext);
                     return true;
                 }
             });
