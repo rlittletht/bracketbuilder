@@ -103,13 +103,13 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.getTeamSourceNameAndOverrideValuesForNamedRange
+        %%Function: StructureEditor.getTeamSourceNameOverrideValueForNamedRange
 
         returns the static source name for the game
         as well as the override (directly edited) value; or [null, null]
         if not overridden
     ----------------------------------------------------------------------------*/
-    static async getTeamSourceNameAndOverrideValuesForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
+    static async getTeamSourceNameOverrideValueForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
         : Promise<string>
     {
         let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
@@ -136,12 +136,12 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.removeGameInfoNamedRangeAndUpdateBracketSource
+        %%Function: StructureEditor.getFieldAndTimeOverrideValuesForNamedRange
 
         Given the name of the gameinfo cell, remove the named range and return
         the values for the field# and the time
     ----------------------------------------------------------------------------*/
-    static async removeGameInfoNamedRangeAndUpdateBracketSource(context: JsCtx, cellName: string): Promise<[any, any]>
+    static async getFieldAndTimeOverrideValuesForNamedRange(context: JsCtx, cellName: string): Promise<[any, any]>
     {
         let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
@@ -162,8 +162,6 @@ export class StructureRemove
         const field: any = range.formulas[0][0];
         const time: any = range.formulas[2][0];
 
-        await Ranges.ensureGlobalNameDeleted(context, cellName);
-
         return [field, time];
     }
 
@@ -181,16 +179,17 @@ export class StructureRemove
         let field: string;
         let time: number;
 
-        overrideText1 = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
+        overrideText1 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
         await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
 
         if (game.IsChampionship)
             return;
 
-        overrideText2 = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
+        overrideText2 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
         await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
 
-        [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(context, game.GameNumberCellName);
+        [field, time] = await this.getFieldAndTimeOverrideValuesForNamedRange(context, game.GameNumberCellName);
+        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
 
         let map: TeamNameMap[] = [];
 
