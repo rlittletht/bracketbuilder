@@ -110,12 +110,12 @@ export class StructureRemove
         if not overridden
     ----------------------------------------------------------------------------*/
     static async getTeamSourceNameAndOverrideValuesForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
-        : Promise<[string, string]>
+        : Promise<string>
     {
         let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
         if (range == null)
-            return [null, null];
+            return null;
 
         range.load("formulas");
         await context.sync();
@@ -124,15 +124,15 @@ export class StructureRemove
 
         // if this team name is not static, then we don't propagate any direct typing
         if (!BracketGame.IsTeamSourceStatic(gameTeamName))
-            return [null, null];
+            return null;
 
         if (value[0] == "=")
         {
             // there was no direct edit. return no update
-            return [null, null];
+            return null;
         }
 
-        return [gameTeamName, value];
+        return value;
     }
 
     /*----------------------------------------------------------------------------
@@ -176,20 +176,18 @@ export class StructureRemove
     ----------------------------------------------------------------------------*/
     static async removeNamedRangesAndUpdateBracketSources(context: JsCtx, game: IBracketGame)
     {
-        let gameTeamName1: string;
         let overrideText1: string;
-        let gameTeamName2: string;
         let overrideText2: string;
         let field: string;
         let time: number;
 
-        [gameTeamName1, overrideText1] = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
+        overrideText1 = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
         await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
 
         if (game.IsChampionship)
             return;
 
-        [gameTeamName2, overrideText2] = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
+        overrideText2 = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
         await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
 
         [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(context, game.GameNumberCellName);
@@ -199,13 +197,13 @@ export class StructureRemove
         if (overrideText1 && overrideText1 != null && overrideText1 != "")
             map.push(
                 {
-                    teamNum: gameTeamName1,
+                    teamNum: game.TopTeamName,
                     name: overrideText1
                 });
         if (overrideText2 && overrideText2 != null && overrideText2 != "")
             map.push(
                 {
-                    teamNum: gameTeamName2,
+                    teamNum: game.BottomTeamName,
                     name: overrideText2
                 });
 
@@ -213,7 +211,7 @@ export class StructureRemove
         if (field && field != null && field != "")
             await BracketSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom);
 
-        console.log(`saved: ${gameTeamName1}=${overrideText1}, ${gameTeamName2}=${overrideText2}, field=${field}, time=${time}`);
+        console.log(`saved: ${game.TopTeamName}=${overrideText1}, ${game.BottomTeamName}=${overrideText2}, field=${field}, time=${time}`);
     }
 
     /*----------------------------------------------------------------------------
