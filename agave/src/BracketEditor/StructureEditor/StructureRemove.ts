@@ -103,9 +103,14 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.removeNamedRangeAndUpdateBracketSource
+        %%Function: StructureEditor.getTeamSourceNameAndOverrideValuesForNamedRange
+
+        returns the static source name for the game
+        as well as the override (directly edited) value; or [null, null]
+        if not overridden
     ----------------------------------------------------------------------------*/
-    static async removeNamedRangeAndUpdateBracketSource(context: JsCtx, cellName: string, gameTeamName: string): Promise<[string, string]>
+    static async getTeamSourceNameAndOverrideValuesForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
+        : Promise<[string, string]>
     {
         let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
@@ -116,7 +121,6 @@ export class StructureRemove
         await context.sync();
 
         const value: string = range.formulas[0][0];
-        await Ranges.ensureGlobalNameDeleted(context, cellName);
 
         // if this team name is not static, then we don't propagate any direct typing
         if (!BracketGame.IsTeamSourceStatic(gameTeamName))
@@ -179,12 +183,14 @@ export class StructureRemove
         let field: string;
         let time: number;
 
-        [gameTeamName1, overrideText1] = await this.removeNamedRangeAndUpdateBracketSource(context, game.TopTeamCellName, game.TopTeamName);
+        [gameTeamName1, overrideText1] = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
+        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
 
         if (game.IsChampionship)
             return;
 
-        [gameTeamName2, overrideText2] = await this.removeNamedRangeAndUpdateBracketSource(context, game.BottomTeamCellName, game.BottomTeamName);
+        [gameTeamName2, overrideText2] = await this.getTeamSourceNameAndOverrideValuesForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
+        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
 
         [field, time] = await this.removeGameInfoNamedRangeAndUpdateBracketSource(context, game.GameNumberCellName);
 
