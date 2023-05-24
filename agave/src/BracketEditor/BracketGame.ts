@@ -11,6 +11,8 @@ import { OADate } from "../Interop/Dates";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
+import { StructureRemove } from "./StructureEditor/StructureRemove";
 
 export interface IBracketGame
 {
@@ -40,6 +42,7 @@ export interface IBracketGame
     get IsChampionship(): boolean;
     get IsIfNecessaryGame(): boolean; // this is true if this game is the 'what-if' game before the championship
     get WinningTeamAdvancesToGameId(): GameId;
+    get NeedsRepair(): boolean; // has this game been manually edited? (and thus needs repair?
 
     FormatTime(): string;
     FormatLoser(): string;
@@ -78,6 +81,26 @@ export class BracketGame implements IBracketGame
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
     m_isIfNecessaryGame: boolean;
+    m_topTeamOverride: string;
+    m_bottomTeamOverride: string;
+    m_fieldOverride: string;
+    m_timeOverride: number;
+
+    get NeedsRepair(): boolean
+    {
+        if (this.IsChampionship)
+            return false;
+
+        if (this.m_bottomTeamOverride != null
+            || this.m_topTeamOverride != null
+            || this.m_fieldOverride != null
+            || this.m_timeOverride != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     SetStartTime(time: number)
     {
@@ -371,11 +394,11 @@ export class BracketGame implements IBracketGame
                             return sheetGet;
                         });
 
-//                if (sheet == null)
-//                {
-//                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-//                    await context.sync();
-//                }
+                //                if (sheet == null)
+                //                {
+                //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                //                    await context.sync();
+                //                }
 
                 AppContext.checkpoint("b.8");
 
@@ -445,7 +468,14 @@ export class BracketGame implements IBracketGame
                 if (appContext != null)
                     appContext.Timer.pauseAggregatedTimer("innerGameNum");
             }
+            // now figure out if we need to repair this game
+            if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
+                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName);
 
+            if (BracketGame.IsTeamSourceStatic(this.BottomTeamName))
+                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
+
+            [this.m_fieldOverride, this.m_timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
         }
 
         AppContext.checkpoint("b.13");
