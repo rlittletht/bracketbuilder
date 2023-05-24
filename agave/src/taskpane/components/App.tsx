@@ -229,6 +229,19 @@ export default class App extends React.Component<AppProps, AppState>
             });
         listItems.push(
             {
+                icon: "BranchMerge",
+                primaryText: "Update brackets with changes",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    // await StructureEditor.syncBracketChangesFromGameSheet(appContext);
+                    appContext;
+                    return true;
+                }
+            });
+        listItems.push(
+            {
                 icon: "Hide3",
                 primaryText: "Toggle showing data sheets",
                 cursor: "cursorPointer",

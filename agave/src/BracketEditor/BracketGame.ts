@@ -91,9 +91,9 @@ export class BracketGame implements IBracketGame
         if (this.IsChampionship)
             return false;
 
-        if (this.m_bottomTeamOverride != null
-            || this.m_topTeamOverride != null
-            || this.m_fieldOverride != null
+        if ((this.m_bottomTeamOverride != null && this.m_bottomTeamOverride != "")
+            || (this.m_topTeamOverride != null && this.m_topTeamOverride != "")
+            || (this.m_fieldOverride != null && this.m_fieldOverride != "" && this.m_fieldOverride[0] != "=")
             || this.m_timeOverride != 0)
         {
             return true;
@@ -475,7 +475,10 @@ export class BracketGame implements IBracketGame
             if (BracketGame.IsTeamSourceStatic(this.BottomTeamName))
                 this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
 
-            [this.m_fieldOverride, this.m_timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
+            let timeOverride: number;
+
+            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
+            this.m_timeOverride = typeof timeOverride !== "number" ? 0 : timeOverride;
         }
 
         AppContext.checkpoint("b.13");
