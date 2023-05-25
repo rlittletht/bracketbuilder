@@ -23,6 +23,23 @@ let _moveSelection: RangeInfo = null;
 export class StructureEditor
 {
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.syncBracketChangesFromGameSheet
+
+        sync any override changes from the game sheet into the field & team
+        tables.
+    ----------------------------------------------------------------------------*/
+    static async syncBracketChangesFromGameSheetClick(appContext: IAppContext)
+    {
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.syncBracketChangesFromGameSheet(appContext, context);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.toggleShowDataSheetsClick
 
         Show or hide all the supporting sheets.
@@ -37,6 +54,7 @@ export class StructureEditor
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.undoClick
 
@@ -223,6 +241,53 @@ export class StructureEditor
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.syncBracketChangesFromGameSheet
+
+        repair all the items that are 'dirty'
+    ----------------------------------------------------------------------------*/
+    static async syncBracketChangesFromGameSheet(appContext: IAppContext, context: JsCtx)
+    {
+        const bracketName: string = await this.getBracketName(context);
+
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        const bookmark: string = "syncBracketChanges";
+        context.pushTrackingBookmark(bookmark);
+
+        // enumerate all the games and collect them
+        const items: GridItem[] = [];
+
+        grid.enumerateMatching(
+            (item: GridItem) =>
+            {
+                items.push(item);
+                return true;
+            },
+            (item: GridItem) =>
+            {
+                return !item.isLineRange;
+            });
+
+        const changes: GridChange[] = [];
+
+        for (let item of items)
+        {
+            const game: IBracketGame = await BracketGame.CreateFromGameId(context, bracketName, item.GameId);
+
+            if (game.NeedsRepair)
+            {
+                changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
+                changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
+            }
+        }
+
+        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+
+        context.releaseTrackedItemsUntil(bookmark);
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.toggleShowDataSheets

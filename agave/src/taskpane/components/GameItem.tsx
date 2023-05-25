@@ -50,7 +50,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 fontSize: 12,
                 height: 0,
                 width: 0,
-                margin: '11px -12px'
+                margin: '11px -8px'
             });
 
         const iconColors = mergeStyleSets(
@@ -74,41 +74,37 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
         return (
             <div className="singleGameItem" style={background}>
-                <Stack horizontal gap={0}>
-                    <Stack.Item grow={0}>
+                <Stack horizontal gap={8}>
+                    <Stack.Item>
                         {dirty}
                     </Stack.Item>
-                    <Stack.Item grow={0}>
-                        <Stack horizontal gap={8}>
-                            <Stack.Item align="center" grow={0}>
-                                ({this.props.game.GameId.Value})
+                    <Stack.Item align="center" grow={0}>
+                        ({this.props.game.GameId.Value})
+                    </Stack.Item>
+                    <Stack.Item align="center" grow={2}>
+                        {gameTitle}
+                    </Stack.Item>
+                    <Stack.Item align="center" grow={0}>
+                        <Stack horizontal horizontalAlign="end">
+                            <Stack.Item grow={0}>
+                                <ActionButton
+                                    appContext={this.props.appContext}
+                                    tooltip="Insert Game"
+                                    tooltipId={`gid-${this.props.game.GameId.Value}`}
+                                    bracketGame={this.props.game}
+                                    delegate={this.DoInsertGame}
+                                    disabled={false}
+                                    icon="Add"/>
                             </Stack.Item>
-                            <Stack.Item align="center" grow={2}>
-                                {gameTitle}
-                            </Stack.Item>
-                            <Stack.Item align="center" grow={0}>
-                                <Stack horizontal horizontalAlign="end">
-                                    <Stack.Item grow={0}>
-                                        <ActionButton
-                                            appContext={this.props.appContext}
-                                            tooltip="Insert Game"
-                                            tooltipId={`gid-${this.props.game.GameId.Value}`}
-                                            bracketGame={this.props.game}
-                                            delegate={this.DoInsertGame}
-                                            disabled={false}
-                                            icon="Add"/>
-                                    </Stack.Item>
-                                    <Stack.Item grow={0}>
-                                        <ActionButton
-                                            appContext={this.props.appContext}
-                                            tooltip="Remove Game"
-                                            tooltipId={`gid-${this.props.game.GameId.Value}`}
-                                            bracketGame={this.props.game}
-                                            delegate={this.DoRemoveGame.bind(this)}
-                                            disabled={false}
-                                            icon="Remove"/>
-                                    </Stack.Item>
-                                </Stack>
+                            <Stack.Item grow={0}>
+                                <ActionButton
+                                    appContext={this.props.appContext}
+                                    tooltip="Remove Game"
+                                    tooltipId={`gid-${this.props.game.GameId.Value}`}
+                                    bracketGame={this.props.game}
+                                    delegate={this.DoRemoveGame.bind(this)}
+                                    disabled={false}
+                                    icon="Remove"/>
                             </Stack.Item>
                         </Stack>
                     </Stack.Item>

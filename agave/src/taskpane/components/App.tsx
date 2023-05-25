@@ -235,7 +235,7 @@ export default class App extends React.Component<AppProps, AppState>
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    // await StructureEditor.syncBracketChangesFromGameSheet(appContext);
+                    await StructureEditor.syncBracketChangesFromGameSheetClick(appContext);
                     appContext;
                     return true;
                 }
