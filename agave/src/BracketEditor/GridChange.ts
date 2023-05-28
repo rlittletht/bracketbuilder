@@ -3,7 +3,9 @@ import { GridItem } from "./GridItem";
 export enum GridChangeOperation
 {
     Insert,
-    Remove
+    InsertLite,
+    Remove,
+    RemoveLite
 }
 
 export class GridChange
@@ -39,6 +41,17 @@ export class GridChange
 
     toString(): string
     {
-        return `${this.m_changeOp == GridChangeOperation.Remove ? "<" : ">"} ${this.GameId == null ? -1 : this.GameId.Value}:${this.SwapTopBottom ? "S" : ""} ${this.Range.toString()}`;
+        let sOp: string = "";
+
+        if (this.m_changeOp == GridChangeOperation.Insert)
+            sOp = ">";
+        else if (this.m_changeOp == GridChangeOperation.InsertLite)
+            sOp = "~>";
+        else if (this.m_changeOp == GridChangeOperation.Remove)
+            sOp = "<";
+        else if (this.m_changeOp == GridChangeOperation.RemoveLite)
+            sOp = "<~";
+
+        return `${sOp} ${this.GameId == null ? -1 : this.GameId.Value}:${this.SwapTopBottom ? "S" : ""} ${this.Range.toString()}`;
     }
 }

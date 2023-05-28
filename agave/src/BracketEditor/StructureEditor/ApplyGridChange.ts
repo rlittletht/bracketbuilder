@@ -31,11 +31,17 @@ export class ApplyGridChange
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.executeRemoveChange
+
+        if the Op is RemoveLite, there's really nothing to do -- the Insert is
+        going to assume all the named ranges are already there
     ----------------------------------------------------------------------------*/
     static async executeRemoveChange(appContext: IAppContext1, context: JsCtx, change: GridChange, bracketName: string)
     {
         if (change.IsLine)
         {
+            if (change.ChangeOp == GridChangeOperation.RemoveLite)
+                return;
+
             AppContext.checkpoint("appc.3");
             // simple, just remove the line formatting
             GameFormatting.removeAllGameFormatting(
@@ -64,20 +70,27 @@ export class ApplyGridChange
         // just delete the range
         if (game == null || !game.IsLinkedToBracket)
         {
+            if (change.ChangeOp == GridChangeOperation.RemoveLite)
+                return;
+
             AppContext.checkpoint("appc.8");
-            await StructureRemove.removeGame(appContext, context, null, change.Range, false);
+            await StructureRemove.removeGame(appContext, context, null, change.Range, false, false);
             AppContext.checkpoint("appc.9");
         }
         else
         {
             AppContext.checkpoint("appc.10");
-            await StructureRemove.removeGame(appContext, context, game, change.Range, false);
+            await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite);
             AppContext.checkpoint("appc.11");
         }
     }
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.executeAddChange
+
+        if the ChangeOp is InsertLite, then all we are going to do is insert
+        the formulas and text. The names and structure are assumed to already
+        be there.
     ----------------------------------------------------------------------------*/
     static async executeAddChange(appContext: IAppContext2, context: JsCtx, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
     {
@@ -88,6 +101,10 @@ export class ApplyGridChange
         AppContext.checkpoint("appc.14");
         if (change.IsLine)
         {
+            if (change.ChangeOp == GridChangeOperation.InsertLite)
+                // nothing to undo since there's no action...
+                return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
+
             AppContext.checkpoint("appc.14.1");
 
             // just format the range as an underline
@@ -105,22 +122,37 @@ export class ApplyGridChange
         AppContext.checkpoint("appc.15");
         await game.Load(context, appContext, bracketName, change.GameId.GameNum);
         AppContext.checkpoint("appc.16");
-        if (game.IsLinkedToBracket)
-            throw "game can't be linked - we should have already removed it from the bracket";
 
-        game.SetSwapTopBottom(change.SwapTopBottom);
-        game.SetStartTime(change.StartTime);
-        game.SetField(change.Field);
+        let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
 
-        AppContext.checkpoint("appc.17");
+        if (change.ChangeOp == GridChangeOperation.InsertLite)
+        {
+            if (!game.IsLinkedToBracket)
+                throw "game not linked on InsertLite operation";
 
-        const undoGameDataItem: UndoGameDataItem =
-            await BracketSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+            if (game.SwapTopBottom != change.SwapTopBottom)
+                throw "swap top/bottom not set correctly on InsertLite operation";
+        }
+        else
+        {
+            if (game.IsLinkedToBracket)
+                throw "game can't be linked - we should have already removed it from the bracket";
+
+            game.SetSwapTopBottom(change.SwapTopBottom);
+            game.SetStartTime(change.StartTime);
+
+            game.SetField(change.Field);
+
+            AppContext.checkpoint("appc.17");
+
+            undoGameDataItem =
+                await BracketSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+        }
 
         if (game.IsChampionship)
             await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range);
         else
-            await StructureInsert.insertGameAtRange(appContext, context, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom);
+            await StructureInsert.insertGameAtRange(appContext, context, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite);
 
         AppContext.checkpoint("appc.18");
 
@@ -145,7 +177,7 @@ export class ApplyGridChange
         for (let item of changes)
         {
             AppContext.checkpoint("appc.2");
-            if (item.ChangeOp == GridChangeOperation.Insert)
+            if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
                 continue;
 
             await this.executeRemoveChange(appContext, context, item, bracketName);
@@ -159,7 +191,7 @@ export class ApplyGridChange
         for (let item of changes)
         {
             AppContext.checkpoint("appc.13");
-            if (item.ChangeOp == GridChangeOperation.Remove)
+            if (item.ChangeOp == GridChangeOperation.Remove || item.ChangeOp == GridChangeOperation.RemoveLite)
                 continue;
 
             let undoGameDataItem: UndoGameDataItem =

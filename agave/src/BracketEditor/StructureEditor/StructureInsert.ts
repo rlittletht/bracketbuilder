@@ -161,7 +161,43 @@ export class StructureInsert
         return;
     }
 
+    static setTargetFormulasForGame(
+        game: IBracketGame,
+        insertRangeInfo: RangeInfo,
+        insertRange: Excel.Range,
+        gameInfoRangeInfo: RangeInfo): Excel.Range
+    {
+        // figure out how big the game will be (width,height)
+        const formulas: any[][] = [];
 
+        formulas.push(
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
+
+        // push padding for the underline row AND the number of blank lines 
+        this.pushPadding(
+            formulas,
+            ["", ""],
+            gameInfoRangeInfo.FirstRow
+            - (insertRangeInfo.FirstRow + 1));
+
+        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId.Value}`]);
+        // we will fill in the game info text later. for now just push space
+
+        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
+
+        formulas.push(
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
+
+        const rngTarget: Excel.Range = insertRange.worksheet.getRangeByIndexes(
+            insertRangeInfo.FirstRow,
+            insertRangeInfo.FirstColumn,
+            insertRangeInfo.RowCount,
+            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+
+        rngTarget.formulas = formulas;
+
+        return rngTarget;
+    }
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
 
@@ -174,7 +210,8 @@ export class StructureInsert
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
-        connectedBottom: boolean)
+        connectedBottom: boolean,
+        liteInsert: boolean)
     {
         const bookmark: string = "insertGameAtRange";
 
@@ -204,34 +241,10 @@ export class StructureInsert
 
         const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
-        // figure out how big the game will be (width,height)
-        let formulas: any[][] = [];
+        let rngTarget: Excel.Range = this.setTargetFormulasForGame(game, insertRangeInfo, rng, gameInfoRangeInfo);
 
-        formulas.push(
-            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
+        context.Ctx.trackedObjects.add(rngTarget);
 
-        // push padding for the underline row AND the number of blank lines 
-        this.pushPadding(
-            formulas,
-            ["", ""],
-            gameInfoRangeInfo.FirstRow
-            - (insertRangeInfo.FirstRow + 1));
-
-        formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId.Value}`]);
-        // we will fill in the game info text later. for now just push space
-
-        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
-
-        formulas.push(
-            [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
-
-        let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
-            insertRangeInfo.FirstRow,
-            insertRangeInfo.FirstColumn,
-            insertRangeInfo.RowCount,
-            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
-
-        rngTarget.formulas = formulas;
         this.setAndFormatGameInfo(
             rng.worksheet,
             new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4, insertRangeInfo.FirstColumn, 1),
@@ -240,31 +253,32 @@ export class StructureInsert
             connectedTop,
             connectedBottom);
 
-        context.Ctx.trackedObjects.add(rngTarget);
+        if (!liteInsert)
+        {
+            // if there are any existing global names for this game, they will get deleted -- 
+            // by now, we are committed to this game going in this spot
 
-        // if there are any existing global names for this game, they will get deleted -- 
-        // by now, we are committed to this game going in this spot
+            // now we have to format the game and assign global names
+            GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
+            await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        // now we have to format the game and assign global names
-        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+            GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+            await Ranges.createOrReplaceNamedRange(context, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
 
-        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(context, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
+            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
+            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
+            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
 
-        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
-        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
-        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
+            context.Ctx.trackedObjects.remove(rngTarget);
+            rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
+            context.Ctx.trackedObjects.add(rngTarget);
 
-        context.Ctx.trackedObjects.remove(rngTarget);
-        rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
-        context.Ctx.trackedObjects.add(rngTarget);
+            GameFormatting.formatGameInfoGameNumberRequest(rngTarget);
+            await Ranges.createOrReplaceNamedRange(context, game.GameNumberCellName, rngTarget);
+            // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
+            await game.Bind(context, appContext);
+        }
 
-        GameFormatting.formatGameInfoGameNumberRequest(rngTarget);
-        await Ranges.createOrReplaceNamedRange(context, game.GameNumberCellName, rngTarget);
-
-        // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(context, appContext);
         context.Ctx.trackedObjects.remove(rngTarget);
         context.Ctx.trackedObjects.remove(rng);
         context.Ctx.trackedObjects.remove(sheet);
