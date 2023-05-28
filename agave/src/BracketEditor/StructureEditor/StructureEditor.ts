@@ -278,8 +278,8 @@ export class StructureEditor
 
             if (game.NeedsRepair)
             {
-                changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
-                changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
+                changes.push(new GridChange(GridChangeOperation.RemoveLite, GridItem.createFromItem(item)));
+                changes.push(new GridChange(GridChangeOperation.InsertLite, GridItem.createFromItem(item)));
             }
         }
 
@@ -444,7 +444,7 @@ export class StructureEditor
         }
 
         // since we want to delete and add it back, we're going to manually
-        // create out diff list
+        // create our diff list
         let changes: GridChange[] = [];
 
         changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));

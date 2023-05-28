@@ -165,31 +165,25 @@ export class StructureRemove
         return [field, time];
     }
 
-
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.removeNamedRangesAndUpdateBracketSources
+        %%Function: StructureRemove.updateBracketSourcesWithOverrides
 
-        remove the named ranges for this game. also, get any direct edits from
-        these ranges and propagate these edits to the bracket sources table
+        get any direct edits from these ranges and propagate these edits to the
+        bracket sources table
     ----------------------------------------------------------------------------*/
-    static async removeNamedRangesAndUpdateBracketSources(context: JsCtx, game: IBracketGame)
+    static async updateBracketSourcesWithOverrides(context: JsCtx, game: IBracketGame)
     {
         let overrideText1: string;
         let overrideText2: string;
         let field: string;
         let time: number;
 
-        overrideText1 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
-        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
-
         if (game.IsChampionship)
             return;
 
+        overrideText1 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
         overrideText2 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
-        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
-
         [field, time] = await this.getFieldAndTimeOverrideValuesForNamedRange(context, game.GameNumberCellName);
-        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
 
         let map: TeamNameMap[] = [];
 
@@ -214,13 +208,25 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.removeNamedRangesAndUpdateBracketSources
+
+        remove the named ranges for this game. 
+    ----------------------------------------------------------------------------*/
+    static async removeNamedRanges(context: JsCtx, game: IBracketGame)
+    {
+        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
+        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
+        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.removeGame
 
         Remove the given bracket game from the sheet.
         If only the rangeinfo is provided, then use that as the range to remove.
         If both are provided, they must be consistent.
     ----------------------------------------------------------------------------*/
-    static async removeGame(appContext: IAppContext1, context: JsCtx, game: IBracketGame, range: RangeInfo, removeConnections: boolean)
+    static async removeGame(appContext: IAppContext1, context: JsCtx, game: IBracketGame, range: RangeInfo, removeConnections: boolean, liteRemove: boolean)
     {
         AppContext.checkpoint("remgm.1");
 
@@ -234,7 +240,9 @@ export class StructureRemove
 
         if (game != null && game.IsLinkedToBracket)
         {
-            await this.removeNamedRangesAndUpdateBracketSources(context, game);
+            await this.updateBracketSourcesWithOverrides(context, game)
+            if (!liteRemove)
+                await this.removeNamedRanges(context, game);
             /*
                         // obliterate can't deal with the named ranges (there's no way to map
                         // range back to named item), but we know the names, so we can delete them
@@ -248,7 +256,8 @@ export class StructureRemove
         }
 
         AppContext.checkpoint("remgm.4");
-        await this.obliterateGameRangeFromSheet(context, appContext, range == null ? game.FullGameRange : range, removeConnections);
+        if (!liteRemove)
+            await this.obliterateGameRangeFromSheet(context, appContext, range == null ? game.FullGameRange : range, removeConnections);
 
         AppContext.checkpoint("remgm.5");
     }
@@ -302,7 +311,7 @@ export class StructureRemove
         {
             if (grid.doesRangeOverlap(rangeSelected) == RangeOverlapKind.None)
             {
-                await this.removeGame(appContext, context, null, rangeSelected, true);
+                await this.removeGame(appContext, context, null, rangeSelected, true, false /*liteRemove*/);
                 return;
             }
         }
