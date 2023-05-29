@@ -15,6 +15,7 @@ export interface TeamNameMap
 {
     teamNum: string;
     name: string;
+    priority: number;
 }
 
 export class BracketSources
@@ -178,7 +179,7 @@ export class BracketSources
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
         {
-            newValues.push([range.values[i][0], range.values[i][1]]);
+            newValues.push([range.values[i][0], range.values[i][1], range.values[i][2]]);
         }
 
         range.values = newValues; // this is what will get picked up
@@ -197,7 +198,7 @@ export class BracketSources
         There are two tables on this sheet:
 
         1) Each game has field/time/homeAwaySwap info
-        2) Each team number has a team name associated
+        2) Each team number has a team name associated and a 'priority'
 
         When games are inserted onto the grid, they get formulas pointing into
         this sheet. If someone subsequently edits the grid, that will overwrite
@@ -248,14 +249,14 @@ export class BracketSources
             gameInfoHeader);
 
         let formulasTeamNames: any[][] = [];
-        const teamNameHeader: any[] = ["TeamNum", "TeamName"];
+        const teamNameHeader: any[] = ["TeamNum", "TeamName", "Priority"];
 
         for (let i: number = 0; i < bracketDefinition.teamCount; i++)
         {
-            formulasTeamNames.push([`Team ${i + 1}`, `Team ${i + 1}`]);
+            formulasTeamNames.push([`Team ${i + 1}`, `Team ${i + 1}`, 1]);
         }
 
-        range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 2);
+        range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 3);
         range.formulas = formulasTeamNames;
         await context.sync();
 
@@ -264,7 +265,7 @@ export class BracketSources
             sheet,
             fastTables,
             "TeamNames",
-            Ranges.addressFromCoordinates([formulasGameInfo.length + 3, 0], [formulasGameInfo.length + 3 + formulasTeamNames.length - 1, 1]),
+            Ranges.addressFromCoordinates([formulasGameInfo.length + 3, 0], [formulasGameInfo.length + 3 + formulasTeamNames.length - 1, 2]),
             teamNameHeader);
     }
 }

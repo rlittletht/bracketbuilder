@@ -20,6 +20,13 @@
                 LFBR_AfterComma: 13,
                 LFBR_SecondNum: 14,
                 LookingForSwapChars: 15,
+                LookingForPriorities: 16,
+                LFP_AfterOpen: 17,
+                LFP_FirstNum: 18,
+                LFP_AfterFirstComma: 19,
+                LFP_SecondNum: 20,
+                LFP_AfterSecondComma: 21,
+                LFP_ThirdNum: 22,
             };
 
             const parseStateCode =
@@ -355,7 +362,7 @@
                     { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
                     { psNext: parseState.LFBR_SecondNum, term: false }, // digit
                     { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [
-                    { psNext: parseState.LookingForGame, term: true, production: prodCaptureEndNotInclusive, key: "BottomRightSecondNum" }, // ]
+                    { psNext: parseState.LookingForPriorities, term: false, production: prodCaptureEndNotInclusive, key: "BottomRightSecondNum" }, // ]
                     { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
                     { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
                     { psNext: parseState.LFBR_SecondNum, term: false }, // WS
@@ -376,6 +383,97 @@
                     { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
                     { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
                 ], /*LookingForSwapChars*/
+                [
+                    { psNext: parseState.LookingForGame, term: true, unget:true }, // other
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // hypen
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // digit
+                    { psNext: parseState.LFP_AfterOpen, term: false }, // (
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // )
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // ,
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // :
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // WS
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // [NS]
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // [tf]
+                    { psNext: parseState.LookingForGame, term: true, unget: true }, // [rueals]
+                ], /*LookingForPriorities*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset}, // other
+                    { psNext: parseState.LFP_FirstNum, term: false, production: prodCaptureStart }, // hypen
+                    { psNext: parseState.LFP_FirstNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // (
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // )
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFP_AfterOpen, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFP_AfterOpen*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFP_FirstNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // (
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // )
+                    { psNext: parseState.LFP_AfterFirstComma, term: false, production: prodCaptureEndNotInclusive, key: "Priority1" }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFP_AfterOpen, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFP_FirstNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LFP_SecondNum, term: false, production: prodCaptureStart }, // hypen
+                    { psNext: parseState.LFP_SecondNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // (
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // )
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFP_AfterFirstComma, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFP_AfterFirstComma*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFP_SecondNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // (
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // )
+                    { psNext: parseState.LFP_AfterSecondComma, term: false, production: prodCaptureEndNotInclusive, key: "Priority2" }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFP_AfterFirstComma, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFP_SecondNum*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LFP_ThirdNum, term: false, production: prodCaptureStart }, // hypen
+                    { psNext: parseState.LFP_ThirdNum, term: false, production: prodCaptureStart }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // (
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // )
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFP_AfterSecondComma, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFP_AfterSecondComma*/
+                [
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // other
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // hypen
+                    { psNext: parseState.LFP_ThirdNum, term: false }, // digit
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // (
+                    { psNext: parseState.LookingForGame, term: true, production: prodCaptureEndNotInclusive, key: "Priority3" }, // )
+                    { psNext: parseState.LFP_AfterSecondComma, term: false, production: prodTotalReset }, // ,
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // :
+                    { psNext: parseState.LFP_AfterSecondComma, term: false }, // WS
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [NS]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [tf]
+                    { psNext: parseState.LookingForGame, term: false, production: prodTotalReset }, // [rueals]
+                ], /*LFP_ThirdNum*/
             ];
 
             function prodTotalReset(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
@@ -484,7 +582,7 @@
                             topLeft: [parseInt(token.coord0), parseInt(token.coord1)],
                             bottomRight: [parseInt(token.coord2), parseInt(token.coord3)],
                             swapped: token.swapHomeAway && token.swapHomeAway === "true"
-                    }
+                        }
                         items.push(item);
                     }
                 }
@@ -511,7 +609,10 @@
                             gameNumber: parseInt(token.gameNum),
                             topLeft: [parseInt(token.TopLeftFirstNum), parseInt(token.TopLeftSecondNum)],
                             bottomRight: [parseInt(token.BottomRightFirstNum), parseInt(token.BottomRightSecondNum)],
-                            swapped: token.swapHomeAway && token.swapHomeAway === "S"
+                            swapped: token.swapHomeAway && token.swapHomeAway === "S",
+                            topPriority: token.Priority1,
+                            bottomPriority: token.Priority2,
+                            gamePriority: token.Priority3
                         }
                         items.push(item);
                     }
@@ -550,6 +651,7 @@
                     item.bottomRight[0] * dySize - item.topLeft[0] * dySize + dySize);
 
                 const text1 = "" + item.topLeft[0] + "," + item.topLeft[1];
+                const priTop = item.topPriority ? ("(" + item.topPriority + ")") : "";
 
                 ctx.fillStyle = "#ffffff";
                 if (item.gameNumber == -1)
@@ -564,7 +666,7 @@
                 {
                     ctx.font = "10px Arial";
                     ctx.fillText(
-                        text1,
+                        text1 + priTop,
                         item.topLeft[1] * dxSize + dxSize / 8,
                         item.topLeft[0] * dySize + dySize * 1.5);
 
@@ -572,13 +674,16 @@
 
                 if (item.gameNumber != -1)
                 {
-                    const text2 = "" + item.bottomRight[0] + "," + item.bottomRight[1];
+                    const priBottom = item.bottomPriority ? ("(" + item.bottomPriority + ")") : "";
+                    const priGame = item.gamePriority ? ("(" + item.gamePriority + ")") : "";
+
+                    const text2 = priBottom + item.bottomRight[0] + "," + item.bottomRight[1];
                     ctx.fillText(
                         text2,
-                        item.bottomRight[1] * dxSize - dxSize / 4,
+                        priGame == "" ? item.bottomRight[1] * dxSize - dxSize / 4 : item.bottomRight[1] * dxSize - dxSize,
                         item.bottomRight[0] * dySize);
 
-                    const game = "" + item.gameNumber + ((item.swapped && item.swapped == true) ? " (S)" : "");
+                    const game = "" + item.gameNumber + ((item.swapped && item.swapped == true) ? " (S)" : "") + priGame;
                     ctx.fillText(
                         game,
                         (item.topLeft[1] + (item.bottomRight[1] - item.topLeft[1]) / 2) * dxSize + dxSize / 4,

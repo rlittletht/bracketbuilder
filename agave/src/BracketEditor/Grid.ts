@@ -1,5 +1,5 @@
 import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
-import { BracketDefinition } from "../Brackets/BracketDefinitions";
+import { BracketDefinition, BracketManager } from "../Brackets/BracketDefinitions";
 import { BracketGame, IBracketGame } from "./BracketGame";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
@@ -19,6 +19,7 @@ import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { PerfTimer } from "../PerfTimer";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { Prioritizer } from "./StructureEditor/Prioritizer";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -51,6 +52,8 @@ export class Grid
     m_fLogChanges: boolean = s_staticConfig.logGridChanges;
     m_fLogGrid: boolean = s_staticConfig.logGrid;
     m_startingSlots: number[] = [10 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 9 * 60];
+    m_mapGameItem: Map<number, GridItem> = new Map<number, GridItem>();
+
 
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
     get FieldsToUse(): number { return this.m_fieldsToUse; }
@@ -70,6 +73,19 @@ export class Grid
     getDateFromGridItem(item: GridItem): Date
     {
         return this.getDateFromGridColumn(item.Range.FirstColumn);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getItemForGameId
+
+        return the grid item for the given game id.
+    ----------------------------------------------------------------------------*/
+    getItemForGameId(gameId: GameId): GridItem
+    {
+        if (this.m_mapGameItem.has(gameId.Value))
+            return this.m_mapGameItem.get(gameId.Value);
+
+        return null;
     }
 
     /*----------------------------------------------------------------------------
@@ -806,6 +822,28 @@ export class Grid
         return rangeReturn;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.inferGamePriorityFromSource
+
+        Infer the priority for this team based on its source.
+        If the source game has the same priority for both teams, then the result
+        of the game is irrelevant -- the priority will be the same.
+
+        returns < 0 if we can't infer or if its not set.
+    ----------------------------------------------------------------------------*/
+    inferGamePriorityFromSource(teamSource: string): number
+    {
+        // need to see if we can infer the priority of this game
+        // get the source
+        const source: string = teamSource;
+        const gameId: GameId = BracketManager.GameIdFromWinnerLoser(source);
+        const sourceItem: GridItem = this.getItemForGameId(gameId);
+
+        if (sourceItem == null)
+            return -1;
+
+        return sourceItem.GamePriority;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.loadGridFromBracket
@@ -813,6 +851,7 @@ export class Grid
     async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
         const timer: PerfTimer = new PerfTimer();
+        const priorityMap: Map<string, number> = await Prioritizer.getTeamPriorityMap(context, null);
 
         timer.pushTimer("buld fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
@@ -862,7 +901,9 @@ export class Grid
                 if (overlapKind != RangeOverlapKind.None)
                     throw `overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`;
 
-                this.addGameRange(game.FullGameRange, game.GameId, false).attachGame(game);
+                const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
+
+                gameItem.attachGame(game);
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
@@ -893,6 +934,33 @@ export class Grid
                     if (overlapKind == RangeOverlapKind.None)
                         this.addLineRange(feederWinner);
                 }
+
+                // get the priority for the top and bottom games
+                if (game.TopTeamNameValue != "")
+                {
+                    if (priorityMap.has(game.TopTeamNameValue))
+                        gameItem.setTopPriority(priorityMap.get(game.TopTeamNameValue));
+                }
+                else
+                {
+                    const priority: number = this.inferGamePriorityFromSource(game.TopTeamName);
+                    if (priority >= 0)
+                            gameItem.setTopPriority(priority);
+                }
+
+                if (game.BottomTeamNameValue != "")
+                {
+                    if (priorityMap.has(game.BottomTeamNameValue))
+                        gameItem.setBottomPriority(priorityMap.get(game.BottomTeamNameValue));
+                }
+                else
+                {
+                    const priority: number = this.inferGamePriorityFromSource(game.BottomTeamName);
+                    if (priority >= 0)
+                        gameItem.setBottomPriority(priority);
+                }
+
+                this.m_mapGameItem.set(gameItem.GameId.Value, gameItem);
             }
             timer.stopAllAggregatedTimers();
         }
@@ -2246,7 +2314,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            console.log(`${item.GameId == null ? -1 : item.GameId.Value }:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}`);
+            console.log(`${item.GameId == null ? -1 : item.GameId.Value }:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}(${item.m_topPriority},${item.m_bottomPriority},${item.GamePriority})`);
         }
     }
 

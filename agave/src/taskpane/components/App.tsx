@@ -36,6 +36,7 @@ import { BracketSources } from "../../Brackets/BracketSources";
 import { ParserTests } from "../../Interop/Parser";
 import { JsCtx } from "../../Interop/JsCtx";
 import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
+import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
 
 /* global console, Excel, require  */
 
@@ -74,7 +75,7 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "1.0.11.0";
+    static version: string = "1.0.13.0";
 
     m_appContext: AppContext;
 
@@ -236,6 +237,19 @@ export default class App extends React.Component<AppProps, AppState>
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
                     await StructureEditor.syncBracketChangesFromGameSheetClick(appContext);
+                    appContext;
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "Brush",
+                primaryText: "Shade games by priority",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await Prioritizer.shadeGamesByPriorityClick(appContext);
                     appContext;
                     return true;
                 }

@@ -19,6 +19,30 @@ export class GridItem
     m_field: string = GlobalDataBuilder.DefaultField;
 
     m_gameId: GameId = null;
+    m_topPriority: number = -1;
+    m_bottomPriority: number = -1;
+
+    get TopPriority(): number
+    {
+        return this.m_topPriority;
+    }
+
+    get BottomPriority(): number
+    {
+        return this.m_bottomPriority;
+    }
+
+    get GamePriority(): number
+    {
+        if (this.m_topPriority == this.m_bottomPriority)
+            return this.m_topPriority;
+
+        // if either priority is unknown, the whole priority is unknown.
+        if (this.m_topPriority == -1 || this.m_bottomPriority == -1)
+            return -1;
+
+        return -2; // indeterminate
+    }
 
     get StartTime(): number
     {
@@ -70,6 +94,16 @@ export class GridItem
     get Range(): RangeInfo
     {
         return this.m_range;
+    }
+
+    setTopPriority(priority: number)
+    {
+        this.m_topPriority = priority;
+    }
+
+    setBottomPriority(priority: number)
+    {
+        this.m_bottomPriority = priority;
     }
 
     doSwapTopBottom(): GridItem

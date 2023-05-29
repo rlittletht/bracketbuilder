@@ -136,6 +136,24 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.getTeamSourceNameValueForNamedRange
+
+        returns the calculated value for the game
+    ----------------------------------------------------------------------------*/
+    static async getTeamSourceNameValueForNamedRange(context: JsCtx, cellName: string): Promise<string>
+    {
+        let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
+
+        if (range == null)
+            return "";
+
+        range.load("values");
+        await context.sync();
+
+        return range.values[0][0];
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.getFieldAndTimeOverrideValuesForNamedRange
 
         Given the name of the gameinfo cell, remove the named range and return
@@ -191,13 +209,15 @@ export class StructureRemove
             map.push(
                 {
                     teamNum: game.TopTeamName,
-                    name: overrideText1
+                    name: overrideText1,
+                    priority: 0
                 });
         if (overrideText2 && overrideText2 != null && overrideText2 != "")
             map.push(
                 {
                     teamNum: game.BottomTeamName,
-                    name: overrideText2
+                    name: overrideText2,
+                    priority: 0
                 });
 
         await BracketSources.updateBracketSourcesTeamNames(context, map);

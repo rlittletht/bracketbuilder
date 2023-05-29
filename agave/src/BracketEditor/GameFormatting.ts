@@ -89,6 +89,20 @@ export class GameFormatting
         range.merge(false);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.formatRangeForPriority
+    ----------------------------------------------------------------------------*/
+    static formatRangeForPriority(range: Excel.Range, priority: number)
+    {
+        if (priority == -2)
+            range.format.fill.color = "#FFFF00";
+        else if (priority == 0)
+            range.format.fill.color = "#C6E0B4";
+        else if (priority == 1)
+            range.format.fill.color = "#F8CBAD";
+        else
+            range.format.fill.clear();
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatRangeNormal

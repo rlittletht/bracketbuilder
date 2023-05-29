@@ -64,6 +64,8 @@ export interface IBracketGame
     get GameIdRange(): RangeInfo;
     get TopSource(): string;
     get BottomSource(): string;
+    get TopTeamNameValue(): string;
+    get BottomTeamNameValue(): string;
 }
 
 
@@ -85,6 +87,8 @@ export class BracketGame implements IBracketGame
     m_bottomTeamOverride: string;
     m_fieldOverride: string;
     m_timeOverride: number;
+    m_topTeamNameValue: string;
+    m_bottomTeamNameValue: string;
 
     get NeedsRepair(): boolean
     {
@@ -173,6 +177,9 @@ export class BracketGame implements IBracketGame
     get BracketName(): string { return this.m_bracketName;  }
     get GameId(): GameId { return this.m_gameNum.GameId; }
     get GameNum(): GameNum { return this.m_gameNum; }
+
+    get TopTeamNameValue(): string { return this.m_topTeamNameValue }
+    get BottomTeamNameValue(): string { return this.m_bottomTeamNameValue }
 
     get FullGameRange(): RangeInfo
     {
@@ -472,8 +479,12 @@ export class BracketGame implements IBracketGame
             if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
                 this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName);
 
+            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName);
+
             if (BracketGame.IsTeamSourceStatic(this.BottomTeamName))
                 this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
+
+            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName);
 
             let timeOverride: number;
 
