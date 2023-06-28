@@ -179,7 +179,11 @@ export class BracketSources
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
         {
-            newValues.push([range.values[i][0], range.values[i][1], range.values[i][2]]);
+            // if there isn't a priority column defined, then don't push it
+            if (range.values[i][2] !== undefined)
+                newValues.push([range.values[i][0], range.values[i][1], range.values[i][2]]);
+            else
+                newValues.push([range.values[i][0], range.values[i][1]]);
         }
 
         range.values = newValues; // this is what will get picked up

@@ -40,7 +40,7 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
         const { children, items, message } = this.props;
         let i: number = 0;
 
-        const stackStyles: IStackItemStyles = {
+        const stackItemStyles: IStackItemStyles = {
             root: {
                 alignItems: 'center',
                 display: 'flex',
@@ -51,7 +51,7 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
 
         const ribbonItems = items.map(
             (item, index) => (
-                <Stack.Item align="center" key={index} styles={stackStyles} >
+                <Stack.Item align="center" key={index} styles={stackItemStyles} >
                     <ActionButton
                         icon={item.icon}
                         tooltip={item.primaryText}

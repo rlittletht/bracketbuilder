@@ -37,6 +37,7 @@ import { ParserTests } from "../../Interop/Parser";
 import { JsCtx } from "../../Interop/JsCtx";
 import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
+import { s_staticConfig } from "../../StaticConfig";
 
 /* global console, Excel, require  */
 
@@ -75,7 +76,7 @@ export interface AppState
 
 export default class App extends React.Component<AppProps, AppState>
 {
-    static version: string = "1.0.13.0";
+    static version: string = s_staticConfig.version;
 
     m_appContext: AppContext;
 

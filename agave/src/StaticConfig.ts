@@ -1,6 +1,7 @@
 
 export interface StaticConfig
 {
+    version: string,
     maxGameMoves: number,
     globalLogging: boolean,
     logGridChanges: boolean,
@@ -12,6 +13,7 @@ export interface StaticConfig
 
 export const s_staticConfig: StaticConfig =
 {
+    version: "1.0.13.2",
     maxGameMoves: 4000,
     globalLogging: true,
     logGridChanges: false,
