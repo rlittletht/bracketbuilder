@@ -357,5 +357,33 @@ export const s_brackets: BracketDefinition[] =
             { winner: "T28", loser: "", topSource: "W26", bottomSource: "L26" },
             { winner: "", loser: "", topSource: "W27", bottomSource: "" },
         ]
-    },
+        },
+        {
+            name: "10 Team Broken",
+            teamCount: 10,
+            tableName: "T10BracketB",
+            games:
+                [
+                    { winner: "T5", loser: "B7", topSource: "Team 1", bottomSource: "Team 2" },
+                    { winner: "B11", loser: "T7", topSource: "Team 3", bottomSource: "Team 4" },
+                    { winner: "T6", loser: "T8", topSource: "Team 5", bottomSource: "Team 6" },
+                    { winner: "B12", loser: "T10", topSource: "Team 7", bottomSource: "Team 8" },
+                    { winner: "T11", loser: "B10", topSource: "Team 9", bottomSource: "W1" },
+                    { winner: "T12", loser: "T9", topSource: "W3", bottomSource: "Team 10" },
+                    { winner: "B9", loser: "", topSource: "L2", bottomSource: "L1" },
+                    { winner: "T10", loser: "", topSource: "L3", bottomSource: "L4" },
+                    { winner: "T13", loser: "", topSource: "L6", bottomSource: "W7" },
+                    { winner: "B14", loser: "", topSource: "W8", bottomSource: "L5" },
+                    { winner: "T16", loser: "T14", topSource: "W5", bottomSource: "W2" },
+                    { winner: "B16", loser: "B13", topSource: "W6", bottomSource: "W4" },
+                    { winner: "T15", loser: "", topSource: "W9", bottomSource: "L12" },
+                    { winner: "B15", loser: "", topSource: "L11", bottomSource: "W10" },
+                    { winner: "B17", loser: "", topSource: "W13", bottomSource: "W14" },
+                    { winner: "T18", loser: "T17", topSource: "W11", bottomSource: "W12" },
+                    { winner: "B18", loser: "", topSource: "L16", bottomSource: "W15" },
+                    { winner: "T19", loser: "B19", topSource: "W16", bottomSource: "W17" },
+                    { winner: "T20", loser: "", topSource: "W18", bottomSource: "L18" },
+                    { winner: "", loser: "", topSource: "W19", bottomSource: "" },
+                ]
+        },
 ];

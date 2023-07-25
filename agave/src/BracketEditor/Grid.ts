@@ -773,7 +773,7 @@ export class Grid
 
         matchedPatterns = 0;
         let firstMatchedColumn = -1;
-        range = new RangeInfo(firstMatchedRow, 1, 6, 1);
+        range = new RangeInfo(firstMatchedRow, 1, 2, 1);
 
         while (range.FirstColumn + 3 < 25 && matchedPatterns < 3)
         {

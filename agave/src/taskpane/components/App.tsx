@@ -90,7 +90,7 @@ export default class App extends React.Component<AppProps, AppState>
             heroTitle: "Setup a new bracket workbook!",
             setupState: SetupState.NoBracketStructure,
             errorMessage: "",
-            selectedBracket: "",
+            selectedBracket: "T8",
             bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
             games: [],
             mainToolbar: [],
@@ -532,7 +532,6 @@ export default class App extends React.Component<AppProps, AppState>
                 heroListFormat: format,
                 heroList: list,
                 heroTitle: title,
-                selectedBracket: "",
                 setupState: setupState,
                 games: []
             });
@@ -632,7 +631,7 @@ export default class App extends React.Component<AppProps, AppState>
                 return (
                     <BracketChooser alignment="center"
                         updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
-                            bracketOptions={this.state.bracketOptions} />
+                            bracketOptions={this.state.bracketOptions} initialBracket={this.state.selectedBracket}/>
                 );
             }
             else

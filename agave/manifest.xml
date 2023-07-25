@@ -8,14 +8,11 @@
 	<Version>1.0.13.2</Version>
 	<ProviderName>Robert Little</ProviderName>
 	<DefaultLocale>en-US</DefaultLocale>
-	<DisplayName DefaultValue="TwBracketBuilder" />
+	<DisplayName DefaultValue="BracketBuilder" />
 	<Description DefaultValue="Build double elimination tournament brackets compatible with Little League double elimination brackets" />
 	<IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png" />
 	<HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png" />
 	<SupportUrl DefaultValue="https://localhost:3000/help/TwBracketBuilder%20Help.html" />
-	<AppDomains>
-		<AppDomain>https://www.d9ump.org</AppDomain>
-	</AppDomains>
 	<Hosts>
 		<Host Name="Workbook" />
 	</Hosts>

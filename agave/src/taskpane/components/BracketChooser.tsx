@@ -7,6 +7,7 @@ import { BracketOption } from "../../Brackets/BracketStructureBuilder";
 export interface BracketChooserProps
 {
     alignment: any,
+    initialBracket: string,
     bracketOptions: BracketOption[],
     updateBracketChoiceDelegate: UpdateBracketChoiceDelegate
 }
@@ -27,8 +28,18 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
     {
         super(props, context);
         this.state = {
-            selectedBracket: null
+            selectedBracket: props.initialBracket
         };
+    }
+
+    setSelectedBracket(selectedBracket: string)
+    {
+        this.setState(
+            {
+                selectedBracket: selectedBracket,
+            });
+
+        this.props.updateBracketChoiceDelegate(selectedBracket);
     }
 
     /*----------------------------------------------------------------------------
@@ -65,11 +76,7 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
             selectedBracket = `T${parseInt(value.substring(start))}`;
         }
 
-        this.setState({
-            selectedBracket: selectedBracket,
-        });
-
-        this.props.updateBracketChoiceDelegate(selectedBracket);
+        this.setSelectedBracket(selectedBracket);
     }
 
     render()
@@ -108,7 +115,7 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
                     <Stack.Item>
                         <ComboBox
                             label=""
-                            allowFreeform={true}
+                            defaultSelectedKey={this.state.selectedBracket}
                             onChange={this.updateSelectedBracket.bind(this)}
                             styles={comboBoxStyles}
                             options={options}

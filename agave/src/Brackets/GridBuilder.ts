@@ -59,7 +59,7 @@ export class GridBuilder
         aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowStart + 1, col], null)}, "DDDD")`);
         aryFirstRow.push(null);
         aryFirstRow.push(null);
-        arySecondRow.push(OADate.ToOADate(new Date(Date.parse("8/21/2021"))) - (7 / 24));
+        arySecondRow.push(OADate.ToOADate(new Date(Date.parse("6/15/2023"))) - (7 / 24));
         arySecondRow.push(null);
         arySecondRow.push(null);
 
@@ -188,7 +188,7 @@ export class GridBuilder
     ----------------------------------------------------------------------------*/
     static async buildGridSheet(context: JsCtx)
     {
-        const colFirstGridColumn: number = 6;
+        const colFirstGridColumn: number = 3;
 
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
         let rngHeader: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
@@ -205,13 +205,11 @@ export class GridBuilder
         let rngBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
         rngBuilding.values = [["BUILDING"]];
 
-        this.formatGridSheetDays(sheet, 6, GridBuilder.maxDays);
+        this.formatGridSheetDays(sheet, 3, GridBuilder.maxDays);
         this.formatColumns(sheet, ["A:A"], 60);
-        this.formatColumns(sheet, ["B:B", "E:E"], 0.9);
-        this.formatColumns(sheet, ["C:C"], 104);
-        this.formatColumns(sheet, ["D:D"], 17.28);
-        this.formatColumns(sheet, ["F:F"], 48);
-        this.addDayGridFormulas(sheet, 4, 6, GridBuilder.maxDays);
+        this.formatColumns(sheet, ["B:B"], 256);
+        this.formatColumns(sheet, ["C:C"], 32);
+        this.addDayGridFormulas(sheet, 4, 3, GridBuilder.maxDays);
 
         await GlobalDataBuilder.addGlobalDataToSheet(context, sheet, 3);
 //        await this.addTipsAndDirections(context, sheet);
