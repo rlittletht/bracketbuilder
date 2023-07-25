@@ -198,8 +198,9 @@ export class StructureInsert
 
         return rngTarget;
     }
+
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.insertGameAtSelection
+        %%Function: StructureEditor.insertGameAtRange
 
         this will insert the text and set the global cell names for all the parts
         of the game. 
@@ -310,6 +311,7 @@ export class StructureInsert
         return [grid.getFirstSlotForDate(date), StructureEditor.getNextFieldName(null, fieldCount)];
     }
 
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
     ----------------------------------------------------------------------------*/
@@ -338,28 +340,54 @@ export class StructureInsert
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
+        if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn
+            && grid.IsEmpty)
+        {
+            // move the selection to the first column
+            const range = Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), grid.FirstGridPattern.offset(0, 1, 0, 1));
+            range.select();
+            requested = await Ranges.createRangeInfoForSelection(context);
+        }
+
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
         {
             appContext.log(`Can't insert game. Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`);
             return;
         }
 
-        if ((requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3 != 0)
-        {
-            const validColumns: string =
-                `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 3)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 6)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 9)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 12)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 15)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 18)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 21)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
-                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
+        const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
 
-            appContext.log(`Can't insert game. Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`);
-            return;
+        if (columnAdjacent != 0)
+        {
+            if (columnAdjacent == 1)
+            {
+                // they aren't in a team name column. if they are in the score column, then auto
+                // adjust back to the name
+                requested.shiftByColumns(-1);
+            }
+            else if (columnAdjacent == 2)
+            {
+                // if they are in the line column, that is closer to the _next_ team name
+                // column
+                requested.shiftByColumns(1);
+            }
+            else
+            {
+                const validColumns: string =
+                    `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 3)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 6)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 9)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 12)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 15)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 18)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 21)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
+                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
+
+                appContext.log(`Can't insert game. Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`);
+                return;
+            }
         }
 
         let gridNew: Grid = null;

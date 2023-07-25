@@ -99,11 +99,22 @@ export class RangeInfo
         return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
     }
 
-    offset(dRows: number, newRowCount: number, dColumns: number, newColumnCount: number): RangeInfo
+    /*----------------------------------------------------------------------------
+        %%Function: RangeInfo.offset
+
+        return a new RangeInfo offset by dRows and dColumns, with the new
+        row and column counts
+    ----------------------------------------------------------------------------*/
+    offset(dRows: number, newRowCount: number, dColumns: number, newColumnCount: number)
     {
         return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
     }
 
+    shiftByColumns(dColumns: number): RangeInfo
+    {
+        this.m_columnStart += dColumns;
+        return this;
+    }
     shiftByRows(dRows: number): RangeInfo
     {
         this.m_rowStart += dRows;
