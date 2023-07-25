@@ -55,6 +55,7 @@ export class Grid
     m_mapGameItem: Map<number, GridItem> = new Map<number, GridItem>();
 
 
+    get IsEmpty(): boolean { return this.m_gridItems.length == 0; }
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
     get FieldsToUse(): number { return this.m_fieldsToUse; }
 
@@ -379,6 +380,19 @@ export class Grid
         [item, kind] = this.getFirstOverlappingItem(range);
 
         return kind;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.isRowEmptyAround
+
+        determines if the space *around* this column (the game width to the left
+        and right) is empty.
+    ----------------------------------------------------------------------------*/
+    isRowEmptyAround(row: number, column: number): boolean
+    {
+        const blankCheck: RangeInfo = new RangeInfo(row, 1, column - 3, column + 5);
+
+        return this.doesRangeOverlap(blankCheck) == RangeOverlapKind.None;
     }
 
     isBlankRow(row: number): boolean
@@ -1789,6 +1803,16 @@ export class Grid
         return maxItem;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getFirstEmptyRowToUse
+
+        return the first non-empty row in the column that we can use for this
+        game, allowing for the given padding.
+
+        make sure we return a content line and not a border line (which can
+        happen if the thing we are avoiding is a connecting line and not a
+        game content item)
+    ----------------------------------------------------------------------------*/
     getFirstEmptyRowToUse(firstColumn: number, lastColumn: number, padding): number
     {
         /*
@@ -1818,6 +1842,7 @@ export class Grid
             }
         }
 
+        maxRow = maxRow + ((maxRow - this.FirstGridPattern.FirstRow) % 2);
         return maxRow;
     }
 
@@ -2255,6 +2280,7 @@ export class Grid
         }
 
         let fAdjusted: boolean;
+        let cAdjusted = 0;
 
         do
         {
@@ -2263,7 +2289,7 @@ export class Grid
                 break;
 
             fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert, [requested]);
-        } while (fAdjusted);
+        } while (fAdjusted && cAdjusted++ < 10);
 
 
         if (gameInsert.m_failReason != null)
