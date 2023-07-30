@@ -17,6 +17,8 @@ import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
 import { JsCtx } from "../../Interop/JsCtx";
 import { PerfTimer } from "../../PerfTimer";
+import { Coachstate } from "../../Coachstate";
+import { CoachTransition } from "../../CoachTransition";
 
 let _moveSelection: RangeInfo = null;
 
@@ -132,6 +134,9 @@ export class StructureEditor
             timer.popTimer();
 
             timer.pushTimer("insertGameAtSelectionClick PART 2");
+
+            appContext.transitionState(CoachTransition.AddGame);
+
             await appContext.invalidateHeroList(context);
             timer.popTimer();
         };
@@ -152,6 +157,8 @@ export class StructureEditor
             context.pushTrackingBookmark(bookmark);
             await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
             context.releaseTrackedItemsUntil(bookmark);
+
+            appContext.transitionState(CoachTransition.PullChanges);
 
             await appContext.invalidateHeroList(context);
         };
@@ -214,6 +221,8 @@ export class StructureEditor
             await StructureRemove.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
             context.releaseTrackedItemsUntil(bookmark);
 
+            appContext.transitionState(CoachTransition.RemoveGame);
+
             await appContext.invalidateHeroList(context);
         };
 
@@ -235,6 +244,7 @@ export class StructureEditor
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
             context.releaseTrackedItemsUntil(bookmark);
+            appContext.transitionState(CoachTransition.RemoveGame);
 
             await appContext.invalidateHeroList(context);
         };
@@ -284,6 +294,7 @@ export class StructureEditor
         }
 
         await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        appContext.transitionState(CoachTransition.PullChanges);
 
         context.releaseTrackedItemsUntil(bookmark);
     }

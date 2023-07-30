@@ -1,6 +1,10 @@
+import * as React from "react";
 import { IBracketGame } from "./BracketEditor/BracketGame";
 import { PerfTimer } from "./PerfTimer";
 import { JsCtx } from "./Interop/JsCtx";
+import { Coachstate } from "./Coachstate";
+import { CoachTransition } from "./CoachTransition";
+import { CoachstateTransitions } from "./CoachstateTransitions";
 
 export interface IAppContext
 {
@@ -10,8 +14,23 @@ export interface IAppContext
     get Timer(): PerfTimer;
     /*async*/ invalidateHeroList(context: JsCtx);
     getSelectedBracket();
-    getGames();
+    getGames(): IBracketGame[];
     setProgressVisible(visible: boolean);
+    clearCoachmarkTimer();
+    startCoachmarkTimer(msecDelay: number, visible: boolean);
+    registerCoachmark(set: CoachmarkVisibilityDelegate);
+    isCoachmarkRegistered(): boolean;
+    clearCoachmark();
+    transitionState(transition: CoachTransition);
+    get Coachstate(): Coachstate;
+    set Coachstate(state: Coachstate);
+    pushTempCoachstate(coachstate: Coachstate);
+    popTempCoachstateIfNecessary();
+}
+
+export interface CoachmarkVisibilityDelegate
+{
+    (visible: boolean): void;
 }
 
 export interface AddLogMessageDelegate
@@ -21,7 +40,7 @@ export interface AddLogMessageDelegate
 
 export interface InvalidateHeroListDelegate
 {
-    (context: JsCtx): void;
+    (context: JsCtx): void
 }
 
 export interface GetSelectedBracketDelegate
@@ -41,6 +60,11 @@ export interface ProgressVisibilityDelegate
 
 export class AppContext implements IAppContext
 {
+    m_coachstate: Coachstate = Coachstate.Unknown;
+    m_tempCoachstate: Coachstate[] = [];
+
+    m_coachmarkVisibilitySet: CoachmarkVisibilityDelegate = null;
+    m_coachmarkTimer: any = null;
     m_addLogMessageDelegate: AddLogMessageDelegate;
     m_progressVisibilityDelegate: ProgressVisibilityDelegate;
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
@@ -48,7 +72,72 @@ export class AppContext implements IAppContext
     m_getGames: GetGamesDelegate;
     m_perfTimer: PerfTimer = new PerfTimer();
 
+    transitionState(transition: CoachTransition)
+    {
+        this.m_coachstate = CoachstateTransitions.GetNextState(this.m_coachstate, transition);
+    }
+
+    pushTempCoachstate(coachstate: Coachstate)
+    {
+        this.m_tempCoachstate.push(coachstate);
+    }
+
+    popTempCoachstateIfNecessary()
+    {
+        if (this.m_tempCoachstate.length > 0)
+            this.m_tempCoachstate.pop();
+    }
+
     get Timer(): PerfTimer { return this.m_perfTimer; }
+
+    get Coachstate(): Coachstate
+    {
+        if (this.m_tempCoachstate.length > 0)
+            return this.m_tempCoachstate[this.m_tempCoachstate.length - 1];
+
+        return this.m_coachstate;
+    }
+
+    set Coachstate(state: Coachstate)
+    {
+        this.m_coachstate = state;
+    }
+
+    registerCoachmark(fun: CoachmarkVisibilityDelegate)
+    {
+        this.m_coachmarkVisibilitySet = fun;
+    }
+
+    isCoachmarkRegistered(): boolean
+    {
+        return this.m_coachmarkVisibilitySet != null;
+    }
+
+    clearCoachmark()
+    {
+        if (this.m_coachmarkVisibilitySet)
+            this.m_coachmarkVisibilitySet(false);
+
+        this.m_coachmarkVisibilitySet = null;
+        this.clearCoachmarkTimer();
+    }
+
+    clearCoachmarkTimer()
+    {
+        if (this.m_coachmarkTimer != null)
+            clearTimeout(this.m_coachmarkTimer);
+
+        this.m_coachmarkTimer = null;
+    }
+
+    startCoachmarkTimer(msecDelay: number, visible: boolean)
+    {
+        if (this.m_coachmarkTimer != null)
+            this.clearCoachmarkTimer();
+
+        if (this.m_coachmarkVisibilitySet != null)
+            this.m_coachmarkTimer = setTimeout(() => this.m_coachmarkVisibilitySet(visible), msecDelay);
+    }
 
     setProgressVisible(visible: boolean)
     {
@@ -125,3 +214,5 @@ export class AppContext implements IAppContext
 //        console.log(log);
     }
 }
+
+export const TheAppContext = React.createContext(null);

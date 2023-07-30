@@ -1,5 +1,4 @@
 import { IAppContext, IAppContext as IAppContext1, IAppContext as IAppContext2, IAppContext as IAppContext3, AppContext } from "../../AppContext";
-import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GameFormatting } from "../GameFormatting";
 import { Ranges } from "../../Interop/Ranges";
@@ -11,6 +10,7 @@ import { OADate } from "../../Interop/Dates";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
+import { Grid } from "../Grid";
 
 export class ApplyGridChange
 {

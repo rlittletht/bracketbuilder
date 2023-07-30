@@ -4,6 +4,8 @@ import { FastTables } from "./Interop/FastTables";
 import { IAppContext, AppContext } from "./AppContext";
 import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
 import { JsCtx } from "./Interop/JsCtx";
+import { Coachstate } from "./Coachstate";
+import { CoachTransition } from "./CoachTransition";
 
 export enum SetupState
 {
@@ -209,6 +211,9 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async buildSpecificBracket(appContext: IAppContext): Promise<boolean>
     {
+        appContext.transitionState(CoachTransition.BuildBracket);
+
+        appContext.clearCoachmark();
         appContext.setProgressVisible(true);
 
         try

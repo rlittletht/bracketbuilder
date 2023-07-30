@@ -213,6 +213,11 @@ export class RangeInfo
         return `[${this.FirstRow},${this.FirstColumn}]-[${this.LastRow},${this.LastColumn}]`;
     }
 
+    toFriendlyString(): string
+    {
+        return `${Ranges.addressFromCoordinates([this.FirstRow, this.FirstColumn], [this.LastRow, this.LastColumn])}`;
+    }
+
     rebase(oldTopRow: number, newTopRow: number)
     {
         const delta: number = this.m_rowStart - oldTopRow;

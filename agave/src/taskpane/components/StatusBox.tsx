@@ -1,7 +1,10 @@
 import * as React from "react";
 import * as CSS from "csstype";
 
-import { IAppContext } from "../../AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext";
+import { Teachable, TeachableId } from "./Teachable";
+import { DirectionalHint } from '@fluentui/react';
+import { Coachstate } from "../../Coachstate";
 
 export interface StatusBoxProps
 {
@@ -15,6 +18,9 @@ export interface StatusBoxState
 
 export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     clearCount: number = 0;
     m_pendingTimer: any;
 
@@ -66,9 +72,27 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
             textAlign: 'left'
         };
 
+        let title = "Status messages";
+        let text = "This is where additional information will show up in response to things you do";
+
+        if (this.context.Coachstate == Coachstate.AfterInsertGameFailed)
+        {
+            title = "Insert failed";
+            text = "The details will often suggest what you need to do to fix it. Try clicking in another column and add the game again";
+        }
+
         return (
+            <Teachable
+                id={TeachableId.ErrorMessage}
+                title={title}
+                text={text}
+                visibleDelay={500}
+                directionalHint={DirectionalHint.bottomRightEdge}
+                isWide={true}>
             <div style={styles}>
                 {this.state.message}
-            </div>);
+                </div>
+            </Teachable>
+        );
     }
 }

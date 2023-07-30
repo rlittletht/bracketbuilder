@@ -2,6 +2,7 @@ import * as React from "react";
 import { IAppContext } from "../../AppContext";
 import { ActionButton } from "./ActionButton";
 import { Stack, Alignment, IStackItemStyles } from '@fluentui/react';
+import { Teachable, TeachableProps } from "./Teachable";
 
 export interface ToolbarItem
 {
@@ -10,6 +11,7 @@ export interface ToolbarItem
     cursor: string;
     delegate: (appContext: IAppContext) => Promise<boolean>;
     stateChecker: string;
+    teachableProps?: TeachableProps
 }
 
 export interface ToolbarProps
@@ -49,18 +51,50 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
             },
         };
 
-        const ribbonItems = items.map(
-            (item, index) => (
-                <Stack.Item align="center" key={index} styles={stackItemStyles} >
-                    <ActionButton
-                        icon={item.icon}
-                        tooltip={item.primaryText}
-                        tooltipId={`rid-${i++}`}
-                        appContext={this.props.appContext}
-                        disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                        bracketGame={null} delegate={() => item.delegate(this.props.appContext)}/>
-                </Stack.Item>
-            ));
+        const ribbonItems = [];
+
+        for (let index = 0; index < items.length; index++)
+        {
+            const item = items[index];
+            if (item.teachableProps)
+            {
+                ribbonItems.push(
+                    (
+                        <Stack.Item align="center" key={index} styles={stackItemStyles} >
+                            <Teachable
+                                id={item.teachableProps.id}
+                                title={item.teachableProps.title}
+                                text={item.teachableProps.text}
+                                visibleDelay={item.teachableProps.visibleDelay}
+                                directionalHint={item.teachableProps.directionalHint}
+                                isWide={item.teachableProps.isWide}>
+                                <ActionButton
+                                    icon={item.icon}
+                                    tooltip={item.primaryText}
+                                    tooltipId={`rid-${i++}`}
+                                    appContext={this.props.appContext}
+                                    disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
+                                    bracketGame={null} delegate={() => item.delegate(this.props.appContext)} />
+                            </Teachable>
+                        </Stack.Item>
+                    ));
+            }
+            else
+            {
+                ribbonItems.push(
+                    (
+                        <Stack.Item align="center" key={index} styles={stackItemStyles} >
+                            <ActionButton
+                                icon={item.icon}
+                                tooltip={item.primaryText}
+                                tooltipId={`rid-${i++}`}
+                                appContext={this.props.appContext}
+                                disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
+                                bracketGame={null} delegate={() => item.delegate(this.props.appContext)} />
+                        </Stack.Item>
+                    ));
+            }
+        }
 
         return (
             <div>

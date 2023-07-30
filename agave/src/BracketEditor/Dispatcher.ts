@@ -63,6 +63,10 @@ export class Dispatcher
                 await Excel.run(
                     async (ctx) =>
                     {
+                        appContext.log("");
+                        appContext.popTempCoachstateIfNecessary();
+                        appContext.clearCoachmark();
+
                         const context: JsCtx = new JsCtx(ctx);
 
                         await this.DispatchWithCatch(

@@ -26,7 +26,7 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
             return fTopIndependent || fBottomIndependent;
 
         if (!gridTry.isRowEmptyAround(regionIncludingBottom.LastRow + 1, gameInsert.Range.FirstColumn))
-            return fTopIndependent || fBottomIndependent;
+            return fBottomIndependent; // consider: do we want to allow if we can adjust top?
 
         return false;
     }
@@ -82,7 +82,7 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         }
 
         // if we got here, then regionIncludingBottom is where we want to insert. 
-        if (bottomIndependent)
+        if (!bottomIndependent)
         {
             // our preflight should guarantee that the other clause either
             // succeeds, or this is gauranteed to be the one we want to do

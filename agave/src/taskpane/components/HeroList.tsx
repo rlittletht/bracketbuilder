@@ -5,6 +5,7 @@ import { ActionButton } from "./ActionButton";
 import { SetupState, SetupBook } from "../../Setup";
 import { RangeInfo } from "../../Interop/Ranges";
 import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import { TeachableProps } from "./Teachable";
 
 export interface HeroListItem
 {

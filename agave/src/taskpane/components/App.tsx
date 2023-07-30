@@ -2,13 +2,13 @@ import * as React from "react";
 import * as CSS from "csstype";
 
 import { DefaultButton } from "@fluentui/react";
-import { ComboBox } from "@fluentui/react";
+import { ComboBox, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps } from "@fluentui/react";
 
 import { HeroList, HeroListItem, HeroListFormat } from "./HeroList";
 import { Progress } from "./Progress";
 import { SetupState } from "../../Setup";
 import { SetupBook } from "../../Setup";
-import { IAppContext, AppContext } from "../../AppContext";
+import { IAppContext, AppContext, TheAppContext } from "../../AppContext";
 import { BracketChooser, UpdateBracketChoiceDelegate } from "./BracketChooser";
 import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
 import { GameItem } from "./GameItem";
@@ -38,6 +38,9 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
 import { s_staticConfig } from "../../StaticConfig";
+import { Teachable, TeachableId } from "./Teachable";
+import { Coachstate } from "../../Coachstate";
+import { CoachTransition } from "../../CoachTransition";
 
 /* global console, Excel, require  */
 
@@ -72,11 +75,13 @@ export interface AppState
     games: IBracketGame[];
     topToolbar: ToolbarItem[];
     mainToolbar: ToolbarItem[];
+    CM:boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState>
 {
     static version: string = s_staticConfig.version;
+    private targetDivRef: React.RefObject<HTMLDivElement> = null;
 
     m_appContext: AppContext;
 
@@ -88,14 +93,15 @@ export default class App extends React.Component<AppProps, AppState>
             heroList: [],
             heroListFormat: HeroListFormat.Vertical,
             heroTitle: "Setup a new bracket workbook!",
-            setupState: SetupState.NoBracketStructure,
+            setupState: SetupState.Unknown,
             errorMessage: "",
             selectedBracket: "T8",
             bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
-    };
+            CM: false
+        };
 
         this.m_appContext = new AppContext();
         this.m_appContext.setDelegates(
@@ -103,6 +109,7 @@ export default class App extends React.Component<AppProps, AppState>
             this.invalidateHeroList.bind(this),
             this.getSelectedBracket.bind(this),
             this.getGames.bind(this));
+        this.targetDivRef = React.createRef();
     }
 
     static async doUnitTests(appContext: IAppContext)
@@ -215,6 +222,15 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     await StructureEditor.undoClick(appContext);
                     return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.Undo,
+                    title: "Undo",
+                    text: "Sometimes if you get stuck, you have to undo a couple of steps and try adding games in a different order or by selecting a different location to add the game",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomAutoEdge,
+                    isWide: true
                 }
             });
         listItems.push(
@@ -340,6 +356,15 @@ export default class App extends React.Component<AppProps, AppState>
                 delegate: async (appContext: IAppContext): Promise<boolean> => {
                     await StructureEditor.finalizeClick(appContext);
                     return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.FinishingTouches,
+                    title: "Finish Up",
+                    text: "Congratulations! All your games are in the bracket. Now its time to apply the finishing touches. This will set the print area, format the titles to appear above the bracket, and hide the bracket sheets. The tournament data will still be on the left of the bracket, but don't worry, it won't print or show up on a PDF you create.",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomRightEdge,
+                    isWide: true
                 }
             });
 
@@ -398,7 +423,35 @@ export default class App extends React.Component<AppProps, AppState>
         if (setupState == SetupState.Ready)
         {
             items = this.buildMainToolbar();
+
+            let countGamesLinked = 0;
+            let countGamesNeedRepair = 0;
+            for (let game of games)
+            {
+                if (game.IsLinkedToBracket)
+                {
+                    countGamesLinked++;
+                }
+                if (game.NeedsRepair)
+                {
+                    countGamesNeedRepair++;
+                }
+            }
+            if (countGamesNeedRepair > 0)
+                this.m_appContext.transitionState(CoachTransition.DirtyGameFound);
+            else if (countGamesLinked == games.length)
+            {
+                if (await (Grid.isFinishingTouchesApplied(context)))
+                    this.m_appContext.transitionState(CoachTransition.FinishTouches);
+                else
+                    this.m_appContext.transitionState(CoachTransition.AllGamesLinked);
+            }
+            else if (countGamesLinked == 0)
+                this.m_appContext.transitionState(CoachTransition.NoGamesLinked);
+            else if (countGamesLinked == 1)
+                this.m_appContext.transitionState(CoachTransition.OneGameLinked);
         }
+        
 
         // update the games list
 
@@ -515,12 +568,18 @@ export default class App extends React.Component<AppProps, AppState>
         return this.state.selectedBracket;
     }
 
+    // setup the initial state as well as the initial coaching state
+    // (this is our opportunity to figure out what state the workbook
+    // is in when the addin is initialized)
     async componentDidMount()
     {
         let setupState: SetupState;
         let bracketChoice: string;
 
         [setupState, bracketChoice] = await (this.getSetupState(null));
+        if (setupState != SetupState.Ready)
+            this.m_appContext.Coachstate = Coachstate.BracketCreation;
+
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
@@ -607,6 +666,22 @@ export default class App extends React.Component<AppProps, AppState>
         });
     }
 
+    showCM()
+    {
+        this.setState(
+            {
+                CM: true
+            });
+    }
+
+    hideCM()
+    {
+        this.setState(
+            {
+                CM: false
+            });
+    }
+
     render()
     {
         const { title, isOfficeInitialized } = this.props;
@@ -629,9 +704,20 @@ export default class App extends React.Component<AppProps, AppState>
                 this.state.setupState == SetupState.NoBracketStructure)
             {
                 return (
-                    <BracketChooser alignment="center"
-                        updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
-                            bracketOptions={this.state.bracketOptions} initialBracket={this.state.selectedBracket}/>
+                    <div>
+                        <Teachable
+                            isWide={true}
+                            id={TeachableId.BracketBuilder }
+                            title="Get started here"
+                            text="Choose the number of teams in the tournament and then click on Build this bracket!"
+                            visibleDelay={1000}
+                            directionalHint={DirectionalHint.bottomLeftEdge}>
+                            <BracketChooser alignment="center"
+                                            updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
+                                            bracketOptions={this.state.bracketOptions} initialBracket={this.state.selectedBracket}/>
+                        </Teachable>
+
+                    </div>
                 );
             }
             else
@@ -673,36 +759,37 @@ export default class App extends React.Component<AppProps, AppState>
 
         return (
             <div>
-                <Stack styles={stackStyles}>
-                    <Stack.Item styles={headerItemStyle}>
-                        <LogoHeader/>
-                        <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
-                    </Stack.Item>
-                    <Progress
-                        title=""
-                        logo={null}
-                        message="Working on it..."
-                        initialVisibility={false}
-                        appContext={this.m_appContext}
-                    />
-                    <Stack.Item styles={bodyHeaderItemStyle}>
-                        <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
-                            {insertBracketChooserMaybe()}
-                        </HeroList>
-                        {maybeToolbar}
-                    </Stack.Item>
-                    <Stack.Item styles={bodyItemStyle}>
-                        <div style={ gamesStyle }>
-                            {games}
-                        </div>
-                    </Stack.Item>
-                    <Stack.Item styles={footerItemStyle}>
-                        <StatusBox appContext={this.m_appContext}/>
-                        <div style={versionLabelProps}>
-                            {App.version}
-                        </div>
-                    </Stack.Item>
-                </Stack>
+                <TheAppContext.Provider value={this.m_appContext}>
+                    <Stack styles={stackStyles}>
+                        <Stack.Item styles={headerItemStyle}>
+                            <LogoHeader/>
+                            <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
+                        </Stack.Item>
+                        <Progress
+                            title=""
+                            logo={null}
+                            message="Working on it..."
+                            initialVisibility={false}
+                            appContext={this.m_appContext}/>
+                        <Stack.Item styles={bodyHeaderItemStyle}>
+                            <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
+                                {insertBracketChooserMaybe()}
+                            </HeroList>
+                            {maybeToolbar}
+                        </Stack.Item>
+                        <Stack.Item styles={bodyItemStyle}>
+                            <div style={ gamesStyle }>
+                                {games}
+                            </div>
+                        </Stack.Item>
+                        <Stack.Item styles={footerItemStyle}>
+                            <StatusBox appContext={this.m_appContext}/>
+                            <div style={versionLabelProps}>
+                                {App.version}
+                            </div>
+                        </Stack.Item>
+                    </Stack>
+                </TheAppContext.Provider>
             </div>
         );
     }

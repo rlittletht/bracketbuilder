@@ -49,7 +49,7 @@ export class Progress extends React.Component<ProgressProps, ProgressState>
             [
                 'overlayStyle',
                 {
-                    top: '40px',
+                    top: '60px',
                     left: '0',
                     padding: '10px',
                     position: 'absolute',

@@ -5,8 +5,8 @@
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
 	<Id>f4607fe8-d788-4c7e-95ee-3ba1f85b5566</Id>
-	<Version>1.0.13.2</Version>
-	<ProviderName>Robert Little</ProviderName>
+	<Version>1.0.14.0</Version>
+	<ProviderName>Thetasoft LLC</ProviderName>
 	<DefaultLocale>en-US</DefaultLocale>
 	<DisplayName DefaultValue="BracketBuilder" />
 	<Description DefaultValue="Build double elimination tournament brackets compatible with Little League double elimination brackets" />

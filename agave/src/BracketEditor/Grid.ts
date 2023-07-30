@@ -53,7 +53,7 @@ export class Grid
     m_fLogGrid: boolean = s_staticConfig.logGrid;
     m_startingSlots: number[] = [10 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 9 * 60];
     m_mapGameItem: Map<number, GridItem> = new Map<number, GridItem>();
-
+    m_finishingTouchesApplied: boolean;
 
     get IsEmpty(): boolean { return this.m_gridItems.length == 0; }
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
@@ -87,6 +87,30 @@ export class Grid
             return this.m_mapGameItem.get(gameId.Value);
 
         return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getFeedingGamesForGame
+
+        return the source game items for this game's feeding games.
+    ----------------------------------------------------------------------------*/
+    getFeedingGamesForGame(game: IBracketGame): [GridItem, GridItem]
+    {
+        let topSourceGame: GridItem = null;
+        let bottomSourceGame: GridItem = null;
+
+        if (!BracketGame.IsTeamSourceStatic(game.TopSource))
+        {
+            const gameId = BracketManager.GameIdFromWinnerLoser(game.TopSource);
+            topSourceGame = this.getItemForGameId(gameId);
+        }
+        if (!BracketGame.IsTeamSourceStatic(game.BottomSource))
+        {
+            const gameId = BracketManager.GameIdFromWinnerLoser(game.BottomSource);
+            bottomSourceGame = this.getItemForGameId(gameId);
+        }
+
+        return [topSourceGame, bottomSourceGame];
     }
 
     /*----------------------------------------------------------------------------
@@ -616,6 +640,22 @@ export class Grid
         {
             this.removeItem(item);
         }
+    }
+
+    static async isFinishingTouchesApplied(context: JsCtx): Promise<boolean>
+    {
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+
+        let range: RangeInfo = new RangeInfo(0, 1, 0, 100);
+        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
+        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+
+        areas.load("areaCount");
+        areas.load("areas");
+        await context.sync();
+
+        // the presence of any merge areas means some finishing touches have been applied
+        return (!areas.isNullObject);
     }
 
     /*----------------------------------------------------------------------------
@@ -1552,28 +1592,67 @@ export class Grid
         if (gameInsert.m_rangeFeederTop != null
             && this.doesRangeOverlap(gameInsert.m_rangeFeederTop) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederTop.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederTop.toString()}) overlaps`;
+            }
+            else
+            {
+                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeFeederTop);
+
+                gameInsert.m_failReason = `Can't insert game here. The line connecting the top would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
+
             return false;
         }
 
         if (gameInsert.m_rangeFeederBottom != null
             && this.doesRangeOverlap(gameInsert.m_rangeFeederBottom) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederBottom.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederBottom.toString()}) overlaps`;
+            }
+            else
+            {
+                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeFeederBottom);
+
+                gameInsert.m_failReason = `Can't insert game here. The line connecting the bottom would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
             return false;
         }
 
         if (gameInsert.m_rangeWinnerFeeder != null
             && this.doesRangeOverlap(gameInsert.m_rangeWinnerFeeder) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `m_rangeWinnerFeeder (${gameInsert.m_rangeWinnerFeeder.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                gameInsert.m_failReason = `m_rangeWinnerFeeder (${gameInsert.m_rangeWinnerFeeder.toString()}) overlaps`;
+            }
+            else
+            {
+                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeWinnerFeeder);
+
+                gameInsert.m_failReason = `Can't insert game here. The line connecting the winner would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
+
             return false;
         }
 
         if (gameInsert.m_rangeGame != null
             && this.doesRangeOverlap(gameInsert.m_rangeGame) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `m_rangeGame (${gameInsert.m_rangeGame.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                gameInsert.m_failReason = `m_rangeGame (${gameInsert.m_rangeGame.toString()}) overlaps`;
+            }
+            else
+            {
+                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeGame);
+
+                gameInsert.m_failReason = `Can't insert game here. The game would overlap an item already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
+
             return false;
         }
 
@@ -2294,7 +2373,7 @@ export class Grid
 
         if (gameInsert.m_failReason != null)
         {
-            return [null, `failed: ${gameInsert.m_failReason}`];
+            return [null, gameInsert.m_failReason];
         }
 
         if (gameInsert.m_rangeFeederTop != null)
@@ -2406,4 +2485,5 @@ export class Grid
 
         this.adjustRangeForGridAlignment(selected, AdjustRangeGrowExtraRow.None);
     }
+
 }

@@ -3,6 +3,9 @@ import { IAppContext } from "../../AppContext";
 import { BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
 import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 import { GameItem } from "./GameItem"
+import { Teachable } from "./Teachable";
+import { DirectionalHint } from '@fluentui/react';
+import { Coachstate } from "../../Coachstate";
 
 // import styles from '../taskpane.css';
 
@@ -17,24 +20,33 @@ export interface GamesState {
 
 export class Games extends React.Component<GamesProps, GamesState>
 {
-    constructor(props, context) {
+    constructor(props, context)
+    {
         super(props, context);
         this.state = {
         };
     }
 
-    render() {
+    render()
+    {
+        let firstUnlinked = true;
 
-        //        this.props.bracketOptions.forEach(
-        //            (value: BracketOption) => {
-        //                options.push({ key: value.key, text: value.name });
-        //            });
-        let bracket: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${this.props.bracketName}Bracket`);
         const games = this.props.appContext.getGames();
-        const gameItems = games.map((_item, index) => 
-            (
-            <GameItem appContext={this.props.appContext} bracketName={this.props.bracketName} game={_item} key={index} linkedToGrid={_item.IsLinkedToBracket}/>
+        const gameItems = [];
+
+        for (let idx = 0; idx < games.length; idx++)
+        {
+            const game = games[idx];
+            const teachable = firstUnlinked && !game.IsLinkedToBracket;
+            if (teachable)
+                firstUnlinked = false;
+
+            gameItems.push((
+                <GameItem idx={idx} teachableAdd=
+                    {() => teachable} teachableRemove={() => false}
+                    appContext={this.props.appContext} bracketName={this.props.bracketName} game={game} key={idx} linkedToGrid={game.IsLinkedToBracket} />
             ));
+        }
 
         return (
             <div className="games">

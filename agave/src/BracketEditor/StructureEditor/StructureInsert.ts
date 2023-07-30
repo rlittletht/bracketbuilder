@@ -10,6 +10,8 @@ import { _undoManager, UndoGameDataItem } from "../Undo";
 import { StructureEditor } from "./StructureEditor";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
+import { GridItem } from "../GridItem";
+import { Coachstate } from "../../Coachstate";
 
 export class StructureInsert
 {
@@ -312,10 +314,23 @@ export class StructureInsert
     }
 
 
+    static checkGameDependency(sourceGame: GridItem, requested: RangeInfo, appContext: IAppContext): boolean
+    {
+        if (sourceGame)
+        {
+            if (sourceGame.Range.FirstColumn >= requested.FirstColumn)
+            {
+                appContext.log(`Can't insert this game in this column. Game ${sourceGame.GameId.Value} must be played first. This game has to be inserted in column ${Ranges.getColName(sourceGame.Range.FirstColumn + 3)} or later`);
+                return false;
+            }
+        }
+        return true;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext2, context: JsCtx, game: IBracketGame)
+    static async insertGameAtSelection(appContext: IAppContext2, context: JsCtx, game: IBracketGame): Promise<boolean>
     {
         const bookmark: string = "insertGameAtSelection";
 
@@ -352,7 +367,8 @@ export class StructureInsert
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
         {
             appContext.log(`Can't insert game. Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`);
-            return;
+            appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
+            return false;
         }
 
         const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
@@ -386,8 +402,24 @@ export class StructureInsert
                         + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
 
                 appContext.log(`Can't insert game. Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`);
-                return;
+                appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
+                return false;
             }
+        }
+
+        // let's confirm that this games predecessor's are not in the same column
+        const [topSourceGame, bottomSourceGame] = grid.getFeedingGamesForGame(game);
+
+        if (!this.checkGameDependency(topSourceGame, requested, appContext))
+        {
+            appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
+            return false;
+        }
+
+        if (!this.checkGameDependency(bottomSourceGame, requested, appContext))
+        {
+            appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
+            return false;
         }
 
         let gridNew: Grid = null;
@@ -410,13 +442,15 @@ export class StructureInsert
 
         if (failReason != null)
         {
-            appContext.log(`failed: ${failReason}`);
-            return;
+            appContext.logError(`Insert Failed: ${failReason}`, 0);
+            appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailedOverlapping);
+            return false;
         }
 
         let undoGameDataItems: UndoGameDataItem[] =
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);
+        return true;
     }
 }
