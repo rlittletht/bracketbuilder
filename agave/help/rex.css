@@ -1,0 +1,307 @@
+:root {
+    --nav-width: 14rem;
+    --nav-padding: 1rem;
+    --article-width: calc(100vw - (var(--nav-padding) + var(--nav-width)));
+    --article-padding: 1rem;
+    --main-padding: 1rem;
+    --main-width: calc(var(--nav-width) + var(--article-width));
+    --header-width: var(--main-width);
+    --header-padding: 1rem;
+    --header-padding-top: 0rem;
+    --body-padding: 1rem;
+    --body-width: calc(var(--main-width) + 2 * var(--body-padding));
+}
+
+html {
+    height: 100%;
+}
+
+logo {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-end;
+    padding-bottom: 2px;
+}
+
+product {
+    display: flex;
+    flex-direction: column;
+    align-content: baseline;
+}
+
+productHeader {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+}
+
+productName {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-content: baseline;
+    font-weight: 800;
+    margin-top: auto;
+}
+
+red {
+    font-variant: 'small-caps';
+    color: red;
+    padding-left: .5rem;
+}
+
+img.logo {
+    height: 3rem
+}
+
+body {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0 auto;
+    font-family: Calibri, sans-serif;
+    overflow: hidden;
+}
+
+header {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: var(--header-width);
+    margin: 0 auto;
+    padding-top: var(--header-padding-top);
+    border-bottom: 1px solid black;
+    font-family: 'Segoe UI';
+    align-content: baseline;
+}
+
+footer {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px solid;
+    margin-top: 0rem;
+}
+
+main {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    margin: 0 auto;
+    padding-top: var(--main-padding);
+    overflow: auto;
+}
+
+article {
+    box-sizing: border-box;
+    flex: 1;
+    flex-direction: row;
+    max-width: var(--article-width);
+    width: var(--article-width);
+    height: calc(100% - 2 * var(--article-padding));
+    padding: var(--article-padding);
+    padding-top: 0;
+    padding-right: calc(2 * var(--article-padding));
+    margin: 0;
+    overflow-y: auto;
+}
+
+floatRight {
+    float: right;
+    padding-left: 1rem;
+}
+
+gallery{
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    justify-content: center;
+}
+
+galleryItem{
+    padding: 1rem;
+}
+
+galleryCaption{
+    display: block;
+}
+p {
+    margin: 1.5rem 0;
+    text-align: justify;
+}
+
+img.whiteBack {
+    background: white;
+    width: 100%;
+}
+
+img.whiteBackSmaller {
+    background: white;
+    width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #111;
+    line-height: 125%;
+    margin-top: 0rem;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+}
+
+h1 {
+    font-size: 4rem;
+    margin-top: 0;
+    font-weight: bolder;
+    font-variant: small-caps;
+}
+
+h2 {
+    font-size: 3.25rem;
+}
+
+h3 {
+    font-size: 2.5rem;
+    margin-top: 2rem;
+}
+
+h4 {
+    font-size: 2rem;
+    margin-top: 1rem;
+}
+
+img.ScreenClip {
+    margin-left: 5pt;
+    border: 1pt solid black;
+}
+
+
+nav {
+    box-sizing: border-box;
+    flex: 0 1 auto;
+    width: var(--nav-width);
+    height: calc(100% - 2 * var(--nav-padding));
+    margin: 0;
+    overflow-y: auto;
+}
+
+    nav ul, nav li {
+        list-style-type: none;
+        padding: 0 0 0.2rem 0.5rem;
+    }
+
+    nav > ul:first-of-type > li > a {
+        font-variant: small-caps;
+        font-size: 1.5rem;
+    }
+
+    nav > ul > li {
+        margin-top: 1rem;
+    }
+
+        nav > ul > li > a {
+            font-variant: normal;
+            font-size: 1.5rem;
+        }
+
+        nav > ul > ul > ul > li > a {
+            font-variant: normal;
+            font-size: 1rem;
+        }
+
+    nav ul li a {
+        font-weight: bold;
+        text-decoration: none;
+        color: darkslategrey;
+        font-size: 1.2rem;
+    }
+
+    nav ul ul {
+        padding: 0 0 0 1rem;
+        margin: 0 inherit;
+    }
+
+    nav a {
+        font-size: 1.33rem;
+    }
+
+
+.flex-body {
+    overflow-y: scroll;
+}
+
+
+.SiteHeader {
+    text-align: center;
+    font-size: 24pt;
+    font-family: calibri light;
+}
+
+body {
+    background: antiquewhite;
+}
+
+.App {
+    text-align: center;
+}
+
+.App-logo {
+    height: 65px;
+    pointer-events: none;
+}
+
+.LinkNoUnderline {
+    text-decoration: none;
+}
+
+
+.NavBar {
+    background: wheat;
+}
+
+.NavBarOuter {
+    border-left: lightgrey 1pt solid;
+    border-top: lightgrey 1pt solid;
+    border-bottom: darkgrey 1pt solid;
+    border-right: darkgrey 1pt solid;
+    height: 40px;
+}
+
+.NavBarItem {
+    border-bottom: lightgrey 1pt solid;
+    border-right: lightgrey 1pt solid;
+    border-left: darkgrey 1pt solid;
+    border-top: darkgrey 1pt solid;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .Cool-App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+.App-header {
+    background-color: #282c34;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes Cool-App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -10,7 +10,7 @@ import { Coachstate } from "../../Coachstate";
 export class TeachableId
 {
     static BracketBuilder = "b";
-    static AddGame = "a";
+    static AddFirstGame = "a";
     static RemoveGame = "r";
     static Undo = "u";
     static StatusBox = "s";
@@ -19,6 +19,12 @@ export class TeachableId
     static Help = "h";
     static ErrorMessage = "e";
     static DirtyGame = "d";
+    static AddGame = "A";
+
+    static toString(): string
+    {
+        return `${this}`;
+    }
 }
 
 export interface TeachableActiveDelegate
@@ -26,6 +32,23 @@ export interface TeachableActiveDelegate
     (): boolean;
 }
 
+class TeachableViewDelay
+{
+    static Auto = 0;
+    static Short = 500;
+    static Medium = 1500;
+    static Long = 3000;
+    static LongIdle = 8000;
+}
+
+interface TeachableConfig
+{
+    coachStates: Coachstate[];
+    firstViewDelay: TeachableViewDelay;
+    viewDelay: TeachableViewDelay;
+    sessionCountLimit: number;
+    globalCountLimit: number;
+}
 
 export interface TeachableProps
 {
@@ -65,13 +88,46 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
         this.targetDivRef = React.createRef();
     }
 
-    setVisibility(visible: boolean)
+    setVisibility(visible: boolean, teachableId: TeachableId)
     {
-        this.setState({ visible: visible });
+        if (teachableId == undefined || teachableId == this.props.id)
+        {
+            if (visible && teachableId !== undefined)
+            {
+                // when we set to true, we increment the number of times we have shown
+                // this teachable
+
+                this.context.setTeachableSessionCount(teachableId, this.context.getTeachableSessionCount(teachableId) + 1);
+                this.context.setTeachableGlobalCount(teachableId, this.context.getTeachableGlobalCount(teachableId) + 1);
+            }
+            this.setState({ visible: visible });
+        }
     }
 
     shouldCreateCoachmark(): boolean
     {
+        if (this.context.getHideThisTeachable(this.props.id)
+            || this.context.getHideAllTeachables())
+        {
+            return false;
+        }
+
+        const config = Teachable.getConfig(this.props.id);
+
+        const sessionCount = this.context.getTeachableSessionCount(this.props.id);
+        const globalCount = this.context.getTeachableGlobalCount(this.props.id);
+
+        if (config.sessionCountLimit != 0 && sessionCount >= config.sessionCountLimit)
+            return false;
+
+        if (config.globalCountLimit != 0
+            && (sessionCount >= config.sessionCountLimit
+                || sessionCount >= config.globalCountLimit
+                || globalCount >= config.globalCountLimit))
+        {
+            return false;
+        }
+
         return Teachable.logit(`about to check state isActiveEx: id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
             && (this.props.isActiveEx?.() ?? true)
             && Teachable.logit(`about to check TeachableStateActive: id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
@@ -85,28 +141,67 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
 
     hideIt()
     {
-        this.setVisibility(false);
+        this.setVisibility(false, this.props.id);
     }
 
-    static s_mapTeachableCoachstates = new Map<TeachableId, Coachstate[]>(
+    static s_mapTeachableCoachstates = new Map<TeachableId, TeachableConfig>(
         [
-            [TeachableId.BracketBuilder, [Coachstate.InitialState]],
-            [TeachableId.AddGame, [Coachstate.AddFirstGame, Coachstate.AfterFirstAdd]],
-            [TeachableId.RemoveGame, []],
-            [TeachableId.Undo, [Coachstate.AfterInsertGameFailedOverlapping]],
-            [TeachableId.StatusBox, []],
-            [TeachableId.FinishingTouches, [Coachstate.AllGamesPlaced]],
-            [TeachableId.Redo, []],
-            [TeachableId.Help, []],
-            [TeachableId.ErrorMessage, [[Coachstate.AfterInsertGameFailed]]],
-            [TeachableId.DirtyGame, [[Coachstate.GameDirty]]]
+            [
+                TeachableId.BracketBuilder,
+                { coachStates: [Coachstate.InitialState], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.AddFirstGame,
+                { coachStates: [Coachstate.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.AddGame,
+                { coachStates: [Coachstate.AfterFirstAdd], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.RemoveGame,
+                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.Undo,
+                { coachStates: [Coachstate.AfterInsertGameFailedOverlapping], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.StatusBox,
+                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.FinishingTouches,
+                { coachStates: [Coachstate.AllGamesPlaced], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.Redo,
+                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.Help,
+                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.ErrorMessage,
+                { coachStates: [Coachstate.AfterInsertGameFailed], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.DirtyGame,
+                { coachStates: [Coachstate.GameDirty], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ]
         ]);
-        
+
+    static getConfig(type: TeachableId): TeachableConfig
+    {
+        return this.s_mapTeachableCoachstates.get(type);
+    }
+
     static IsTeachableStateActive(type: TeachableId, currentState: Coachstate): boolean
     {
-        const validStates = this.s_mapTeachableCoachstates.get(type) ?? [];
+        const teachableConfig = this.getConfig(type) ?? { coachStates: [] };
 
-        for (let state of validStates)
+        for (let state of teachableConfig.coachStates)
             if (state == currentState)
                 return true;
         
@@ -118,6 +213,7 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
         console.log(s);
         return true;
     }
+
     render()
     {
         if (!this.context.isCoachmarkRegistered())
@@ -125,8 +221,19 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
             if (this.shouldCreateCoachmark())
             {
                 this.context.registerCoachmark(this.setVisibility.bind(this));
-                if (this.props.visibleDelay > 0)
-                    this.context.startCoachmarkTimer(this.props.visibleDelay, true);
+                let delay: TeachableViewDelay = this.props.visibleDelay;
+
+                if (delay == TeachableViewDelay.Auto)
+                {
+                    const config = Teachable.getConfig(this.props.id);
+
+                    if (this.context.getTeachableSessionCount(this.props.id) > 0)
+                        delay = config.firstViewDelay;
+                    else
+                        delay = config.viewDelay;
+                }
+                if (delay > 0)
+                    this.context.startCoachmarkTimer(Number(delay), true, this.props.id);
             }
         }
 
@@ -136,7 +243,7 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
         };
         const buttonProps: IButtonProps = {
             text: 'Got it!',
-            onClick: () => this.setVisibility(false)
+            onClick: () => this.setVisibility(false, this.props.id)
         };
 
 
@@ -164,7 +271,7 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
                         closeButtonAriaLabel="Close"
                                 primaryButtonProps={buttonProps}
                         isWide={true}
-                                onDismiss={() => this.setVisibility(false)}>
+                                onDismiss={() => this.setVisibility(false, this.props.id)}>
                                 {this.props.text}
                             </TeachingBubbleContent>
                         </Coachmark>)}

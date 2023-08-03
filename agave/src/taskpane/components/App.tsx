@@ -105,13 +105,24 @@ export default class App extends React.Component<AppProps, AppState>
 
         this.m_appContext = new AppContext();
         this.m_appContext.setDelegates(
-            this.addLogMessage.bind(this),
+            null,
             this.invalidateHeroList.bind(this),
             this.getSelectedBracket.bind(this),
             this.getGames.bind(this));
         this.targetDivRef = React.createRef();
     }
 
+    static async resetCoachingTips(appContext: IAppContext)
+    {
+        appContext.resetTeachableStates();
+        appContext.logTimeout("All coaching tips have been reset. If you want to see them in this session, right click and select Refresh", 10000);
+    }
+
+    static async launchHelp(appContext: IAppContext)
+    {
+        appContext;
+        window.open("https://twbbldcdnendpoint.azureedge.net/help/BracketBuilder-Help.html");
+    }
     static async doUnitTests(appContext: IAppContext)
     {
         let curTest = "";
@@ -285,17 +296,66 @@ export default class App extends React.Component<AppProps, AppState>
             });
         listItems.push(
             {
-                icon: "AlertSolid",
-                primaryText: "Run Unit Tests",
+                icon: "ActionCenter",
+                primaryText: "Reset Coaching Tips",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    await App.doUnitTests(appContext);
+                    await App.resetCoachingTips(appContext);
                     return true;
                 }
             });
+        if (s_staticConfig.isLocalHost)
+        {
+            listItems.push(
+                {
+                    icon: "AlertSolid",
+                    primaryText: "Run Unit Tests",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await App.doUnitTests(appContext);
+                        return true;
+                    }
+                });
+        }
+        listItems.push(
+            {
+                icon: "CompletedSolid",
+                primaryText: "Apply the finishing touches",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.finalizeClick(appContext);
+                    return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.FinishingTouches,
+                    title: "Finish Up",
+                    text:
+                        "Congratulations! All your games are in the bracket. Now its time to apply the finishing touches. This will set the print area, format the titles to appear above the bracket, and hide the bracket sheets. The tournament data will still be on the left of the bracket, but don't worry, it won't print or show up on a PDF you create.",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomRightEdge,
+                    isWide: true
+                }
+            });
 
+        listItems.push(
+            {
+                icon: "Help",
+                primaryText: "Get help on the web",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await App.launchHelp(appContext);
+                    return true;
+                }
+            });
         return listItems;
     }
 
@@ -347,26 +407,6 @@ export default class App extends React.Component<AppProps, AppState>
                     return true;
                 }
             });
-        listItems.push(
-            {
-                icon: "CompletedSolid",
-                primaryText: "Apply the finishing touches",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
-                    await StructureEditor.finalizeClick(appContext);
-                    return true;
-                },
-                teachableProps:
-                {
-                    id: TeachableId.FinishingTouches,
-                    title: "Finish Up",
-                    text: "Congratulations! All your games are in the bracket. Now its time to apply the finishing touches. This will set the print area, format the titles to appear above the bracket, and hide the bracket sheets. The tournament data will still be on the left of the bracket, but don't worry, it won't print or show up on a PDF you create.",
-                    visibleDelay: 500,
-                    directionalHint: DirectionalHint.bottomRightEdge,
-                    isWide: true
-                }
-            });
 
         return listItems;
     }
@@ -382,10 +422,6 @@ export default class App extends React.Component<AppProps, AppState>
 
         Add a log message to the UI
     ----------------------------------------------------------------------------*/
-    addLogMessage(message: string)
-    {
-        this.setState({ errorMessage: message });
-    }
 
     /*----------------------------------------------------------------------------
         %%Function: App.invalidateHeroList

@@ -9,18 +9,24 @@ export interface StaticConfig
     logMoveSteps: boolean,
     newStepLogger: boolean,
     logOptions: boolean,
-    debuggingInfo: boolean
+    debuggingInfo: boolean,
+    topLevelStateName: string,
+    isLocalHost: boolean;
 }
+
+const isLocalHost = window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
-    version: "1.0.14.0",
+    version: "1.0.14.1",
     maxGameMoves: 4000,
-    globalLogging: true,
-    logGridChanges: false,
-    logGrid: false,
-    logMoveSteps: false,
-    newStepLogger: false,
-    logOptions: false,
-    debuggingInfo: false
+    globalLogging: true && isLocalHost,
+    logGridChanges: false && isLocalHost,
+    logGrid: false && isLocalHost,
+    logMoveSteps: false && isLocalHost,
+    newStepLogger: false && isLocalHost,
+    logOptions: false && isLocalHost,
+    debuggingInfo: false && isLocalHost,
+    topLevelStateName: "traynrex-red",
+    isLocalHost: false && window.location.host.indexOf('localhost') > -1
 }

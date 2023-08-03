@@ -3,7 +3,7 @@ import * as CSS from "csstype";
 
 import { IAppContext, TheAppContext } from "../../AppContext";
 import { Teachable, TeachableId } from "./Teachable";
-import { DirectionalHint } from '@fluentui/react';
+import { DirectionalHint, MessageBar, MessageBarType } from '@fluentui/react';
 import { Coachstate } from "../../Coachstate";
 
 export interface StatusBoxProps
@@ -14,6 +14,7 @@ export interface StatusBoxProps
 export interface StatusBoxState
 {
     message: string
+    messageType: MessageBarType
 }
 
 export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
@@ -37,7 +38,8 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 
         this.state =
         {
-            message: ""
+            message: "",
+            messageType: MessageBarType.info
         }
 
         props.appContext.setLogMessageDelegate(this.addLogMessage.bind(this), this.delayClearMessage.bind(this));
@@ -49,9 +51,11 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
         Add a log message to the UI
 
     ----------------------------------------------------------------------------*/
-    addLogMessage(message: string, msecVisible: number = 0)
+    addLogMessage(message: string, messageType: MessageBarType, msecVisible: number = 0)
     {
-        this.setState({ message: message });
+        this.setState({ message: message, messageType: messageType });
+        this.props.appContext.clearCoachmark(TeachableId.ErrorMessage);
+
         if (this.m_pendingTimer != null)
         {
             clearTimeout(this.m_pendingTimer);
@@ -81,6 +85,17 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
             text = "The details will often suggest what you need to do to fix it. Try clicking in another column and add the game again";
         }
 
+        const messageBar = this.state.message !== ""
+            ? (
+                <MessageBar
+                    messageBarType={this.state.messageType}
+                    isMultiline={true}
+                    onDismiss={()=>this.addLogMessage("", 0) } >
+                    {this.state.message}
+                </MessageBar>
+            )
+            : (<span />);
+
         return (
             <Teachable
                 id={TeachableId.ErrorMessage}
@@ -89,9 +104,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
                 visibleDelay={500}
                 directionalHint={DirectionalHint.bottomRightEdge}
                 isWide={true}>
-            <div style={styles}>
-                {this.state.message}
-                </div>
+                {messageBar}
             </Teachable>
         );
     }

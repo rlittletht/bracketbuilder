@@ -257,7 +257,7 @@ export class BracketSources
 
         for (let i: number = 0; i < bracketDefinition.teamCount; i++)
         {
-            formulasTeamNames.push([`Team ${i + 1}`, `Team ${i + 1}`, 1]);
+            formulasTeamNames.push([`Team ${i + 1}`, `Team ${i + 1}`, 0]);
         }
 
         range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 3);

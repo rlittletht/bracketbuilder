@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TwBracketBuilder Help</title>
+    <link rel="stylesheet" href="./rex.css" />
+    <style>
+    </style>
+</head>
+<body>
+    <header>
+        <logo>
+            <img class="logo" src="./ModernTrainWithTRex.png" />
+        </logo>
+        <product>
+            <productHeader>
+                <h1> Bracket Builder </h1>
+            </productHeader>
+            <productName>
+                traynrex <red>RED</red>
+            </productName>
+        </product>
+        <logo>
+            <img class="logo" src="./VintageTrainRTLWithTRex.png" />
+        </logo>
+
+    </header>
+    <main>
+        <nav>
+            <ul>
+                <li><a href="./BracketBuilder-Help.html">Getting Started</a></li>
+                <ul>
+                    <li><a href="./BracketBuilder-Help.html#intro">Introduction</a></li>
+                    <li><a href="./BracketBuilder-Help.html#quickstart">Quick Walk-through</a></li>
+                </ul>
+                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
+                <ul>
+                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
+                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
+                        <li><a href="./SheetEditing.html#score">Scores</a></li>
+                        <li><a href="./SheetEditing.html#field">Field</a></li>
+                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
+                    </ul>
+                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
+                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
+                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
+                    </ul>
+                </ul>
+                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
+                <ul>
+                    <li><a href="./Commands.html#Controls">Interface Controls</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
+                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
+                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
+                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
+                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
+                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
+                        <li><a href="./Commands.html#Help">Help</a></li>
+                    </ul>
+                </ul>
+            </ul>
+        </nav>
+        <article>
+            <floatRight style="width: 30vw;padding-top: 2rem"><img class="whiteBack" src="./FullAddin.png" /></floatRight>
+
+            <h2><a name="Commands">Builder Functions</a></h2>
+            <p>
+                So far we have only looked at some of the features in BracketBuilder. This page will go into
+                a lot more detail on each of the commands that are provided
+            </p>
+            <p> Let's start with an overview of that parts of the addin'</p>
+            <h3><a name="Controls">Controls</a></h3>
+            <p>
+                There are several main parts of BracketBuilder that you will be working with:
+                <ul>
+                    <li>Main tools - this is where tools for the whole bracket will be </li>
+                    <li>Bracket tools - this is where tools for working with games in the bracket are</li>
+                    <li>Games list - games already on the bracket are shaded gray, others are white</li>
+                    <li>Message area - informational messages and errors will show up here</li>
+                    <li>Version number - helpful for making sure you have the latest version</li>
+                </ul>
+            </p>
+            <p> Now let's go through each of the commands</p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./UndoRedo.png" /></floatRight>
+            <h4><a name="Undo">Undo/Redo</a></h4>
+            <p>
+                BracketBuilder can't integrate directly with Excel's undo functionality, so we implement our own. For most operations,
+                like inserting or removing a game, you can click the <em>Undo</em> to go back. You should be able to go back all the
+                way to the beginning of the bracket, unless you have closed and reopened the workbook.
+            </p>
+            <p>When you undo something, you can also click <em>Redo</em> if you decide you want it back.</p>
+            <p>
+                Undo is very useful when you are building a bracket and you find yourself working into a corner -- that is,
+                if you have placed the games and you find yourself unable to continue because you should have done things
+                in a different order (like placing a difficult game first, even though its not the next game on the list
+                of games to add).
+            </p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./UpdateBracket.png" /></floatRight>
+            <h4><a name="Update">Update Bracket with Changes</a></h4>
+            <p>
+                You can change team names, fields, and times directly on the bracket by just typing into the cell (right on top
+                of the formula). (NOTE: For team names, only do this for the first game the team plays). When you do this,
+                BracketBuilder notices that there is a difference between the text in the bracket and the data on the
+                "TeamsAndFields" Sheet. When this happens, the game is considered "dirty".
+            </p>
+            <p>
+                It can be very useful (though not required) for the TeamsAndFields sheet to be kept
+                up-to-date with what is on the bracket. To update the TeamsAndFields sheet, click on the <em>Update Bracket</em>
+                button. All the games at this point will no longer be dirty.
+            </p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./ShadePriorities.png" /></floatRight>
+            <h4><a name="Priorities">Shade Priorities</a></h4>
+            <p>
+                Its unfortunate that BracketBuilder includes this feature, but it is sadly a reality for many leagues.
+                For whatever reason, a game may be considered higher or lower priority based on the teams participating. The
+                original reason behind this was about teams that provided volunteer support for the tournament and teams
+                that did not. Teams that provide volunteer support are a higher priority when assigning scarce volunteer
+                resources for the game. A game with two volunteer teams is the highest priority, next is games with one of
+                each, and lastly is games with two teams providing no volunteer support.
+            </p>
+            <p>
+                When you click on the <em>Shade Priorities</em> button, BracketBuilder will shade each game green/yellow/red
+                according to the teams involved with the game, according to the priorities assigned to each team. Games that can't
+                be determined yet (because the teams aren't known) will not get shaded <b>unless</b> its irrelevant which team
+                wins the previous game. For example, if the top team for a game comes from the winner of Game 2, and Game 2 has
+                two volunteer teams, then it doesn't matter who wins -- the top team is guaranteed to be a volunteer team.
+            </p>
+            <p>
+                On the TeamsAndFields sheet, each team has a priority (0 is highest, 1 is lowest). By default, all teams are
+                highest priority (0). You can change these priorities to change the way games are shaded
+            </p>
+            <p>I really hope most people don't have to use this feature...</p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./ShowHideSheets.png" /></floatRight>
+            <h4><a name="ShowHide">Show/Hide Sheets</a></h4>
+            <p>
+                There are several sheets <em>behind the scenes</em> that BracketBuilder uses. If you are planning on using
+                Excel to create a PDF for your bracket (using File/Export and choose PDF), then you probably don't want all
+                these sheets to be visible.'
+            </p>
+            <p>To switch between showing or hiding these sheets, click on the <em>Show/Hide</em> button</p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./ResetTeaching.png" /></floatRight>
+            <h4><a name="ResetTeaching">Reset Teaching</a></h4>
+            <p>
+                As you get started with BracketBuilder, you will notice coaching hints showing up. If you point your mouse at
+                these coaching marks, you will see a teaching callout show up with some (hopefully) helpful information. These
+                teaching callouts try not to show up too often, and many of them stop showing up after you see them a few times.
+                You can also choose to <em>never show again</em>
+            </p>
+            <p>
+                You might find that you want to get them back, though. If that happens, you can click on <em>
+                    Reset Coaching
+                    Tips
+                </em> and they will start showing up again.
+            </p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./FinishingTouches.png" /></floatRight>
+            <h4><a name="FinishingTouches">Finishing Touches</a></h4>
+            <p>
+                When you are done placing all your games in the bracket, you will notice that the bracket still doesn't look
+                completely polished -- the titles aren't centered, you have extra days in the bracket, and so on.
+            </p>
+            <p>
+                At this point, if you click on <em>finishing touches</em>, BracketBuilder will do some cleaning up to make
+                your bracket look polished:
+                <ul>
+                    <li>The final day of the bracket is stretched out to cover both the final game as well as the <em>champion</em></li>
+                    <li>All other days are removed from the bracket after the final game</li>
+                    <li>The title lines are merged and centered over the bracket</li>
+                    <li>The <em>Hosted By</em> and <em>Last Updated</em> markers are put at the bottom of the bracket</li>
+                    <li>
+                        The <em>Print Area</em> for the sheet is defined to cover only the bracket (and not the information to the
+                        left of the bracket)
+                    </li>
+                </ul>
+            </p>
+            <p>
+                Once you apply the finishing touches to the bracket, you can print and only the bracket will get printed, or you
+                can export to PDF and only the bracket will get exported (assuming you use <em>Show/Hide</em> to hide the extra
+                sheets.
+            </p>
+            <br clear="all" />
+            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./Help.png" /></floatRight>
+            <h4><a name="Help">Help</a></h4>
+            <p>Brings you to this help page.</p>
+
+        </article>
+
+    </main>
+</body>
+</html>

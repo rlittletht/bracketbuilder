@@ -113,9 +113,13 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
             ? "Click on the + sign to add this game to the bracket"
             : "Keep adding games to fill the bracket";
 
+        const teachableId = this.context.Coachstate == Coachstate.AddFirstGame
+            ? TeachableId.AddFirstGame
+            : TeachableId.AddGame;
+
         const addWrapped = (
             <Teachable
-                id={TeachableId.AddGame}
+                id={teachableId}
                 idx={this.props.idx}
                 isWide={true}
                 isActiveEx={this.props.teachableAdd}
