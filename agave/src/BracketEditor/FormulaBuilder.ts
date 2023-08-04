@@ -96,7 +96,7 @@ export class FormulaBuilder
     ----------------------------------------------------------------------------*/
     static getFieldFormulaTextFromGameNumber(gameNum: GameNum): string
     {
-        return `INDEX(BracketSourceData[Field],MATCH(${gameNum.Value}, BracketSourceData[GameNum],0))`;
+        return `INDEX(BracketSourceData[Field],MATCH(${gameNum.GameId.Value}, BracketSourceData[GameID],0))`;
     }
 
     /*----------------------------------------------------------------------------
@@ -112,7 +112,7 @@ export class FormulaBuilder
     ----------------------------------------------------------------------------*/
     static getTimeFormulaTextFromGameId(gameId: GameId): string
     {
-        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameId.GameNum.Value}, BracketSourceData[GameNum],0)), "h:MM AM/PM")`;
+        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameId.GameNum.GameId.Value}, BracketSourceData[GameID],0)), "h:MM AM/PM")`;
     }
 
     /*----------------------------------------------------------------------------

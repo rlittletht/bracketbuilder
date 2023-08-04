@@ -54,11 +54,11 @@ export class BracketSources
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
         {
-            if (range.values[i][0] == gameNum.Value)
+            if (range.values[i][0] == gameNum.GameId.Value)
             {
                 newValues.push(
                     [
-                        gameNum.Value,
+                        gameNum.GameId.Value,
                         field[0] == "=" ? range.values[i][1] : field,
                         typeof time !== "number" ? range.values[i][2] : time,
                         typeof swapHomeAway !== "boolean" ? range.values[i][3] : swapHomeAway
@@ -93,7 +93,7 @@ export class BracketSources
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
         {
-            if (range.values[i][0] == gameNum.Value)
+            if (range.values[i][0] == gameNum.GameId.Value)
             {
                 let newField: string;
                 let newTime: number;
@@ -124,7 +124,7 @@ export class BracketSources
 
                 newValues.push(
                     [
-                        gameNum.Value,
+                        gameNum.GameId.Value,
                         newField,
                         newTime,
                         range.values[i][3]
@@ -222,14 +222,16 @@ export class BracketSources
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let formulasGameInfo: any[][] = [];
-        const gameInfoHeader: any[] = ["GameNum", "Field", "Time", "SwapTopBottom"];
+        const gameInfoHeader: any[] = ["GameID", "Field", "Time", "SwapTopBottom"];
 
         // we get a line for each game
         for (let i: number = 0; i < bracketDefinition.games.length; i++)
         {
+            const gameNum: GameNum = new GameNum(i);
+
             formulasGameInfo.push(
                 [
-                    i,
+                    gameNum.GameId.Value,
                     GlobalDataBuilder.DefaultField,
                     OADate.OATimeFromMinutes(GlobalDataBuilder.DefaultStartTime),
                     false

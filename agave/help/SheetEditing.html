@@ -36,6 +36,7 @@
                 </ul>
                 <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
                 <ul>
+                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
                     <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
                     <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
                     <ul>
@@ -74,6 +75,41 @@
                 structure in the worksheet. The goal is for you to understand how to fine-tune the bracket
                 without breaking the underlying formulas/formatting
             </p>
+            <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="./Sheets.png" /></floatRight>
+            <h3><a name="workbook">Workbook Structure</a></h3>
+            <p>
+                After you create click on <em>Build This Bracket</em>, you will have several sheets
+                in your workbook. The <em>Games</em> sheet is the one with the real bracket on it, and its what you
+                will be working with most of the time. The other sheets have data for and about your bracket.
+            </p>
+        <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="./GamesSheet.png"/></floatRight>
+            <h4><a name="Games">Games Sheet</a></h4>
+        <p> The <em>Games sheet</em> has the actual bracket grid on it and is what you will be building and eventually publishing</p>
+        <p>This sheet has several things you need to customize to get your bracket looking the way you want</p>
+        <h5>BUILDING Cell</h5>
+        <p>The Building cell (A1) starts out with "BUILDING" in the cell. When the text <em>BUILDING</em> is in this cell,
+            each game will show the teams involved if they are known, but if we don't know which team will be playing,
+            then the game will show W1 or L1 (for example) to show that the team will be the Winner of game 1 (hence W1), or
+            the loser of game 1 (L1)</p>
+        <p>You will usually want to clear cell A1 in order to remove the W1/L1 team names from the sheet ot make a cleaner
+            looking bracket</p>
+        <h5>Tournament Information</h5>
+        <p>There are several things to customize in this section. They will change the title and location information
+            for the bracket as well as allow you to customize the tournament host and last updated time. As you edit these cells
+            you should see the title block changing.</p>
+        <p>NOTE: You won't see the <em>hosted</em> or <em>last update</em> items until you apply the finishing touches to the 
+            bracket.</p>
+        <p>The FieldCount item lets you tell BracketBuilder how many fields you have. As BracketBuilder adds games to the 
+            bracket, it will <em>try</em> to play games on the next field and at the next time slot. This really doesn't work
+            out very well, but it does put the games on different fields and at different times, which makes it a little easier
+            to change the <em>TeamsAndFields</em> sheet. (If we didn't do this, then all you would see would be the same field
+            and time for every single game)</p>
+        <h5>Start Date</h5>
+        <p>There is a row of days at the top of the bracket. Each of these days automatically update from the previous day, <b>except</b>
+            for the first day. If you change the date in the first day, then all of the other days will update and your bracket
+            will get a new start date.</p>
+            <h3><a name="workbook">Workbook Structure</a></h3>
+
             <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="./GameOnGrid.png" /></floatRight>
             <h3><a name="structure">Sheet Structure</a></h3>
             <p>
