@@ -2,6 +2,8 @@
 import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
 import { IAppContext } from "../AppContext";
 import { JsCtx } from "../Interop/JsCtx";
+import { HelpTopic } from "../HelpInfo";
+import { StatusBox } from "../taskpane/components/StatusBox";
 
 
 // NOTE on mutex use. Most of the stuff we do is asynchronous, and while
@@ -38,7 +40,7 @@ export class Dispatcher
         }
         catch (error)
         {
-            appContext.log(`Caught: ${error}`);
+            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         appContext.setProgressVisible(false);
@@ -63,7 +65,7 @@ export class Dispatcher
                 await Excel.run(
                     async (ctx) =>
                     {
-                        appContext.log("");
+                        appContext.clearMessage();
                         appContext.popTempCoachstateIfNecessary();
                         appContext.clearCoachmark();
 

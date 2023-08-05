@@ -11,6 +11,8 @@ import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { GridBuilder } from "./GridBuilder";
 import { BracketSources } from "./BracketSources";
 import { JsCtx } from "../Interop/JsCtx";
+import { StatusBox } from "../taskpane/components/StatusBox";
+import { HelpTopic } from "../HelpInfo";
 
 export interface BracketOption
 {
@@ -182,7 +184,7 @@ export class BracketStructureBuilder
         }
         catch (error)
         {
-            appContext.log("ERROR: ".concat(error.message));
+            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
     }
 
@@ -207,7 +209,7 @@ export class BracketStructureBuilder
         {
             if (bracketDefinition == null)
             {
-                appContext.log(`Don't know how to build bracket for choice: '${bracketChoice}'`);
+                appContext.error([`Don't know how to build bracket for choice: '${bracketChoice}'`]);
                 return;
             }
 

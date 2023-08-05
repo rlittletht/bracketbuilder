@@ -107,6 +107,7 @@ export default class App extends React.Component<AppProps, AppState>
         this.m_appContext = new AppContext();
         this.m_appContext.setDelegates(
             null,
+            null,
             this.invalidateHeroList.bind(this),
             this.getSelectedBracket.bind(this),
             this.getGames.bind(this));
@@ -116,7 +117,7 @@ export default class App extends React.Component<AppProps, AppState>
     static async resetCoachingTips(appContext: IAppContext)
     {
         appContext.resetTeachableStates();
-        appContext.logTimeout("All coaching tips have been reset. If you want to see them in this session, right click and select Refresh", 10000);
+        appContext.message(["All coaching tips have been reset. If you want to see them in this session, right click and select Refresh"], null, 10000);
     }
 
     static async launchHelp(appContext: IAppContext)
@@ -209,14 +210,12 @@ export default class App extends React.Component<AppProps, AppState>
             // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);
 
-            appContext.logTimeout("tests complete", 5000);
+            appContext.message(["tests complete"], null, 5000);
         }
         catch (e)
         {
-            appContext.log(
-                `TEST FAILURE: ${testContext.CurrentTest} (${
-                e
-                })`);
+            appContext.error(
+                [`TEST FAILURE: ${testContext.CurrentTest} (${e})`]);
         }
     }
 
@@ -820,7 +819,7 @@ export default class App extends React.Component<AppProps, AppState>
                             </div>
                         </Stack.Item>
                         <Stack.Item styles={footerItemStyle}>
-                            <StatusBox appContext={this.m_appContext}/>
+                            <StatusBox/>
                             <div style={versionLabelProps}>
                                 {App.version}
                             </div>

@@ -10,6 +10,7 @@ import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
+import { HelpTopic } from "../../HelpInfo";
 
 export class StructureRemove
 {
@@ -322,7 +323,10 @@ export class StructureRemove
         // we can't do anything
         if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1)
         {
-            appContext.log(`Cannot find game ${game.GameId.Value} in the bracket`);
+            appContext.error(
+                [`Cannot find game ${game.GameId.Value} in the bracket`],
+                { topic: HelpTopic.FAQ_BrokenBracket });
+
             return;
         }
 

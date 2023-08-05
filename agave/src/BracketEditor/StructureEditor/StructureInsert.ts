@@ -12,6 +12,7 @@ import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { GridItem } from "../GridItem";
 import { Coachstate } from "../../Coachstate";
+import { HelpTopic } from "../../HelpInfo";
 
 export class StructureInsert
 {
@@ -37,7 +38,10 @@ export class StructureInsert
 
         if (insertRangeInfo == null)
         {
-            appContext.log("Selection is invalid for a game insert");
+            appContext.error(
+                ["There was no selection for the championship game insertion. You must select a cell to insert the championship game at"],
+                { topic: HelpTopic.FAQ_ManuallySelect });
+
             return;
         }
 
@@ -232,7 +236,9 @@ export class StructureInsert
 
         if (insertRangeInfo == null)
         {
-            appContext.log("Selection is invalid for a game insert");
+            appContext.error(
+                ["There was no selection for the game insertion. You must select a cell to insert a game at."],
+                { topic: HelpTopic.FAQ_ManuallySelect });
             return;
         }
 
@@ -320,7 +326,10 @@ export class StructureInsert
         {
             if (sourceGame.Range.FirstColumn >= requested.FirstColumn)
             {
-                appContext.log(`Can't insert this game in this column. Game ${sourceGame.GameId.Value} must be played first. This game has to be inserted in column ${Ranges.getColName(sourceGame.Range.FirstColumn + 3)} or later`);
+                appContext.error(
+                    [`Can't insert this game in this column. Game ${sourceGame.GameId.Value} must be played first.`,
+                    `This game has to be inserted in column ${Ranges.getColName(sourceGame.Range.FirstColumn + 3)} or later`],
+                    { topic: HelpTopic.FAQ_GameDependencies });
                 return false;
             }
         }
@@ -366,7 +375,10 @@ export class StructureInsert
 
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
         {
-            appContext.log(`Can't insert game. Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`);
+            appContext.error(
+                ["Can't insert game at the current location.",
+                    `Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`],
+                { topic: HelpTopic.FAQ_InsertLocation });
             appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
             return false;
         }
@@ -401,7 +413,13 @@ export class StructureInsert
                         + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
                         + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
 
-                appContext.log(`Can't insert game. Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`);
+                appContext.error(
+                    [
+                        "Can't insert game at the current location.",
+                        `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
+                    ],
+                    { topic: HelpTopic.FAQ_InsertLocation });
+
                 appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
                 return false;
             }
@@ -442,7 +460,7 @@ export class StructureInsert
 
         if (failReason != null)
         {
-            appContext.logError(`Insert Failed: ${failReason}`, 0);
+            appContext.error([`Insert Failed: ${failReason}`], {topic: HelpTopic.FAQ_InsertFailed});
             appContext.pushTempCoachstate(Coachstate.AfterInsertGameFailedOverlapping);
             return false;
         }

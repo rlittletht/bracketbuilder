@@ -9,12 +9,18 @@ import { MessageBarType } from '@fluentui/react';
 import { TeachableId } from "./taskpane/components/Teachable";
 import { DurableState } from "./DurableState";
 import { s_staticConfig } from "./StaticConfig";
+import { IHelpInfo } from "./HelpInfo";
 
 export interface IAppContext
 {
-    log(message: string);
-    logTimeout(message: string, msecVisible: number);
-    logError(message: string, msecVisible: number);
+    // Log just logs the string to wherever logs are going...
+    log2(message: string);
+    // message and error update the MessageBar for the user (with optional
+    // timeout to erase them)
+    message(message: string[], helpInfo?: IHelpInfo, msecVisible?: number);
+    error(message: string[], helpInfo?: IHelpInfo, msecVisible?: number);
+    clearMessage();
+
     get Timer(): PerfTimer;
     /*async*/ invalidateHeroList(context: JsCtx);
     getSelectedBracket();
@@ -39,6 +45,7 @@ export interface IAppContext
     getHideAllTeachables(): boolean;
     setHideThisTeachable(teachableId: TeachableId, hide: boolean);
     getHideThisTeachable(teachableId: TeachableId): boolean;
+    setMessageDelegates(setDelegate: SetMessageDelegate, clearDelegate: ClearMessageDelegate): void;
 }
 
 export interface CoachmarkVisibilityDelegate
@@ -46,9 +53,14 @@ export interface CoachmarkVisibilityDelegate
     (visible: boolean, teachableId: TeachableId): void;
 }
 
-export interface AddLogMessageDelegate
+export interface ClearMessageDelegate
 {
-    (message: string, messageType: MessageBarType, msecVisible: number): void;
+    (): void;
+}
+
+export interface SetMessageDelegate
+{
+    (message: string[], messageType: MessageBarType, helpInfo?: IHelpInfo, msecVisible?: number): void;
 }
 
 export interface InvalidateHeroListDelegate
@@ -81,7 +93,8 @@ export class AppContext implements IAppContext
 
     m_coachmarkVisibilitySet: CoachmarkVisibilityDelegate = null;
     m_coachmarkTimer: any = null;
-    m_addLogMessageDelegate: AddLogMessageDelegate;
+    m_setMessageDelegate: SetMessageDelegate;
+    m_clearMessageDelegate: ClearMessageDelegate;
     m_progressVisibilityDelegate: ProgressVisibilityDelegate;
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
     m_getSelectedBracket: GetSelectedBracketDelegate;
@@ -219,24 +232,30 @@ export class AppContext implements IAppContext
             this.m_progressVisibilityDelegate(visible);
     }
 
-    log(message: string, msecVisible: number = 0)
+    log2(message: string)
     {
-        if (this.m_addLogMessageDelegate != null)
-            this.m_addLogMessageDelegate(message, MessageBarType.info, msecVisible);
+        if (s_staticConfig.globalLogging)
+            console.log(message);
     }
 
-    logTimeout(message: string, msecVisible: number)
+    message(message: string[], helpInfo?: IHelpInfo, msecVisible?: number)
     {
-        if (this.m_addLogMessageDelegate != null)
-            this.m_addLogMessageDelegate(message, MessageBarType.info, msecVisible);
+        if (this.m_setMessageDelegate != null)
+            this.m_setMessageDelegate(message, MessageBarType.info, helpInfo, msecVisible);
     }
 
-    logError(message: string, msecVisible: number = 0)
+    error(message: string[], helpInfo?: IHelpInfo, msecVisible?: number)
     {
-        if (this.m_addLogMessageDelegate != null)
-            this.m_addLogMessageDelegate(message, MessageBarType.error, msecVisible);
+        if (this.m_setMessageDelegate != null)
+            this.m_setMessageDelegate(message, MessageBarType.error, helpInfo, msecVisible);
     }
 
+    clearMessage()
+    {
+        if (this.m_clearMessageDelegate)
+            this.m_clearMessageDelegate();
+
+    }
     async invalidateHeroList(context: JsCtx)
     {
         if (this.m_invalidateHeroListDelegate)
@@ -260,21 +279,24 @@ export class AppContext implements IAppContext
     }
 
     setDelegates(
-        addMessageDelegate: AddLogMessageDelegate,
+        addMessageDelegate: SetMessageDelegate,
+        clearMessageDelegate: ClearMessageDelegate,
         invalidateHeroList: InvalidateHeroListDelegate,
         getSelectedBracket: GetSelectedBracketDelegate,
         getGames: GetGamesDelegate
         )
     {
-        this.m_addLogMessageDelegate = addMessageDelegate;
+        this.m_setMessageDelegate = addMessageDelegate;
+        this.m_clearMessageDelegate = clearMessageDelegate;
         this.m_invalidateHeroListDelegate = invalidateHeroList;
         this.m_getSelectedBracket = getSelectedBracket;
         this.m_getGames = getGames;
     }
 
-    setLogMessageDelegate(addMessageDelegate: AddLogMessageDelegate)
+    setMessageDelegates(addMessageDelegate: SetMessageDelegate, clearMessageDelagate: ClearMessageDelegate)
     {
-        this.m_addLogMessageDelegate = addMessageDelegate;
+        this.m_setMessageDelegate = addMessageDelegate;
+        this.m_clearMessageDelegate = clearMessageDelagate;
     }
 
     setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)

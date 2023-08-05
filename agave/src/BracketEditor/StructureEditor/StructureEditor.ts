@@ -1,6 +1,9 @@
 
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { IAppContext, AppContext } from "../../AppContext";
+import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
+import { IAppContext, AppContext, IAppContext as IAppContext1, IAppContext as IAppContext2, IAppContext as IAppContext3, IAppContext as IAppContext4, IAppContext as IAppContext5, IAppContext as IAppContext6,
+    IAppContext as IAppContext7,
+    IAppContext as IAppContext8
+} from "../../AppContext";
 import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
 import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
 import { GameFormatting } from "../GameFormatting";
@@ -19,6 +22,7 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { PerfTimer } from "../../PerfTimer";
 import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
+import { HelpTopic, HelpInfo } from "../../HelpInfo";
 
 let _moveSelection: RangeInfo = null;
 
@@ -194,7 +198,10 @@ export class StructureEditor
     {
         if (_moveSelection == null)
         {
-            appContext.log("no selection was capture for the move");
+            appContext.error(
+                ["No game was captured for the move. You have to pick up a game first."],
+                { topic: HelpTopic.Commands_PickupGame });
+
             return;
         }
 
@@ -212,7 +219,7 @@ export class StructureEditor
 
         Remove the game that the selection overlaps
     ----------------------------------------------------------------------------*/
-    static async removeGameAtSelectionClick(appContext: IAppContext)
+    static async removeGameAtSelectionClick(appContext: IAppContext1)
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
@@ -235,7 +242,7 @@ export class StructureEditor
 
         find the given game in the bracket grid and remove it.
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame)
+    static async findAndRemoveGameClick(appContext: IAppContext2, game: IBracketGame1)
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
@@ -257,7 +264,7 @@ export class StructureEditor
 
         repair all the items that are 'dirty'
     ----------------------------------------------------------------------------*/
-    static async syncBracketChangesFromGameSheet(appContext: IAppContext, context: JsCtx)
+    static async syncBracketChangesFromGameSheet(appContext: IAppContext3, context: JsCtx)
     {
         const bracketName: string = await this.getBracketName(context);
 
@@ -305,7 +312,7 @@ export class StructureEditor
 
         Show or hide all the supporting sheets.
     ----------------------------------------------------------------------------*/
-    static async toggleShowDataSheets(appContext: IAppContext, context: JsCtx)
+    static async toggleShowDataSheets(appContext: IAppContext4, context: JsCtx)
     {
         appContext;
 
@@ -441,7 +448,7 @@ export class StructureEditor
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.repairGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async repairGameAtSelection(appContext: IAppContext, context: JsCtx, bracketName: string)
+    static async repairGameAtSelection(appContext: IAppContext5, context: JsCtx, bracketName: string)
     {
         let selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
@@ -450,7 +457,10 @@ export class StructureEditor
 
         if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
         {
-            appContext.log(`no game detected at range ${selection.toString()}`);
+            appContext.error(
+                [`Could not find a game at the selected range: ${selection.toString()}`],
+                { topic: HelpTopic.Commands_RepairGame });
+
             return;
         }
 
@@ -464,7 +474,7 @@ export class StructureEditor
         await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
     }
 
-    static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
+    static async doGameMoveToSelection(appContext: IAppContext6, context: JsCtx, selection: RangeInfo, bracketName: string)
     {
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         const itemOld: GridItem = grid.inferGameItemFromSelection(selection);
@@ -487,7 +497,7 @@ export class StructureEditor
 
         if (gridNew == null)
         {
-            appContext.logError("I don't know how to move the game to this selection. It would probably break the bracket.", 8000);
+            appContext.error(["I don't know how to move the game to this selection. It would probably break the bracket."], null, 8000);
             return;
         }
 
@@ -497,11 +507,11 @@ export class StructureEditor
             _undoManager.setUndoGrid(grid, []);
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName);
             if (mover.Warning != "")
-                appContext.logError(mover.Warning, 8000);
+                appContext.error([mover.Warning], null, 8000);
         }
     }
 
-    static async testGridClick(appContext: IAppContext)
+    static async testGridClick(appContext: IAppContext7)
     {
         appContext;
         let delegate: DispatchWithCatchDelegate = async (context) =>
@@ -516,7 +526,7 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
-    static async applyFinalFormatting(appContext: IAppContext, context: JsCtx, bracketName: string)
+    static async applyFinalFormatting(appContext: IAppContext8, context: JsCtx, bracketName: string)
     {
         appContext;
 

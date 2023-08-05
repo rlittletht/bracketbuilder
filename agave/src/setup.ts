@@ -6,6 +6,8 @@ import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
 import { JsCtx } from "./Interop/JsCtx";
 import { Coachstate } from "./Coachstate";
 import { CoachTransition } from "./CoachTransition";
+import { StatusBox } from "./taskpane/components/StatusBox";
+import { HelpTopic } from "./HelpInfo";
 
 export enum SetupState
 {
@@ -195,7 +197,7 @@ export class SetupBook
         }
         catch (error)
         {
-            appContext.log(`Exception caught: ${error.message}`);
+            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         return true;
@@ -228,7 +230,7 @@ export class SetupBook
         }
         catch (error)
         {
-            appContext.log(`Exception caught: ${error.message}`);
+            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         appContext.setProgressVisible(false);

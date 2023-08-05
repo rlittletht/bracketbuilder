@@ -3,13 +3,21 @@ import * as CSS from "csstype";
 
 import { IAppContext, TheAppContext } from "../../AppContext";
 import { Teachable, TeachableId } from "./Teachable";
-import { DirectionalHint, MessageBar, MessageBarType } from '@fluentui/react';
+import { Link } from '@fluentui/react';
 import { Coachstate } from "../../Coachstate";
 import { s_staticConfig } from "../../StaticConfig";
 
+export interface HelpLinkInfo
+{
+    nodes?: React.ReactNode;
+    display?: string;
+    
+}
 export interface HelpLinkProps
 {
     children?: React.ReactNode;
+    helpLink: string;
+    text?: string;
 }
 
 export interface HelpLinkState
@@ -20,6 +28,7 @@ export class HelpLink extends React.Component<HelpLinkProps, HelpLinkState>
 {
     context!: IAppContext;
     static contextType = TheAppContext;
+    static getHelp = "Click for more information";
 
     constructor(props, context)
     {
@@ -44,9 +53,29 @@ export class HelpLink extends React.Component<HelpLinkProps, HelpLinkState>
             color: "blue"
         };
 
+        const { children, text } = this.props;
+        let content;
+
+        if (children)
+            content = children;
+        else if (text)
+            content = (
+                <span>
+                    {text}
+                </span>);
+        else
+            content = (
+                <span>
+                    {HelpLink.getHelp}
+                </span>
+            );
+
+        const full = HelpLink.buildHelpLink(this.props.helpLink);
+
         return (
-            <span style={styles}>{this.props.children}
-            </span>
+            <Link href="{full}" target="_blank" underlink>
+                {content}
+            </Link>
         );
     }
 }
