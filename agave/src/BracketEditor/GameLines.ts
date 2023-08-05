@@ -1,7 +1,7 @@
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { GameFormatting } from "./GameFormatting";
 import { IBracketGame, IBracketGame as IBracketGame1, BracketGame } from "./BracketGame";
-import { AppContext } from "../AppContext";
+import { AppContext } from "../AppContext/AppContext";
 import { BracketManager } from "../Brackets/BracketDefinitions";
 import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";

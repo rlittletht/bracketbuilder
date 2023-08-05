@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { TooltipHost, ITooltipHostStyles } from "@fluentui/react/lib/Tooltip";
 
 export interface ActionButtonProps

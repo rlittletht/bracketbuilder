@@ -3,7 +3,7 @@ import { BracketDefinition, GameDefinition, s_brackets, BracketManager } from ".
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { Grid } from "./Grid";
-import { AppContext, IAppContext } from "../AppContext";
+import { AppContext, IAppContext } from "../AppContext/AppContext";
 import { BracketSources } from "../Brackets/BracketSources";
 import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";

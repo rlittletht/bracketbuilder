@@ -1,6 +1,6 @@
 import { Grid } from "./Grid";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
-import { IAppContext } from "../AppContext";
+import { IAppContext } from "../AppContext/AppContext";
 import { ApplyGridChange } from "./StructureEditor/ApplyGridChange";
 import { GameNum } from "./GameNum";
 import { BracketSources } from "../Brackets/BracketSources";

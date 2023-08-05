@@ -1,15 +1,15 @@
 import * as React from "react";
-import { IBracketGame } from "./BracketEditor/BracketGame";
-import { PerfTimer } from "./PerfTimer";
-import { JsCtx } from "./Interop/JsCtx";
-import { Coachstate } from "./Coachstate";
-import { CoachTransition } from "./CoachTransition";
-import { CoachstateTransitions } from "./CoachstateTransitions";
+import { IBracketGame } from "../BracketEditor/BracketGame";
+import { PerfTimer } from "../PerfTimer";
+import { JsCtx } from "../Interop/JsCtx";
+import { Coachstate } from "../Coachstate";
+import { CoachTransition } from "../CoachTransition";
+import { CoachstateTransitions } from "../CoachstateTransitions";
 import { MessageBarType } from '@fluentui/react';
-import { TeachableId } from "./taskpane/components/Teachable";
-import { DurableState } from "./DurableState";
-import { s_staticConfig } from "./StaticConfig";
-import { IHelpInfo } from "./HelpInfo";
+import { TeachableId } from "../taskpane/components/Teachable";
+import { DurableState } from "../DurableState";
+import { s_staticConfig } from "../StaticConfig";
+import { IHelpInfo } from "../HelpInfo";
 
 export interface IAppContext
 {

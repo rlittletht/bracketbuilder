@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Spinner, SpinnerSize } from "@fluentui/react";
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { classNamesFunction, IStyle, Overlay } from '@fluentui/react';
 
 export interface ProgressProps

@@ -1,4 +1,4 @@
-import { IAppContext, IAppContext as IAppContext1, IAppContext as IAppContext2, IAppContext as IAppContext3, AppContext } from "../../AppContext";
+import { IAppContext, AppContext } from "../../AppContext/AppContext";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GameFormatting } from "../GameFormatting";
 import { Ranges } from "../../Interop/Ranges";
@@ -35,7 +35,7 @@ export class ApplyGridChange
         if the Op is RemoveLite, there's really nothing to do -- the Insert is
         going to assume all the named ranges are already there
     ----------------------------------------------------------------------------*/
-    static async executeRemoveChange(appContext: IAppContext1, context: JsCtx, change: GridChange, bracketName: string)
+    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string)
     {
         if (change.IsLine)
         {
@@ -92,7 +92,7 @@ export class ApplyGridChange
         the formulas and text. The names and structure are assumed to already
         be there.
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext2, context: JsCtx, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
+    static async executeAddChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
     {
         const bookmark: string = "executeAddChange";
 
@@ -167,7 +167,7 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext3, context: JsCtx, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
+    static async applyChanges(appContext: IAppContext, context: JsCtx, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
     {
         let undoGameDataItems: UndoGameDataItem[] = [];
 

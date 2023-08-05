@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
 import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 import { GameItem } from "./GameItem"

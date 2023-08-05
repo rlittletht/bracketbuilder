@@ -5,7 +5,7 @@ import { RangeInfo } from "../../Interop/Ranges";
 import { GridAdjust } from "./GridAdjust";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { GameNum } from "../GameNum";
 import { UnitTestContext } from "../../taskpane/components/App";
 

@@ -1,4 +1,4 @@
-import { IAppContext, IAppContext as IAppContext1, IAppContext as IAppContext2 } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { IBracketGame } from "../BracketGame";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { FormulaBuilder } from "../FormulaBuilder";
@@ -212,7 +212,7 @@ export class StructureInsert
         of the game. 
     ----------------------------------------------------------------------------*/
     static async insertGameAtRange(
-        appContext: IAppContext1,
+        appContext: IAppContext,
         context: JsCtx,
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
@@ -339,7 +339,7 @@ export class StructureInsert
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext2, context: JsCtx, game: IBracketGame): Promise<boolean>
+    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame): Promise<boolean>
     {
         const bookmark: string = "insertGameAtSelection";
 

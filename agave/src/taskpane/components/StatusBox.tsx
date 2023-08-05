@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as CSS from "csstype";
 
-import { IAppContext, TheAppContext } from "../../AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { Teachable, TeachableId } from "./Teachable";
 import { DirectionalHint, MessageBar, MessageBarType } from '@fluentui/react';
 import { Coachstate } from "../../Coachstate";

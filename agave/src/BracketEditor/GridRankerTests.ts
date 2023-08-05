@@ -1,4 +1,4 @@
-import { IAppContext } from "../AppContext";
+import { IAppContext } from "../AppContext/AppContext";
 import { Grid } from "./Grid";
 import { RangeInfo } from "../Interop/Ranges";
 import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";

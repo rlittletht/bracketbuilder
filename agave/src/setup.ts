@@ -1,7 +1,7 @@
 
 import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
 import { FastTables } from "./Interop/FastTables";
-import { IAppContext, AppContext } from "./AppContext";
+import { IAppContext, AppContext } from "./AppContext/AppContext";
 import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
 import { JsCtx } from "./Interop/JsCtx";
 import { Coachstate } from "./Coachstate";

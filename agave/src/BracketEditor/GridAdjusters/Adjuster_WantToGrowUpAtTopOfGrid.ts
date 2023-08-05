@@ -4,7 +4,7 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
 import { Spacer } from "./Spacer";
 import { GridAdjust } from "./GridAdjust";
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { GridItem } from "../GridItem";
 import { GameNum } from "../GameNum";
 import { GameId } from "../GameId";

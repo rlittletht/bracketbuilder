@@ -1,9 +1,6 @@
 
 import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
-import { IAppContext, AppContext, IAppContext as IAppContext1, IAppContext as IAppContext2, IAppContext as IAppContext3, IAppContext as IAppContext4, IAppContext as IAppContext5, IAppContext as IAppContext6,
-    IAppContext as IAppContext7,
-    IAppContext as IAppContext8
-} from "../../AppContext";
+import { IAppContext, AppContext } from "../../AppContext/AppContext";
 import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
 import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
 import { GameFormatting } from "../GameFormatting";
@@ -219,7 +216,7 @@ export class StructureEditor
 
         Remove the game that the selection overlaps
     ----------------------------------------------------------------------------*/
-    static async removeGameAtSelectionClick(appContext: IAppContext1)
+    static async removeGameAtSelectionClick(appContext: IAppContext)
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
@@ -242,7 +239,7 @@ export class StructureEditor
 
         find the given game in the bracket grid and remove it.
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGameClick(appContext: IAppContext2, game: IBracketGame1)
+    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame1)
     {
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
@@ -264,7 +261,7 @@ export class StructureEditor
 
         repair all the items that are 'dirty'
     ----------------------------------------------------------------------------*/
-    static async syncBracketChangesFromGameSheet(appContext: IAppContext3, context: JsCtx)
+    static async syncBracketChangesFromGameSheet(appContext: IAppContext, context: JsCtx)
     {
         const bracketName: string = await this.getBracketName(context);
 
@@ -312,7 +309,7 @@ export class StructureEditor
 
         Show or hide all the supporting sheets.
     ----------------------------------------------------------------------------*/
-    static async toggleShowDataSheets(appContext: IAppContext4, context: JsCtx)
+    static async toggleShowDataSheets(appContext: IAppContext, context: JsCtx)
     {
         appContext;
 
@@ -448,7 +445,7 @@ export class StructureEditor
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.repairGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async repairGameAtSelection(appContext: IAppContext5, context: JsCtx, bracketName: string)
+    static async repairGameAtSelection(appContext: IAppContext, context: JsCtx, bracketName: string)
     {
         let selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
@@ -474,7 +471,7 @@ export class StructureEditor
         await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
     }
 
-    static async doGameMoveToSelection(appContext: IAppContext6, context: JsCtx, selection: RangeInfo, bracketName: string)
+    static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
     {
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         const itemOld: GridItem = grid.inferGameItemFromSelection(selection);
@@ -511,7 +508,7 @@ export class StructureEditor
         }
     }
 
-    static async testGridClick(appContext: IAppContext7)
+    static async testGridClick(appContext: IAppContext)
     {
         appContext;
         let delegate: DispatchWithCatchDelegate = async (context) =>
@@ -526,7 +523,7 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
-    static async applyFinalFormatting(appContext: IAppContext8, context: JsCtx, bracketName: string)
+    static async applyFinalFormatting(appContext: IAppContext, context: JsCtx, bracketName: string)
     {
         appContext;
 

@@ -8,7 +8,7 @@ import { HeroList, HeroListItem, HeroListFormat } from "./HeroList";
 import { Progress } from "./Progress";
 import { SetupState } from "../../Setup";
 import { SetupBook } from "../../Setup";
-import { IAppContext, AppContext, TheAppContext } from "../../AppContext";
+import { IAppContext, AppContext, TheAppContext } from "../../AppContext/AppContext";
 import { BracketChooser, UpdateBracketChoiceDelegate } from "./BracketChooser";
 import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
 import { GameItem } from "./GameItem";

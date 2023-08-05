@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { Stack, IStackStyles, IStackItemStyles, Alignment, ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
 import { BracketOption } from "../../Brackets/BracketStructureBuilder";
 

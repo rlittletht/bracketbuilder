@@ -1,5 +1,5 @@
 import { JsCtx } from "../../Interop/JsCtx";
-import { AppContext, IAppContext } from "../../AppContext";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { Grid } from "../Grid";
 import { StructureEditor } from "./StructureEditor";

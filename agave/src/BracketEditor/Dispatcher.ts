@@ -1,6 +1,6 @@
 
 import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
-import { IAppContext } from "../AppContext";
+import { IAppContext } from "../AppContext/AppContext";
 import { JsCtx } from "../Interop/JsCtx";
 import { HelpTopic } from "../HelpInfo";
 import { StatusBox } from "../taskpane/components/StatusBox";

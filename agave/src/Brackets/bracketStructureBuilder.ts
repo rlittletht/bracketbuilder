@@ -4,7 +4,7 @@ import { BracketDefinition, GameDefinition, s_brackets, _bracketManager } from "
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
-import { IAppContext } from "../AppContext";
+import { IAppContext } from "../AppContext/AppContext";
 import { SetupBook } from "../Setup";
 import { BracketDataBuilder } from "./BracketDataBuilder";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";

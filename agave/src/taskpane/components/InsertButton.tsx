@@ -2,7 +2,7 @@ import * as React from "react";
 import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 
 export interface InsertButtonProps
 {

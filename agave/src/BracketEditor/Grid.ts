@@ -9,7 +9,7 @@ import { GridGameInsert } from "./GridGameInsert";
 import { FormulaBuilder } from "./FormulaBuilder";
 import { GridItem } from "./GridItem";
 import { GridChange, GridChangeOperation } from "./GridChange";
-import { AppContext } from "../AppContext";
+import { AppContext } from "../AppContext/AppContext";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";

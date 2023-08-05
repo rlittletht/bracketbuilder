@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IAppContext } from "../../AppContext";
+import { IAppContext } from "../../AppContext/AppContext";
 import { ActionButton } from "./ActionButton";
 import { SetupState, SetupBook } from "../../Setup";
 import { RangeInfo } from "../../Interop/Ranges";
