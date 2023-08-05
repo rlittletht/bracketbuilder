@@ -197,7 +197,7 @@ export class SetupBook
         }
         catch (error)
         {
-            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         return true;
@@ -213,9 +213,9 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async buildSpecificBracket(appContext: IAppContext): Promise<boolean>
     {
-        appContext.transitionState(CoachTransition.BuildBracket);
+        appContext.Teaching.transitionState(CoachTransition.BuildBracket);
 
-        appContext.clearCoachmark();
+        appContext.Teaching.clearCoachmark();
         appContext.setProgressVisible(true);
 
         try
@@ -230,7 +230,7 @@ export class SetupBook
         }
         catch (error)
         {
-            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         appContext.setProgressVisible(false);

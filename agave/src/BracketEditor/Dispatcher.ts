@@ -40,7 +40,7 @@ export class Dispatcher
         }
         catch (error)
         {
-            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         appContext.setProgressVisible(false);
@@ -65,9 +65,9 @@ export class Dispatcher
                 await Excel.run(
                     async (ctx) =>
                     {
-                        appContext.clearMessage();
-                        appContext.popTempCoachstateIfNecessary();
-                        appContext.clearCoachmark();
+                        appContext.Messages.clearMessage();
+                        appContext.Teaching.popTempCoachstateIfNecessary();
+                        appContext.Teaching.clearCoachmark();
 
                         const context: JsCtx = new JsCtx(ctx);
 

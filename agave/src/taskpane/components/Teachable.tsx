@@ -97,8 +97,8 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
                 // when we set to true, we increment the number of times we have shown
                 // this teachable
 
-                this.context.setTeachableSessionCount(teachableId, this.context.getTeachableSessionCount(teachableId) + 1);
-                this.context.setTeachableGlobalCount(teachableId, this.context.getTeachableGlobalCount(teachableId) + 1);
+                this.context.Teaching.setTeachableSessionCount(teachableId, this.context.Teaching.getTeachableSessionCount(teachableId) + 1);
+                this.context.Teaching.setTeachableGlobalCount(teachableId, this.context.Teaching.getTeachableGlobalCount(teachableId) + 1);
             }
             this.setState({ visible: visible });
         }
@@ -106,16 +106,16 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
 
     shouldCreateCoachmark(): boolean
     {
-        if (this.context.getHideThisTeachable(this.props.id)
-            || this.context.getHideAllTeachables())
+        if (this.context.Teaching.getHideThisTeachable(this.props.id)
+            || this.context.Teaching.getHideAllTeachables())
         {
             return false;
         }
 
         const config = Teachable.getConfig(this.props.id);
 
-        const sessionCount = this.context.getTeachableSessionCount(this.props.id);
-        const globalCount = this.context.getTeachableGlobalCount(this.props.id);
+        const sessionCount = this.context.Teaching.getTeachableSessionCount(this.props.id);
+        const globalCount = this.context.Teaching.getTeachableGlobalCount(this.props.id);
 
         if (config.sessionCountLimit != 0 && sessionCount >= config.sessionCountLimit)
             return false;
@@ -131,7 +131,7 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
         return Teachable.logit(`about to check state isActiveEx: id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
             && (this.props.isActiveEx?.() ?? true)
             && Teachable.logit(`about to check TeachableStateActive: id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
-            && Teachable.IsTeachableStateActive(this.props.id, this.context.Coachstate);
+            && Teachable.IsTeachableStateActive(this.props.id, this.context.Teaching.Coachstate);
     }
 
     async componentDidMount()
@@ -216,24 +216,24 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
 
     render()
     {
-        if (!this.context.isCoachmarkRegistered())
+        if (!this.context.Teaching.isCoachmarkRegistered())
         {
             if (this.shouldCreateCoachmark())
             {
-                this.context.registerCoachmark(this.setVisibility.bind(this));
+                this.context.Teaching.registerCoachmark(this.setVisibility.bind(this));
                 let delay: TeachableViewDelay = this.props.visibleDelay;
 
                 if (delay == TeachableViewDelay.Auto)
                 {
                     const config = Teachable.getConfig(this.props.id);
 
-                    if (this.context.getTeachableSessionCount(this.props.id) > 0)
+                    if (this.context.Teaching.getTeachableSessionCount(this.props.id) > 0)
                         delay = config.firstViewDelay;
                     else
                         delay = config.viewDelay;
                 }
                 if (delay > 0)
-                    this.context.startCoachmarkTimer(Number(delay), true, this.props.id);
+                    this.context.Teaching.startCoachmarkTimer(Number(delay), true, this.props.id);
             }
         }
 
@@ -258,7 +258,7 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
                     Teachable.logit(`about to check state isActiveEx: id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
                     && (this.props.isActiveEx?.() ?? true)
                     && Teachable.logit(`about to check TeachableStateActive: id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
-                    && Teachable.IsTeachableStateActive(this.props.id, this.context.Coachstate)
+                    && Teachable.IsTeachableStateActive(this.props.id, this.context.Teaching.Coachstate)
                     && Teachable.logit(`about to check state visible id(${this.props.id} idx(${this.props.idx}): ${this.state.visible}`)
                     && this.state.visible)
                     && (<Coachmark

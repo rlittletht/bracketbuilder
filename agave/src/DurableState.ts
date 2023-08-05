@@ -19,7 +19,14 @@ interface IDurableStateDataSerialized
     HideAllTeachables: boolean;
 }
 
-export class DurableState
+export interface IDurableState
+{
+    get State(): IDurableStateData;
+    load(topLevelKey: string);
+    save(topLevelKey: string);
+}
+
+export class DurableState implements IDurableState
 {
     static DefaultData(): IDurableStateData
     {

@@ -54,13 +54,13 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
             messageType: MessageBarType.info
         }
 
-        this.context.setMessageDelegates(this.setMessage.bind(this), this.clearMessage.bind(this));
+        this.context.Messages.setMessageDelegates(this.setMessage.bind(this), this.clearMessage.bind(this));
     }
 
     clearMessage()
     {
         this.setState({ message: null, helpInfo: null, messageType: MessageBarType.info });
-        this.context.clearCoachmark(TeachableId.ErrorMessage);
+        this.context.Teaching.clearCoachmark(TeachableId.ErrorMessage);
 
         if (this.m_pendingTimer != null)
         {
@@ -78,7 +78,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
     setMessage(message: string[], messageType: MessageBarType, helpInfo?: IHelpInfo, msecVisible?: number)
     {
         this.setState({ message: message, helpInfo: helpInfo, messageType: messageType });
-        this.context.clearCoachmark(TeachableId.ErrorMessage);
+        this.context.Teaching.clearCoachmark(TeachableId.ErrorMessage);
 
         if (this.m_pendingTimer != null)
         {
@@ -104,7 +104,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
         let text = "This is where additional information will show up in response to things you do";
         const lines = this.state.message?.map((line) => (<div>{line}</div>));
 
-        if (this.context.Coachstate == Coachstate.AfterInsertGameFailed)
+        if (this.context.Teaching.Coachstate == Coachstate.AfterInsertGameFailed)
         {
             title = "Insert failed";
             text = "The details will often suggest what you need to do to fix it. Try clicking in another column and add the game again";

@@ -323,7 +323,7 @@ export class StructureRemove
         // we can't do anything
         if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1)
         {
-            appContext.error(
+            appContext.Messages.error(
                 [`Cannot find game ${game.GameId.Value} in the bracket`],
                 { topic: HelpTopic.FAQ_BrokenBracket });
 

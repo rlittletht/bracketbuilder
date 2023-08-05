@@ -116,8 +116,8 @@ export default class App extends React.Component<AppProps, AppState>
 
     static async resetCoachingTips(appContext: IAppContext)
     {
-        appContext.resetTeachableStates();
-        appContext.message(["All coaching tips have been reset. If you want to see them in this session, right click and select Refresh"], null, 10000);
+        appContext.Teaching.resetTeachableStates();
+        appContext.Messages.message(["All coaching tips have been reset. If you want to see them in this session, right click and select Refresh"], null, 10000);
     }
 
     static async launchHelp(appContext: IAppContext)
@@ -210,11 +210,11 @@ export default class App extends React.Component<AppProps, AppState>
             // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
             //await StructureEditor.testGridClick(appContext);
 
-            appContext.message(["tests complete"], null, 5000);
+            appContext.Messages.message(["tests complete"], null, 5000);
         }
         catch (e)
         {
-            appContext.error(
+            appContext.Messages.error(
                 [`TEST FAILURE: ${testContext.CurrentTest} (${e})`]);
         }
     }
@@ -474,18 +474,18 @@ export default class App extends React.Component<AppProps, AppState>
                 }
             }
             if (countGamesNeedRepair > 0)
-                this.m_appContext.transitionState(CoachTransition.DirtyGameFound);
+                this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
             else if (countGamesLinked == games.length)
             {
                 if (await (Grid.isFinishingTouchesApplied(context)))
-                    this.m_appContext.transitionState(CoachTransition.FinishTouches);
+                    this.m_appContext.Teaching.transitionState(CoachTransition.FinishTouches);
                 else
-                    this.m_appContext.transitionState(CoachTransition.AllGamesLinked);
+                    this.m_appContext.Teaching.transitionState(CoachTransition.AllGamesLinked);
             }
             else if (countGamesLinked == 0)
-                this.m_appContext.transitionState(CoachTransition.NoGamesLinked);
+                this.m_appContext.Teaching.transitionState(CoachTransition.NoGamesLinked);
             else if (countGamesLinked == 1)
-                this.m_appContext.transitionState(CoachTransition.OneGameLinked);
+                this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
         }
         
 
@@ -614,7 +614,7 @@ export default class App extends React.Component<AppProps, AppState>
 
         [setupState, bracketChoice] = await (this.getSetupState(null));
         if (setupState != SetupState.Ready)
-            this.m_appContext.Coachstate = Coachstate.BracketCreation;
+            this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
 
         let format: HeroListFormat;
         let list: HeroListItem[];

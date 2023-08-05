@@ -136,7 +136,7 @@ export class StructureEditor
 
             timer.pushTimer("insertGameAtSelectionClick PART 2");
 
-            appContext.transitionState(CoachTransition.AddGame);
+            appContext.Teaching.transitionState(CoachTransition.AddGame);
 
             await appContext.invalidateHeroList(context);
             timer.popTimer();
@@ -159,7 +159,7 @@ export class StructureEditor
             await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
             context.releaseTrackedItemsUntil(bookmark);
 
-            appContext.transitionState(CoachTransition.PullChanges);
+            appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
             await appContext.invalidateHeroList(context);
         };
@@ -195,7 +195,7 @@ export class StructureEditor
     {
         if (_moveSelection == null)
         {
-            appContext.error(
+            appContext.Messages.error(
                 ["No game was captured for the move. You have to pick up a game first."],
                 { topic: HelpTopic.Commands_PickupGame });
 
@@ -225,7 +225,7 @@ export class StructureEditor
             await StructureRemove.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
             context.releaseTrackedItemsUntil(bookmark);
 
-            appContext.transitionState(CoachTransition.RemoveGame);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
             await appContext.invalidateHeroList(context);
         };
@@ -248,7 +248,7 @@ export class StructureEditor
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
             context.releaseTrackedItemsUntil(bookmark);
-            appContext.transitionState(CoachTransition.RemoveGame);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
             await appContext.invalidateHeroList(context);
         };
@@ -298,7 +298,7 @@ export class StructureEditor
         }
 
         await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
-        appContext.transitionState(CoachTransition.PullChanges);
+        appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
         context.releaseTrackedItemsUntil(bookmark);
     }
@@ -454,7 +454,7 @@ export class StructureEditor
 
         if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
         {
-            appContext.error(
+            appContext.Messages.error(
                 [`Could not find a game at the selected range: ${selection.toString()}`],
                 { topic: HelpTopic.Commands_RepairGame });
 
@@ -494,7 +494,7 @@ export class StructureEditor
 
         if (gridNew == null)
         {
-            appContext.error(["I don't know how to move the game to this selection. It would probably break the bracket."], null, 8000);
+            appContext.Messages.error(["I don't know how to move the game to this selection. It would probably break the bracket."], null, 8000);
             return;
         }
 
@@ -504,7 +504,7 @@ export class StructureEditor
             _undoManager.setUndoGrid(grid, []);
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName);
             if (mover.Warning != "")
-                appContext.error([mover.Warning], null, 8000);
+                appContext.Messages.error([mover.Warning], null, 8000);
         }
     }
 

@@ -184,7 +184,7 @@ export class BracketStructureBuilder
         }
         catch (error)
         {
-            appContext.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
     }
 
@@ -209,7 +209,7 @@ export class BracketStructureBuilder
         {
             if (bracketDefinition == null)
             {
-                appContext.error([`Don't know how to build bracket for choice: '${bracketChoice}'`]);
+                appContext.Messages.error([`Don't know how to build bracket for choice: '${bracketChoice}'`]);
                 return;
             }
 
