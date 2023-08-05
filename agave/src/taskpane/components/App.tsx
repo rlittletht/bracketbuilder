@@ -729,7 +729,6 @@ export default class App extends React.Component<AppProps, AppState>
                     title={title}
                     logo={require("./../../../assets/TW-Logo.png")}
                     message="Please sideload your addin to see app body."
-                    appContext={this.m_appContext}
                     initialVisibility={true}/>
             );
         }
@@ -761,12 +760,12 @@ export default class App extends React.Component<AppProps, AppState>
         }
 
         const games = this.state.setupState == SetupState.Ready
-                          ? (<Games appContext={this.m_appContext} bracketName="T9"/>)
+                          ? (<Games bracketName="T9"/>)
                           : "";
 
         const maybeToolbar =
             this.state.setupState == SetupState.Ready
-                ? (<Toolbar message={""} appContext={this.m_appContext} items={this.state.mainToolbar} alignment="center"/>)
+                ? (<Toolbar message={""} items={this.state.mainToolbar} alignment="center"/>)
                 : "";
         const versionLabelProps: CSS.Properties =
         {
@@ -799,16 +798,15 @@ export default class App extends React.Component<AppProps, AppState>
                     <Stack styles={stackStyles}>
                         <Stack.Item styles={headerItemStyle}>
                             <LogoHeader/>
-                            <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
+                            <Toolbar alignment="start" message={""} items={this.state.topToolbar}/>
                         </Stack.Item>
                         <Progress
                             title=""
                             logo={null}
                             message="Working on it..."
-                            initialVisibility={false}
-                            appContext={this.m_appContext}/>
+                            initialVisibility={false}/>
                         <Stack.Item styles={bodyHeaderItemStyle}>
-                            <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
+                            <HeroList message={this.state.heroTitle} items={this.state.heroList} heroListFormat={this.state.heroListFormat}>
                                 {insertBracketChooserMaybe()}
                             </HeroList>
                             {maybeToolbar}

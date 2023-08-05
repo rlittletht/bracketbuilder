@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { ActionButton } from "./ActionButton";
 import { Stack, Alignment, IStackItemStyles } from '@fluentui/react';
 import { Teachable, TeachableProps } from "./Teachable";
@@ -19,7 +19,6 @@ export interface ToolbarProps
     message: string;
     alignment: Alignment;
     items: ToolbarItem[];
-    appContext: IAppContext;
 }
 
 export interface ToolbarState
@@ -28,6 +27,9 @@ export interface ToolbarState
 
 export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -72,9 +74,8 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
                                     icon={item.icon}
                                     tooltip={item.primaryText}
                                     tooltipId={`rid-${i++}`}
-                                    appContext={this.props.appContext}
                                     disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                                    bracketGame={null} delegate={() => item.delegate(this.props.appContext)} />
+                                    bracketGame={null} delegate={() => item.delegate(this.context)} />
                             </Teachable>
                         </Stack.Item>
                     ));
@@ -88,9 +89,8 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
                                 icon={item.icon}
                                 tooltip={item.primaryText}
                                 tooltipId={`rid-${i++}`}
-                                appContext={this.props.appContext}
                                 disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                                bracketGame={null} delegate={() => item.delegate(this.props.appContext)} />
+                                bracketGame={null} delegate={() => item.delegate(this.context)} />
                         </Stack.Item>
                     ));
             }

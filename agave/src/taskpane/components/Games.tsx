@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
 import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 import { GameItem } from "./GameItem"
@@ -11,7 +11,6 @@ import { Coachstate } from "../../Coachstate";
 
 export interface GamesProps {
     bracketName: string;
-    appContext: IAppContext;
 }
 
 export interface GamesState {
@@ -20,6 +19,9 @@ export interface GamesState {
 
 export class Games extends React.Component<GamesProps, GamesState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -31,7 +33,7 @@ export class Games extends React.Component<GamesProps, GamesState>
     {
         let firstUnlinked = true;
 
-        const games = this.props.appContext.getGames();
+        const games = this.context.getGames();
         const gameItems = [];
 
         for (let idx = 0; idx < games.length; idx++)
@@ -44,7 +46,7 @@ export class Games extends React.Component<GamesProps, GamesState>
             gameItems.push((
                 <GameItem idx={idx} teachableAdd=
                     {() => teachable} teachableRemove={() => false}
-                    appContext={this.props.appContext} bracketName={this.props.bracketName} game={game} key={idx} linkedToGrid={game.IsLinkedToBracket} />
+                    bracketName={this.props.bracketName} game={game} key={idx} linkedToGrid={game.IsLinkedToBracket} />
             ));
         }
 

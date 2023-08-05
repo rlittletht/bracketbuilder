@@ -1,11 +1,10 @@
 import * as React from "react";
 import { Spinner, SpinnerSize } from "@fluentui/react";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { classNamesFunction, IStyle, Overlay } from '@fluentui/react';
 
 export interface ProgressProps
 {
-    appContext: IAppContext;
     logo: string;
     message: string;
     title: string;
@@ -24,6 +23,9 @@ interface IOverlayStyle
 
 export class Progress extends React.Component<ProgressProps, ProgressState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -33,7 +35,7 @@ export class Progress extends React.Component<ProgressProps, ProgressState>
             visible: props.initialVisibility
         }
 
-        props.appContext.setProgressVisibilityDelegate(this.setVisibility.bind(this));
+        this.context.setProgressVisibilityDelegate(this.setVisibility.bind(this));
     }
 
     setVisibility(newVisible: boolean)

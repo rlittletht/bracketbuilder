@@ -1,13 +1,12 @@
 import * as React from "react";
 import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { TooltipHost, ITooltipHostStyles } from "@fluentui/react/lib/Tooltip";
 
 export interface ActionButtonProps
 {
     bracketGame: IBracketGame;
-    appContext: IAppContext;
     icon: string;
     tooltip: string;
     tooltipId: string;
@@ -22,6 +21,9 @@ export interface ActionButtonState
 
 export class ActionButton extends React.Component<ActionButtonProps, ActionButtonState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -43,7 +45,7 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
                     iconProps={{ iconName: this.props.icon }}
                     size={100}
                     disabled={this.props.disabled}
-                    onClick={async () => await this.props.delegate(this.props.appContext, this.state.bracketGame)}/>
+                    onClick={async () => await this.props.delegate(this.context, this.state.bracketGame)}/>
             </TooltipHost>
         );
     }

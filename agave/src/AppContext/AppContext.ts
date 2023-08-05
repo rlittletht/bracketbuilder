@@ -2,14 +2,8 @@ import * as React from "react";
 import { IBracketGame } from "../BracketEditor/BracketGame";
 import { PerfTimer } from "../PerfTimer";
 import { JsCtx } from "../Interop/JsCtx";
-import { Coachstate } from "../Coachstate";
-import { CoachTransition } from "../CoachTransition";
-import { CoachstateTransitions } from "../CoachstateTransitions";
-import { MessageBarType } from '@fluentui/react';
-import { TeachableId } from "../taskpane/components/Teachable";
 import { DurableState } from "../DurableState";
 import { s_staticConfig } from "../StaticConfig";
-import { IHelpInfo } from "../HelpInfo";
 import { IAppContextMessages, AppContextMessages, SetMessageDelegate, ClearMessageDelegate } from "./AppContextMessages";
 import { IAppContextTeaching, AppContextTeaching } from "./AppContextTeaching";
 
@@ -26,6 +20,7 @@ export interface IAppContext
     getSelectedBracket();
     getGames(): IBracketGame[];
     setProgressVisible(visible: boolean);
+    setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
 }
 
 export interface InvalidateHeroListDelegate

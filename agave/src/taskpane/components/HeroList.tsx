@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { ActionButton } from "./ActionButton";
 import { SetupState, SetupBook } from "../../Setup";
 import { RangeInfo } from "../../Interop/Ranges";
@@ -27,7 +27,6 @@ export interface HeroListProps
     message: string;
     items: HeroListItem[];
     heroListFormat: HeroListFormat;
-    appContext: IAppContext;
 }
 
 export interface HeroListState
@@ -36,6 +35,9 @@ export interface HeroListState
 }
 export class HeroList extends React.Component<HeroListProps, HeroListState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -86,7 +88,7 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
             (item, index) => (
                 <Stack.Item grow className="{item.cursor} heroItem" align="center" key={index} onClick={() =>
                 {
-                    item.delegate(this.props.appContext)
+                    item.delegate(this.context)
                 }}>
                     <i className={`ms-Icon ms-Icon--${item.icon} ${item.cursor}`}></i>
                     <span className={`ms-font-xl ms-fontWeight-semibold ms-fontColor-neutralPrimary ${item.cursor}`}>{item.primaryText}</span>
@@ -117,9 +119,8 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
                         icon={item.icon}
                         tooltip={item.primaryText}
                         tooltipId={`rid-${i++}`}
-                        appContext={this.props.appContext}
                         disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                        bracketGame={null} delegate={() => item.delegate(this.props.appContext)}/>
+                        bracketGame={null} delegate={() => item.delegate(this.context)}/>
                 </Stack.Item>
             ));
 

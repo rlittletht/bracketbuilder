@@ -16,7 +16,6 @@ export interface GameItemProps
     idx: number;
     game: IBracketGame;
     bracketName: string;
-    appContext: IAppContext;
     linkedToGrid: boolean;
     teachableAdd: TeachableActiveDelegate;
     teachableRemove: TeachableActiveDelegate;
@@ -36,7 +35,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
         super(props, context);
     }
 
-    async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    static async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
         appContext.Timer.pushTimer("DoInsertGame");
         appContext.Teaching.clearCoachmark();
@@ -46,7 +45,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
         return true; // we don't get an error back...
     }
 
-    async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    static async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
         appContext.Timer.pushTimer("DoRemoveGame");
         appContext.Teaching.clearCoachmark();
@@ -97,11 +96,10 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
         const addButton = (
             <ActionButton
-                appContext={this.props.appContext}
                 tooltip="Insert Game"
                 tooltipId={`gid-${this.props.game.GameId.Value}`}
                 bracketGame={this.props.game}
-                delegate={this.DoInsertGame}
+                delegate={GameItem.DoInsertGame}
                 disabled={false}
                 icon="Add" />
         );
@@ -133,11 +131,10 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
         const removeButton = (
             <ActionButton
-                appContext={this.props.appContext}
                 tooltip="Remove Game"
                 tooltipId={`gid-${this.props.game.GameId.Value}`}
                 bracketGame={this.props.game}
-                delegate={this.DoRemoveGame.bind(this)}
+                delegate={GameItem.DoRemoveGame.bind(this)}
                 disabled={false}
                 icon="Remove"/>
         );
