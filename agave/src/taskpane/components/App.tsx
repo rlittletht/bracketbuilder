@@ -41,6 +41,7 @@ import { s_staticConfig } from "../../StaticConfig";
 import { Teachable, TeachableId } from "./Teachable";
 import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
+import { HelpLink } from "./HelpLink";
 
 /* global console, Excel, require  */
 
@@ -121,7 +122,7 @@ export default class App extends React.Component<AppProps, AppState>
     static async launchHelp(appContext: IAppContext)
     {
         appContext;
-        window.open("https://twbbldcdnendpoint.azureedge.net/help/BracketBuilder-Help.html");
+        window.open(HelpLink.buildHelpLink("BracketBuilder-Help.html"));
     }
     static async doUnitTests(appContext: IAppContext)
     {

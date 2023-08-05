@@ -19,7 +19,8 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
     {
         const [regionIncludingTop, regionIncludingBottom] = this.regionsCalculate(gridTry, gameInsert);
         let fTopIndependent = gridTry.isRangeIndependent(regionIncludingTop);
-        let fBottomIndependent = gridTry.isRangeIndependent(regionIncludingBottom);
+        let fBottomIndependent = gridTry.isRangeIndependent(regionIncludingBottom)
+            && !gridTry.isBlankRow(regionIncludingBottom.LastRow + 1);
 
         // if the top conflicts, return true if we can grow above or below
         if (!gridTry.isRowEmptyAround(regionIncludingTop.LastRow, gameInsert.Range.FirstColumn))
@@ -56,8 +57,8 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         let gridTry: Grid = null;
         const topWantsSpace = !grid.isBlankRow(regionIncludingTop.LastRow);
         const topIndependent = grid.isRangeIndependent(regionIncludingTop);
-        const bottomIndependent = !grid.isRangeIndependent(regionIncludingBottom)
-            || grid.isBlankRow(regionIncludingBottom.LastRow + 1);
+        const bottomIndependent = grid.isRangeIndependent(regionIncludingBottom)
+            && !grid.isBlankRow(regionIncludingBottom.LastRow + 1);
 
         if (topIndependent)
         {

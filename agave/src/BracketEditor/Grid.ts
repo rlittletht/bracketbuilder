@@ -1683,6 +1683,59 @@ export class Grid
         return true;
     }
 
+    excludeConnectedGameItemFromOverlapCheck(topSource: RangeInfo, bottomSource: RangeInfo, overlapRegion: RangeInfo, stopColumn: number, depth: number)
+    {
+        if (depth > 10)
+            return;
+
+        if (topSource != null)
+        {
+            const [gameItem, kind] = this.getFirstOverlappingItem(topSource.offset(0, 1, -1, 1));
+
+            if (gameItem != null)
+            {
+                if (gameItem.Range.LastColumn > stopColumn)
+                {
+                    overlapRegion.excludeRangeByRows(gameItem.Range);
+
+                    const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
+                    if (connectedItem != null)
+                        overlapRegion.excludeRangeByRows(connectedItem.Range);
+
+                    this.excludeConnectedGameItemFromOverlapCheck(
+                        gameItem.TopTeamRange?.offset(0, 1, 0, 1),
+                        gameItem.BottomTeamRange?.offset(0, 1, 0, 1),
+                        overlapRegion,
+                        Math.min(topSource.FirstColumn, bottomSource.FirstColumn),
+                        depth + 1);
+                }
+            }
+        }
+
+        if (bottomSource != null)
+        {
+            const [gameItem, kind] = this.getFirstOverlappingItem(bottomSource.offset(0, 1, -1, 1));
+
+            if (gameItem != null)
+            {
+                if (gameItem.Range.LastColumn > stopColumn)
+                {
+                    overlapRegion.excludeRangeByRows(gameItem.Range);
+                    const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
+                    if (connectedItem != null)
+                        overlapRegion.excludeRangeByRows(connectedItem.Range);
+
+                    this.excludeConnectedGameItemFromOverlapCheck(
+                        gameItem.TopTeamRange?.offset(0, 1, 0, 1),
+                        gameItem.BottomTeamRange?.offset(0, 1, 0, 1),
+                        overlapRegion,
+                        Math.min(topSource.FirstColumn, bottomSource.FirstColumn),
+                        depth + 1);
+                }
+            }
+        }
+    }
+
     doesSourceOverlapAreaRangeOverlap(
         source1: RangeInfo,
         source2: RangeInfo,
@@ -1715,31 +1768,33 @@ export class Grid
                 source2.offset(1, 0, 0, 1).newSetColumn(targetColumn + 2));
         }
 
-        if (source1 != null)
-        {
-            const [gameItem, kind] = this.getFirstOverlappingItem(source1.offset(0, 1, -1, 1));
+        this.excludeConnectedGameItemFromOverlapCheck(source1, source2, overlapRegion, 1, 1);
 
-            if (gameItem != null)
-            {
-                overlapRegion.excludeRangeByRows(gameItem.Range);
-                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
-                if (connectedItem != null)
-                    overlapRegion.excludeRangeByRows(connectedItem.Range);
-            }
-        }
-
-        if (source2 != null)
-        {
-            const [gameItem, kind] = this.getFirstOverlappingItem(source2.offset(0, 1, -1, 1));
-
-            if (gameItem != null)
-            {
-                overlapRegion.excludeRangeByRows(gameItem.Range);
-                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
-                if (connectedItem != null)
-                    overlapRegion.excludeRangeByRows(connectedItem.Range);
-            }
-        }
+//        if (source1 != null)
+//        {
+//            const [gameItem, kind] = this.getFirstOverlappingItem(source1.offset(0, 1, -1, 1));
+//
+//            if (gameItem != null)
+//            {
+//                overlapRegion.excludeRangeByRows(gameItem.Range);
+//                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
+//                if (connectedItem != null)
+//                    overlapRegion.excludeRangeByRows(connectedItem.Range);
+//            }
+//        }
+//
+//        if (source2 != null)
+//        {
+//            const [gameItem, kind] = this.getFirstOverlappingItem(source2.offset(0, 1, -1, 1));
+//
+//            if (gameItem != null)
+//            {
+//                overlapRegion.excludeRangeByRows(gameItem.Range);
+//                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
+//                if (connectedItem != null)
+//                    overlapRegion.excludeRangeByRows(connectedItem.Range);
+//            }
+//        }
 
         if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)
         {

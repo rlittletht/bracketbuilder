@@ -11,7 +11,7 @@
 <body>
     <header>
         <logo>
-            <img class="logo" src="./ModernTrainWithTRex.png" />
+            <img class="logo" src="Images/ModernTrainWithTRex.png" />
         </logo>
         <product>
             <productHeader>
@@ -22,7 +22,7 @@
             </productName>
         </product>
         <logo>
-            <img class="logo" src="./VintageTrainRTLWithTRex.png" />
+            <img class="logo" src="Images/VintageTrainRTLWithTRex.png" />
         </logo>
 
     </header>
@@ -32,18 +32,61 @@
                 <li><a href="./BracketBuilder-Help.html">Getting Started</a></li>
                 <ul>
                     <li><a href="./BracketBuilder-Help.html#intro">Introduction</a></li>
-                    <li><a href="./BracketBuilder-Help.html#compat">Bracket Compatibility</a></li>
                     <li><a href="./BracketBuilder-Help.html#quickstart">Quick Walk-through</a></li>
                 </ul>
-                <li><a href="./Advanced.html#Advanced">Advanced Topics</a></li>
-            </ul>
+                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
+                <ul>
+                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#Games">Games Sheet</a></li>
+                        <li><a href="./SheetEditing.html#TeamsAndFields">TeamsAndFields Sheet</a></li>
+                        <li><a href="./SheetEditing.html#BracketInfo">BracketInformation Sheet</a></li>
+
+                    </ul>
+                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
+                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
+                        <li><a href="./SheetEditing.html#score">Scores</a></li>
+                        <li><a href="./SheetEditing.html#field">Field</a></li>
+                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
+                    </ul>
+                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
+                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
+                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
+                    </ul>
+                </ul>
+                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
+                <ul>
+                    <li><a href="./Commands.html#Controls">Main Interface</a></li>
+                    <li><a href="./Commands.html#Controls">Main Tools</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
+                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
+                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
+                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
+                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
+                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
+                        <li><a href="./Commands.html#Help">Help</a></li>
+                    </ul>
+                    <li><a href="./Commands.html#BracketTools">Bracket Tools</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#PickUpGame">Pick up Game</a></li>
+                        <li><a href="./Commands.html#DropGame">Drop Game</a></li>
+                        <li><a href="./Commands.html#RemoveGame">Remove Game</a></li>
+                        <li><a href="./Commands.html#RepairGame">Repair Game</a></li>
+                    </ul>
+                    <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
+                </ul>
         </nav>
         <article>
             <h2>Getting Started</h2>
 
             <h3>Introduction</h3>
             <floatRight style="width: 30vw">
-                <a href="FullBracket.png"><img src="FullBracket.png" class="whiteBack" /></a>
+                <a href="FullBracket.png"><img src="Images/FullBracket.png" class="whiteBack" /></a>
             </floatRight>
             <p>
                 Making tournament brackets like this one can be tedious -- you have to figure out which games
@@ -76,11 +119,11 @@
                 First, a note able these brackets and their compatibility. This add-in creates double-elimination
                 tournament brackets that conform
                 to Little League's Approved Double Elimination Tournament Brackets. If you intend to use these for a
-                Little League tournament, remember they must still be approved in order to be used in the 
+                Little League tournament, remember they must still be approved in order to be used in the
                 Little League tournament. This add-in just helps you create and format the bracket.
             </p>
             <h3><a name="quickstart">Quick Walk-Through</a></h3>
-            <img src="ChooseSize.png" alt="SetupExample" class="ScreenClip" style="width: 256px; height: 271px"
+            <img src="Images/ChooseSize.png" alt="SetupExample" class="ScreenClip" style="width: 256px; height: 271px"
                  align="right">
             <p>
                 Ok, there's a lot of details we could go into, but let's just do a quick
@@ -99,7 +142,7 @@
                 <li>Select cell G7 (because we want to insert on Saturday 8/21)</li>
                 <li>
                     Insert game 1 (Click "+" for game 1
-                    <img src="Game1.png" alt="game 1 picture"
+                    <img src="Images/Game1.png" alt="game 1 picture"
                          style="width: 136px; height: 25px;">)
                 </li>
                 <li>Insert game 2</li>
@@ -124,7 +167,7 @@
             Ok, that looks a little funky. Maybe we could do better. <br>
             <ul>
                 <li>
-                    Click Undo <img src="UndoIcon.png" alt="Undo Icon" style="width: 22px; height: 25px;">twice.
+                    Click Undo <img src="Images/UndoIcon.png" alt="Undo Icon" style="width: 22px; height: 25px;">twice.
                     Game 10 and game 8 should be gone now
                 </li>
                 <li>(Make sure M7 is still selected)</li>
@@ -188,7 +231,7 @@
                 Once you click "Build a bracket",your workbook will be setup to start
                 building out your bracket.
             </p>
-            <img src="GridAndTaskpane.png" alt="Grid and taskpane screen clipping" class="ScreenClip"
+            <img src="Images/GridAndTaskpane.png" alt="Grid and taskpane screen clipping" class="ScreenClip"
                  style="width: 701px; height: 295px;" align="right"> <br clear="right">
             <p>Let's get familiar with the bracket and how it's built.</p>
             <h3>BUILDING</h3>
@@ -231,7 +274,7 @@
                     The line column is even smaller.
                 </li>
             </ul>
-            <img src="GameStructure.png" alt="Game structure screen clipping" style="width: 245px; height: 208px;"
+            <img src="Images/GameStructure.png" alt="Game structure screen clipping" style="width: 245px; height: 208px;"
                  class="ScreenClip" align="right">
             <h3>Games on the Grid</h3>
             <p>Each game has several components.</p>
@@ -262,7 +305,7 @@
             </p>
             <h3>
                 Selecting
-                <img src="GameSelected.png" alt="Selected Game structure screen clipping"
+                <img src="Images/GameSelected.png" alt="Selected Game structure screen clipping"
                      style="width: 152px; height: 129px;" class="ScreenClip" align="right">
             </h3>
             <p>
@@ -278,7 +321,7 @@
             <p></p>
             <h2> Placing Games </h2>
             <h3>
-                <img src="Taskpane.png" alt="Selected Game structure screen clipping" style="width: 140px; height: 312px;"
+                <img src="Images/Taskpane.png" alt="Selected Game structure screen clipping" style="width: 140px; height: 312px;"
                      class="ScreenClip" align="right">
             </h3>
             <p>
@@ -309,7 +352,7 @@
                     Don't use
                     Excel's undo
                 </b>. Use the undo button in the task pane:
-                <img src="UndoIcon.png"
+                <img src="Images/UndoIcon.png"
                      alt="Undo Icon" style="width: 22px; height: 25px;"> (You can also use
                 redo to undo what you undid). You should be able to undo multiple things
                 by clicking undo again. If clicking undo doesn't do anything, then you
@@ -319,7 +362,7 @@
                 To remove a game manually, first try just clicking the "-" next to the
                 game you are trying to remove. If that doesn't work, then select the game
                 in the grid and click the "Remove Game" button:
-                <img src="RemoveGameIcon.png"
+                <img src="Images/RemoveGameIcon.png"
                      alt="Remove Game Icon" style="width: 22px; height: 25px;">
             </p>
         </article>
