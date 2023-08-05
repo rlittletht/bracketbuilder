@@ -1,5 +1,5 @@
 :root {
-    --nav-width: 14rem;
+    --nav-width: 15rem;
     --nav-padding: 1rem;
     --article-width: calc(100vw - (var(--nav-padding) + var(--nav-width)));
     --article-padding: 1rem;
@@ -15,6 +15,87 @@
 html {
     height: 100%;
 }
+
+main {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    margin: 0 auto;
+    padding-top: var(--main-padding);
+    overflow: auto;
+}
+
+article {
+    box-sizing: border-box;
+    flex: 1;
+    flex-direction: row;
+    max-width: var(--article-width);
+    width: var(--article-width);
+    height: calc(100% - 2 * var(--article-padding));
+    padding: var(--article-padding);
+    padding-top: 0;
+    padding-right: calc(2 * var(--article-padding));
+    margin: 0;
+    overflow-y: auto;
+}
+
+footer {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px solid;
+    margin-top: 0rem;
+}
+
+nav {
+    box-sizing: border-box;
+    flex: 0 1 auto;
+    width: var(--nav-width);
+    height: calc(100% - 2 * var(--nav-padding));
+    margin: 0;
+    overflow-y: auto;
+}
+
+    nav ul, nav li {
+        list-style-type: none;
+        padding: 0 0 0.2rem 0.5rem;
+    }
+
+    nav > ul:first-of-type > li > a {
+        font-variant: small-caps;
+        font-size: 1.5rem;
+    }
+
+    nav > ul > li {
+        margin-top: 1rem;
+    }
+
+        nav > ul > li > a {
+            font-variant: normal;
+            font-size: 1.5rem;
+        }
+
+    nav > ul > ul > ul > li > a {
+        font-variant: normal;
+        font-size: 1rem;
+    }
+
+    nav ul li a {
+        font-weight: bold;
+        text-decoration: none;
+        color: darkslategrey;
+        font-size: 1.2rem;
+    }
+
+    nav ul ul {
+        padding: 0 0 0 1rem;
+        margin: 0 inherit;
+    }
+
+    nav a {
+        font-size: 1.33rem;
+    }
 
 logo {
     display: flex;
@@ -77,57 +158,28 @@ header {
     align-content: baseline;
 }
 
-footer {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    border-top: 1px solid;
-    margin-top: 0rem;
-}
 
-main {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    margin: 0 auto;
-    padding-top: var(--main-padding);
-    overflow: auto;
-}
-
-article {
-    box-sizing: border-box;
-    flex: 1;
-    flex-direction: row;
-    max-width: var(--article-width);
-    width: var(--article-width);
-    height: calc(100% - 2 * var(--article-padding));
-    padding: var(--article-padding);
-    padding-top: 0;
-    padding-right: calc(2 * var(--article-padding));
-    margin: 0;
-    overflow-y: auto;
-}
 
 floatRight {
     float: right;
     padding-left: 1rem;
 }
 
-gallery{
+gallery {
     display: flex;
     flex-direction: row;
     flex-flow: row wrap;
     justify-content: center;
 }
 
-galleryItem{
+galleryItem {
     padding: 1rem;
 }
 
-galleryCaption{
+galleryCaption {
     display: block;
 }
+
 p {
     margin: 1.5rem 0;
     text-align: justify;
@@ -171,64 +223,16 @@ h4 {
     font-size: 2rem;
     margin-top: 1rem;
 }
+
 h5 {
     font-size: 1.7rem;
     margin-top: 1rem;
 }
+
 img.ScreenClip {
     margin-left: 5pt;
     border: 1pt solid black;
 }
-
-
-nav {
-    box-sizing: border-box;
-    flex: 0 1 auto;
-    width: var(--nav-width);
-    height: calc(100% - 2 * var(--nav-padding));
-    margin: 0;
-    overflow-y: auto;
-}
-
-    nav ul, nav li {
-        list-style-type: none;
-        padding: 0 0 0.2rem 0.5rem;
-    }
-
-    nav > ul:first-of-type > li > a {
-        font-variant: small-caps;
-        font-size: 1.5rem;
-    }
-
-    nav > ul > li {
-        margin-top: 1rem;
-    }
-
-        nav > ul > li > a {
-            font-variant: normal;
-            font-size: 1.5rem;
-        }
-
-        nav > ul > ul > ul > li > a {
-            font-variant: normal;
-            font-size: 1rem;
-        }
-
-    nav ul li a {
-        font-weight: bold;
-        text-decoration: none;
-        color: darkslategrey;
-        font-size: 1.2rem;
-    }
-
-    nav ul ul {
-        padding: 0 0 0 1rem;
-        margin: 0 inherit;
-    }
-
-    nav a {
-        font-size: 1.33rem;
-    }
 
 
 .flex-body {
