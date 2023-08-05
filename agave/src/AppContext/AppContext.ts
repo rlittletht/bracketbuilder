@@ -67,8 +67,7 @@ export class AppContext implements IAppContext
 
     setProgressVisible(visible: boolean)
     {
-        if (this.m_progressVisibilityDelegate != null)
-            this.m_progressVisibilityDelegate(visible);
+        this.m_progressVisibilityDelegate?.(visible);
     }
 
     log(message: string)
@@ -79,8 +78,7 @@ export class AppContext implements IAppContext
 
     async invalidateHeroList(context: JsCtx)
     {
-        if (this.m_invalidateHeroListDelegate)
-            await this.m_invalidateHeroListDelegate(context);
+        await this.m_invalidateHeroListDelegate?.(context);
     }
 
     getSelectedBracket(): string
