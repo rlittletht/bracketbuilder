@@ -38,7 +38,8 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
             "Something has gone very wrong.",
             "Its not your fault, its mine.",
             "It would be great if you would report this problem to me via email at red@traynrex.com.",
-            "Copy and paste all of the details below. THANK YOU!",
+            "Copy and paste all of the details below.",
+            "THANK YOU!",
             "Details:",
             `Exception caught: ${error.message}`,
             ...error.stack.split("\n")];
@@ -102,7 +103,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 
         let title = "Status messages";
         let text = "This is where additional information will show up in response to things you do";
-        const lines = this.state.message?.map((line) => (<div>{line}</div>));
+        const lines = this.state.message?.map((line, idx) => (<div key={idx}>{line}</div>));
 
         if (this.context.Teaching.Coachstate == Coachstate.AfterInsertGameFailed)
         {
