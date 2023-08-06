@@ -260,7 +260,7 @@ export class GridItem
     attachGame(game: IBracketGame)
     {
         if (!game.IsLinkedToBracket)
-            throw "can't attach game that isn't linked";
+            throw Error("can't attach game that isn't linked");
 
         this.m_topTeamRange = RangeInfo.createFromRangeInfo(game.TopTeamRange);
         this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(game.BottomTeamRange);

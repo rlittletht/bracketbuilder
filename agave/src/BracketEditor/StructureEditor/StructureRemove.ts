@@ -255,7 +255,7 @@ export class StructureRemove
         {
             AppContext.checkpoint("remgm.2");
             if (!range.isEqual(game.FullGameRange))
-                throw "remove game: bound game range != given range";
+                throw Error("remove game: bound game range != given range");
             AppContext.checkpoint("remgm.3");
         }
 

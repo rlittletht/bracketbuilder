@@ -34,15 +34,26 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 
     static linesFromError(error): string[]
     {
-        return [
-            "Something has gone very wrong.",
-            "Its not your fault, its mine.",
-            "It would be great if you would report this problem to me via email at red@traynrex.com.",
-            "Copy and paste all of the details below.",
-            "THANK YOU!",
-            "Details:",
-            `Exception caught: ${error.message}`,
-            ...error.stack.split("\n")];
+        if (error.stack)
+            return [
+                "Something has gone very wrong.",
+                "Its not your fault, its mine.",
+                "It would be great if you would report this problem to me via email at red@traynrex.com.",
+                "Copy and paste all of the details below.",
+                "THANK YOU!",
+                "Details:",
+                `Exception caught: ${error.message}`,
+                ...error.stack.split("\n")];
+        else
+            return [
+                "Something has gone very wrong.",
+                "Its not your fault, its mine.",
+                "It would be great if you would report this problem to me via email at red@traynrex.com.",
+                "Copy and paste all of the details below.",
+                "THANK YOU!",
+                "Details:",
+                `Exception caught: ${error.message}`,
+                "BAD DEVELOPER, no stack trace!"];
     }
 
     constructor(props, context)

@@ -128,15 +128,15 @@ export class ApplyGridChange
         if (change.ChangeOp == GridChangeOperation.InsertLite)
         {
             if (!game.IsLinkedToBracket)
-                throw "game not linked on InsertLite operation";
+                throw Error("game not linked on InsertLite operation");
 
             if (game.SwapTopBottom != change.SwapTopBottom)
-                throw "swap top/bottom not set correctly on InsertLite operation";
+                throw Error("swap top/bottom not set correctly on InsertLite operation");
         }
         else
         {
             if (game.IsLinkedToBracket)
-                throw "game can't be linked - we should have already removed it from the bracket";
+                throw Error("game can't be linked - we should have already removed it from the bracket");
 
             game.SetSwapTopBottom(change.SwapTopBottom);
             game.SetStartTime(change.StartTime);

@@ -42,6 +42,7 @@ import { Teachable, TeachableId } from "./Teachable";
 import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
 import { HelpLink } from "./HelpLink";
+import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "../../BracketEditor/GridAdjusters/Adjuster_NeedExtraSpaceBelowRegionForGameInsert";
 
 /* global console, Excel, require  */
 
@@ -167,6 +168,8 @@ export default class App extends React.Component<AppProps, AppState>
             Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
             Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
             Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext, testContext);
+
+            Adjuster_NeedExtraSpaceBelowRegionForGameInsert.testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough(appContext, testContext);
 
             GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(appContext, testContext);
 

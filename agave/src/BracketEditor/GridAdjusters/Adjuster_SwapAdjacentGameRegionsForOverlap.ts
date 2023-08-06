@@ -103,7 +103,7 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
             source2 = null;
         }
 
-        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column))
+        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column).overlaps)
             return [false, null, null];
 
         if (source2 == null)
@@ -230,7 +230,7 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         if (source2 != null)
             throw Error("bracket definition unexpected");
 
-        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn))
+        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
             throw Error("testSwapAdjacentRegionsForGameOverlap: FAILED: rearrange failed to resolve");
         }

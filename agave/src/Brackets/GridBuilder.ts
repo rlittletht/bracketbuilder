@@ -24,7 +24,7 @@ export class GridBuilder
         rangeJustDays.format.horizontalAlignment = Excel.HorizontalAlignment.center;
 
         rangeJustDays.format.borders.getItem('EdgeTop').style = Excel.BorderLineStyle.continuous;
-        rangeJustDays.format.borders.getItem('EdgeTop').weight = Excel.BorderWeight.medium;
+        rangeJustDays.format.borders.getItem('EdgeTop').weight = Excel.BorderWeight.thick;
 
         rangeJustDays.format.borders.getItem('EdgeBottom').style = Excel.BorderLineStyle.continuous;
         rangeJustDays.format.borders.getItem('EdgeBottom').weight = Excel.BorderWeight.thick;
@@ -43,7 +43,7 @@ export class GridBuilder
     static async addDayGridFormulas(sheet: Excel.Worksheet, rowStart: number, colStart: number, days: number)
     {
         if (days <= 1)
-            throw "days must be > 1";
+            throw Error("days must be > 1");
 
         const daysSpan: number = days * 3;
 

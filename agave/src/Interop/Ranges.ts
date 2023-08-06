@@ -30,12 +30,12 @@ export class RangeInfo
     constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
     {
         if (rowCount < 0)
-            throw "negative row count";
+            throw Error("negative row count");
         this.m_rowStart = rowStart;
         this.m_rowCount = rowCount;
 
         if (columnCount < 0)
-            throw "negative column count";
+            throw Error("negative column count");
         this.m_columnStart = columnStart;
         this.m_columnCount = columnCount;
     }
@@ -437,7 +437,7 @@ export class Ranges
     static getColName_1Based(col: number): string
     {
         if (col > this.colsMap.length)
-            throw `cannot handle columns > ${this.colsMap.length}`;
+            throw Error(`cannot handle columns > ${this.colsMap.length}`);
 
         return this.colsMap[col - 1];
     }
@@ -457,10 +457,10 @@ export class Ranges
     static addressFromCoordinates_1Based(addrFrom: [number, number], addrTo: [number, number]): string
     {
         if (addrFrom[1] - 1 > this.colsMap.length || (addrTo != null && addrTo[1] - 1 > this.colsMap.length))
-            throw `cannot handle columns > ${this.colsMap.length}`;
+            throw Error(`cannot handle columns > ${this.colsMap.length}`);
 
         if (addrFrom[1] <= 0 || (addrTo != null && addrTo[1] <= 0))
-            throw "row/column addresses are 1-based";
+            throw Error("row/column addresses are 1-based");
 
         let addrFinal: string = this.colsMap[addrFrom[1] - 1]
             .concat(addrFrom[0].toString());

@@ -956,7 +956,7 @@ export class Grid
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw `overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`;
+                    throw Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`);
 
                 const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
 
@@ -2146,6 +2146,9 @@ export class Grid
             }
             requested.setRow(matched.FirstRow - 1);
 
+            if (source1 && source2 && source1.FirstRow > source2.FirstRow)
+                return GridGameInsert.createFailedGame("Can't insert the game as requested -- the top game would be below the bottom game");
+
             // now grow to including outgoing
             if (outgoing != null)
             {
@@ -2206,6 +2209,9 @@ export class Grid
                 fSwapTopBottom = !fSwapTopBottom;
             }
             requested.setRow(matched.FirstRow - 1);
+
+            if (source1 && source2 && source1.FirstRow > source2.FirstRow)
+                return GridGameInsert.createFailedGame("Can't insert the game as requested -- the top game would be below the bottom game");
 
             // now grow to including outgoing
             if (outgoing != null)
@@ -2592,7 +2598,7 @@ export class Grid
     static getRangeInfoForGameInfo(gameRange: RangeInfo): RangeInfo
     {
         if (gameRange.RowCount < 9) 
-            throw new Error("bad rangeInfo param");
+            throw Error("bad rangeInfo param");
 
         const infoRowCount = gameRange.RowCount - 4; // remove top and bottom game titles\
         const offsetToFirstGameInfo = Math.floor((infoRowCount - 5) / 2);

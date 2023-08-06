@@ -32,7 +32,7 @@ export class TableIO
 
             iHeader++;
         }
-        throw new Error(ePropagate);
+        throw Error(ePropagate);
     }
 
 
@@ -91,7 +91,7 @@ export class TableIO
             else
             {
                 if (fRequired)
-                    throw new Error("could not find required header field '" + sItem + "' in excel table " + sTable);
+                    throw Error("could not find required header field '" + sItem + "' in excel table " + sTable);
 
                 headerMapping[sItem] = -1;
             }
