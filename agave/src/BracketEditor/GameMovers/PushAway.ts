@@ -103,11 +103,14 @@ export class PushAway
             }
             else
             {
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
-                    return true;
+                if (!mover.ItemNew.IsChampionshipGame)
+                {
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                        return true;
 
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
-                    return true;
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                        return true;
+                }
             }
 
             range;
@@ -178,11 +181,14 @@ export class PushAway
             }
             else
             {
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
-                    return true;
+                if (!mover.ItemNew.IsChampionshipGame)
+                {
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                        return true;
 
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
-                    return true;
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                        return true;
+                }
             }
 
             range;
@@ -246,12 +252,15 @@ export class PushAway
             }
             else
             {
-                // check to see if the adjacent item is a game connected to us...
-                if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
-                    return true;
+                if (!mover.ItemOld.IsChampionshipGame)
+                {
+                    // check to see if the adjacent item is a game connected to us...
+                    if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                        return true;
 
-                if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
-                    return true;
+                    if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                        return true;
+                }
             }
 
             range;

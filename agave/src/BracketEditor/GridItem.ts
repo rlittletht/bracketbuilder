@@ -22,6 +22,10 @@ export class GridItem
     m_topPriority: number = -1;
     m_bottomPriority: number = -1;
 
+    get IsChampionshipGame(): boolean
+    {
+        return (this.m_range.RowCount == 3 && this.m_bottomTeamRange == null);
+    }
     get TopPriority(): number
     {
         return this.m_topPriority;

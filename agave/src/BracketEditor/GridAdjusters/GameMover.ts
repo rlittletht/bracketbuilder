@@ -204,7 +204,9 @@ export class GameMover
 
         // we had to let it actually move the game, but now if the game is not valid, then invalidate
         // this option
-        if ((!itemNew.isLineRange && itemNew.Range.RowCount <= 7)
+        if ((!itemNew.isLineRange
+            && !itemNew.IsChampionshipGame 
+            && itemNew.Range.RowCount <= 7)
             || itemNew.Range.FirstRow < working.grid.FirstGridPattern.FirstRow)
         {
             working.rank = -1;

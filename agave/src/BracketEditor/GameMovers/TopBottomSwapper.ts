@@ -16,6 +16,9 @@ export class TopBottomSwapper
         crumbs;
         // check to see if the old and the new linkages work by swapping top and bottom
 
+        if (mover.ItemNew.IsChampionshipGame || mover.ItemOld.IsChampionshipGame)
+            return false;
+
         // get the connected gridItems for the old item location
         const game: IBracketGame = BracketGame.CreateFromGameSync(mover.Bracket, mover.ItemOld.GameId.GameNum);
         const [item1, item2] = optionWork.grid.getConnectedGridItemsForGameFeeders(mover.ItemOld, game);
@@ -67,9 +70,12 @@ export class TopBottomSwapper
         const outgoing: GridItem = optionWork.grid.getConnectedGridItemForGameResult(game);
 
         // now figure out if the new item would continue to be connected if we just swapped top/bottom
-        if (outgoing != null)
+        if (outgoing != null && !outgoing.IsChampionshipGame)
         {
             const gameOut: IBracketGame = BracketGame.CreateFromGameSync(mover.Bracket, outgoing.GameId.GameNum);
+            if (gameOut.IsChampionship)
+                return false;
+
             const gameOutItem: GridItem = optionWork.grid.findGameItem(gameOut.GameId);
 
             if (mover.ItemOld.OutgoingFeederPoint.FirstRow == gameOutItem.TopTeamRange.FirstRow + 1

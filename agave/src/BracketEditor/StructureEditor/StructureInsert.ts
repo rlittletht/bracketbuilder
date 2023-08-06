@@ -364,7 +364,8 @@ export class StructureInsert
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
-        if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn
+        if ((requested.FirstColumn < grid.FirstGridPattern.FirstColumn
+            || (requested.FirstColumn > grid.FirstGridPattern.FirstColumn && requested.FirstColumn < grid.FirstGridPattern.FirstColumn + 3))
             && grid.IsEmpty)
         {
             // move the selection to the first column

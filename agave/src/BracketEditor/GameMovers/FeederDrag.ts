@@ -10,6 +10,9 @@ export class FeederDrag
 {
     static checkAndDragByOutgoingFeeder(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        if (mover.ItemNew.IsChampionshipGame || mover.ItemOld.IsChampionshipGame)
+            return false;
+
         let changed = false;
 
         // now, see if our move changed the location of our outgoing feed point
@@ -130,6 +133,9 @@ export class FeederDrag
 
     static checkAndDragByBottomIncomingFeed(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        if (mover.ItemNew.IsChampionshipGame || mover.ItemOld.IsChampionshipGame)
+            return false;
+
         let changed = false;
 
         // now, see if our move changed the location of our outgoing feed point
