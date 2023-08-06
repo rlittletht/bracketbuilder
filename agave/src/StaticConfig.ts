@@ -14,6 +14,13 @@ export interface StaticConfig
     topLevelStateName: string,
     isLocalHost: boolean;
     cdnRoot: string;
+    bodyFont: string;
+    bodySize: number;
+    gameNumSize: number;
+    blackFont: string;
+    blackSize: number;
+    championSize: number;
+    advanceSize: number;
 }
 
 const isLocalHost = window.location.host.indexOf('localhost') > -1;
@@ -31,6 +38,13 @@ export const s_staticConfig: StaticConfig =
     debuggingInfo: false && isLocalHost,
     topLevelStateName: "traynrex-red",
     logCheckpoints: false,
-    isLocalHost: false && window.location.host.indexOf('localhost') > -1,
-    cdnRoot: window.location.host.indexOf('localhost') ? "https://localhost" : "https://twbbldcdnendpoint.azureedge.net"
+    isLocalHost: window.location.host.indexOf('localhost') > -1,
+    cdnRoot: window.location.host.indexOf('localhost') ? "https://localhost" : "https://twbbldcdnendpoint.azureedge.net",
+    bodyFont: "Aptos Narrow",
+    bodySize: 9,
+    blackFont: "Aptos Black",
+    blackSize: 10,
+    gameNumSize: 9,
+    championSize: 12,
+    advanceSize: 8,
 }

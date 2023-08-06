@@ -1,6 +1,7 @@
 import { JsCtx } from "../Interop/JsCtx";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { RangeInfo } from "../Interop/Ranges";
+import { s_staticConfig } from "../StaticConfig";
 
 export class GameFormatting
 {
@@ -9,8 +10,8 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static formatTeamNameRangeRequest(teamNameRange: Excel.Range)
     {
-        teamNameRange.format.font.name = "Arial Black";
-        teamNameRange.format.font.size = 9;
+        teamNameRange.format.font.name = s_staticConfig.blackFont;
+        teamNameRange.format.font.size = s_staticConfig.blackSize;
         teamNameRange.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         teamNameRange.format.verticalAlignment = Excel.VerticalAlignment.center;
     }
@@ -33,16 +34,16 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static formatGameInfoBodyTextRequest(range: Excel.Range)
     {
-        range.format.font.name = "Calibri";
-        range.format.font.size = 9;
+        range.format.font.name = s_staticConfig.bodyFont;
+        range.format.font.size = s_staticConfig.bodySize;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
     }
 
     static formatChampionshipText(range: Excel.Range)
     {
-        range.format.font.name = "Calibri";
-        range.format.font.size = 12;
+        range.format.font.name = s_staticConfig.bodyFont;
+        range.format.font.size = s_staticConfig.championSize;
         range.format.font.bold = true;
         range.format.font.italic = true;
         range.format.font.color = "#ff0000";
@@ -55,8 +56,8 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static formatGameInfoTimeTextRequest(range: Excel.Range)
     {
-        range.format.font.name = "Calibri";
-        range.format.font.size = 9;
+        range.format.font.name = s_staticConfig.bodyFont
+        range.format.font.size = s_staticConfig.bodySize;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         range.format.verticalAlignment = Excel.VerticalAlignment.top;
         range.numberFormat = [["h:mm AM/PM"]];
@@ -67,8 +68,8 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static formatGameInfoAdvanceToTextRequest(range: Excel.Range, align: Excel.VerticalAlignment)
     {
-        range.format.font.name = "Calibri";
-        range.format.font.size = 8;
+        range.format.font.name = s_staticConfig.bodyFont;
+        range.format.font.size = s_staticConfig.advanceSize;
         range.format.font.bold = true;
         range.format.font.italic = true;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
@@ -81,8 +82,8 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static formatGameInfoGameNumberRequest(range: Excel.Range)
     {
-        range.format.font.name = "Calibri";
-        range.format.font.size = 8;
+        range.format.font.name = s_staticConfig.bodyFont;
+        range.format.font.size = s_staticConfig.gameNumSize;
         range.format.font.bold = true;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.right;
         range.format.verticalAlignment = Excel.VerticalAlignment.center;
@@ -110,7 +111,7 @@ export class GameFormatting
     static formatRangeNormalRequest(range: Excel.Range)
     {
         range.format.fill.clear();
-        range.format.font.name = "Calibri";
+        range.format.font.name = s_staticConfig.bodyFont;
         range.format.font.size = 11;
         range.format.horizontalAlignment = Excel.HorizontalAlignment.left;
         range.format.verticalAlignment = Excel.VerticalAlignment.top;

@@ -152,6 +152,10 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 </Teachable>
             );
 
+        const gameNumber = this.props.game.IsChampionship
+            ? (<span />)
+            : (<>{ this.props.game.GameId.Value }</>);
+
         return (
             <div className="singleGameItem" style={background}>
                 <Stack horizontal gap={8}>
@@ -159,7 +163,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                         {dirty}
                     </Stack.Item>
                     <Stack.Item align="center" grow={0}>
-                        ({this.props.game.GameId.Value})
+                        {gameNumber}
                     </Stack.Item>
                     <Stack.Item align="center" grow={2}>
                         {gameTitle}

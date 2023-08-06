@@ -528,7 +528,7 @@ export class StructureEditor
         appContext;
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
-        const gridArea: RangeInfo = grid.getPrintArea(4);
+        const gridArea: RangeInfo = grid.getPrintArea(6);
 
         const printArea: RangeInfo = RangeInfo.createFromCorners(
             gridArea.topLeft().newSetRow(0),
@@ -625,6 +625,8 @@ export class StructureEditor
 
         rangeWholeChampionDayTop.merge(true);
         rangeWholeChampionDayBottom.merge(true);
+        rangeWholeChampionDayTop.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.thick;
+        rangeWholeChampionDayBottom.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.thick;
 
         const rangeUnformat: Excel.Range = sheet.getRangeByIndexes(
             3,
