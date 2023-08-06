@@ -1706,7 +1706,7 @@ export class Grid
                         gameItem.TopTeamRange?.offset(0, 1, 0, 1),
                         gameItem.BottomTeamRange?.offset(0, 1, 0, 1),
                         overlapRegion,
-                        Math.min(topSource.FirstColumn, bottomSource.FirstColumn),
+                        Math.min(topSource.FirstColumn, bottomSource?.FirstColumn ?? Number.MAX_VALUE),
                         depth + 1);
                 }
             }
@@ -1729,7 +1729,7 @@ export class Grid
                         gameItem.TopTeamRange?.offset(0, 1, 0, 1),
                         gameItem.BottomTeamRange?.offset(0, 1, 0, 1),
                         overlapRegion,
-                        Math.min(topSource.FirstColumn, bottomSource.FirstColumn),
+                        Math.min(topSource?.FirstColumn ?? Number.MAX_VALUE, bottomSource.FirstColumn),
                         depth + 1);
                 }
             }
