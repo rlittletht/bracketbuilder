@@ -12,6 +12,7 @@ export class GridItem
     m_bottomTeamRange: RangeInfo = null;
     m_gameNumberRange: RangeInfo = null;
     m_swapTopBottom: boolean = false; // we will save this from the bound game - allows us to find connecting lines
+    m_ephemeral: boolean = false; // ephemeral means its not really there...
 
     // these two values will only be set if this was created from a bracket
     // (not inferred)
@@ -21,6 +22,28 @@ export class GridItem
     m_gameId: GameId = null;
     m_topPriority: number = -1;
     m_bottomPriority: number = -1;
+
+    toString(): string
+    {
+        if (this.isLineRange)
+        {
+            return `line: ${this.m_range.toString()}${this.m_ephemeral ? "ephemeral" : ""}`;
+        }
+        else
+        {
+            return `game ${this.GameId.Value}: ${this.m_range.toString()} ${this.m_ephemeral ? "ephemeral" : ""} ${this.IsChampionshipGame ? "Championship" : ""}`;
+        }
+    }
+    set IsEphemeral(f: boolean)
+    {
+        this.m_ephemeral = f;
+    }
+
+    get IsEphemeral(): boolean
+    {
+        return this.m_ephemeral;
+    }
+
 
     get IsChampionshipGame(): boolean
     {
