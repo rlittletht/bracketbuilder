@@ -191,9 +191,12 @@ export class Grid
         return item;
     }
 
-    addLineRange(range: RangeInfo)
+    addLineRange(range: RangeInfo): GridItem
     {
-        this.m_gridItems.push(new GridItem(range, null, true));
+        const newItem = new GridItem(range, null, true);
+        this.m_gridItems.push(newItem);
+
+        return newItem;
     }
 
     enumerateOverlapping(ranges: RangeOverlapMatch[]): boolean
@@ -961,6 +964,11 @@ export class Grid
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
+                // before we try this, check to see if we need to expand our fastRangeAreas
+                const moreRowsNeeded = fastRangeAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
+                if (moreRowsNeeded)
+                    await fastRangeAreas.addRangeAreaGridForRangeInfo(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
+
                 [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
                 AppContext.checkpoint("lgfb.6");
 
@@ -1582,6 +1590,48 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Grid.extendUnconnectedOutgoingFeeders
+
+        For any unconnected outgoing feeder in a game, extend it with a line at
+        least 3 games wide to anticipate overlapping collisions
+
+        nrmal operation here is to do all of this in a clone so we don't have
+        to worry about cleaning these up.
+
+        don't do this for any of the ranges in excludes (these are probably
+        the very game lines we're trying to insert!)
+    ----------------------------------------------------------------------------*/
+    extendUnconnectedOutgoingFeeders(excludes: RangeInfo[])
+    {
+        this.enumerateMatching(
+            (item: GridItem) =>
+            {
+                const outgoingCheck = item.OutgoingFeederPoint.offset(0, 1, 1, 1);
+                let excludeThisItem = false;
+
+                for (let exclude of excludes)
+                {
+                    if (RangeInfo.isOverlappingRows(exclude, item.OutgoingFeederPoint))
+                        {
+                        excludeThisItem = true;
+                        break;
+                    }
+                }
+
+                if (!excludeThisItem
+                    && this.doesRangeOverlap(outgoingCheck) == RangeOverlapKind.None)
+                {
+                    // there is nothing next to the outgoing feeder point. add an item
+                    const newItem = this.addLineRange(outgoingCheck.offset(0, 1, 0, 9));
+                    newItem.IsEphemeral = true;
+                }
+
+                return true;
+            },
+            (item: GridItem) => !item.isLineRange && !item.IsChampionshipGame);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Grid.isValidGridGameInsert
 
         if any of the ranges overlap things already in the grid, then
@@ -1589,68 +1639,95 @@ export class Grid
     ----------------------------------------------------------------------------*/
     isValidGridGameInsert(gameInsert: GridGameInsert): boolean
     {
+        const extendedOutgoing = this.clone();
+
+        // use the actual range for the exclusion rows -- it doesn't matter if we aren't going to have
+        // a feeder line, we still want to inhibit the feeder line from being extended
+        extendedOutgoing.extendUnconnectedOutgoingFeeders(
+            [gameInsert.Range.topLeft().offset(1, 1, 0, 1), gameInsert.Range.bottomLeft().offset(-1, 1, 0, 1)]);
+
         if (gameInsert.m_rangeFeederTop != null
-            && this.doesRangeOverlap(gameInsert.m_rangeFeederTop) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeFeederTop) != RangeOverlapKind.None)
         {
+            const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederTop);
+
             if (s_staticConfig.debuggingInfo)
             {
-                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederTop.toString()}) overlaps`;
+                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederTop.toString()}) overlaps ${item.toString()}`;
             }
             else
             {
-                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeFeederTop);
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederTop);
 
-                gameInsert.m_failReason = `Can't insert game here. The line connecting the top would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the top would overlap the result of an existing game at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the top would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
             }
 
             return false;
         }
 
         if (gameInsert.m_rangeFeederBottom != null
-            && this.doesRangeOverlap(gameInsert.m_rangeFeederBottom) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeFeederBottom) != RangeOverlapKind.None)
         {
             if (s_staticConfig.debuggingInfo)
             {
-                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederBottom.toString()}) overlaps`;
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederBottom);
+
+                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederBottom.toString()}) overlaps ${item.toString()}`;
             }
             else
             {
-                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeFeederBottom);
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederBottom);
 
-                gameInsert.m_failReason = `Can't insert game here. The line connecting the bottom would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the bottom would overlap the result of an existing game on the bracket at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the bottom would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
             }
             return false;
         }
 
         if (gameInsert.m_rangeWinnerFeeder != null
-            && this.doesRangeOverlap(gameInsert.m_rangeWinnerFeeder) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeWinnerFeeder) != RangeOverlapKind.None)
         {
             if (s_staticConfig.debuggingInfo)
             {
-                gameInsert.m_failReason = `m_rangeWinnerFeeder (${gameInsert.m_rangeWinnerFeeder.toString()}) overlaps`;
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeWinnerFeeder);
+
+                gameInsert.m_failReason = `m_rangeWinnerFeeder (${gameInsert.m_rangeWinnerFeeder.toString()}) overlaps ${item.toString()}`;
             }
             else
             {
-                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeWinnerFeeder);
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeWinnerFeeder);
 
-                gameInsert.m_failReason = `Can't insert game here. The line connecting the winner would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the winner would overlap the result of an existing game on the bracket at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the winner would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
             }
 
             return false;
         }
 
         if (gameInsert.m_rangeGame != null
-            && this.doesRangeOverlap(gameInsert.m_rangeGame) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeGame) != RangeOverlapKind.None)
         {
             if (s_staticConfig.debuggingInfo)
             {
-                gameInsert.m_failReason = `m_rangeGame (${gameInsert.m_rangeGame.toString()}) overlaps`;
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeGame);
+
+                gameInsert.m_failReason = `m_rangeGame (${gameInsert.m_rangeGame.toString()}) overlaps ${item.toString()}`;
             }
             else
             {
-                const [item, kind] = this.getFirstOverlappingItem(gameInsert.m_rangeGame);
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeGame);
 
-                gameInsert.m_failReason = `Can't insert game here. The game would overlap an item already on the bracket at ${item.Range.toFriendlyString()}`;
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The game would overlap the result of an existing game already on the bracket at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The game would overlap an item already on the bracket at ${item.Range.toFriendlyString()}`;
             }
 
             return false;
@@ -1670,13 +1747,19 @@ export class Grid
             source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
         }
 
-        if (this.doesSourceOverlapAreaRangeOverlap(
-            source1,
-            source2,
-            gameInsert.m_rangeGame.FirstColumn))
-            //false))
+        const { overlaps, firstOverlapItem } =
+            extendedOutgoing.doesSourceOverlapAreaRangeOverlap(
+                source1,
+                source2,
+                gameInsert.m_rangeGame.FirstColumn);
+
+        if (overlaps)
         {
-            gameInsert.m_failReason = `overlap region overlapped`;
+            if (firstOverlapItem.IsEphemeral)
+                gameInsert.m_failReason = `Can't insert game here. The game would overlap the result of an existing game already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
+            else
+                gameInsert.m_failReason = `Can't insert game here. The game would overlap an existing item already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
+
             return false;
         }
 
@@ -1739,7 +1822,7 @@ export class Grid
     doesSourceOverlapAreaRangeOverlap(
         source1: RangeInfo,
         source2: RangeInfo,
-        targetColumn: number): boolean
+        targetColumn: number): {  overlaps: boolean, firstOverlapItem?: GridItem}
     {
         let f: boolean = false;
 
@@ -1796,11 +1879,14 @@ export class Grid
 //            }
 //        }
 
-        if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)
+        const [item, kind] = this.getFirstOverlappingItem(overlapRegion);
+
+        if (kind != RangeOverlapKind.None)
         {
-            return true;
+            return { overlaps: true, firstOverlapItem: item };
         }
-        return false;
+
+        return { overlaps: false };
     }
 
     /*----------------------------------------------------------------------------
@@ -2460,7 +2546,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            s += `${item.GameId == null ? -1 : item.GameId.Value}:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}`;
+            s += `${item.GameId == null ? -1 : item.GameId.Value}:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}(${item.m_topPriority},${item.m_bottomPriority},${item.GamePriority})`;
         }
         console.log(s);
     }

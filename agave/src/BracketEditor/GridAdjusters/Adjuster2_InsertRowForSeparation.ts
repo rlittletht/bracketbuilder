@@ -93,11 +93,7 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
 
         Spacer.insertRowSpaceBefore(gridTry, regionIncludingBottom.LastRow + 1, 2);
         grid.setInternalGridItems(gridTry.m_gridItems);
-        for (let range of rangesAdjust)
-        {
-            if (range.LastRow >= regionIncludingBottom.LastRow + 1)
-                range.shiftByRows(2);
-        }
+        // if we are inserting *after* the adjusting ranges, then don't change the adjust ranges
         return true;
     }
 

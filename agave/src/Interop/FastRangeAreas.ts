@@ -1,12 +1,16 @@
 import { RangeInfo, Ranges } from "./Ranges";
 import { JsCtx } from "./JsCtx";
 
-export class FastRangeAreas
+class AreasItem
 {
-    static itemMax: number = 1000; // only 2000 items per rangearea...
-
-    m_rangeAreas: Excel.RangeAreas[] = [];
+    m_rangeAreas: Excel.RangeAreas[];
     m_rangeInfo: RangeInfo;
+
+    constructor(rangeAreas: Excel.RangeAreas[], rangeInfo: RangeInfo)
+    {
+        this.m_rangeAreas = rangeAreas;
+        this.m_rangeInfo = rangeInfo;
+    }
 
     getRangeAreaForIndex(index: number): [Excel.RangeAreas, number]
     {
@@ -41,6 +45,70 @@ export class FastRangeAreas
 
         return rangeArea.areas.items[idxAdjusted];
     }
+}
+
+export class FastRangeAreas
+{
+    static itemMax: number = 1000; // only 2000 items per rangearea...
+
+    m_areasItems: AreasItem[] = [];
+
+    getAreasItemForRangeInfo(range: RangeInfo): AreasItem | null
+    {
+        for (let item of this.m_areasItems)
+        {
+            if (RangeInfo.isOverlapping(item.m_rangeInfo, range))
+                return item;
+        }
+
+        return null;
+    }
+
+    lastAreaCached(): RangeInfo | null
+    {
+        let lastRow: RangeInfo | null = null;
+
+        for (let item of this.m_areasItems)
+        {
+            if (!lastRow || lastRow.LastRow < item.m_rangeInfo.LastRow)
+                lastRow = item.m_rangeInfo;
+        }
+
+        return lastRow;
+    }
+
+
+    private static nearestMultiple(num: number, multiple: number): number
+    {
+        return (Math.floor(num / multiple) + 1) * multiple;
+    }
+
+    rowCountNeededToExpand(range: RangeInfo): number
+    {
+        const lastRow = this.lastAreaCached();
+
+        if (!lastRow)
+            return 150;
+
+        if (range.ColumnCount != 1 || range.RowCount != 1)
+            throw Error('range areas only works with single cells');
+
+        if (lastRow.LastRow >= range.LastRow)
+            return 0;
+
+        // cache 150 rows at a time
+        let rowsNeeded = range.LastRow - lastRow.LastRow;
+
+        return FastRangeAreas.nearestMultiple(rowsNeeded, 150);
+    }
+
+    getRangeForRangeInfo(range: RangeInfo): Excel.Range
+    {
+        const item = this.getAreasItemForRangeInfo(range);
+
+        return item.getRangeForRangeInfo(range);
+    }
+
 
     getFormatForRangeInfo(range: RangeInfo): Excel.RangeFormat
     {
@@ -58,19 +126,40 @@ export class FastRangeAreas
     {
         const areas: FastRangeAreas = new FastRangeAreas();
 
-        areas.m_rangeAreas =
-            await context.getTrackedItem(
+        await areas.addRangeAreaGridForRangeInfo(context, key, sheet, 150, range);
+
+        return areas;
+    }
+
+    async addRangeAreaGridForRangeInfo(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeRef?: RangeInfo)
+    {
+        let lastRow = this.lastAreaCached();
+        let range: RangeInfo;
+
+        if (!lastRow)
+        {
+            if (!rangeRef)
+                throw Error("must provide a reference range for the first addRange");
+
+            range = rangeRef.offset(0, rangeRef.RowCount, 0, rangeRef.ColumnCount);
+        }
+        else
+        {
+            range = new RangeInfo(lastRow.LastRow + 1, rowCount, lastRow.FirstColumn, lastRow.ColumnCount);
+        }
+
+        const areas = await context.getTrackedItem(
                 key,
                 async (context) =>
                 {
-                    const addrs: string[] = this.buildCellListForRangeInfo(range);
+                    const addrs: string[] = FastRangeAreas.buildCellListForRangeInfo(range);
                     const rangeAreasAry: Excel.RangeAreas[] = [];
 
                     for (let addr of addrs)
                     {
                         const rangeAreas: Excel.RangeAreas = sheet.getRanges(addr);
                         let props =
-//                            'format, areaCount, areas, areas.items, areas.items.format, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
+                            //                            'format, areaCount, areas, areas.items, areas.items.format, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
                             'areas.items, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
                         rangeAreas.load(props);
                         rangeAreasAry.push(rangeAreas);
@@ -79,8 +168,7 @@ export class FastRangeAreas
                     return rangeAreasAry;
                 });
 
-        areas.m_rangeInfo = range;
-        return areas;
+        this.m_areasItems.push(new AreasItem(areas, range));
     }
 
     static buildCellListForRangeInfo(range: RangeInfo): string[]
