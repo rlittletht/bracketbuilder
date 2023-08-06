@@ -30,6 +30,13 @@ export class GridGameInsert
         return gameInsert;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: GridGameInsert.setFeedersFromSources
+
+        This sets the feeder line ranges. If no feeder line is going to be
+        required (because we are going to abutt the source game), then that
+        range will not be set
+    ----------------------------------------------------------------------------*/
     setFeedersFromSources(sourceTop: RangeInfo, sourceBottom: RangeInfo, winnerTarget: RangeInfo, column: number, fSwapTopBottom: boolean)
     {
         fSwapTopBottom;
