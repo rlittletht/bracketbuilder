@@ -118,8 +118,8 @@ export class AppContext implements IAppContext
 
     static checkpoint(log: string)
     {
-        log;
-//        console.log(log);
+        if (s_staticConfig.logCheckpoints)
+            console.log(log);
     }
 }
 

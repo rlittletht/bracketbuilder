@@ -5,6 +5,7 @@ export interface StaticConfig
     maxGameMoves: number,
     globalLogging: boolean,
     logGridChanges: boolean,
+    logCheckpoints: boolean,
     logGrid: boolean,
     logMoveSteps: boolean,
     newStepLogger: boolean,
@@ -29,6 +30,7 @@ export const s_staticConfig: StaticConfig =
     logOptions: false && isLocalHost,
     debuggingInfo: false && isLocalHost,
     topLevelStateName: "traynrex-red",
+    logCheckpoints: true,
     isLocalHost: false && window.location.host.indexOf('localhost') > -1,
     cdnRoot: window.location.host.indexOf('localhost') ? "https://localhost" : "https://twbbldcdnendpoint.azureedge.net"
 }
