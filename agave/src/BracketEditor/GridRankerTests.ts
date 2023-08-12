@@ -7,8 +7,10 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameMover } from "./GridAdjusters/GameMover";
 import { GridChange } from "./GridChange";
 import { GameId } from "./GameId";
-import { UnitTestContext } from "../taskpane/components/App";
 import { GridRanker } from "./GridRanker";
+import { TestRunner } from "../Support/TestRunner";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestResult } from "../Support/TestResult";
 
 interface SetupGridRankerTestDelegate
 {
@@ -17,16 +19,16 @@ interface SetupGridRankerTestDelegate
 
 export class GridRankerTests
 {
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
+
     static doGridRankerTest(
-        appContext: IAppContext,
-        testContext: UnitTestContext,
-        testName: string,
+        result: TestResult,
         bracket: string,
         delegate: SetupGridRankerTestDelegate)
     {
-        appContext;
-        testContext.StartTest(testName);
-
         let grid: Grid = new Grid();
         let gridBetter: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -42,15 +44,10 @@ export class GridRankerTests
         grid.logGridCondensed();
 
         if (!passed)
-        {
-            throw new Error(
-                `${
-                testName
-                } failed. !(Rank ${rankBetter} > ${rank})`);
-        }
+            result.addError(`!(Rank ${rankBetter} > ${rank})`);
     }
 
-    static test_danglingFeeder_vs_swappedGame(appContext: IAppContext, testContext: UnitTestContext)
+    static test_danglingFeeder_vs_swappedGame(result: TestResult)
     {
         const setup: SetupGridRankerTestDelegate =
             (grid, gridBetter)  =>
@@ -129,9 +126,7 @@ export class GridRankerTests
             };
 
         this.doGridRankerTest(
-            appContext,
-            testContext,
-            "GridTests.test_danglingFeeder_vs_swappedGame",
+            result,
             "T13",
             setup);
     }

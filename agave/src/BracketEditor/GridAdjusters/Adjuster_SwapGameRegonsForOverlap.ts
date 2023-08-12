@@ -7,7 +7,9 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext/AppContext";
 import { GameNum } from "../GameNum";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { StreamWriter } from "../../Support/StreamWriter";
 
 // THIS ADJUSTER IS is for the insert of Game 19 on a 14 team bracket
 // W15 and W13 will overlap game 16.  To fix this (and to fix the next problem
@@ -70,7 +72,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
 
         return doesApply;
     }
-    
+
     /*----------------------------------------------------------------------------
         %%Function: Adjuster_SwapGameRegonsForOverlap.doesAdjusterApply
 
@@ -183,12 +185,17 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
 
         return true;
     }
+}
 
-    static testSwapRegionsForGameOverlap(appContext: IAppContext, testContext: UnitTestContext)
+export class Adjuster_SwapGameRegonsForOverlapTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        appContext;
-        testContext.StartTest("Adjuster_SwapGameRegonsForOverlap. testSwapRegionsForGameOverlap");
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
+    static test_SwapRegionsForGameOverlap(result: TestResult)
+    {
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
@@ -230,7 +237,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw new Error("testSwapRegionsForGameOverlap: FAILED: rearrange failed to resolve");
+            result.addError("rearrange failed to resolve");
         }
     }
 }

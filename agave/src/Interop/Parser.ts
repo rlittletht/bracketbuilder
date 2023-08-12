@@ -1,4 +1,7 @@
-
+import { IAppContext } from "../AppContext/AppContext";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestRunner } from "../Support/TestRunner";
+import { TestResult } from "../Support/TestResult";
 
 export class AmPmDecoration
 {
@@ -267,33 +270,36 @@ export class Parser
 
 export class ParserTests
 {
-    static testParseStringTest(trim: TrimType, quoting: Quoting, accepts: ParseStringAccepts, s: string, ichCur: number, ichMax: number, expected: string, ichExpected: number)
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
+
+    static doParseStringTest(result: TestResult, trim: TrimType, quoting: Quoting, accepts: ParseStringAccepts, s: string, ichCur: number, ichMax: number, expected: string, ichExpected: number)
     {
         let [actual, ichActual] = Parser.parseString(trim, quoting, accepts, s, ichCur, ichMax);
 
-        if (actual != expected)
-            throw new Error(`testParseString: trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax}), expected(${expected}) != actual(${actual})`);
-
-        if (ichActual != ichExpected)
-            throw new Error(`testParseString: trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax}), ichExpected(${ichExpected}) != ichActual(${ichActual})`);
+        result.assertIsEqual(expected, actual, `trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax})`);
+        result.assertIsEqual(ichExpected, ichActual, `trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax})`);
     }
 
-    static testParseStringTests()
+    static test_ParseStringTests(result: TestResult)
     {
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "test", 0, 4, "test", 4);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, " test", 0, 5, "test", 5);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, " !test", 0, 5, "", 1);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "!test", 0, 4, "", 0);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "'!test'", 0, 7, "'!test'", 7);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "!'!test'", 1, 8, "'!test'", 8);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "Sheet1!$A1B1", 0, 12, "Sheet1", 6);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "te12", 0, 4, "te12", 4);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.Alpha, "te12", 0, 4, "te", 2);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.Numeric, "te12", 0, 4, "", 0);
-        this.testParseStringTest(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.Numeric, "te12", 2, 4, "12", 4);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "test", 0, 4, "test", 4);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, " test", 0, 5, "test", 5);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, " !test", 0, 5, "", 1);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "!test", 0, 4, "", 0);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "'!test'", 0, 7, "'!test'", 7);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "!'!test'", 1, 8, "'!test'", 8);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "Sheet1!$A1B1", 0, 12, "Sheet1", 6);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, "te12", 0, 4, "te12", 4);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.Alpha, "te12", 0, 4, "te", 2);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.Numeric, "te12", 0, 4, "", 0);
+        this.doParseStringTest(result, TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.Numeric, "te12", 2, 4, "12", 4);
     }
 
-    static testParseExcelColumnRowReferenceTest(
+    static doParseExcelColumnRowReferenceTest(
+        result: TestResult,
         addr: string,
         ichCur: number,
         ichMax: number,
@@ -303,12 +309,6 @@ export class ParserTests
         fRowAbsoluteExpected: boolean | undefined,
         ichExpected: number)
     {
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw new Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
-        }
-
         let fColAbsoluteActual: boolean | undefined;
         let fRowAbsoluteActual: boolean | undefined;
         let colRefActual: string | undefined;
@@ -316,24 +316,27 @@ export class ParserTests
 
         [colRefActual, fColAbsoluteActual, rowRefActual, fRowAbsoluteActual, ichCur] = Parser.parseExcelColumnRowReference(addr, ichCur, ichMax);
 
-        AssertEqual(colRefExpected, colRefActual);
-        AssertEqual(rowRefExpected, rowRefActual);
-        AssertEqual(fRowAbsoluteExpected, fRowAbsoluteActual);
-        AssertEqual(fColAbsoluteExpected, fColAbsoluteActual);
-        AssertEqual(ichExpected, ichCur);
+        const prefix = ` addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}`;
+
+        result.assertIsEqual(colRefExpected, colRefActual, prefix);
+        result.assertIsEqual(rowRefExpected, rowRefActual, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected, fRowAbsoluteActual, prefix);
+        result.assertIsEqual(fColAbsoluteExpected, fColAbsoluteActual, prefix);
+        result.assertIsEqual(ichExpected, ichCur, prefix);
     }
 
-    static testParseExcelColumnRowReferenceTests()
+    static test_ParseExcelColumnRowReferenceTests(result: TestResult)
     {
-        this.testParseExcelColumnRowReferenceTest("A1", 0, 2, "A", false, 1, false, 2);
-        this.testParseExcelColumnRowReferenceTest("$A1", 0, 3, "A", true, 1, false, 3);
-        this.testParseExcelColumnRowReferenceTest("$A$1", 0, 4, "A", true, 1, true, 4);
-        this.testParseExcelColumnRowReferenceTest("A$1", 0, 3, "A", false, 1, true, 3);
-        this.testParseExcelColumnRowReferenceTest("AA$1", 0, 4, "AA", false, 1, true, 4);
-        this.testParseExcelColumnRowReferenceTest("AA$1:", 0, 5, "AA", false, 1, true, 4);
+        this.doParseExcelColumnRowReferenceTest(result, "A1", 0, 2, "A", false, 1, false, 2);
+        this.doParseExcelColumnRowReferenceTest(result, "$A1", 0, 3, "A", true, 1, false, 3);
+        this.doParseExcelColumnRowReferenceTest(result, "$A$1", 0, 4, "A", true, 1, true, 4);
+        this.doParseExcelColumnRowReferenceTest(result, "A$1", 0, 3, "A", false, 1, true, 3);
+        this.doParseExcelColumnRowReferenceTest(result, "AA$1", 0, 4, "AA", false, 1, true, 4);
+        this.doParseExcelColumnRowReferenceTest(result, "AA$1:", 0, 5, "AA", false, 1, true, 4);
     }
 
-    static testParseExcelAddressTest(
+    static doParseExcelAddressTest(
+        result: TestResult,
         addr: string,
         ichCur: number,
         ichMax: number,
@@ -347,26 +350,23 @@ export class ParserTests
         fRowAbsoluteExpected2: boolean | undefined,
         ichExpected: number)
     {
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw new Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
-        }
-
         let [colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] = Parser.parseExcelSimpleAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
 
-        AssertEqual(      colRefExpected1,       colRefActual1);
-        AssertEqual(      rowRefExpected1,       rowRefActual1);
-        AssertEqual(fRowAbsoluteExpected1, fRowAbsoluteActual1);
-        AssertEqual(fColAbsoluteExpected1, fColAbsoluteActual1);
-        AssertEqual(      colRefExpected2,       colRefActual2);
-        AssertEqual(      rowRefExpected2,       rowRefActual2);
-        AssertEqual(fRowAbsoluteExpected2, fRowAbsoluteActual2);
-        AssertEqual(fColAbsoluteExpected2, fColAbsoluteActual2);
-        AssertEqual(ichExpected, ichCurActual);
+        const prefix = `addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax})`;
+
+        result.assertIsEqual(colRefExpected1, colRefActual1, prefix);
+        result.assertIsEqual(rowRefExpected1, rowRefActual1, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected1, fRowAbsoluteActual1, prefix);
+        result.assertIsEqual(fColAbsoluteExpected1, fColAbsoluteActual1, prefix);
+        result.assertIsEqual(colRefExpected2, colRefActual2, prefix);
+        result.assertIsEqual(rowRefExpected2, rowRefActual2, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected2, fRowAbsoluteActual2, prefix);
+        result.assertIsEqual(fColAbsoluteExpected2, fColAbsoluteActual2, prefix);
+        result.assertIsEqual(ichExpected, ichCurActual, prefix);
     }
 
-    static testParseExcelFullAddressTest(
+    static doParseExcelFullAddressTest(
+        result: TestResult,
         addr: string,
         ichCur: number,
         ichMax: number,
@@ -381,41 +381,37 @@ export class ParserTests
         fRowAbsoluteExpected2: boolean | undefined,
         ichExpected: number)
     {
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw new Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
-        }
-
         let [sheetNameActual, colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] =
             Parser.parseExcelFullAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
 
-        AssertEqual(colRefExpected1, colRefActual1);
-        AssertEqual(rowRefExpected1, rowRefActual1);
-        AssertEqual(fRowAbsoluteExpected1, fRowAbsoluteActual1);
-        AssertEqual(fColAbsoluteExpected1, fColAbsoluteActual1);
-        AssertEqual(colRefExpected2, colRefActual2);
-        AssertEqual(rowRefExpected2, rowRefActual2);
-        AssertEqual(fRowAbsoluteExpected2, fRowAbsoluteActual2);
-        AssertEqual(fColAbsoluteExpected2, fColAbsoluteActual2);
-        AssertEqual(ichExpected, ichCurActual);
-        AssertEqual(sheetNameExpected, sheetNameActual);
+        const prefix = `addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax})`;
+
+        result.assertIsEqual(colRefExpected1, colRefActual1, prefix);
+        result.assertIsEqual(rowRefExpected1, rowRefActual1, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected1, fRowAbsoluteActual1, prefix);
+        result.assertIsEqual(fColAbsoluteExpected1, fColAbsoluteActual1, prefix);
+        result.assertIsEqual(colRefExpected2, colRefActual2, prefix);
+        result.assertIsEqual(rowRefExpected2, rowRefActual2, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected2, fRowAbsoluteActual2, prefix);
+        result.assertIsEqual(fColAbsoluteExpected2, fColAbsoluteActual2, prefix);
+        result.assertIsEqual(ichExpected, ichCurActual, prefix);
+        result.assertIsEqual(sheetNameExpected, sheetNameActual, prefix);
     }
 
-    static testParseExcelAddressTests()
+    static test_ParseExcelAddressTests(result: TestResult)
     {
-        this.testParseExcelAddressTest("A:B", 0, 3, "A", false, undefined, undefined, "B", false, undefined, undefined, 3);
-        this.testParseExcelAddressTest("A1:B2", 0, 5, "A", false, 1, false, "B", false, 2, false, 5);
-        this.testParseExcelAddressTest("A1", 0, 2, "A", false, 1, false, undefined, undefined, undefined, undefined, 2);
-        this.testParseExcelAddressTest("$A1", 0, 3, "A", true, 1, false, undefined, undefined, undefined, undefined, 3);
-        this.testParseExcelAddressTest("$A$1", 0, 4, "A", true, 1, true, undefined, undefined, undefined, undefined, 4);
-        this.testParseExcelAddressTest("A$1", 0, 3, "A", false, 1, true, undefined, undefined, undefined, undefined, 3);
-        this.testParseExcelAddressTest("AA$1", 0, 4, "AA", false, 1, true, undefined, undefined, undefined, undefined, 4);
-        this.testParseExcelAddressTest("AA$1:", 0, 5, "AA", false, 1, true, undefined, undefined, undefined, undefined, 5);
+        this.doParseExcelAddressTest(result, "A:B", 0, 3, "A", false, undefined, undefined, "B", false, undefined, undefined, 3);
+        this.doParseExcelAddressTest(result, "A1:B2", 0, 5, "A", false, 1, false, "B", false, 2, false, 5);
+        this.doParseExcelAddressTest(result, "A1", 0, 2, "A", false, 1, false, undefined, undefined, undefined, undefined, 2);
+        this.doParseExcelAddressTest(result, "$A1", 0, 3, "A", true, 1, false, undefined, undefined, undefined, undefined, 3);
+        this.doParseExcelAddressTest(result, "$A$1", 0, 4, "A", true, 1, true, undefined, undefined, undefined, undefined, 4);
+        this.doParseExcelAddressTest(result, "A$1", 0, 3, "A", false, 1, true, undefined, undefined, undefined, undefined, 3);
+        this.doParseExcelAddressTest(result, "AA$1", 0, 4, "AA", false, 1, true, undefined, undefined, undefined, undefined, 4);
+        this.doParseExcelAddressTest(result, "AA$1:", 0, 5, "AA", false, 1, true, undefined, undefined, undefined, undefined, 5);
 
-        this.testParseExcelFullAddressTest("AA$1:", 0, 5, undefined, "AA", false, 1, true, undefined, undefined, undefined, undefined, 5);
-        this.testParseExcelFullAddressTest("Sheet1!AA$1:", 0, 12, "Sheet1", "AA", false, 1, true, undefined, undefined, undefined, undefined, 12);
-        this.testParseExcelFullAddressTest("'My S'!AA$1:", 0, 12, "'My S'", "AA", false, 1, true, undefined, undefined, undefined, undefined, 12);
-        this.testParseExcelFullAddressTest("'M! S'!AA$1:", 0, 12, "'M! S'", "AA", false, 1, true, undefined, undefined, undefined, undefined, 12);
+        this.doParseExcelFullAddressTest(result, "AA$1:", 0, 5, undefined, "AA", false, 1, true, undefined, undefined, undefined, undefined, 5);
+        this.doParseExcelFullAddressTest(result, "Sheet1!AA$1:", 0, 12, "Sheet1", "AA", false, 1, true, undefined, undefined, undefined, undefined, 12);
+        this.doParseExcelFullAddressTest(result, "'My S'!AA$1:", 0, 12, "'My S'", "AA", false, 1, true, undefined, undefined, undefined, undefined, 12);
+        this.doParseExcelFullAddressTest(result, "'M! S'!AA$1:", 0, 12, "'M! S'", "AA", false, 1, true, undefined, undefined, undefined, undefined, 12);
     }
 }

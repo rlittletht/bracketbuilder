@@ -16,12 +16,12 @@ import { Games } from "./Games";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
 import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
 import { BracketDefinition, _bracketManager } from "../../Brackets/BracketDefinitions";
-import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
-import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
+import { RegionSwapper_BottomGameTests } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
+import { Adjuster_WantToGrowUpAtTopOfGridTests } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
 import { TableIO } from "../../Interop/TableIO";
-import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
+import { Adjuster_SwapGameRegonsForOverlapTests } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
 import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
-import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
+import { Adjuster_SwapAdjacentGameRegionsForOverlapTests as Adjuster_SwapAdjacentGameRegonsForOverlapTests } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
 import { Toolbar, ToolbarItem } from "./Toolbar";
 import { LogoHeader } from "./LogoHeader";
 import { StatusBox } from "./StatusBox";
@@ -30,7 +30,7 @@ import { Grid } from "../../BracketEditor/Grid";
 import { GameNum } from "../../BracketEditor/GameNum";
 import { GridTests } from "../../BracketEditor/GridTests";
 import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
-import { OADate } from "../../Interop/Dates";
+import { OADateTests } from "../../Interop/Dates";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { ParserTests } from "../../Interop/Parser";
@@ -43,6 +43,8 @@ import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
 import { HelpLink } from "./HelpLink";
 import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "../../BracketEditor/GridAdjusters/Adjuster_NeedExtraSpaceBelowRegionForGameInsert";
+import { TestRunner } from "../../Support/TestRunner";
+import { StreamWriter } from "../../Support/StreamWriter";
 
 /* global console, Excel, require  */
 
@@ -50,18 +52,6 @@ export interface AppProps
 {
     title: string;
     isOfficeInitialized: boolean;
-}
-
-export class UnitTestContext
-{
-    m_testName: string;
-
-    get CurrentTest(): string { return this.m_testName; }
-
-    StartTest(testName: string)
-    {
-        this.m_testName = testName;
-    }
 }
 
 export interface AppState
@@ -126,20 +116,15 @@ export default class App extends React.Component<AppProps, AppState>
         appContext;
         window.open(HelpLink.buildHelpLink("BracketBuilder-Help.html"));
     }
+
     static async doUnitTests(appContext: IAppContext)
     {
-        let curTest = "";
-        const testContext: UnitTestContext = new UnitTestContext();
+        const results = [];
+
+        const outStream = new StreamWriter((line) => results.push(line));
 
         try
         {
-            FastRangeAreasTest.buildCellListForRangeInfoTests();
-            ParserTests.testParseStringTests();
-            ParserTests.testParseExcelColumnRowReferenceTests();
-            ParserTests.testParseExcelAddressTests();
-            OADate.TestFromOADateTests();
-
-
             // first, dump the grid for the current sheet. this is handy if you are building
             // unit tests since it gives you a way to generate a grid...
             await Excel.run(
@@ -152,77 +137,26 @@ export default class App extends React.Component<AppProps, AppState>
                     context.releaseAllTrackedItems();
                 });
 
-            GameMoverTests.test_ShiftItemDown(appContext, testContext);
+            FastRangeAreasTest.runAllTests(appContext, outStream);
+            ParserTests.runAllTests(appContext, outStream);
+            OADateTests.runAllTests(appContext, outStream);
+            GameMoverTests.runAllTests(appContext, outStream);
+            GridRankerTests.runAllTests(appContext, outStream);
+            GridTests.runAllTests(appContext, outStream);
+            RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
+            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
+            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
+            Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
+            Adjuster_SwapAdjacentGameRegonsForOverlapTests.runAllTests(appContext, outStream);
 
-            OADate.TestMinutesFromTimeStringTests();
-
-            GridRankerTests.test_danglingFeeder_vs_swappedGame(appContext, testContext);
-            GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext, testContext);
-
-            GridTests.test_getConnectedGridItemForGameResult_ConnectedByLine(appContext, testContext);
-            GridTests.test_getConnectedGridItemForGameResult_ConnectedAdjacent(appContext, testContext);
-            GridTests.test_getConnectedGridItemForGameResult_NotConnected(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
-
-            RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
-            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
-            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
-            Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext, testContext);
-
-            Adjuster_NeedExtraSpaceBelowRegionForGameInsert.testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(appContext, testContext);
-
-            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity(appContext, testContext);
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(appContext, testContext);
-            GameMoverTests.test_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing(appContext, testContext);
-
-//FAIL            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameAndLineDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame_BlockedByGameBelow(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame(appContext, testContext);
-
-            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_NoRoomToGrow_ShrinkConnectedGame(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_FitInAvailableSpace(appContext, testContext);
-
-            GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext, testContext);
-            GameMoverTests.test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity(appContext, testContext);
-            GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
-
-            GameMoverTests.test_DropItemToSwapHomeAway_Swapped(appContext, testContext);
-            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext, testContext);
-            GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext, testContext);
-
-//FAIL            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext, testContext);
-            GameMoverTests.test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem(appContext, testContext);
-            GameMoverTests.test_MoveItemWithConnectedTopFeeder_MoveConnectedItem(appContext, testContext);
-            GameMoverTests.test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(appContext, testContext);
-
-            // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
-            //await StructureEditor.testGridClick(appContext);
-
-            appContext.Messages.message(["tests complete"], null, 5000);
         }
         catch (e)
         {
-            appContext.Messages.error(
-                [`TEST FAILURE: ${testContext.CurrentTest} (${e})`]);
+            results.push(`EXCEPTION CAUGHT: ${e}`);
         }
+
+        appContext.Messages.message([...results, "Unit Tests Complete"]);
+
     }
 
     buildTopToolbar(): ToolbarItem[]

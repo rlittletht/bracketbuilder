@@ -4,11 +4,13 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
 import { Spacer } from "./Spacer";
 import { GridAdjust } from "./GridAdjust";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext} from "../../AppContext/AppContext";
 import { GridItem } from "../GridItem";
 import { GameNum } from "../GameNum";
 import { GameId } from "../GameId";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestRunner } from "../../Support/TestRunner";
+import { TestResult } from "../../Support/TestResult";
 
 /*----------------------------------------------------------------------------
     Adjuster_WantToGrowUpAtTopOfGrid.Adjuster_WantToGrowUpAtTopOfGrid
@@ -114,16 +116,21 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
 
         return true;
     }
+}
+
+export class Adjuster_WantToGrowUpAtTopOfGridTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid
-
-        
+       
     ----------------------------------------------------------------------------*/
-    static testInsertSpaceAtTopOfGrid(appContext: IAppContext, testContext: UnitTestContext)
+    static test_InsertSpaceAtTopOfGrid(result: TestResult)
     {
-        appContext;
-        testContext.StartTest("Adjuster_WantToGrowUpAtTopOfGrid. testInsertSpaceAtTopOfGrid");
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -146,9 +153,9 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         let item: GridItem = gridNew.findGameItem(new GameId(1));
 
         if (item == null)
-            throw new Error("testInsertSpaceAtTopOfGrid: game 1 disappeared?");
+            result.addError("testInsertSpaceAtTopOfGrid: game 1 disappeared?");
 
         if (item.Range.FirstRow != 13)
-            throw new Error("testInsertSpaceAtTopOfGrid: game 1 didn't move!");
+            result.addError("testInsertSpaceAtTopOfGrid: game 1 didn't move!");
     }
 }

@@ -5,9 +5,11 @@ import { RangeInfo } from "../../Interop/Ranges";
 import { GridAdjust } from "./GridAdjust";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, IAppContext as IAppContext1 } from "../../AppContext/AppContext";
 import { GameNum } from "../GameNum";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestRunner } from "../../Support/TestRunner";
+import { TestResult } from "../../Support/TestResult";
 
 export class RegionSwapper_BottomGame implements IGridAdjuster
 {
@@ -93,6 +95,14 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
 
         return true;
     }
+}
+
+export class RegionSwapper_BottomGameTests
+{
+    static runAllTests(appContext: IAppContext1, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: RegionSwapper_BottomGame.testRegionSwap1
@@ -102,11 +112,8 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         and the top game in the grid to combine, which naturally causes a conflict
         and requires a region swap.  Test this.
     ----------------------------------------------------------------------------*/
-    static testRegionSwap1(appContext: IAppContext, testContext: UnitTestContext)
+    static test_RegionSwap1(result: TestResult)
     {
-        testContext.StartTest("RegionSwapper_BottomGame. testRegionSwap1");
-
-        appContext;
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -136,7 +143,7 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw new Error("testRegionSwap1: FAILED: rearrange failed to resolve");
+            result.addError("testRegionSwap1: FAILED: rearrange failed to resolve");
         }
     }
 }

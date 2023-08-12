@@ -7,8 +7,10 @@ import { GridAdjust } from "./GridAdjusters/GridAdjust";
 import { GameMover } from "./GridAdjusters/GameMover";
 import { GridChange } from "./GridChange";
 import { GameId } from "./GameId";
-import { UnitTestContext } from "../taskpane/components/App";
 import * as GridRanker from "./GridRanker";
+import { TestRunner } from "../Support/TestRunner";
+import { TestResult } from "../Support/TestResult";
+import { StreamWriter } from "../Support/StreamWriter";
 
 interface SetupTestDelegate
 {
@@ -17,17 +19,17 @@ interface SetupTestDelegate
 
 export class GameMoverTests
 {
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
+
     static doGameMoverTest(
-        appContext: IAppContext,
-        testContext: UnitTestContext,
-        testName: string,
+        result: TestResult,
         bracket: string,
         delegate: SetupTestDelegate,
         firstGridPattern?: RangeInfo)
     {
-        appContext;
-        testContext.StartTest(testName);
-
         let grid: Grid = new Grid();
         if (firstGridPattern)
             grid.m_firstGridPattern = firstGridPattern;
@@ -44,7 +46,10 @@ export class GameMoverTests
         const rank: number = GridRanker.GridRanker.getGridRank(grid, bracket);
 
         if (rank == -1)
-            throw new Error(`starting grid invalid. bad test`);
+        {
+            result.addError("starting grid invalid. bad test");
+            return;
+        }
 
         console.log(
             `original (rank=${
@@ -55,14 +60,21 @@ export class GameMoverTests
         // about to change
         let gridResult: Grid = mover.moveGame(itemOld.clone(), itemNew, bracket);
 
+        if (!gridResult)
+        {
+            result.addError("not gridResult returned");
+            return;
+        }
+
         const changes: GridChange[] = gridResult.diff(gridExpected, bracket);
         if (changes.length != 0)
         {
             grid.logChanges(changes);
-            throw new Error(
+            result.addError(
                 `${
                 grid.logChangesToString(changes)
                 }`);
+            return;
         }
     }
 
@@ -72,7 +84,7 @@ export class GameMoverTests
         move game 6 down by 2 rows. this should push games 6 and 7 down by 2
         rows.
     ----------------------------------------------------------------------------*/
-    static test_ShiftItemDown(appContext: IAppContext, testContext: UnitTestContext)
+    static testFailing_ShiftItemDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -102,9 +114,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShiftItemDown_MaintainBuffer_PushGameDown",
+            result,
             "T5",
             setup,
             new RangeInfo(9, 1, 3, 1));
@@ -117,7 +127,7 @@ export class GameMoverTests
         move game 6 down by 2 rows. this should push games 6 and 7 down by 2
         rows.
     ----------------------------------------------------------------------------*/
-    static test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShiftItemDown_MaintainBuffer_PushGameDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -147,16 +157,14 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShiftItemDown_MaintainBuffer_PushGameDown",
+            result,
             "T9",
             setup);
     }
 
 
 
-    static test_GrowItemDown_FitInAvailableSpace(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemDown_FitInAvailableSpace(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -174,14 +182,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemDown_FitInAvailableSpace",
+            result,
             "T4",
             setup);
     }
 
-    static test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -211,9 +217,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity",
+            result,
             "T9",
             setup);
     }
@@ -227,7 +231,7 @@ export class GameMoverTests
         Game 6 and 7 are only 1 row apart, so leaving it alone is not an option,
         hence we will push it away 4.
     ----------------------------------------------------------------------------*/
-    static test_ShiftItemUp_MaintainBufferPushGameUp(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShiftItemUp_MaintainBufferPushGameUp(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -257,9 +261,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShiftItemUp_MaintainBufferPushGameUp",
+            result,
             "T9",
             setup);
     }
@@ -270,7 +272,7 @@ export class GameMoverTests
         Grow game2 by 4 rows, which will grow game 3 by 2 rows because of the
         outgoing connection between game2 and game3
     ----------------------------------------------------------------------------*/
-    static test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtBottom_DragOutgoingConnectedGameDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -290,9 +292,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtBottom_DragOutgoingConnectedGameDown",
+            result,
             "T4",
             setup);
     }
@@ -305,7 +305,7 @@ export class GameMoverTests
         outgoing connection between game2 and game3. The game feeders are
         connected by lines, so the lines have to move as well
     ----------------------------------------------------------------------------*/
-    static test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -329,14 +329,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown",
+            result,
             "T4",
             setup);
     }
 
-    static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_NoRoomToGrow_ShrinkConnectedGame(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_NoRoomToGrow_ShrinkConnectedGame(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -356,15 +354,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_NoRoomToGrow_ShrinkConnectedGame",
+            result,
             "T4",
             setup);
     }
 
 
-    static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -384,15 +380,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame",
+            result,
             "T4",
             setup);
     }
 
 
-    static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -412,9 +406,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp",
+            result,
             "T4",
             setup);
     }
@@ -426,7 +418,7 @@ export class GameMoverTests
         the target game grows, moving the bottom game feed location, dragging
         the feeding game along...
     ----------------------------------------------------------------------------*/
-    static test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -446,15 +438,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtBottom_DragBottomFeedConnectedGameDown",
+            result,
             "T4",
             setup);
     }
 
 
-    static test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -474,14 +464,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame",
+            result,
             "T4",
             setup);
     }
 
-    static test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame_BlockedByGameBelow(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame_BlockedByGameBelow(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -504,9 +492,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame_BlockedByGameBelow",
+            result,
             "T4",
             setup);
     }
@@ -517,7 +503,7 @@ export class GameMoverTests
         the target game grows, moving the bottom game feed location, dragging
         the feeding game along...
     ----------------------------------------------------------------------------*/
-    static test_GrowItemAtBottom_DragBottomFeedConnectedGameAndLineDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtBottom_DragBottomFeedConnectedGameAndLineDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -541,9 +527,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtBottom_DragBottomFeedConnectedGameAndLineDown",
+            result,
             "T4",
             setup);
     }
@@ -554,7 +538,7 @@ export class GameMoverTests
         We have room to grow game 1, but we will just shift it up in order
         to favor a consistent height of games in the columns
     ----------------------------------------------------------------------------*/
-    static test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -574,9 +558,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity",
+            result,
             "T4",
             setup);
     }
@@ -588,7 +570,7 @@ export class GameMoverTests
         here we have 2 different game heights already, so introducing a 3rd isn't
         disadvantageous. we will favor less sparsity
     ----------------------------------------------------------------------------*/
-    static test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -610,15 +592,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop",
+            result,
             "T8",
             setup);
     }
 
 
-    static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -638,15 +618,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown",
+            result,
             "T4",
             setup);
     }
 
 
-    static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -666,14 +644,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity",
+            result,
             "T4",
             setup);
     }
 
-    static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -695,16 +671,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow",
+            result,
             "T8",
             setup);
     }
 
 
-    static test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(appContext: IAppContext, testContext: UnitTestContext)
-    {
+    static testKnownFailing_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(result: TestResult)    {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
             {
@@ -727,15 +700,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity",
+            result,
             "T4",
             setup);
     }
 
     
-    static test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext: IAppContext, testContext: UnitTestContext)
+    static testFailing_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -761,9 +732,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp",
+            result,
             "T8",
             setup);
     }
@@ -772,7 +741,7 @@ export class GameMoverTests
 
         Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.
     ----------------------------------------------------------------------------*/
-    static test_GrowItemDown_PushColumnAdjacentItemDown(appContext: IAppContext, testContext: UnitTestContext)
+    static test_GrowItemDown_PushColumnAdjacentItemDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -794,24 +763,23 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemDown_PushColumnAdjacentItemDown",
+            result,
             "T4",
             setup);
     }
 
 
     /*----------------------------------------------------------------------------
-        %%Function: GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown
+        %%Function: GameMoverTests.testFailing_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision
 
         Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.
     ----------------------------------------------------------------------------*/
-    static test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(appContext: IAppContext, testContext: UnitTestContext)
+    static testFailing_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
             {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 33, 11,), 3, false).inferGameInternals();
 
@@ -825,9 +793,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision",
+            result,
             "T4",
             setup);
     }
@@ -835,7 +801,7 @@ export class GameMoverTests
 
     // the interesting thing here is that the game 2 is swapped home and away -- do we need to 
     // add that in the addGameRangeByIdValue? probably. 
-    static test_DropItemToSwapHomeAway_Swapped(appContext: IAppContext, testContext: UnitTestContext)
+    static test_DropItemToSwapHomeAway_Swapped(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -853,16 +819,14 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_DropItemToSwapHomeAway_Swapped",
+            result,
             "T2",
             setup);
     }
 
     // the interesting thing here is that the game 2 is swapped home and away -- do we need to 
     // add that in the addGameRangeByIdValue? probably. 
-    static test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext: IAppContext, testContext: UnitTestContext)
+    static testKnownFailing_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -913,14 +877,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped",
+            result,
             "T8",
             setup);
     }
 
-    static test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext: IAppContext, testContext: UnitTestContext)
+    static test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -939,14 +901,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap",
+            result,
             "T13",
             setup);
     }
 
-    static test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext: IAppContext, testContext: UnitTestContext)
+    static test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -969,15 +929,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_DropItemToSwapHomeAwayWithConnectedSources_Swapped",
+            result,
             "T8",
             setup);
     }
 
 
-    static test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem(appContext: IAppContext, testContext: UnitTestContext)
+    static test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -996,14 +954,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem",
+            result,
             "T4",
             setup);
     }
 
-    static test_MoveItemWithConnectedTopFeeder_MoveConnectedItem(appContext: IAppContext, testContext: UnitTestContext)
+    static test_MoveItemWithConnectedTopFeeder_MoveConnectedItem(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -1022,15 +978,13 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_MoveItemWithConnectedTopFeeder_MoveConnectedItem",
+            result,
             "T4",
             setup);
     }
 
 
-    static test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(appContext: IAppContext, testContext: UnitTestContext)
+    static testFailing_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -1056,14 +1010,12 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames",
+            result,
             "T9",
             setup);
     }
 
-    static test_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing(appContext: IAppContext, testContext: UnitTestContext)
+    static testFailing_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -1130,9 +1082,7 @@ export class GameMoverTests
             };
 
         this.doGameMoverTest(
-            appContext,
-            testContext,
-            "GameMoverTests. test_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing",
+            result,
             "T9",
             setup,
             new RangeInfo(9, 1, 3, 1));

@@ -1,5 +1,9 @@
 import { RangeInfo, Ranges } from "./Ranges";
 import { JsCtx } from "./JsCtx";
+import { IAppContext } from "../AppContext/AppContext";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestRunner } from "../Support/TestRunner";
+import { TestResult } from "../Support/TestResult";
 
 class AreasItem
 {
@@ -211,74 +215,57 @@ export class FastRangeAreas
 
 export class FastRangeAreasTest
 {
-    static buildCellListForRangeInfoTest(range: RangeInfo, expected: string[])
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw new Error(`testFastRangeAreasTest: range(${range.toString}): expected(${e}) != actual(${a})`);
-        }
-
-        let actual = FastRangeAreas.buildCellListForRangeInfo(range);
-
-        AssertEqual(expected, actual[0]);
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
     }
 
-    static TestMaxMinus1CellList()
+    static buildCellListForRangeInfoTest(result: TestResult, range: RangeInfo, expected: string[])
+    {
+        let actual = FastRangeAreas.buildCellListForRangeInfo(range);
+
+        result.assertIsEqual(expected[0], actual[0]);
+    }
+
+    static test_MaxMinus1CellList(result: TestResult)
     {
         const ichMaxMinus1Chars: number = ("" + (FastRangeAreas.itemMax - 1)).length;
 
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw new Error(`TestMaxMinus1CellList: expected(${e}) != actual(${a})`);
-        }
-
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax - 1, 0, 1));
-        AssertEqual("A1", actual[0].substring(0, 2));
-        AssertEqual("A" + (FastRangeAreas.itemMax - 1), actual[0].substring(actual[0].length - ichMaxMinus1Chars - 1, actual[0].length));
+        result.assertIsEqual("A1", actual[0].substring(0, 2));
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax - 1), actual[0].substring(actual[0].length - ichMaxMinus1Chars - 1, actual[0].length));
     }
 
-    static TestMaxCellList()
+    static test_MaxCellList(result: TestResult)
     {
         const cchMax: number = ("" + (FastRangeAreas.itemMax)).length;
 
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw new Error(`TestMaxCellList: expected(${e}) != actual(${a})`);
-        }
-
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax, 0, 1));
-        AssertEqual("A1", actual[0].substring(0, 2));
-        AssertEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMax - 1, actual[0].length));
+        result.assertIsEqual("A1", actual[0].substring(0, 2));
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMax - 1, actual[0].length));
     }
 
-    static TestMaxPlus1CellList()
+    static test_MaxPlus1CellList(result: TestResult)
     {
         const cchMaxPlusOne: number = ("" + (FastRangeAreas.itemMax + 1)).length;
 
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw new Error(`TestMaxPlus1CellList: expected(${e}) != actual(${a})`);
+                result.addError(`expected(${e}) != actual(${a})`);
         }
 
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax + 1, 0, 1));
-        AssertEqual("A1", actual[0].substring(0, 2));
-        AssertEqual("A" + (FastRangeAreas.itemMax + 1), actual[1]);
-        AssertEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMaxPlusOne - 1, actual[0].length));
+        result.assertIsEqual("A1", actual[0].substring(0, 2));
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax + 1), actual[1]);
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMaxPlusOne - 1, actual[0].length));
     }
 
-    static buildCellListForRangeInfoTests()
+    static test_buildCellListForRangeInfo(result: TestResult)
     {
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 1, 0, 1), ["A1"]);
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 2, 0, 1), ["A1,A2"]);
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 1, 0, 2), ["A1,B1"]);
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 4, 0, 4), ["A1,A2,A3,A4,B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,D3,D4"]);
-
-        this.TestMaxMinus1CellList();
-        this.TestMaxCellList();
-        this.TestMaxPlus1CellList();
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 1, 0, 1), ["A1"]);
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 2, 0, 1), ["A1,A2"]);
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 1, 0, 2), ["A1,B1"]);
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 4, 0, 4), ["A1,A2,A3,A4,B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,D3,D4"]);
     }
 }

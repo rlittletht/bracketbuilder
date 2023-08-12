@@ -8,7 +8,9 @@ import { IAppContext } from "../../AppContext/AppContext";
 import { GridItem } from "../GridItem";
 import { GameNum } from "../GameNum";
 import { GameId } from "../GameId";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestRunner } from "../../Support/TestRunner";
+import { TestResult } from "../../Support/TestResult";
 
 /*----------------------------------------------------------------------------
     Adjuster_WantToGrowUpAtTopOfGrid.Adjuster_NeedExtraSpaceBelowRegionForGameInsert
@@ -71,7 +73,7 @@ export class Adjuster_NeedExtraSpaceBelowRegionForGameInsert implements IGridAdj
             return { adjusterApplies: false };
 
         return { adjusterApplies: true, insertBefore: bottomRegion.FirstRow, rowsToInsert: rowsNeeded };
-    }        
+    }
 
     doesAdjusterApply(
         gridTry: Grid,
@@ -96,16 +98,22 @@ export class Adjuster_NeedExtraSpaceBelowRegionForGameInsert implements IGridAdj
 
         return adjusterApplies;
     }
+}
+
+export class Adjuster_NeedExtraSpaceBelowRegionForGameInsertTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Adjuster_NeedExtraSpaceBelowRegionForGameInsert.testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough
 
         
     ----------------------------------------------------------------------------*/
-    static testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough(appContext: IAppContext, testContext: UnitTestContext)
+    static test_InsertSpaceAtTopRegion_SpacedAlreadyNotEnough(result: TestResult)
     {
-        appContext;
-        testContext.StartTest("Adjuster_NeedExtraSpaceBelowRegionForGameInsert. testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough");
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 3, 1);
@@ -130,9 +138,9 @@ export class Adjuster_NeedExtraSpaceBelowRegionForGameInsert implements IGridAdj
         let item: GridItem = gridNew.findGameItem(new GameId(13));
 
         if (item == null)
-            throw new Error("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 disappeared?");
+            result.addError("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 disappeared?");
 
         if (item.Range.FirstRow != 131)
-            throw new Error("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 didn't move!");
+            result.addError("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 didn't move!");
     }
 }

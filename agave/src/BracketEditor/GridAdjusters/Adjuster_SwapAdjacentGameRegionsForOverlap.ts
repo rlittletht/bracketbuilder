@@ -7,7 +7,9 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext/AppContext";
 import { GameNum } from "../GameNum";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { StreamWriter } from "../../Support/StreamWriter";
 
 // THIS ADJUSTER IS is for the insert of Game 16 on a 14 team bracket
 // W12 and L10. Since L10 is unanchored, it just needs space to insert into
@@ -190,12 +192,17 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
 
         return true;
     }
+}
 
-    static testSwapAdjacentRegionsForGameOverlap(appContext: IAppContext, testContext: UnitTestContext)
+export class Adjuster_SwapAdjacentGameRegionsForOverlapTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        appContext;
-        testContext.StartTest("Adjuster_SwapGameRegonsForOverlap. testSwapAdjacentRegionsForGameOverlap");
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
+    static test_SwapAdjacentRegionsForGameOverlap(result: TestResult)
+    {
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
@@ -228,11 +235,11 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         // source2 should be null
         if (source2 != null)
-            throw new Error("bracket definition unexpected");
+            result.addError("bracket definition unexpected");
 
         if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw new Error("testSwapAdjacentRegionsForGameOverlap: FAILED: rearrange failed to resolve");
+            result.addError("rearrange failed to resolve");
         }
     }
 }
