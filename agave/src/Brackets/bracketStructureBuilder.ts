@@ -1,6 +1,6 @@
 
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { BracketDefinition, GameDefinition, s_brackets, _bracketManager } from "./BracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets, BracketManager, _bracketManager, TeamPlacement } from "./BracketDefinitions";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
@@ -13,6 +13,8 @@ import { BracketSources } from "./BracketSources";
 import { JsCtx } from "../Interop/JsCtx";
 import { StatusBox } from "../taskpane/components/StatusBox";
 import { HelpTopic } from "../HelpInfo";
+import { TrError} from "../Exceptions";
+import { GameNum } from "../BracketEditor/GameNum";
 
 export interface BracketOption
 {
@@ -63,6 +65,90 @@ export class BracketStructureBuilder
         return brackets;
     }
 
+    static verifyAdvanceSourceCorrect(games: GameDefinition[], sourceExpected: string, advance: string)
+    {
+        const advanceNum = BracketManager.GameIdFromWinnerLoser(advance).GameNum;
+        const placement = BracketManager.GetTeamPlacementFromAdvance(advance);
+
+        if (advanceNum.Value < 0 || advanceNum.Value >= games.length)
+            throw new Error(`bad advance to game number {$advanceNum.Value} in bracket - out of bounds`);
+
+        const targetGame = games[advanceNum.Value];
+        const actualSource = (placement == TeamPlacement.Top) ? targetGame.topSource : targetGame.bottomSource;
+
+        if (actualSource != sourceExpected)
+            throw new Error(`sourceExpected(${sourceExpected}) != actual(${actualSource}))`);
+    }
+
+    static verifySourceAdvanceCorrect(games: GameDefinition[], advanceExpected: string, source: string)
+    {
+        const sourceId = BracketManager.GameIdFromWinnerLoser(source);
+        const sourceNum = sourceId.GameNum;
+
+        if (sourceNum.Value < 0 || sourceNum.Value >= games.length)
+            throw new Error(`bad advance to game number {sourceNum.Value} in bracket - out of bounds`);
+
+        const sourceGame = games[sourceNum.Value];
+
+        // we don't really need the result, but we want to make sure it converts properly...
+        const result = BracketManager.GetGameResultTypeFromSource(source);
+        const advanceId = BracketManager.GameIdFromWinnerLoser(advanceExpected);
+
+        // one of the results (winner or loser) has to go to the expected
+        if (sourceGame.winner != advanceExpected
+            && sourceGame.loser != advanceExpected)
+        {
+            throw new Error(`source information for game (${advanceExpected}) doesn't match winner or loser in G${sourceId.Value} -- corrupt bracket`);
+        }
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketStructureBuilder.verifyBracketConsistency
+
+        Verify that the bracket is internally consistent
+    ----------------------------------------------------------------------------*/
+    static verifyBracketConsistency(def: BracketDefinition)
+    {
+        for (let num = 0; num < def.games.length; num++)
+        {
+            const gameDef = def.games[num];
+            const id = new GameNum(num).GameId;
+
+            try
+            {
+                let isChampionship = false;
+
+                if (gameDef.winner && gameDef.winner != "")
+                {
+                    this.verifyAdvanceSourceCorrect(def.games, `W${new GameNum(num).GameId.Value}`, gameDef.winner);
+                }
+                else
+                {
+                    if (gameDef.loser && gameDef.loser != "")
+                        throw new Error("game can't have no winner advance but have a loser advance");
+
+                    isChampionship = true;
+                }
+
+                if (gameDef.loser && gameDef.loser != "")
+                    this.verifyAdvanceSourceCorrect(def.games, `L${new GameNum(num).GameId.Value}`, gameDef.loser);
+
+                if (!BracketManager.IsTeamSourceStatic(gameDef.topSource))
+                    this.verifySourceAdvanceCorrect(def.games, `T${new GameNum(num).GameId.Value}`, gameDef.topSource);
+
+                if (!isChampionship && !BracketManager.IsTeamSourceStatic(gameDef.bottomSource))
+                    this.verifySourceAdvanceCorrect(def.games, `B${new GameNum(num).GameId.Value}`, gameDef.bottomSource);
+            }
+            catch (e)
+            {
+                const newError = new Error(`G${id.Value}: ${e.message}`);
+
+                newError.stack = e.stack;
+                throw newError;
+            }
+        }
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: BracketStructureBuilder.getBracketDefinition
     ----------------------------------------------------------------------------*/
@@ -71,16 +157,18 @@ export class BracketStructureBuilder
         if (_bracketManager.IsCached(bracketTableName))
             return _bracketManager.Bracket;
 
-        let returnVal: BracketDefinition = null;
+        let match: BracketDefinition = null;
 
         s_brackets.forEach(
             (bracket: BracketDefinition) =>
             {
                 if (bracket.tableName === bracketTableName)
-                    returnVal = bracket;
+                    match = bracket;
             });
 
-        return returnVal;
+        this.verifyBracketConsistency(match);
+
+        return match;
     }
 
 
@@ -184,7 +272,10 @@ export class BracketStructureBuilder
         }
         catch (error)
         {
-            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            if (error instanceof TrError)
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
+            else
+                appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
     }
 

@@ -76,7 +76,7 @@ export class FormulaBuilder
         if (source[0] === "L")
             return this.getLoserFormulaFromSource(BracketManager.GameIdFromWinnerLoser(source), bracketName);
 
-        throw Error("bad source string");
+        throw new Error("bad source string");
     }
 
     /*----------------------------------------------------------------------------

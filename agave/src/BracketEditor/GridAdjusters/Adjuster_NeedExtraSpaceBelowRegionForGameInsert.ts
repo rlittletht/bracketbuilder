@@ -130,9 +130,9 @@ export class Adjuster_NeedExtraSpaceBelowRegionForGameInsert implements IGridAdj
         let item: GridItem = gridNew.findGameItem(new GameId(13));
 
         if (item == null)
-            throw Error("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 disappeared?");
+            throw new Error("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 disappeared?");
 
         if (item.Range.FirstRow != 131)
-            throw Error("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 didn't move!");
+            throw new Error("testInsertSpaceAtTopRegion_SpacedAlreadyNotEnough: game 13 didn't move!");
     }
 }

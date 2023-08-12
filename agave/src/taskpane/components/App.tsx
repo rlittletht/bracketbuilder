@@ -152,6 +152,7 @@ export default class App extends React.Component<AppProps, AppState>
                     context.releaseAllTrackedItems();
                 });
 
+            GameMoverTests.test_ShiftItemDown(appContext, testContext);
 
             OADate.TestMinutesFromTimeStringTests();
 
@@ -179,6 +180,8 @@ export default class App extends React.Component<AppProps, AppState>
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity(appContext, testContext);
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
             GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(appContext, testContext);
+            GameMoverTests.test_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing(appContext, testContext);
+
 //FAIL            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
 
             GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);

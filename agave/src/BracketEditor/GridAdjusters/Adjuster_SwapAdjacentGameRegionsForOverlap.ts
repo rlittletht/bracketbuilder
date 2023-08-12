@@ -228,11 +228,11 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         // source2 should be null
         if (source2 != null)
-            throw Error("bracket definition unexpected");
+            throw new Error("bracket definition unexpected");
 
         if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw Error("testSwapAdjacentRegionsForGameOverlap: FAILED: rearrange failed to resolve");
+            throw new Error("testSwapAdjacentRegionsForGameOverlap: FAILED: rearrange failed to resolve");
         }
     }
 }

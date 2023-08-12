@@ -8,6 +8,7 @@ import { Coachstate } from "./Coachstate";
 import { CoachTransition } from "./CoachTransition";
 import { StatusBox } from "./taskpane/components/StatusBox";
 import { HelpTopic } from "./HelpInfo";
+import { TrError } from "./Exceptions";
 
 export enum SetupState
 {
@@ -197,7 +198,10 @@ export class SetupBook
         }
         catch (error)
         {
-            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            if (error instanceof TrError)
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
+            else
+                appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         return true;
@@ -230,7 +234,10 @@ export class SetupBook
         }
         catch (error)
         {
-            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            if (error instanceof TrError)
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
+            else
+                appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
         }
 
         appContext.setProgressVisible(false);

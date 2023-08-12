@@ -4,6 +4,7 @@ import { IAppContext } from "../AppContext/AppContext";
 import { JsCtx } from "../Interop/JsCtx";
 import { HelpTopic } from "../HelpInfo";
 import { StatusBox } from "../taskpane/components/StatusBox";
+import { TrError } from "../Exceptions";
 
 
 // NOTE on mutex use. Most of the stuff we do is asynchronous, and while
@@ -40,7 +41,14 @@ export class Dispatcher
         }
         catch (error)
         {
-            appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            if (error instanceof TrError)
+            {
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo});
+            }
+            else
+            {
+                appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            }
         }
 
         appContext.setProgressVisible(false);

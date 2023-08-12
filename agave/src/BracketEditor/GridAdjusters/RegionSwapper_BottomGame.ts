@@ -136,7 +136,7 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw Error("testRegionSwap1: FAILED: rearrange failed to resolve");
+            throw new Error("testRegionSwap1: FAILED: rearrange failed to resolve");
         }
     }
 }

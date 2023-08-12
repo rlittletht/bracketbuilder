@@ -21,6 +21,8 @@ export interface StaticConfig
     blackSize: number;
     championSize: number;
     advanceSize: number;
+    logMoveKeySetting: boolean;
+    logMoveTree: boolean;
 }
 
 const isLocalHost = window.location.host.indexOf('localhost') > -1;
@@ -28,7 +30,7 @@ const isLocalHost = window.location.host.indexOf('localhost') > -1;
 export const s_staticConfig: StaticConfig =
 {
     version: "1.0.14.2",
-    maxGameMoves: 4000,
+    maxGameMoves: 6000,
     globalLogging: true && isLocalHost,
     logGridChanges: false && isLocalHost,
     logGrid: false && isLocalHost,
@@ -47,4 +49,6 @@ export const s_staticConfig: StaticConfig =
     gameNumSize: 9,
     championSize: 12,
     advanceSize: 8,
+    logMoveKeySetting: false && isLocalHost,
+    logMoveTree: false && isLocalHost,
 }

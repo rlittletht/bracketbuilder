@@ -28,7 +28,7 @@ export class OADate
         let actual: Date = OADate.FromOADate(oaDate);
 
         if (actual.valueOf() != expected.valueOf())
-            throw Error(`TestOADateTest(${oaDate}): ${expected} != ${actual}`);
+            throw new Error(`TestOADateTest(${oaDate}): ${expected} != ${actual}`);
     }
 
     static TestFromOADateTests()
@@ -79,7 +79,7 @@ export class OADate
         const actual: number = OADate.MinutesFromTimeString(timeString);
 
         if (actual != expected)
-            throw Error(`TestMinutesFromTimeString(${timeString}): ${expected} != ${actual}`);
+            throw new Error(`TestMinutesFromTimeString(${timeString}): ${expected} != ${actual}`);
     }
 
     static TestMinutesFromTimeStringTests()

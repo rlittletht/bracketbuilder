@@ -9,11 +9,16 @@ export class TopBottomSwapper
 {
     /*----------------------------------------------------------------------------
         %%Function: TopBottomSwapper.checkAndSwapTopBottom
+
+        this operates IN PLACE - it does not push a grid option, but rather
+        modifies the current option in place
+
+        this means we have to push our own crumb to the map
     ----------------------------------------------------------------------------*/
-    static checkAndSwapTopBottom(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
+    static checkAndSwapTopBottom(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumb: string): boolean
     {
         gameMover;
-        crumbs;
+
         // check to see if the old and the new linkages work by swapping top and bottom
 
         if (mover.ItemNew.IsChampionshipGame || mover.ItemOld.IsChampionshipGame)
@@ -33,7 +38,7 @@ export class TopBottomSwapper
                 || (mover.ItemOld.BottomTeamRange.LastRow - 1 == source1.FirstRow
                     && mover.ItemNew.TopTeamRange.FirstRow + 1 == source1.FirstRow))
             {
-                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom(), "checkAndSwapTopBottom");
+                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom(), "checkAndSwapTopBottom", crumb);
                 return true;
             }
         }
@@ -45,10 +50,13 @@ export class TopBottomSwapper
                 || (mover.ItemOld.BottomTeamRange.LastRow - 1 == source2.FirstRow
                     && mover.ItemNew.TopTeamRange.FirstRow + 1 == source2.FirstRow))
             {
-                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom(), "checkAndSwapTopBottom");
+                mover.doChange(optionWork, true, mover.ItemNew, mover.ItemNew.clone().doSwapTopBottom(), "checkAndSwapTopBottom", crumb);
                 return true;
             }
         }
+
+        // at this point, we don't have a slam-dunk move, we might want to push both options...someday...
+
         return false;
     }
 
@@ -59,10 +67,9 @@ export class TopBottomSwapper
         item, check that item to see if we need to swap top/bottom on that item
         to keep it correct
     ----------------------------------------------------------------------------*/
-    static checkOutgoingFeedAndMaybeSwapTopBottomTarget(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
+    static checkOutgoingFeedAndMaybeSwapTopBottomTarget(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumb: string): boolean
     {
         gameMover;
-        crumbs;
         // check to see if the old and the new linkages work by swapping top and bottom
 
         // get the connected gridItems for the old item location
@@ -81,14 +88,14 @@ export class TopBottomSwapper
             if (mover.ItemOld.OutgoingFeederPoint.FirstRow == gameOutItem.TopTeamRange.FirstRow + 1
                 && mover.ItemNew.OutgoingFeederPoint.FirstRow == gameOutItem.BottomTeamRange.FirstRow - 1)
             {
-                mover.doChange(optionWork, true, gameOutItem, gameOutItem.clone().doSwapTopBottom(), "checkOutgoingFeedAndMaybeSwapTopBottomTarget");
+                mover.doChange(optionWork, true, gameOutItem, gameOutItem.clone().doSwapTopBottom(), "checkOutgoingFeedAndMaybeSwapTopBottomTarget", crumb);
                 return true;
             }
 
             if (mover.ItemOld.OutgoingFeederPoint.FirstRow == gameOutItem.BottomTeamRange.FirstRow - 1
                 && mover.ItemNew.OutgoingFeederPoint.FirstRow == gameOutItem.TopTeamRange.FirstRow + 1)
             {
-                mover.doChange(optionWork, true, gameOutItem, gameOutItem.clone().doSwapTopBottom(), "checkOutgoingFeedAndMaybeSwapTopBottomTarget");
+                mover.doChange(optionWork, true, gameOutItem, gameOutItem.clone().doSwapTopBottom(), "checkOutgoingFeedAndMaybeSwapTopBottomTarget", crumb);
                 return true;
             }
         }

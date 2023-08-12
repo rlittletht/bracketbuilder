@@ -23,13 +23,13 @@ class AreasItem
     getRangeForRangeInfo(range: RangeInfo): Excel.Range
     {
         if (range.ColumnCount != 1 || range.RowCount != 1)
-            throw Error('range areas only works with single cells');
+            throw new Error('range areas only works with single cells');
 
         if (range.FirstColumn < this.m_rangeInfo.FirstColumn || range.FirstColumn > this.m_rangeInfo.LastColumn)
-            throw Error('column out of range');
+            throw new Error('column out of range');
 
         if (range.FirstRow < this.m_rangeInfo.FirstRow || range.LastRow > this.m_rangeInfo.LastRow)
-            throw Error('row out of range');
+            throw new Error('row out of range');
 
         // figure out the offset into the items...
         const colOffset: number = range.FirstColumn - this.m_rangeInfo.FirstColumn;
@@ -41,7 +41,7 @@ class AreasItem
 
         const addrExpected: string = Ranges.getColName(range.FirstColumn) + (range.FirstRow + 1)
         if (!rangeArea.areas.items[idxAdjusted].address.endsWith(addrExpected))
-            throw Error(`addresses don't match`);
+            throw new Error(`addresses don't match`);
 
         return rangeArea.areas.items[idxAdjusted];
     }
@@ -91,7 +91,7 @@ export class FastRangeAreas
             return 150;
 
         if (range.ColumnCount != 1 || range.RowCount != 1)
-            throw Error('range areas only works with single cells');
+            throw new Error('range areas only works with single cells');
 
         if (lastRow.LastRow >= range.LastRow)
             return 0;
@@ -139,7 +139,7 @@ export class FastRangeAreas
         if (!lastRow)
         {
             if (!rangeRef)
-                throw Error("must provide a reference range for the first addRange");
+                throw new Error("must provide a reference range for the first addRange");
 
             range = rangeRef.offset(0, rangeRef.RowCount, 0, rangeRef.ColumnCount);
         }
@@ -216,7 +216,7 @@ export class FastRangeAreasTest
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`testFastRangeAreasTest: range(${range.toString}): expected(${e}) != actual(${a})`);
+                throw new Error(`testFastRangeAreasTest: range(${range.toString}): expected(${e}) != actual(${a})`);
         }
 
         let actual = FastRangeAreas.buildCellListForRangeInfo(range);
@@ -231,7 +231,7 @@ export class FastRangeAreasTest
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`TestMaxMinus1CellList: expected(${e}) != actual(${a})`);
+                throw new Error(`TestMaxMinus1CellList: expected(${e}) != actual(${a})`);
         }
 
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax - 1, 0, 1));
@@ -246,7 +246,7 @@ export class FastRangeAreasTest
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`TestMaxCellList: expected(${e}) != actual(${a})`);
+                throw new Error(`TestMaxCellList: expected(${e}) != actual(${a})`);
         }
 
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax, 0, 1));
@@ -261,7 +261,7 @@ export class FastRangeAreasTest
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`TestMaxPlus1CellList: expected(${e}) != actual(${a})`);
+                throw new Error(`TestMaxPlus1CellList: expected(${e}) != actual(${a})`);
         }
 
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax + 1, 0, 1));

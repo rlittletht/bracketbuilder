@@ -8,6 +8,7 @@ import { GridItem } from "../GridItem";
 import { GameId } from "../GameId";
 import { RangeOverlapKind } from "../../Interop/Ranges";
 import { s_staticConfig } from "../../StaticConfig";
+import { v4 as uuidv4 } from 'uuid';
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,
@@ -20,6 +21,8 @@ export interface GameMoverDelegate
     (gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean;
 }
 
+let cRecurse = 0;
+
 export class Mover
 {
     m_logGrids: boolean = s_staticConfig.logMoveSteps;
@@ -28,6 +31,12 @@ export class Mover
     m_itemOld: GridItem;
     m_option: GridOption;
     m_bracket: string;
+    m_tree = new Map<string, GridOption>();
+
+    get Tree(): Map<string, GridOption>
+    {
+        return this.m_tree;
+    }
 
     get ItemNew(): GridItem { return this.m_itemNew; }
 
@@ -59,59 +68,117 @@ export class Mover
         Change itemOld to itemNew, optionally preserving the working grid as
         unchanged
     ----------------------------------------------------------------------------*/
-    doChange(optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string): boolean
+    doChange(optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumb: string): boolean
     {
         const gridOption: GridOption =
             preserveWorking
-                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name)
+                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name, optionWork.crumbs)
                 : optionWork;
 
-        gridOption.name = `${gridOption.name}:doChange(${name})`;
+        gridOption.name = `${gridOption.crumbs.join(":")}:G${itemNew.GameId.Value}:${crumb}:doChange(${name})`;
+        gridOption.crumbs.push(`G${itemNew.GameId.Value}:${crumb}`);
+
+        if (s_staticConfig.logMoveKeySetting)
+        {
+            const preface1 = `doChange for G${itemNew.GameId.Value}`.padEnd(25, " ");
+            console.log(`${preface1}${gridOption.name}`);
+        }
 
         // make this change
         // get the matching item
         let [match, kind] = gridOption.grid.getBestOverlappingItem(itemOld.Range);
 
         if (kind != RangeOverlapKind.Equal)
-            throw Error("old item not found on original grid");
+            throw new Error("old item not found on original grid");
 
         if (!GameId.compare(match.GameId, itemNew.GameId))
-            throw Error("old item not found on original grid with matching id");
+            throw new Error("old item not found on original grid with matching id");
 
         match.setGameInternals(itemNew.Range, itemNew.TopTeamRange, itemNew.BottomTeamRange, itemNew.GameNumberRange, itemNew.SwapTopBottom);
 
         if (preserveWorking && gridOption.rank != -1)
             this.pushOption(gridOption);
 
+        const key = gridOption.crumbs.join(":");
+
+        if (s_staticConfig.logMoveKeySetting)
+        {
+            const preface = `setting tree`.padEnd(25, " ");
+            console.log(`${preface}${key}[${gridOption.uuid}]`);
+        }
+        if (s_staticConfig.logMoveTree)
+        {
+            if (this.Tree.has(key))
+                throw new Error(`tree already has key "${key}"`);
+
+            this.Tree.set(key, GameMover.cloneGridOption(gridOption));
+        }
+
         return true;
     }
 
-    moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumbs: string): boolean
+    mergeTree(tree: Map<string, GridOption>)
+    {
+        if (tree)
+        {
+            for (let key of tree.keys())
+            {
+                const preface = `adding key:`.padEnd(25, " ");
+//                console.log(`${preface}${key}`);
+
+                if (this.Tree.has(key) && this.Tree.get(key).uuid != tree.get(key).uuid)
+                    throw new Error(`parent Tree already has key ${key}`);
+
+                this.Tree.set(key, tree.get(key));
+            }
+        }
+    }
+
+    moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumb: string): boolean
     {
         if (optionWork.movedGames.has(itemNew.GameId))
             return false;
 
         const gridOption: GridOption =
             preserveWorking
-                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name)
+                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name, optionWork.crumbs)
                 : optionWork;
 
-        gridOption.name = `${gridOption.name}:moveRecurse(${name})`;
+        gridOption.name = `${gridOption.crumbs.join(":")}:G${itemNew.GameId.Value}:${crumb}:moveRecurse(${name})`;
+
+        if (s_staticConfig.logMoveKeySetting)
+        {
+            const preface1 = `${++cRecurse}: recursing for G${itemNew.GameId.Value}`.padEnd(25, " ");
+            console.log(`${preface1}${gridOption.name}`);
+        }
 
         // make sure to clone itemOld -- it might be connected to the grid we are about to modify
-        const newItems1: GridOption[] = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket, crumbs);
+        const { options, tree } = gameMover.moveGameInternal(gridOption, itemOld.clone(), itemNew, this.Bracket, crumb);
         if (preserveWorking && gridOption.rank != -1 && !gridOption.clean)
             this.pushOption(gridOption);
 
-        if (newItems1.length > 0)
+        if (s_staticConfig.logMoveKeySetting)
         {
+            const preface2 = `${cRecurse--}: returning for G${itemNew.GameId.Value}`.padEnd(25, " ");
 
-            for (let item of newItems1)
+            console.log(`${preface2}${gridOption.name}`);
+        }
+
+        if (s_staticConfig.logMoveTree)
+        {
+            this.mergeTree(tree);
+        }
+
+        if (options.length > 0)
+        {
+            if (s_staticConfig.logMoveTree)
             {
-                if (item.rank != -1)
-                    this.pushOption(item);
+                for (let item of options)
+                {
+                    if (item.rank != -1)
+                        this.pushOption(item);
+                }
             }
-
             return true;
         }
 
@@ -149,6 +216,20 @@ export class Mover
         // that we pushed ourselves
         const maxItemForThisInvocation: number = this.m_items.length;
 
+        // we no longer try to apply the move to ANY accumulated options -- its unclear
+        // why we would ever have wanted to try this. the game change we are trying to
+        // make is in the context of the current option, and would make no sense in the
+        // other options (which were recursively generated for previous moves)
+
+        // ACTUALLY YES, we want to do this.  What if we push an option in step 2 and step 4 may make
+        // that option better (e.g. when we finally make swap actually push both swap options), then
+        // the later push games away might make the previous swap options better.
+
+        // the secret to avoiding duplicate keys is to recognize that when we apply
+        // a singleGameMover to a pushed option (and not the current option), we have to
+        // designate that we are pushing new moves on top of a pushed option...so add 
+        // something like O{i}: to the crumbb
+//      for (let i = -1; i < 0; i++)
         for (let i = -1; i < maxItemForThisInvocation; i++)
         {
             let optionWork: GridOption = i == -1 ? this.m_option : this.m_items[i];
@@ -166,7 +247,8 @@ export class Mover
                 continue;
             }
 
-            if (singleMover(gameMover, this, optionWork, crumbs))
+            const thisCrumb = i == -1 ? crumbs : `O:${i}crumbs`;
+            if (singleMover(gameMover, this, optionWork, thisCrumb))
                 optionWork.logDirty = true;
 
             if (s_staticConfig.newStepLogger)

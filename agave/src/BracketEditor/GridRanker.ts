@@ -96,7 +96,7 @@ export class GridRanker
                 }
 
                 if (overlapping.length == 0)
-                    throw Error("can't find item we just enumerated")
+                    throw new Error("can't find item we just enumerated")
 
                 if (!item.isLineRange)
                 {

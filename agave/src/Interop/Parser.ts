@@ -272,10 +272,10 @@ export class ParserTests
         let [actual, ichActual] = Parser.parseString(trim, quoting, accepts, s, ichCur, ichMax);
 
         if (actual != expected)
-            throw Error(`testParseString: trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax}), expected(${expected}) != actual(${actual})`);
+            throw new Error(`testParseString: trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax}), expected(${expected}) != actual(${actual})`);
 
         if (ichActual != ichExpected)
-            throw Error(`testParseString: trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax}), ichExpected(${ichExpected}) != ichActual(${ichActual})`);
+            throw new Error(`testParseString: trim/quoting/s/ichCur/ichMax(${trim}, ${quoting}, ${s}, ${ichCur}, ${ichMax}), ichExpected(${ichExpected}) != ichActual(${ichActual})`);
     }
 
     static testParseStringTests()
@@ -306,7 +306,7 @@ export class ParserTests
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
+                throw new Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
         }
 
         let fColAbsoluteActual: boolean | undefined;
@@ -350,7 +350,7 @@ export class ParserTests
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
+                throw new Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
         }
 
         let [colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] = Parser.parseExcelSimpleAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
@@ -384,7 +384,7 @@ export class ParserTests
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
+                throw new Error(`testParseExcelColumnRowReferenceTest: addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax}), expected(${e}) != actual(${a})`);
         }
 
         let [sheetNameActual, colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] =

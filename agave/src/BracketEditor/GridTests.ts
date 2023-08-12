@@ -46,7 +46,7 @@ export class GridTests
 
         if (!passed)
         {
-            throw Error(`${testName} failed`);
+            throw new Error(`${testName} failed`);
         }
     }
 

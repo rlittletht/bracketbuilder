@@ -119,7 +119,7 @@ export class BracketGame implements IBracketGame
     get IsIfNecessaryGame(): boolean
     {
         if (this.m_bracketGameDefinition == null)
-            throw Error("no BracketGameDefinition available for IsIfNecessaryGame()");
+            throw new Error("no BracketGameDefinition available for IsIfNecessaryGame()");
 
         if (this.m_bracketGameDefinition.topSource.length <= 1
             || this.m_bracketGameDefinition.bottomSource.length <= 1)

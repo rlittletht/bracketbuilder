@@ -43,7 +43,7 @@ export class GridRankerTests
 
         if (!passed)
         {
-            throw Error(
+            throw new Error(
                 `${
                 testName
                 } failed. !(Rank ${rankBetter} > ${rank})`);

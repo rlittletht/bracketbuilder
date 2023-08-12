@@ -87,7 +87,7 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         {
             // our preflight should guarantee that the other clause either
             // succeeds, or this is gauranteed to be the one we want to do
-            throw Error("illegal internal state. should not have gotten here");
+            throw new Error("illegal internal state. should not have gotten here");
         }
         gridTry = grid.clone();
 

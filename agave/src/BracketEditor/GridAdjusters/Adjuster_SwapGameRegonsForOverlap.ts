@@ -139,7 +139,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         }
 
         if (!gridTry.isRangeIndependent(region2))
-            throw Error("how is the middle region not independent?!");
+            throw new Error("how is the middle region not independent?!");
 
         return [region1, region2, region3];
     }
@@ -230,7 +230,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw Error("testSwapRegionsForGameOverlap: FAILED: rearrange failed to resolve");
+            throw new Error("testSwapRegionsForGameOverlap: FAILED: rearrange failed to resolve");
         }
     }
 }

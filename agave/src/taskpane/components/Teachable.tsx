@@ -210,7 +210,8 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
 
     static logit(s: string): boolean
     {
-        console.log(s);
+        s;
+//        console.log(s);
         return true;
     }
 

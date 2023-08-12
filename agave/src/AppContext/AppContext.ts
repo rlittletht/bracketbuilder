@@ -7,6 +7,9 @@ import { s_staticConfig } from "../StaticConfig";
 import { IAppContextMessages, AppContextMessages, SetMessageDelegate, ClearMessageDelegate } from "./AppContextMessages";
 import { IAppContextTeaching, AppContextTeaching } from "./AppContextTeaching";
 
+import * as fs from 'fs';
+
+
 export interface IAppContext
 {
     // Log just logs the string to wherever logs are going...
@@ -121,6 +124,12 @@ export class AppContext implements IAppContext
         if (s_staticConfig.logCheckpoints)
             console.log(log);
     }
+
+    static log(log: string)
+    {
+        console.log(log);
+    }
+
 }
 
 export const TheAppContext = React.createContext(null);

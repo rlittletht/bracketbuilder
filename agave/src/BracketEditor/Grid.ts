@@ -20,6 +20,7 @@ import { JsCtx } from "../Interop/JsCtx";
 import { PerfTimer } from "../PerfTimer";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
+import { TrError } from "../Exceptions";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -379,10 +380,10 @@ export class Grid
         }
 
         if (match == null)
-            throw Error("old item not found on original grid");
+            throw new Error("old item not found on original grid");
 
         if (!GameId.compare(match.GameId, gameId))
-            throw Error("old item not found on original grid with matching id");
+            throw new Error("old item not found on original grid with matching id");
 
         return match;
     }
@@ -925,7 +926,7 @@ export class Grid
         timer.pushTimer("getFirstGridPatternCell");
         this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreas);
         if (this.m_firstGridPattern == null)
-            throw Error("could not load grid pattern");
+            throw new Error("could not load grid pattern");
 
         timer.popTimer();
         timer.pushTimer("getGridColumnDateValues");
@@ -956,7 +957,7 @@ export class Grid
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`);
+                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`);
 
                 const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
 
@@ -2546,7 +2547,7 @@ export class Grid
         return [gridNew, null];
     }
 
-    logGridCondensed()
+    logGridCondensedString(): string
     {
         let s: string = "";
 
@@ -2554,7 +2555,13 @@ export class Grid
         {
             s += `${item.GameId == null ? -1 : item.GameId.Value}:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}(${item.m_topPriority},${item.m_bottomPriority},${item.GamePriority})`;
         }
-        console.log(s);
+
+        return s;
+    }
+
+    logGridCondensed()
+    {
+        console.log(this.logGridCondensedString());
     }
 
     logGrid()
@@ -2598,7 +2605,7 @@ export class Grid
     static getRangeInfoForGameInfo(gameRange: RangeInfo): RangeInfo
     {
         if (gameRange.RowCount < 9) 
-            throw Error("bad rangeInfo param");
+            throw new Error("bad rangeInfo param");
 
         const infoRowCount = gameRange.RowCount - 4; // remove top and bottom game titles\
         const offsetToFirstGameInfo = Math.floor((infoRowCount - 5) / 2);
@@ -2624,7 +2631,7 @@ export class Grid
         if (selected.FirstRow < this.m_firstGridPattern.FirstRow
             || selected.FirstColumn < this.m_firstGridPattern.FirstColumn)
         {
-            throw Error("selection is outside bracket grid");
+            throw new TrError([`The current selection is outside the current bracket grid. Please select a cell on the grid starting at ${this.m_firstGridPattern.toFriendlyString()}`]);
         }
 
         if (selected.RowCount == 1)

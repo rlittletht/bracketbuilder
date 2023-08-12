@@ -43,7 +43,7 @@ export class GridBuilder
     static async addDayGridFormulas(sheet: Excel.Worksheet, rowStart: number, colStart: number, days: number)
     {
         if (days <= 1)
-            throw Error("days must be > 1");
+            throw new Error("days must be > 1");
 
         const daysSpan: number = days * 3;
 
@@ -59,7 +59,7 @@ export class GridBuilder
         aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowStart + 1, col], null)}, "DDDD")`);
         aryFirstRow.push(null);
         aryFirstRow.push(null);
-        arySecondRow.push(OADate.ToOADate(new Date(Date.parse("6/15/2023"))) - (7 / 24));
+        arySecondRow.push(OADate.ToOADate(new Date(Date.parse("6/17/2023"))) - (7 / 24));
         arySecondRow.push(null);
         arySecondRow.push(null);
 

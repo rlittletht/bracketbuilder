@@ -116,7 +116,7 @@ export class UndoManager
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, undoItem.grid, bracketName);
 
         if (undoneGameDataItems.length != 0)
-            throw Error("apply undo changes should not result in UndoGameDataItems!");
+            throw new Error("apply undo changes should not result in UndoGameDataItems!");
 
         undoneGameDataItems = await UndoManager.applyUndoGameDataItems(context, undoItem.gameData);
 
@@ -136,7 +136,7 @@ export class UndoManager
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, undoItem.grid, bracketName);
 
         if (undoneGameDataItems.length != 0)
-            throw Error("apply undo changes should not result in UndoGameDataItems!");
+            throw new Error("apply undo changes should not result in UndoGameDataItems!");
 
         undoneGameDataItems = await UndoManager.applyUndoGameDataItems(context, undoItem.gameData);
 

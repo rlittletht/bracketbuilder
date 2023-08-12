@@ -17,6 +17,18 @@ export interface BracketDefinition
     games: GameDefinition[];
 }
 
+export class TeamPlacement
+{
+    static Top = "T";
+    static Bottom = "B";
+}
+
+export class GameResultType
+{
+    static Winner = "W";
+    static Loser = "L";
+}
+
 export class BracketManager
 {
     m_bracket: BracketDefinition = null;
@@ -39,6 +51,45 @@ export class BracketManager
     static GameIdFromWinnerLoser(winnerLoser: string): GameId
     {
         return new GameId(Number(winnerLoser.substring(1)));
+    }
+
+    static GetTeamPlacementFromAdvance(advance: string): TeamPlacement
+    {
+        const placement = advance.substring(0, 1);
+
+        switch (placement.toUpperCase())
+        {
+            case "T":
+                return TeamPlacement.Top;
+            case "B":
+                return TeamPlacement.Bottom;
+        }
+        throw new Error("bad team placement string - corrupt internal bracket");
+    }
+
+    static GetGameResultTypeFromSource(source: string): GameResultType
+    {
+        const result = source.substring(0, 1);
+
+        switch (result.toUpperCase())
+        {
+            case "W":
+                return GameResultType.Winner;
+            case "L":
+                return GameResultType.Loser;
+        }
+        throw new Error("bad game result type string - corrupt internal bracket");
+    }
+
+    static IsTeamSourceStatic(source: string): boolean
+    {
+        if (source.length > 3 || source.length == 1)
+            return true;
+
+        if (source[0] === "W" || source[0] === "L")
+            return isNaN(+source.substring(1, source.length - 1));
+
+        return false;
     }
 }
 
@@ -359,31 +410,74 @@ export const s_brackets: BracketDefinition[] =
         ]
         },
         {
-            name: "10 Team Broken",
-            teamCount: 10,
-            tableName: "T10BracketB",
+            name: "15 Team",
+            teamCount: 15,
+            tableName: "T15Bracket",
             games:
                 [
-                    { winner: "T5", loser: "B7", topSource: "Team 1", bottomSource: "Team 2" },
-                    { winner: "B11", loser: "T7", topSource: "Team 3", bottomSource: "Team 4" },
-                    { winner: "T6", loser: "T8", topSource: "Team 5", bottomSource: "Team 6" },
-                    { winner: "B12", loser: "T10", topSource: "Team 7", bottomSource: "Team 8" },
-                    { winner: "T11", loser: "B10", topSource: "Team 9", bottomSource: "W1" },
-                    { winner: "T12", loser: "T9", topSource: "W3", bottomSource: "Team 10" },
-                    { winner: "B9", loser: "", topSource: "L2", bottomSource: "L1" },
-                    { winner: "T10", loser: "", topSource: "L3", bottomSource: "L4" },
-                    { winner: "T13", loser: "", topSource: "L6", bottomSource: "W7" },
-                    { winner: "B14", loser: "", topSource: "W8", bottomSource: "L5" },
-                    { winner: "T16", loser: "T14", topSource: "W5", bottomSource: "W2" },
-                    { winner: "B16", loser: "B13", topSource: "W6", bottomSource: "W4" },
-                    { winner: "T15", loser: "", topSource: "W9", bottomSource: "L12" },
-                    { winner: "B15", loser: "", topSource: "L11", bottomSource: "W10" },
-                    { winner: "B17", loser: "", topSource: "W13", bottomSource: "W14" },
-                    { winner: "T18", loser: "T17", topSource: "W11", bottomSource: "W12" },
-                    { winner: "B18", loser: "", topSource: "L16", bottomSource: "W15" },
-                    { winner: "T19", loser: "B19", topSource: "W16", bottomSource: "W17" },
-                    { winner: "T20", loser: "", topSource: "W18", bottomSource: "L18" },
-                    { winner: "", loser: "", topSource: "W19", bottomSource: "" },
+                   { winner: "B8", loser: "T15", topSource: "Team 1", bottomSource: "Team 2" },     // 1
+                   { winner: "T9", loser: "T14", topSource: "Team 3", bottomSource: "Team 4" },     // 2
+                   { winner: "B9", loser: "B14", topSource: "Team 5", bottomSource: "Team 6" },     // 3
+                   { winner: "T10", loser: "T12", topSource: "Team 7", bottomSource: "Team 8" },    // 4
+                   { winner: "B10", loser: "B12", topSource: "Team 9", bottomSource: "Team 10" },   // 5
+                   { winner: "T11", loser: "T13", topSource: "Team 11", bottomSource: "Team 12" },  // 6
+                   { winner: "B11", loser: "B13", topSource: "Team 13", bottomSource: "Team 14" },  // 7
+                   { winner: "T19", loser: "T16", topSource: "Team 15", bottomSource: "W1" },       // 8
+                   { winner: "B19", loser: "B17", topSource: "W2", bottomSource: "W3" },            // 9
+                   { winner: "T20", loser: "B15", topSource: "W4", bottomSource: "W5" },            // 10
+                   { winner: "B20", loser: "B18", topSource: "W6", bottomSource: "W7" },            // 11
+                   { winner: "B16", loser: "", topSource: "L4", bottomSource: "L5" },               // 12
+                   { winner: "T17", loser: "", topSource: "L6", bottomSource: "L7" },               // 13
+                   { winner: "T18", loser: "", topSource: "L2", bottomSource: "L3" },               // 14
+                   { winner: "T22", loser: "", topSource: "L1", bottomSource: "L10" },              // 15
+                   { winner: "T21", loser: "", topSource: "L8", bottomSource: "W12" },              // 16
+                   { winner: "B21", loser: "", topSource: "W13", bottomSource: "L9" },              // 17
+                   { winner: "B22", loser: "", topSource: "W14", bottomSource: "L11" },             // 18
+                   { winner: "T23", loser: "T24", topSource: "W8", bottomSource: "W9" },            // 19
+                   { winner: "B23", loser: "T25", topSource: "W10", bottomSource: "W11" },          // 20
+                   { winner: "B25", loser: "", topSource: "W16", bottomSource: "W17" },             // 21
+                   { winner: "B24", loser: "", topSource: "W15", bottomSource: "W18" },             // 22
+                   { winner: "T28", loser: "T27", topSource: "W19", bottomSource: "W20" },          // 23
+                   { winner: "B26", loser: "", topSource: "L19", bottomSource: "W22" },             // 24
+                   { winner: "T26", loser: "", topSource: "L20", bottomSource: "W21" },             // 25
+                   { winner: "B27", loser: "", topSource: "W25", bottomSource: "W24" },             // 26
+                   { winner: "B28", loser: "", topSource: "L23", bottomSource: "W26" },             // 27
+                   { winner: "T29", loser: "B29", topSource: "W23", bottomSource: "W27" },          // 28
+                   { winner: "T30", loser: "", topSource: "W28", bottomSource: "L28" },             // 29
+                   { winner: "", loser: "", topSource: "W29", bottomSource: "" },                   // 30
                 ]
         },
+
 ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

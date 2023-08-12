@@ -99,7 +99,7 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         const countToGrow: number = this.getCountToGrow(gridTry, source1);
 
         if (countToGrow <= 0)
-            throw Error(`trying to insert negative rows: ${countToGrow}`);
+            throw new Error(`trying to insert negative rows: ${countToGrow}`);
 
         Spacer.insertRowSpaceBefore(gridTry, gridTry.FirstGridPattern.FirstRow, countToGrow);
 
@@ -146,9 +146,9 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         let item: GridItem = gridNew.findGameItem(new GameId(1));
 
         if (item == null)
-            throw Error("testInsertSpaceAtTopOfGrid: game 1 disappeared?");
+            throw new Error("testInsertSpaceAtTopOfGrid: game 1 disappeared?");
 
         if (item.Range.FirstRow != 13)
-            throw Error("testInsertSpaceAtTopOfGrid: game 1 didn't move!");
+            throw new Error("testInsertSpaceAtTopOfGrid: game 1 didn't move!");
     }
 }
