@@ -73,7 +73,7 @@ export class HelpLink extends React.Component<HelpLinkProps, HelpLinkState>
         const full = HelpLink.buildHelpLink(this.props.helpLink);
 
         return (
-            <Link href="{full}" target="_blank" underline>
+            <Link href={full} target="_blank" underline>
                 {content}
             </Link>
         );

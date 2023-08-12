@@ -124,7 +124,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
 
         const helpLink =
             this.state.helpInfo
-                ? HelpLink.buildHelpLink(HelpInfo.BuildHelpLink(this.state.helpInfo.topic))
+                ? `${this.state.helpInfo.topic}`
                 : null;
 
         const help =
