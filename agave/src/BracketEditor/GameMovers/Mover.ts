@@ -216,20 +216,6 @@ export class Mover
         // that we pushed ourselves
         const maxItemForThisInvocation: number = this.m_items.length;
 
-        // we no longer try to apply the move to ANY accumulated options -- its unclear
-        // why we would ever have wanted to try this. the game change we are trying to
-        // make is in the context of the current option, and would make no sense in the
-        // other options (which were recursively generated for previous moves)
-
-        // ACTUALLY YES, we want to do this.  What if we push an option in step 2 and step 4 may make
-        // that option better (e.g. when we finally make swap actually push both swap options), then
-        // the later push games away might make the previous swap options better.
-
-        // the secret to avoiding duplicate keys is to recognize that when we apply
-        // a singleGameMover to a pushed option (and not the current option), we have to
-        // designate that we are pushing new moves on top of a pushed option...so add 
-        // something like O{i}: to the crumbb
-//      for (let i = -1; i < 0; i++)
         for (let i = -1; i < maxItemForThisInvocation; i++)
         {
             let optionWork: GridOption = i == -1 ? this.m_option : this.m_items[i];
@@ -247,6 +233,8 @@ export class Mover
                 continue;
             }
 
+            // make sure we can differentiate moves put on top of previous options versus
+            // moves on the current option...
             const thisCrumb = i == -1 ? crumbs : `O:${i}crumbs`;
             if (singleMover(gameMover, this, optionWork, thisCrumb))
                 optionWork.logDirty = true;

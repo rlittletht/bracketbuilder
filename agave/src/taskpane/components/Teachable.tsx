@@ -4,7 +4,7 @@ import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { ActionButton } from "./ActionButton";
 import { SetupState, SetupBook } from "../../Setup";
 import { RangeInfo } from "../../Interop/Ranges";
-import { Stack, IStackStyles, IStackItemStyles, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps } from '@fluentui/react';
+import { Stack, IStackStyles, IStackItemStyles, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps, IContextualMenuProps } from '@fluentui/react';
 import { Coachstate } from "../../Coachstate";
 
 export class TeachableId
@@ -44,6 +44,7 @@ class TeachableViewDelay
 interface TeachableConfig
 {
     coachStates: Coachstate[];
+    othersToHide: TeachableId[];
     firstViewDelay: TeachableViewDelay;
     viewDelay: TeachableViewDelay;
     sessionCountLimit: number;
@@ -148,47 +149,47 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
         [
             [
                 TeachableId.BracketBuilder,
-                { coachStates: [Coachstate.InitialState], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.InitialState], othersToHide: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.AddFirstGame,
-                { coachStates: [Coachstate.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.AddFirstGame], othersToHide: [TeachableId.AddGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.AddGame,
-                { coachStates: [Coachstate.AfterFirstAdd], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.AfterFirstAdd], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.RemoveGame,
-                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.Undo,
-                { coachStates: [Coachstate.AfterInsertGameFailedOverlapping], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.AfterInsertGameFailedOverlapping], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.StatusBox,
-                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.FinishingTouches,
-                { coachStates: [Coachstate.AllGamesPlaced], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.AllGamesPlaced], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.Redo,
-                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.Help,
-                { coachStates: [], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.ErrorMessage,
-                { coachStates: [Coachstate.AfterInsertGameFailed], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.AfterInsertGameFailed], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ],
             [
                 TeachableId.DirtyGame,
-                { coachStates: [Coachstate.GameDirty], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+                { coachStates: [Coachstate.GameDirty], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
             ]
         ]);
 
@@ -206,6 +207,19 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
                 return true;
         
         return false;
+    }
+
+    hideThisType()
+    {
+        this.context.Teaching.setHideThisTeachable(this.props.id, true);
+        const config = Teachable.getConfig(this.props.id);
+        for (let otherHide of config.othersToHide)
+            this.context.Teaching.setHideThisTeachable(otherHide, true);
+    }
+
+    hideAllTips()
+    {
+        this.context.Teaching.setHideAllTeachables(true);
     }
 
     static logit(s: string): boolean
@@ -247,6 +261,35 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
             onClick: () => this.setVisibility(false, this.props.id)
         };
 
+        const hideMenuProps: IContextualMenuProps =
+        {
+            items: [
+                {
+                    key: 'hideThis',
+                    text: 'Hide this kind of tip',
+                    onClick: () =>
+                    {
+                        this.hideThisType();
+                        this.setVisibility(false, this.props.id)
+                    }
+                },
+                {
+                    key: 'hideAll',
+                    text: 'Hide all tips',
+                    onClick: () =>
+                    {
+                        this.hideAllTips();
+                        this.setVisibility(false, this.props.id)
+                    }
+                }
+            ]
+        };
+
+        const hideButtonProps: IButtonProps =
+        {
+            text: 'Hide',
+            menuProps: hideMenuProps
+        };
 
         const { children } = this.props;
 
@@ -270,7 +313,8 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
                         headline={this.props.title}
                         hasCloseButton
                         closeButtonAriaLabel="Close"
-                                primaryButtonProps={buttonProps}
+                        primaryButtonProps={buttonProps}
+                        secondaryButtonProps={hideButtonProps}
                         isWide={true}
                                 onDismiss={() => this.setVisibility(false, this.props.id)}>
                                 {this.props.text}
