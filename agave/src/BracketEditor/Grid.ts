@@ -1734,35 +1734,39 @@ export class Grid
             return false;
         }
 
-        let source1: RangeInfo = gameInsert.m_rangeFeederTop;
-        let source2: RangeInfo = gameInsert.m_rangeFeederBottom;
+        // don't do this any more -- we have the extended lines above that will catch these overlaps
 
-        if (!source1 || source1 == null)
-        {
-            // for this comparison, we have to have a source, even if there's no feeder line
-            source1 = gameInsert.m_rangeGame.offset(1, 1, 0, 1);
-        }
+        // TEST THIS
 
-        if (!source2 || source2 == null)
-        {
-            source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
-        }
-
-        const { overlaps, firstOverlapItem } =
-            extendedOutgoing.doesSourceOverlapAreaRangeOverlap(
-                source1,
-                source2,
-                gameInsert.m_rangeGame.FirstColumn);
-
-        if (overlaps)
-        {
-            if (firstOverlapItem.IsEphemeral)
-                gameInsert.m_failReason = `Can't insert game here. The game would overlap the result of an existing game already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
-            else
-                gameInsert.m_failReason = `Can't insert game here. The game would overlap an existing item already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
-
-            return false;
-        }
+//        let source1: RangeInfo = gameInsert.m_rangeFeederTop;
+//        let source2: RangeInfo = gameInsert.m_rangeFeederBottom;
+//
+//        if (!source1 || source1 == null)
+//        {
+//            // for this comparison, we have to have a source, even if there's no feeder line
+//            source1 = gameInsert.m_rangeGame.offset(1, 1, 0, 1);
+//        }
+//
+//        if (!source2 || source2 == null)
+//        {
+//            source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
+//        }
+//
+//        const { overlaps, firstOverlapItem } =
+//            extendedOutgoing.doesSourceOverlapAreaRangeOverlap(
+//                source1,
+//                source2,
+//                gameInsert.m_rangeGame.FirstColumn);
+//
+//        if (overlaps)
+//        {
+//            if (firstOverlapItem.IsEphemeral)
+//                gameInsert.m_failReason = `Can't insert game here. The game would overlap the result of an existing game already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
+//            else
+//                gameInsert.m_failReason = `Can't insert game here. The game would overlap an existing item already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
+//
+//            return false;
+//        }
 
         return true;
     }

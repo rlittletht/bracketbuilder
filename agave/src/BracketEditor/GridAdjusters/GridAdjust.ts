@@ -40,9 +40,9 @@ export class GridAdjust
     // to be inserted at all. these must be run before we try to place any game
     static adjusters: IGridAdjuster[] =
     [
-        new Adjuster_NeedExtraSpaceBelowRegionForGameInsert(),
         new Adjuster_SwapGameRegonsForOverlap(),
         new Adjuster_SwapAdjacentGameRegonsForOverlap(),
+        new Adjuster_NeedExtraSpaceBelowRegionForGameInsert(),
         new RegionSwapper_BottomGame(),
         new Adjuster_WantToGrowUpAtTopOfGrid(),
     ];

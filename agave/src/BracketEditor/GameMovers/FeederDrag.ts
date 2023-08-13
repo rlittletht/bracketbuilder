@@ -10,6 +10,9 @@ export class FeederDrag
 {
     static adjustItemForOverlappingGrowth(connectedAtTop: boolean, itemNew: GridItem, adjusted: GridItem)
     {
+        if (adjusted.IsChampionshipGame)
+            return;
+
         // check to see if we are now overlapping
         if (connectedAtTop)
         {
@@ -127,37 +130,40 @@ export class FeederDrag
                 gameMover.RequestExtraMoves();
         }
 
-        let grownShrunk: GridItem;
-
-        if (connectedAtTop)
+        if (!connectedGame.IsChampionshipGame)
         {
-            if (dRows > 0)
+            let grownShrunk: GridItem;
+
+            if (connectedAtTop)
             {
-                // if dRows > 0, then we need to shrink this game and shift it by dRows
-                grownShrunk = connectedGame.clone().growShrink(-dRows).shiftByRows(dRows);
+                if (dRows > 0)
+                {
+                    // if dRows > 0, then we need to shrink this game and shift it by dRows
+                    grownShrunk = connectedGame.clone().growShrink(-dRows).shiftByRows(dRows);
+                }
+                else
+                    // else, we have to grow and shift up by dRows
+                    grownShrunk = connectedGame.clone().growShrink(-dRows).shiftByRows(dRows);
             }
             else
-                // else, we have to grow and shift up by dRows
-                grownShrunk = connectedGame.clone().growShrink(-dRows).shiftByRows(dRows);
-        }
-        else
-        {
-            // if we are connected at the bottom...
-            if (dRows > 0)
-                // we have to grow the game...
-                grownShrunk = connectedGame.clone().growShrink(dRows);
-            else
-                // we have to shrink the game
-                grownShrunk = connectedGame.clone().growShrink(dRows);
-        }
+            {
+                // if we are connected at the bottom...
+                if (dRows > 0)
+                    // we have to grow the game...
+                    grownShrunk = connectedGame.clone().growShrink(dRows);
+                else
+                    // we have to shrink the game
+                    grownShrunk = connectedGame.clone().growShrink(dRows);
+            }
 
-        if (growing)
-            FeederDrag.adjustItemForOverlappingGrowth(connectedAtTop, mover.ItemNew, grownShrunk);
+            if (growing)
+                FeederDrag.adjustItemForOverlappingGrowth(connectedAtTop, mover.ItemNew, grownShrunk);
 
-        if ((connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
-            || (!connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
-        {
-            changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, grownShrunk, "checkAndDragByOutgoingFeeder_growShrink", `${crumbs}.2`) || changed;
+            if ((connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
+                || (!connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
+            {
+                changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, grownShrunk, "checkAndDragByOutgoingFeeder_growShrink", `${crumbs}.2`) || changed;
+            }
         }
 
         return changed;

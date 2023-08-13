@@ -1014,6 +1014,30 @@ export class GameMoverTests
             setup);
     }
 
+    static test_GrowGameCausingConnectedGameOverlap_ShowNotGrowConnectedChampionshipGame(result: TestResult)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(21, 6, 31, 8,), 7, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 9, 27, 11,), 8, false).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(7));
+                const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
+                    RangeInfo.createFromCornersCoord(21, 6, 37, 8));
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(21, 6, 37, 8,), 7, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 9, 29, 11,), 8, false).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            result,
+            "T4",
+            setup);
+    }
+
     static test_MoveItemWithConnectedTopFeeder_MoveConnectedItem(result: TestResult)
     {
         const setup: SetupTestDelegate =

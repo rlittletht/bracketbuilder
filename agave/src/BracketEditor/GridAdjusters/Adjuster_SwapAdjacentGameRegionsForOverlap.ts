@@ -105,7 +105,18 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
             source2 = null;
         }
 
-        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column).overlaps)
+        const extendedOutgoing = gridTry.clone();
+
+        if (source1 != null && source2 != null)
+        {
+            // MAYBE WE DON'T WANT TO EXTEND?
+            // use the actual range for the exclusion rows -- it doesn't matter if we aren't going to have
+            // a feeder line, we still want to inhibit the feeder line from being extended
+            extendedOutgoing.extendUnconnectedOutgoingFeeders(
+                [source1.topLeft().offset(1, 1, 0, 1), source2.bottomLeft().offset(-1, 1, 0, 1)]);
+        }
+
+        if (!extendedOutgoing.doesSourceOverlapAreaRangeOverlap(source1, source2, column).overlaps)
             return [false, null, null];
 
         if (source2 == null)
