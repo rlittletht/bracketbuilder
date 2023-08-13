@@ -90,6 +90,7 @@ export class Grid
     get IsEmpty(): boolean { return this.m_gridItems.length == 0; }
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
     get FieldsToUse(): number { return this.m_fieldsToUse; }
+    get AreDatesLoaded(): boolean { return this.m_datesForGrid ? true : false; }
 
     getFirstSlotForDate(date: Date): number
     {

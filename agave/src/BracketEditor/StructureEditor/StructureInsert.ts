@@ -320,20 +320,130 @@ export class StructureInsert
     }
 
 
-    static checkGameDependency(sourceGame: GridItem, requested: RangeInfo, appContext: IAppContext): boolean
+    static checkGameDependency(sourceGame: GridItem, requested: RangeInfo): { depSuccess: boolean, depFailReason?: string[], depTopic?: HelpTopic}
     {
         if (sourceGame)
         {
             if (sourceGame.Range.FirstColumn >= requested.FirstColumn)
             {
-                appContext.Messages.error(
-                    [`Can't insert this game in this column. Game ${sourceGame.GameId.Value} must be played first.`,
+                return {
+                    depSuccess: false,
+                    depFailReason: [`Can't insert this game in this column. Game ${sourceGame.GameId.Value} must be played first.`,
                     `This game has to be inserted in column ${Ranges.getColName(sourceGame.Range.FirstColumn + 3)} or later`],
-                    { topic: HelpTopic.FAQ_GameDependencies });
-                return false;
+                    depTopic: HelpTopic.FAQ_GameDependencies
+                };
             }
         }
-        return true;
+        return { depSuccess: true };
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureInsert.buildNewGridForGameInsertAtSelection
+
+        This is the non async portion of insert game at selection. Suitable for
+        testing
+    ----------------------------------------------------------------------------*/
+    static buildNewGridForGameInsertAtSelection(requested: RangeInfo, grid: Grid, game: IBracketGame): { gridNew: Grid, failReason?: string[], coachState?: Coachstate, topic?: HelpTopic }
+    {
+        if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
+        {
+            return {
+                gridNew: null,
+                failReason: ["Can't insert game at the current location.",
+                    `Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`],
+                topic: HelpTopic.FAQ_InsertLocation,
+                coachState: Coachstate.AfterInsertGameFailed
+            };
+        }
+
+        const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
+
+        if (columnAdjacent != 0)
+        {
+            if (columnAdjacent == 1)
+            {
+                // they aren't in a team name column. if they are in the score column, then auto
+                // adjust back to the name
+                requested.shiftByColumns(-1);
+            }
+            else if (columnAdjacent == 2)
+            {
+                // if they are in the line column, that is closer to the _next_ team name
+                // column
+                requested.shiftByColumns(1);
+            }
+            else
+            {
+                const validColumns: string =
+                    `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 3)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 6)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 9)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 12)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 15)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 18)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 21)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
+                    + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
+
+                return {
+                    gridNew: null,
+                    failReason: [
+                        "Can't insert game at the current location.",
+                        `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
+                    ],
+                    topic: HelpTopic.FAQ_InsertLocation,
+                    coachState: Coachstate.AfterInsertGameFailed
+                };
+            }
+        }
+
+        // let's confirm that this games predecessor's are not in the same column
+        const [topSourceGame, bottomSourceGame] = grid.getFeedingGamesForGame(game);
+
+        {
+            const { depSuccess, depFailReason, depTopic } = this.checkGameDependency(topSourceGame, requested);
+
+            if (!depSuccess)
+                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed };
+        }
+        {
+            const { depSuccess, depFailReason, depTopic } = this.checkGameDependency(bottomSourceGame, requested);
+
+            if (!depSuccess)
+                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed };
+        }
+
+        // before we insert the game, let's figure out field and start time info. only do this if we have loaded
+        // the date information for the grid...
+        if (grid.AreDatesLoaded)
+        {
+            const date: Date = grid.getDateFromGridColumn(requested.FirstColumn);
+            let maxTime: number = 0;
+            let count: number = 0;
+            let fields: string[] = [];
+
+            [maxTime, count, fields] = grid.getLatestTimeForDate(date);
+            let nextTime: number;
+            let field: string;
+            [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
+            game.SetStartTime(nextTime);
+            game.SetField(field);
+        }
+
+        const [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
+
+        if (failReason != null)
+        {
+            return {
+                gridNew: null,
+                failReason: [`Insert Failed: ${failReason}`],
+                topic: HelpTopic.FAQ_InsertFailed,
+                coachState: Coachstate.AfterInsertGameFailedOverlapping
+            };
+        }
+
+        return { gridNew: gridNew };
     }
 
     /*----------------------------------------------------------------------------
@@ -374,95 +484,18 @@ export class StructureInsert
             requested = await Ranges.createRangeInfoForSelection(context);
         }
 
-        if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
+        const { gridNew, failReason, coachState, topic } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
+       
+        // caller 
+        if (failReason)
         {
             appContext.Messages.error(
-                ["Can't insert game at the current location.",
-                    `Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`],
-                { topic: HelpTopic.FAQ_InsertLocation });
-            appContext.Teaching.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
-            return false;
-        }
+                failReason,
+                { topic: topic });
 
-        const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
+            if (coachState)
+                appContext.Teaching.pushTempCoachstate(coachState);
 
-        if (columnAdjacent != 0)
-        {
-            if (columnAdjacent == 1)
-            {
-                // they aren't in a team name column. if they are in the score column, then auto
-                // adjust back to the name
-                requested.shiftByColumns(-1);
-            }
-            else if (columnAdjacent == 2)
-            {
-                // if they are in the line column, that is closer to the _next_ team name
-                // column
-                requested.shiftByColumns(1);
-            }
-            else
-            {
-                const validColumns: string =
-                    `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 3)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 6)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 9)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 12)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 15)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 18)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 21)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
-                        + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
-
-                appContext.Messages.error(
-                    [
-                        "Can't insert game at the current location.",
-                        `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
-                    ],
-                    { topic: HelpTopic.FAQ_InsertLocation });
-
-                appContext.Teaching.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
-                return false;
-            }
-        }
-
-        // let's confirm that this games predecessor's are not in the same column
-        const [topSourceGame, bottomSourceGame] = grid.getFeedingGamesForGame(game);
-
-        if (!this.checkGameDependency(topSourceGame, requested, appContext))
-        {
-            appContext.Teaching.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
-            return false;
-        }
-
-        if (!this.checkGameDependency(bottomSourceGame, requested, appContext))
-        {
-            appContext.Teaching.pushTempCoachstate(Coachstate.AfterInsertGameFailed);
-            return false;
-        }
-
-        let gridNew: Grid = null;
-        let failReason: string = null;
-
-        // before we insert the game, let's figure out field and start time info
-        const date: Date = grid.getDateFromGridColumn(requested.FirstColumn);
-        let maxTime: number = 0;
-        let count: number = 0;
-        let fields: string[] = [];
-
-        [maxTime, count, fields] = grid.getLatestTimeForDate(date);
-        let nextTime: number;
-        let field: string;
-        [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
-        game.SetStartTime(nextTime);
-        game.SetField(field);
-
-        [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
-
-        if (failReason != null)
-        {
-            appContext.Messages.error([`Insert Failed: ${failReason}`], {topic: HelpTopic.FAQ_InsertFailed});
-            appContext.Teaching.pushTempCoachstate(Coachstate.AfterInsertGameFailedOverlapping);
             return false;
         }
 

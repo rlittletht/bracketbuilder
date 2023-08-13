@@ -46,6 +46,7 @@ import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "../../BracketEd
 import { TestRunner } from "../../Support/TestRunner";
 import { StreamWriter } from "../../Support/StreamWriter";
 import { About } from "./About";
+import { StructureInsertTests } from "../../BracketEditor/StructureEditor/StrutureInsertTests";
 
 /* global console, Excel, require  */
 
@@ -142,6 +143,7 @@ export default class App extends React.Component<AppProps, AppState>
                     context.releaseAllTrackedItems();
                 });
 
+            StructureInsertTests.runAllTests(appContext, outStream);
             FastRangeAreasTest.runAllTests(appContext, outStream);
             ParserTests.runAllTests(appContext, outStream);
             OADateTests.runAllTests(appContext, outStream);
