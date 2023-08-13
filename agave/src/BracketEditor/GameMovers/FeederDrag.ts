@@ -8,10 +8,45 @@ import { GameId } from "../GameId";
 
 export class FeederDrag
 {
+    static adjustItemForOverlappingGrowth(connectedAtTop: boolean, itemNew: GridItem, adjusted: GridItem)
+    {
+        // check to see if we are now overlapping
+        if (connectedAtTop)
+        {
+            let shortBy = itemNew.Range.LastRow - adjusted.Range.LastRow + 2;
+            shortBy = shortBy + (shortBy % 2); // round up to 2
+
+            // check the bottom range
+            if (shortBy > 0)
+                adjusted.growShrink(shortBy);
+        }
+        else
+        {
+            let shortBy = adjusted.Range.FirstRow - itemNew.Range.FirstRow + 2;
+            shortBy = shortBy + (shortBy % 2); // round up to 2
+
+            // check the bottom range
+            if (shortBy > 0)
+                adjusted.growShrinkFromTop(shortBy);
+        }
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: FeederDrag.checkAndDragByOutgoingFeeder
+
+        two options to consider:
+        1) shift the connected item to remain connected
+        2) grow/shrink the connected item to remain connected
+
+        if this item is growing and requiring the change, we might have to grow
+        the connected item to avoid overlapping
+    ----------------------------------------------------------------------------*/
     static checkAndDragByOutgoingFeeder(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
         if (mover.ItemNew.IsChampionshipGame || mover.ItemOld.IsChampionshipGame)
             return false;
+
+        const growing = mover.ItemOld.Range.RowCount < mover.ItemNew.Range.RowCount;
 
         let changed = false;
 
@@ -77,13 +112,16 @@ export class FeederDrag
         // do both and add them to the options. the ranker will figure out which is better
 
         const overMoves: boolean = gameMover.ExceededMoveCount;
-        const shiftedDown = connectedGame.clone().shiftByRows(dRows);
+        const shifted = connectedGame.clone().shiftByRows(dRows);
+
+        if (growing)
+            FeederDrag.adjustItemForOverlappingGrowth(connectedAtTop, mover.ItemNew, shifted);
 
         // don't do this move if we don't remain connected
-        if ((connectedAtTop && outgoingPointNew.FirstRow == shiftedDown.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
-            || (!connectedAtTop && outgoingPointNew.FirstRow == shiftedDown.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
+        if ((connectedAtTop && outgoingPointNew.FirstRow == shifted.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
+            || (!connectedAtTop && outgoingPointNew.FirstRow == shifted.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
         {
-            changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, shiftedDown, "checkAndDragByOutgoingFeeder_shift", `${crumbs}.1`) || changed;
+            changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, shifted, "checkAndDragByOutgoingFeeder_shift", `${crumbs}.1`) || changed;
 
             if (!overMoves && gameMover.ExceededMoveCount)
                 gameMover.RequestExtraMoves();
@@ -112,6 +150,9 @@ export class FeederDrag
                 // we have to shrink the game
                 grownShrunk = connectedGame.clone().growShrink(dRows);
         }
+
+        if (growing)
+            FeederDrag.adjustItemForOverlappingGrowth(connectedAtTop, mover.ItemNew, grownShrunk);
 
         if ((connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
             || (!connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))

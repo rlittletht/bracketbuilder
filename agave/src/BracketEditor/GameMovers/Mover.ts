@@ -235,7 +235,7 @@ export class Mover
 
             // make sure we can differentiate moves put on top of previous options versus
             // moves on the current option...
-            const thisCrumb = i == -1 ? crumbs : `O:${i}crumbs`;
+            const thisCrumb = i == -1 ? crumbs : `O:${i}${crumbs}`;
             if (singleMover(gameMover, this, optionWork, thisCrumb))
                 optionWork.logDirty = true;
 

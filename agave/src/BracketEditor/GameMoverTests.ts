@@ -62,7 +62,7 @@ export class GameMoverTests
 
         if (!gridResult)
         {
-            result.addError("not gridResult returned");
+            result.addError("no gridResult returned");
             return;
         }
 
@@ -187,7 +187,7 @@ export class GameMoverTests
             setup);
     }
 
-    static test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity(result: TestResult)
+    static test_ShiftItemUp_AllowBufferShrink_FavorGameSpacing_SqueezeAdjacent(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -209,7 +209,7 @@ export class GameMoverTests
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 6, 51, 8,), 3, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(55, 6, 65, 8,), 4, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 9, 19, 11,), 5, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(69, 9, 79, 11,), 6, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 9, 77, 11,), 6, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(81, 9, 91, 11,), 7, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 9, 47, 11,), 9, false).inferGameInternals();
 
@@ -706,7 +706,7 @@ export class GameMoverTests
     }
 
     
-    static testFailing_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(result: TestResult)
+    static test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -718,10 +718,10 @@ export class GameMoverTests
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 12, 35, 14,), 5, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 6, 57, 8,), 3, false).inferGameInternals();
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(3));
+                const itemOld: GridItem = grid.findGameItem(new GameId(1));
                 const itemNew: GridItem = itemOld.clone().growShrinkFromTop(2);
 
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(11, 6, 25, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 6, 25, 8,), 1, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(18, 9, 18, 11,), -1, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 6, 39, 8,), 2, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(34, 9, 34, 11,), -1, false).inferGameInternals();
@@ -770,16 +770,15 @@ export class GameMoverTests
 
 
     /*----------------------------------------------------------------------------
-        %%Function: GameMoverTests.testFailing_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision
+        %%Function: GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown
 
-        Grow game 3 by 2 rows, pushing game 4 down and connected game 2 down.
+        Grow game 1 by 4 rows, dragging connected game 2 down and shrinking it
     ----------------------------------------------------------------------------*/
-    static testFailing_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(result: TestResult)
+    static test_GrowItemDown_DragOutgoingFeederDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
             {
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 33, 11,), 3, false).inferGameInternals();
 
@@ -787,7 +786,40 @@ export class GameMoverTests
                 const itemNew: GridItem = itemOld.clone().growShrink(4);
 
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 23, 8,), 1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 9, 35, 11,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 9, 33, 11,), 3, false).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            result,
+            "T4",
+            setup);
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision
+
+        Grow game 2 by 4 rows, dragging connected game 2 down. game 4 doesn't move, it already had room
+    ----------------------------------------------------------------------------*/
+    static test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(result: TestResult)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 33, 8,), 2, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 29, 11,), 3, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(39, 9, 49, 11,), 4, false).inferGameInternals();
+
+                const itemOld: GridItem = grid.findGameItem(new GameId(2));
+                const itemNew: GridItem = itemOld.clone().growShrink(4);
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 6, 37, 8,), 2, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 9, 31, 11,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(39, 9, 49, 11,), 4, false).inferGameInternals();
 
                 return [itemOld, itemNew];
             };
@@ -934,8 +966,31 @@ export class GameMoverTests
             setup);
     }
 
+    static test_GrowGameUpCausingConnectedGameOverlap_ShouldGrowConnectedGameToAvoid(result: TestResult)
+    {
+        const setup: SetupTestDelegate =
+            (grid, gridExpected): [GridItem, GridItem] =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 9, 37, 11,), 3, true).inferGameInternals();
 
-    static test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem(result: TestResult)
+                const itemOld: GridItem = grid.findGameItem(new GameId(1));
+                const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
+                    RangeInfo.createFromCornersCoord(21, 6, 41, 8));
+
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(21, 6, 41, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(19, 9, 31, 11,), 3, true).inferGameInternals();
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            result,
+            "T4",
+            setup);
+    }
+
+    static test_GrowGameCausingConnectedGameOverlap_ShouldGrowConnectedGameToAvoid(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -943,12 +998,12 @@ export class GameMoverTests
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(21, 6, 31, 8,), 1, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 9, 35, 11,), 3, false).inferGameInternals();
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(3));
+                const itemOld: GridItem = grid.findGameItem(new GameId(1));
                 const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
-                    RangeInfo.createFromCornersCoord(17, 9, 27, 11));
+                    RangeInfo.createFromCornersCoord(21, 6, 37, 8));
 
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 6, 23, 8,), 1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(17, 9, 27, 11,), 3, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(21, 6, 37, 8,), 1, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 9, 39, 11,), 3, false).inferGameInternals();
 
                 return [itemOld, itemNew];
             };
@@ -984,7 +1039,7 @@ export class GameMoverTests
     }
 
 
-    static testFailing_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(result: TestResult)
+    static test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -1015,7 +1070,7 @@ export class GameMoverTests
             setup);
     }
 
-    static testFailing_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing(result: TestResult)
+    static test_SwapHomeAwayMovingItemUpWithTopFeederBecomingBottomFeederConnectedOutgoing(result: TestResult)
     {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -1069,14 +1124,14 @@ export class GameMoverTests
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 31, 14,), 10, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(87, 12, 97, 14,), 11, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(92, 15, 92, 17,), -1, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 15, 77, 17,), 12, true).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 15, 77, 17,), 12, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(21, 15, 51, 17,), 13, true).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 18, 36, 23,), -1, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 18, 93, 20,), 14, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63, 21, 81, 23,), 15, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(35, 24, 71, 26,), 16, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(49, 27, 77, 29,), 17, false).inferGameInternals();
-                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 30, 61, 32,), 18, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(69, 21, 83, 23,), 15, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(35, 24, 77, 26,), 16, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(55, 27, 83, 29,), 17, false).inferGameInternals();
+                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 30, 69, 32,), 18, false).inferGameInternals();
 
                 return [itemOld, itemNew];
             };

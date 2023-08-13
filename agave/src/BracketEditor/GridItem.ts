@@ -211,9 +211,18 @@ export class GridItem
     inferGameInternals()
     {
         this.m_topTeamRange = this.m_range.topLeft();
-        this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
-        if (this.m_range.RowCount > 7)
-            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        if (this.m_range.RowCount == 3)
+        // this is the championship game
+        {
+            this.m_bottomTeamRange = null;
+            this.m_gameNumberRange = null;
+        }
+        else
+        {
+            this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
+            if (this.m_range.RowCount > 7)
+                this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        }
     }
 
     inferGameInternalsIfNecessary()

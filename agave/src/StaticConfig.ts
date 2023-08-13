@@ -50,5 +50,5 @@ export const s_staticConfig: StaticConfig =
     championSize: 12,
     advanceSize: 8,
     logMoveKeySetting: false && isLocalHost,
-    logMoveTree: false && isLocalHost,
+    logMoveTree: true // false && isLocalHost,
 }

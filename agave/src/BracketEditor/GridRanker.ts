@@ -8,6 +8,7 @@ export class GridRank
 {
     cDisqualifers: number = 0;
     cAlmostAdjacentFeeder: number = 0;
+    cTooCloseSameColumn: number = 0;
     cDisconnectedSources: number = 0;
     fDisqualified: boolean = false;
     homogeneityPenalty: number = 0;
@@ -123,6 +124,14 @@ export class GridRanker
                         gridRank.cAlmostAdjacentFeeder++;
                         return true;
                     };
+                    const delegateTooCloseSameColumn: RangeOverlapDelegate = (matchRange: RangeInfo, matchItem: GridItem, matchKind: RangeOverlapKind) =>
+                    {
+                        matchRange;
+                        matchItem;
+                        matchKind;
+                        gridRank.cTooCloseSameColumn++;
+                        return true;
+                    };
                     let rangesToCheck: RangeOverlapMatch[] = [];
                     const gameTop: RangeInfo = fSwap ? item.BottomTeamRange : item.TopTeamRange;
                     const gameBottom: RangeInfo = !fSwap ? item.BottomTeamRange : item.TopTeamRange;
@@ -135,8 +144,15 @@ export class GridRanker
                         }
                         // our top item is not connected. make sure it doesn't have anything
                         // adjacent
+                        // disqualifying if there is an item to the left of us overlapping our feeder line
                         rangesToCheck.push({ range: gameTop.offset(0, 2, -1, 1), delegate: delegateDisqalOverlap });
-                        rangesToCheck.push({ range: gameTop.offset(0, 4, -1, 1), delegate: delegateTooCloseAdjacent });
+
+                        // too adjacent if there is a team name to the left of us that is on the same line as our team name.
+                        rangesToCheck.push({ range: gameTop.offset(-1, 2, -1, 1), delegate: delegateTooCloseAdjacent });
+
+                        // we prefer a full row (i.e. a name row + line row) between games in the same column
+                        rangesToCheck.push({ range: gameTop.offset(-2, 2, 0, 1), delegate: delegateTooCloseSameColumn });
+                        
                     }
                     if (item2 == null)
                     {
@@ -149,7 +165,10 @@ export class GridRanker
                             // our bottom item is not connected. make sure it doesn't have anything
                             // adjacent
                             rangesToCheck.push({ range: gameBottom.offset(-1, 2, -1, 1), delegate: delegateDisqalOverlap });
-                            rangesToCheck.push({ range: gameBottom.offset(-1, 4, -1, 1), delegate: delegateTooCloseAdjacent });
+                            rangesToCheck.push({ range: gameBottom.offset(0, 2, -1, 1), delegate: delegateTooCloseAdjacent });
+
+                            // we prefer a full row (i.e. a name row + line row) between games in the same column
+                            rangesToCheck.push({ range: gameBottom.offset(1, 2, 0, 1), delegate: delegateTooCloseSameColumn });
                         }
                     }
                     grid.enumerateOverlapping(rangesToCheck);
@@ -220,6 +239,7 @@ export class GridRanker
 
         return gridRank.cAlmostAdjacentFeeder * 50
             + gridRank.cDisconnectedSources * 100
+            + gridRank.cTooCloseSameColumn * 25
             + (maxHeight * 1.25)
             + sparsity
             + gridRank.homogeneityPenalty
