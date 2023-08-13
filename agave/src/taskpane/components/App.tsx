@@ -801,9 +801,6 @@ export default class App extends React.Component<AppProps, AppState>
                         </Stack.Item>
                         <Stack.Item styles={footerItemStyle}>
                             <StatusBox/>
-                            <div style={versionLabelProps}>
-                                {App.version}
-                            </div>
                         </Stack.Item>
                     </Stack>
                 </TheAppContext.Provider>
