@@ -4,7 +4,7 @@ import { RangeInfo } from "../Interop/Ranges";
 import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
 import { GridItem } from "./GridItem";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameMover } from "./GridAdjusters/GameMover";
+import { GameMover } from "./GameMover";
 import { GridChange } from "./GridChange";
 import { GameId } from "./GameId";
 import { GridRanker } from "./GridRanker";

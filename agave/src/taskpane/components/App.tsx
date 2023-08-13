@@ -66,6 +66,7 @@ export interface AppState
     bracketOptions: BracketOption[];
     games: IBracketGame[];
     topToolbar: ToolbarItem[];
+    debugToolbar: ToolbarItem[];
     mainToolbar: ToolbarItem[];
     CM:boolean;
 }
@@ -92,6 +93,7 @@ export default class App extends React.Component<AppProps, AppState>
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
+            debugToolbar: this.buildDebugToolbar(),
             CM: false
         };
 
@@ -246,21 +248,6 @@ export default class App extends React.Component<AppProps, AppState>
                     return true;
                 }
             });
-        if (s_staticConfig.isLocalHost)
-        {
-            listItems.push(
-                {
-                    icon: "AlertSolid",
-                    primaryText: "Run Unit Tests",
-                    cursor: "cursorPointer",
-                    stateChecker: null,
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await App.doUnitTests(appContext);
-                        return true;
-                    }
-                });
-        }
         listItems.push(
             {
                 icon: "CompletedSolid",
@@ -296,6 +283,41 @@ export default class App extends React.Component<AppProps, AppState>
                     return true;
                 }
             });
+        return listItems;
+    }
+
+    buildDebugToolbar(): ToolbarItem[]
+    {
+        let listItems: ToolbarItem[] = [];
+
+        if (!s_staticConfig.isLocalHost)
+            return listItems;
+
+            listItems.push(
+                {
+                    icon: "AlertSolid",
+                    primaryText: "Run Unit Tests",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await App.doUnitTests(appContext);
+                        return true;
+                    }
+                });
+
+            listItems.push(
+                {
+                    icon: "Copy",
+                    primaryText: "Copy selected area",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.copySelectionToClipboardClick(appContext);
+                        return true;
+                    }
+                });
         return listItems;
     }
 
@@ -732,13 +754,18 @@ export default class App extends React.Component<AppProps, AppState>
             }
         };
 
+        const debugToolbar = s_staticConfig.isLocalHost
+            ? (<Toolbar alignment="start" message={""} items={this.state.debugToolbar} />)
+            : (<span />);
+
         return (
             <div>
                 <TheAppContext.Provider value={this.m_appContext}>
                     <Stack styles={stackStyles}>
                         <Stack.Item styles={headerItemStyle}>
                             <LogoHeader/>
-                            <Toolbar alignment="start" message={""} items={this.state.topToolbar}/>
+                            <Toolbar alignment="start" message={""} items={this.state.topToolbar} />
+                            {debugToolbar}
                         </Stack.Item>
                         <Progress
                             title=""

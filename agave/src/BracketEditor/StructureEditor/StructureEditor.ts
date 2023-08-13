@@ -10,7 +10,7 @@ import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
 import { GridRanker } from "../GridRanker";
-import { GameMover } from "../GridAdjusters/GameMover";
+import { GameMover } from "../GameMover";
 import { GridBuilder } from "../../Brackets/GridBuilder";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureRemove } from "./StructureRemove";
@@ -25,6 +25,17 @@ let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
+    static async copySelectionToClipboardClick(appContext: IAppContext)
+    {
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await this.copySelectionToClipboard(appContext, context);
+            await appContext.invalidateHeroList(context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.syncBracketChangesFromGameSheet
 
@@ -254,6 +265,22 @@ export class StructureEditor
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.copySelectionToClipboard
+
+        Copy the selected area of the bracket to the clipboard
+    ----------------------------------------------------------------------------*/
+    static async copySelectionToClipboard(appContext: IAppContext, context: JsCtx)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
+        const selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+
+        const gridSelection = grid.createFromRange(selection);
+
+        const selString = gridSelection.logGridCondensedString();
+        navigator.clipboard.writeText(selString);
     }
 
     /*----------------------------------------------------------------------------

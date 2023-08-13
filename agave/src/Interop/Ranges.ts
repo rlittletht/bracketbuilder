@@ -40,6 +40,11 @@ export class RangeInfo
         this.m_columnCount = columnCount;
     }
 
+    clone(): RangeInfo
+    {
+        return new RangeInfo(this.m_rowStart, this.RowCount, this.m_columnStart, this.ColumnCount);
+    }
+
     static createFromRangeInfo(range: RangeInfo): RangeInfo
     {
         if (range == null)

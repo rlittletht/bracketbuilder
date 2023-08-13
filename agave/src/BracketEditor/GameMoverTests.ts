@@ -4,7 +4,7 @@ import { RangeInfo } from "../Interop/Ranges";
 import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
 import { GridItem } from "./GridItem";
 import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameMover } from "./GridAdjusters/GameMover";
+import { GameMover } from "./GameMover";
 import { GridChange } from "./GridChange";
 import { GameId } from "./GameId";
 import * as GridRanker from "./GridRanker";
@@ -120,7 +120,6 @@ export class GameMoverTests
             new RangeInfo(9, 1, 3, 1));
     }
 
-
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown
 
@@ -161,8 +160,6 @@ export class GameMoverTests
             "T9",
             setup);
     }
-
-
 
     static test_GrowItemDown_FitInAvailableSpace(result: TestResult)
     {
@@ -221,7 +218,6 @@ export class GameMoverTests
             "T9",
             setup);
     }
-
 
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp
@@ -359,7 +355,6 @@ export class GameMoverTests
             setup);
     }
 
-
     static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame(result: TestResult)
     {
         const setup: SetupTestDelegate =
@@ -385,7 +380,6 @@ export class GameMoverTests
             setup);
     }
 
-
     static test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp(result: TestResult)
     {
         const setup: SetupTestDelegate =
@@ -410,7 +404,6 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
 
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown
@@ -442,7 +435,6 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
 
     static test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame(result: TestResult)
     {
@@ -563,7 +555,6 @@ export class GameMoverTests
             setup);
     }
 
-
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop
 
@@ -597,7 +588,6 @@ export class GameMoverTests
             setup);
     }
 
-
     static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(result: TestResult)
     {
         const setup: SetupTestDelegate =
@@ -622,7 +612,6 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
 
     static test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity(result: TestResult)
     {
@@ -676,7 +665,6 @@ export class GameMoverTests
             setup);
     }
 
-
     static testKnownFailing_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(result: TestResult)    {
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -704,8 +692,7 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
-    
+        
     static test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(result: TestResult)
     {
         const setup: SetupTestDelegate =
@@ -736,6 +723,7 @@ export class GameMoverTests
             "T8",
             setup);
     }
+
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown
 
@@ -768,7 +756,6 @@ export class GameMoverTests
             setup);
     }
 
-
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown
 
@@ -796,7 +783,6 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
 
     /*----------------------------------------------------------------------------
         %%Function: GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision
@@ -829,7 +815,6 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
 
     // the interesting thing here is that the game 2 is swapped home and away -- do we need to 
     // add that in the addGameRangeByIdValue? probably. 
@@ -943,7 +928,6 @@ export class GameMoverTests
         const setup: SetupTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
             {
-//                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14,), 9, true).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 12, 93, 14,), 10, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 15, 89, 17,), 12, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(63, 18, 81, 20,), 13, false).inferGameInternals();
@@ -952,7 +936,6 @@ export class GameMoverTests
                 const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(
                     RangeInfo.createFromCornersCoord(79, 18, 93, 20));
 
-//                gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(67, 12, 77, 14,), 9, true).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(83, 12, 93, 14,), 10, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 15, 89, 17,), 12, false).inferGameInternals();
                 gridExpected.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 18, 93, 20,), 13, true).inferGameInternals();
@@ -1061,7 +1044,6 @@ export class GameMoverTests
             "T4",
             setup);
     }
-
 
     static test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(result: TestResult)
     {

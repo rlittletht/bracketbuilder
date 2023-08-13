@@ -10,7 +10,7 @@ initializeIcons();
 
 let isOfficeInitialized = false;
 
-const title = "TrainWreck Bracket Builder";
+const title = "traynrex red BracketBuilder";
 // OfficeExtension.config.extendedErrorLogging = true;
 
 const render = (Component) =>

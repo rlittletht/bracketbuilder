@@ -1,15 +1,15 @@
-import { Grid } from "../Grid";
-import { GridItem } from "../GridItem";
-import { GridRanker } from "../GridRanker";
-import { RangeOverlapKind, RangeInfo } from "../../Interop/Ranges";
-import { BracketGame, IBracketGame } from "../BracketGame";
-import { GameId } from "../GameId";
-import { Mover } from "../GameMovers/Mover";
-import { PushAway } from "../GameMovers/PushAway";
-import { FeederDrag } from "../GameMovers/FeederDrag";
-import { TopBottomSwapper } from "../GameMovers/TopBottomSwapper";
-import { s_staticConfig } from "../../StaticConfig";
-import { StreamWriter } from "../../Support/StreamWriter";
+import { Grid } from "./Grid";
+import { GridItem } from "./GridItem";
+import { GridRanker } from "./GridRanker";
+import { RangeOverlapKind, RangeInfo } from "../Interop/Ranges";
+import { BracketGame, IBracketGame } from "./BracketGame";
+import { GameId } from "./GameId";
+import { Mover } from "./GameMovers/Mover";
+import { PushAway } from "./GameMovers/PushAway";
+import { FeederDrag } from "./GameMovers/FeederDrag";
+import { TopBottomSwapper } from "./GameMovers/TopBottomSwapper";
+import { s_staticConfig } from "../StaticConfig";
+import { StreamWriter } from "../Support/StreamWriter";
 import { v4 as uuidv4 } from 'uuid';
 
 export interface GridOption

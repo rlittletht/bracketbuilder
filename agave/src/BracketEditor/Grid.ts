@@ -56,6 +56,37 @@ export class Grid
     m_mapGameItem: Map<number, GridItem> = new Map<number, GridItem>();
     m_finishingTouchesApplied: boolean;
 
+    static createBasedOn(base: Grid): Grid
+    {
+        const grid = new Grid();
+        grid.m_firstGridPattern = base.m_firstGridPattern.clone();
+
+        return grid;
+    }
+
+    createFromRange(range: RangeInfo): Grid
+    {
+        const grid = Grid.createBasedOn(this);
+
+        this.enumerateOverlapping(
+            [{
+                range: range,
+                delegate: (_range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
+                {
+                    _range;
+                    kind;
+                    if (item.isLineRange)
+                        grid.addLineRange(item.Range);
+                    else
+                        grid.addGameRange(item.Range, item.GameId, item.SwapTopBottom);
+
+                    return true;
+                }
+            }]);
+
+        return grid;
+    }
+
     get IsEmpty(): boolean { return this.m_gridItems.length == 0; }
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
     get FieldsToUse(): number { return this.m_fieldsToUse; }

@@ -2,7 +2,7 @@
 
 // this class holds the support for a single game move invocation, including
 // the growing number of options...
-import { GridOption, GameMover } from "../GridAdjusters/GameMover";
+import { GridOption, GameMover } from "../GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GameId } from "../GameId";
