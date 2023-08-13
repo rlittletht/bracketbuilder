@@ -302,7 +302,7 @@ export default class App extends React.Component<AppProps, AppState>
 
             listItems.push(
                 {
-                    icon: "AlertSolid",
+                    icon: "Bug",
                     primaryText: "Run Unit Tests",
                     cursor: "cursorPointer",
                     stateChecker: null,
