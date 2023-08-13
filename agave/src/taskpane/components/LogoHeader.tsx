@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as CSS from "csstype";
 import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import { ProductName } from "./ProductName";
 
 export interface LogoHeaderProps
 {
@@ -56,7 +57,7 @@ export class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState
                         <img src={require('./../../../assets/ModernTrainWithTRex.png')} height="36" />
                     </Stack.Item>
                     <Stack.Item grow styles={stackItemCenter} align="end">
-                        <b>&gt;traynrex <span style={red}>red</span>&lt;</b>
+                        <ProductName/>
                     </Stack.Item>
                     <Stack.Item>
                         <img src={require('./../../../assets/VintageTrainRTLWithTRex.png')} height="36"/>

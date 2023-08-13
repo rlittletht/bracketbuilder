@@ -2,6 +2,7 @@ import * as React from "react";
 
 export class HelpTopic
 {
+    static Root = "";
     static Starting = "start";
     static Editing = "edit";
     static Commands = "commands";
@@ -27,6 +28,7 @@ export class HelpInfo
 {
     static mapTopics = new Map<HelpTopic, string>(
         [
+            [HelpTopic.Root, "BracketBuilder-Help.html"],
             [HelpTopic.Starting, "BracketBuilder-Help.html"],
             [HelpTopic.Editing, "SheetEditing.html"],
             [HelpTopic.Commands, "Commands.html"],

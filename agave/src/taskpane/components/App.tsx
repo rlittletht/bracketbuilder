@@ -45,6 +45,7 @@ import { HelpLink } from "./HelpLink";
 import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "../../BracketEditor/GridAdjusters/Adjuster_NeedExtraSpaceBelowRegionForGameInsert";
 import { TestRunner } from "../../Support/TestRunner";
 import { StreamWriter } from "../../Support/StreamWriter";
+import { About } from "./About";
 
 /* global console, Excel, require  */
 
@@ -68,6 +69,7 @@ export interface AppState
     topToolbar: ToolbarItem[];
     debugToolbar: ToolbarItem[];
     mainToolbar: ToolbarItem[];
+    aboutShowing: boolean;
     CM:boolean;
 }
 
@@ -94,7 +96,8 @@ export default class App extends React.Component<AppProps, AppState>
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
             debugToolbar: this.buildDebugToolbar(),
-            CM: false
+            CM: false,
+            aboutShowing: false
         };
 
         this.m_appContext = new AppContext();
@@ -274,12 +277,14 @@ export default class App extends React.Component<AppProps, AppState>
         listItems.push(
             {
                 icon: "Help",
-                primaryText: "Get help on the web",
+                primaryText: "About traynrex red",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    await App.launchHelp(appContext);
+                    appContext;
+                    this.showAboutDialog();
+//                    await App.launchHelp(appContext);
                     return true;
                 }
             });
@@ -680,6 +685,16 @@ export default class App extends React.Component<AppProps, AppState>
             });
     }
 
+    hideAboutDialog()
+    {
+        this.setState({ aboutShowing: false });
+    }
+
+    showAboutDialog()
+    {
+        this.setState({ aboutShowing: true });
+    }
+
     render()
     {
         const { title, isOfficeInitialized } = this.props;
@@ -761,6 +776,7 @@ export default class App extends React.Component<AppProps, AppState>
         return (
             <div>
                 <TheAppContext.Provider value={this.m_appContext}>
+                    <About closeDelegate={this.hideAboutDialog.bind(this)} showDialog={this.state.aboutShowing} />
                     <Stack styles={stackStyles}>
                         <Stack.Item styles={headerItemStyle}>
                             <LogoHeader/>
