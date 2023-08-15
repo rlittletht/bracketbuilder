@@ -47,6 +47,9 @@ export class Prioritizer
     ----------------------------------------------------------------------------*/
     static async shadeGamesByPriorityClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.shadeGamesByPriority(appContext, context);

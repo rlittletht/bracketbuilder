@@ -5,6 +5,7 @@ import { JsCtx } from "../Interop/JsCtx";
 import { HelpTopic } from "../HelpInfo";
 import { StatusBox } from "../taskpane/components/StatusBox";
 import { TrError } from "../Exceptions";
+import { SetupState } from "../Setup";
 
 
 // NOTE on mutex use. Most of the stuff we do is asynchronous, and while
@@ -26,6 +27,21 @@ export interface DispatchWithCatchDelegate
 
 export class Dispatcher
 {
+    static RequireBracketReady(appContext: IAppContext): boolean
+    {
+        if (appContext.SetupStateFromState == SetupState.Ready)
+            return true;
+
+        appContext.Messages.error(
+            [
+                "I'm sorry, this command isn't available until the Bracket has been created",
+                "To get started, choose the number of teams in your tournament and then click the 'Build This Bracket' button"
+            ],
+            { topic: HelpTopic.FAQ_BracketNotReady });
+
+        return false;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.DispatchWithCatch
 

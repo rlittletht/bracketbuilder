@@ -10,14 +10,14 @@ import { StatusBox } from "./taskpane/components/StatusBox";
 import { HelpTopic } from "./HelpInfo";
 import { TrError } from "./Exceptions";
 
-export enum SetupState
+export class SetupState
 {
-    Unknown,
-    Broken,
-    NoBracketStructure,
-    NoBracketData,
-    NoBracketChoice,
-    Ready
+    static Unknown = "U";
+    static Broken = "B";
+    static NoBracketStructure = "NBS";
+    static NoBracketData = "NBD";
+    static NoBracketChoice = "NBC";
+    static Ready = "R";
 };
 
 let fastTables: FastTables = new FastTables();

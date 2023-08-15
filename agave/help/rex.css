@@ -16,6 +16,29 @@ html {
     height: 100%;
 }
 
+body {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0 auto;
+    font-family: Calibri, sans-serif;
+    overflow: hidden;
+}
+
+header {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: var(--header-width);
+    margin: 0 auto;
+    padding-top: var(--header-padding-top);
+    border-bottom: 1px solid black;
+    font-family: 'Segoe UI';
+    align-content: baseline;
+}
+
 main {
     box-sizing: border-box;
     display: flex;
@@ -48,6 +71,52 @@ footer {
     margin-top: 0rem;
 }
 
+
+zoomable img {
+    transition: transform 0.25s ease;
+}
+
+    zoomable img:active {
+        max-width: 90vw;
+        max-height: 90vh;
+        position: absolute;
+        left: 5vw;
+        top: 2vh;
+    }
+
+steps {
+    display: flex;
+    vertical-align: middle;
+    padding-top: .5rem;
+    align-items: center;
+}
+
+iconic {
+    min-width: 10vw;
+    width: 10vw;
+    float: left;
+    margin-right: .5rem;
+    background: white;
+    height: 5rem;
+    display: flex;
+
+}
+
+steps p {
+    margin: 0;
+}
+    iconic img {
+        transition: transform 0.25s ease;
+        height: 4.9rem;
+        object-fit: contain;
+    }
+
+        iconic img:active {
+            width: 60vw;
+            height: 30vh;
+            position: relative;
+        }
+
 nav {
     box-sizing: border-box;
     flex: 0 1 auto;
@@ -57,9 +126,17 @@ nav {
     overflow-y: auto;
 }
 
+    nav ul.smaller li a {
+        font-size: 1rem;
+    }
+
     nav ul, nav li {
         list-style-type: none;
-        padding: 0 0 0.2rem 0.5rem;
+        padding-left: 0.5rem;
+        text-indent: -1rem;
+        padding-right: 0rem;
+        padding-top: 0;
+        padding-bottom: 0;
     }
 
     nav > ul:first-of-type > li > a {
@@ -135,30 +212,10 @@ img.logo {
     height: 3rem
 }
 
-body {
-    box-sizing: border-box;
+floatNone {
     display: flex;
-    flex-direction: column;
-    height: 100%;
-    margin: 0 auto;
-    font-family: Calibri, sans-serif;
-    overflow: hidden;
+    padding: 0.25rem;
 }
-
-header {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    width: var(--header-width);
-    margin: 0 auto;
-    padding-top: var(--header-padding-top);
-    border-bottom: 1px solid black;
-    font-family: 'Segoe UI';
-    align-content: baseline;
-}
-
-
 
 floatRight {
     float: right;
@@ -174,10 +231,12 @@ gallery {
 
 galleryItem {
     padding: 1rem;
+    margin-top: auto;
 }
 
 galleryCaption {
     display: block;
+    padding-left: 2rem;
 }
 
 p {

@@ -15,6 +15,7 @@ export class HelpTopic
     static FAQ_BrokenBracket = "faq#broken";
     static FAQ_Exceptions = "faq#exceptions";
     static FAQ_InsertFailed = "faq.insertFailed";
+    static FAQ_BracketNotReady = "faq.bracketNotReady";
 }
 
 export interface IHelpInfo
@@ -40,7 +41,8 @@ export class HelpInfo
             [HelpTopic.FAQ_InsertLocation, "FAQ.html#insertLocation"],
             [HelpTopic.FAQ_BrokenBracket, "FAQ.html#broken"],
             [HelpTopic.FAQ_Exceptions, "FAQ.html#exceptions"],
-            [HelpTopic.FAQ_InsertFailed, "FAQ.html#insertFailed"]
+            [HelpTopic.FAQ_InsertFailed, "FAQ.html#insertFailed"],
+            [HelpTopic.FAQ_BracketNotReady, "FAQ.html#bracketNotReady"]
         ]
     );
 

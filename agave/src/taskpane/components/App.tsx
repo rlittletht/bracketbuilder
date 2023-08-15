@@ -47,6 +47,7 @@ import { TestRunner } from "../../Support/TestRunner";
 import { StreamWriter } from "../../Support/StreamWriter";
 import { About } from "./About";
 import { StructureInsertTests } from "../../BracketEditor/StructureEditor/StrutureInsertTests";
+import { ProductName } from "./ProductName";
 
 /* global console, Excel, require  */
 
@@ -107,8 +108,15 @@ export default class App extends React.Component<AppProps, AppState>
             null,
             this.invalidateHeroList.bind(this),
             this.getSelectedBracket.bind(this),
-            this.getGames.bind(this));
+            this.getGames.bind(this),
+            this.getSetupStateFromState.bind(this));
+
         this.targetDivRef = React.createRef();
+    }
+
+    getSetupStateFromState(): SetupState
+    {
+        return this.state.setupState;
     }
 
     static async resetCoachingTips(appContext: IAppContext)
@@ -762,7 +770,25 @@ export default class App extends React.Component<AppProps, AppState>
         {
             root: { overflow: 'auto' }
         };
+        const welcomeItemStyle: IStackItemStyles =
+        {
+            root: { overflow: 'auto', padding: "1rem" }
+        };
 
+        const welcome = this.state.setupState == SetupState.Ready
+            ? (<span />)
+            : (
+                <>
+                    <h1>Welcome!</h1>
+                    <p>
+                    </p>
+                    <p>To get started, choose the size of your bracket above and then click
+                        the <em>BuildThisBracket</em> button!</p>
+                    <p>For help, click on the ? button on the toolbar, or just hover over a button to get
+                        a tip about what it does.
+                    </p>
+                </>
+            );
         const stackStyles: IStackStyles =
         {
             root:
@@ -795,6 +821,9 @@ export default class App extends React.Component<AppProps, AppState>
                                 {insertBracketChooserMaybe()}
                             </HeroList>
                             {maybeToolbar}
+                        </Stack.Item>
+                        <Stack.Item styles={welcomeItemStyle}>
+                            {welcome}
                         </Stack.Item>
                         <Stack.Item styles={bodyItemStyle}>
                             <div style={ gamesStyle }>

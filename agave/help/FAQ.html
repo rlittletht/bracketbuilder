@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TwBracketBuilder Help</title>
+    <link rel="stylesheet" href="./rex.css" />
+    <style>
+    </style>
+</head>
+<body>
+    <header>
+        <logo>
+            <img class="logo" src="Images/ModernTrainWithTRex.png" />
+        </logo>
+        <product>
+            <productHeader>
+                <h1> Bracket Builder </h1>
+            </productHeader>
+            <productName>
+                &gt;traynrex <red>RED</red>&lt;
+            </productName>
+        </product>
+        <logo>
+            <img class="logo" src="Images/VintageTrainRTLWithTRex.png" />
+        </logo>
+
+    </header>
+    <main>
+        <nav>
+            <ul>
+                <li><a href="./BracketBuilder-Help.html">Getting Started</a></li>
+                <ul>
+                    <li><a href="./BracketBuilder-Help.html#intro">Introduction</a></li>
+                    <li><a href="./BracketBuilder-Help.html#quickstart">Quick Walk-through</a></li>
+                </ul>
+                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
+                <ul>
+                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#Games">Games Sheet</a></li>
+                        <li><a href="./SheetEditing.html#TeamsAndFields">TeamsAndFields Sheet</a></li>
+                        <li><a href="./SheetEditing.html#BracketInfo">BracketInformation Sheet</a></li>
+
+                    </ul>
+                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
+                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
+                        <li><a href="./SheetEditing.html#score">Scores</a></li>
+                        <li><a href="./SheetEditing.html#field">Field</a></li>
+                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
+                    </ul>
+                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
+                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
+                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
+                    </ul>
+                </ul>
+                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
+                <ul>
+                    <li><a href="./Commands.html#Controls">Main Interface</a></li>
+                    <li><a href="./Commands.html#Controls">Main Tools</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
+                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
+                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
+                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
+                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
+                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
+                        <li><a href="./Commands.html#Help">Help</a></li>
+                    </ul>
+                    <li><a href="./Commands.html#BracketTools">Bracket Tools</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#PickUpGame">Pick up Game</a></li>
+                        <li><a href="./Commands.html#DropGame">Drop Game</a></li>
+                        <li><a href="./Commands.html#RemoveGame">Remove Game</a></li>
+                        <li><a href="./Commands.html#RepairGame">Repair Game</a></li>
+                    </ul>
+                    <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
+                </ul>
+                <li><a href="./FAQ.html">FAQ/Scenarios</a></li>
+                <ul class="smaller">
+                    <li><a href="./FAQ.html#manuallySelect">Choosing insertion range</a></li>
+                    <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
+                    <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
+                </ul>
+                <li><a href="./Licenses.html">Licenses</a></li>
+                <li><a href="./Privacy.html">Privacy</a></li>
+            </ul>
+        </nav>
+        <article>
+            <h2>Frequently Asked Questions / Scenarios</h2>
+            <p>
+                This is a collection of topics that frequently come up while building brackets
+                using BracketBuilder. We're always looking for more topics to add here, so please
+                <a href="mailto:red@traynrex.com">let us know</a> about things you run into often and how you solve them.
+            </p>
+            <h3><a name="manuallySelect"><a name="InsertLocation">Manually selecting where a game gets inserted</a></a></h3>
+            <p>
+                Most of the time, BracketBuilder does a good job figuring out how to place a game
+                on the bracket, including shifting other games around to make things fit. Sometimes, though,
+                you just want a game to go in a specific place. There are a few things you can do.
+            </p>
+            <h4>Choose the day for the game</h4>
+            <p>
+                The most common selection for inserting a game is to just click somewhere in the column for the
+                day you want the game to be placed on.
+            </p>
+            <p>
+                Be careful, if you click in a cell that is close to where
+                BracketBuilder might place the game, then it might get confused and think you are actually asking for
+                a specific place. The best way to avoid this is to click at the top of the column you want to insert in.
+            </p>
+            <h4>Choose the starting cell for the game</h4>
+            <p>
+                If you only want to tell BracketBuilder where you would like a game to <i>start</i> (i.e. where
+                the top of the game should be), then just click in the cell where you want the top team
+                name to be.
+            </p>
+            <p>
+                When you do this, BracketBuilder will try to insert the game at this location. Note that
+                if there are game conflicts (overlapping games, etc), then BracketBuilder might still try
+                to adjust your selection. The most common automatic adjustments:
+                <ul>
+                    <li>
+                        Insert the game <i>above</i> your selection - BracketBuilder will do this if it thinkgs
+                        that flipping the game top/bottom will make it fit better
+                    </li>
+                    <li>Insert the game two cells up or down from your selection</li>
+                </ul>
+            </p>
+            <p>
+                Since BracketBuilder is trying to insert where you are asking it to, this sometimes means
+                it gets confused when you have clicked in a column and you aren't asking for a specific place. If you
+                are being told that you can't insert a game at the requested location and you aren't trying to
+                ask for a specfic place, then just click in a cell at the top of the column you want to place the
+                game in.
+            </p>
+            <h4>Choosing the exact range for the game</h4>
+            <p>
+                This is the most specific way to tell BracketBuilder where to put the game. When you do this, BracketBuilder
+                will place the game at your selection even if it means breaking the bracket
+            </p>
+            <p>
+                BracketBuilder will still make some adjustments even when you specific range:
+                <ul>
+                    <li>Move the game up or down 1 row to make it fit better</li>
+                    <li>Grow or shrink the game by 1 row to make it fit</li>
+                    <li>Rearrange the games on the grid in order to make it fit</li>
+                </ul>
+            </p>
+            <h3><a name="gameDependencies">What are game dependencies?</a></h3>
+            <p>
+                Each game has two teams playing. With the exception of the first game for each team, each of these teams
+                comes from a previous game -- either the winner or the loser of that game. BracketBuilder will
+                connect the winner of a game with the next game that the winning team will play.
+            </p>
+            <p>
+                The bracket is laid out with each column as a day of the week. (Actually, you can have more
+                than one column for a day, but we'll cover that later). Each game will be in one of those columns
+                in the bracket. This means that every game has to be placed in a column <i>after</i> all of the games
+                that feed into it. These are called the <i>game dependencies</i>.
+            </p>
+            <p>
+                For example, if Game 19 is played between the winner of game 15 (W15) and the winner of game 13 (W13),
+                then Game 19 has to be in a column <i>after</i> both games 15 and 13. If you try to place a game in the
+                same column as one of its dependencies, then BracketBuilder will tell you it can't insert the game, and it
+                will suggest what column you have to put the game in.
+            </p>
+            <p>If you need to play two games on the same day, see the section on Creating Double-Headers.</p>
+            <h3><a name="doubleHeaders">How do I create a double-header?</a></h3>
+            <p>
+                There is no way to place a game in the same column as one of its dependencies. There is nothing that says
+                you can't have more than one column for any given day, though. In fact, we do this already when we extend
+                the last day of the tournament to include the <i>champion</i> game (which isn't really a game, its just
+                the fancy place we put the name of the tournament champion).
+            </p>
+            <p>
+                Someday, maybe we'll make a bracket command to make a day take up more columns, but for now its a manual
+                process. This is also a good step-by-step guide on how you can really tweak the schedule!
+            </p>
+            <h4>
+                Double header for the what-if game
+            </h4>
+            <zoomable>
+                <floatRight style="width: 20vw">
+                    <img src="Images/DH-Start.png" class="whiteBack" />
+                </floatRight>
+            </zoomable>
+            <p>
+                Let's imagine we have a 4 team bracket, and we want to play the what-if game on the same day
+                as the championship game as a double-header.  We want the championship game at 3pm and the what-if
+                will be at 6pm.
+            </p>
+            <p>
+                To do this, we are going to merge two of the days together in the header so that a single day now has
+                two columns. We also have to fix the day formulas. There are several steps:
+            </p>
+            <br clear="all" />
+            <steps>
+                <iconic>
+                    <img src="Images/DH-TwoDays.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>First, determine which days you want to merge. You can merge as many days as you want, but this example
+                    will only demonstrate two days.</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-SelectBothDays.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>Select the two cells for the day-of-week to merge. You have to merge the day-of-the week cells (Monday/Tuesday/Wednesday) 
+                    and the date cells (June 19, June 20, June 21) separately, so for the first step, only select the day-of-the-week cells.</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-MergeAndCenterRibbon.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>On the home tab, find <em>Merge and center</em> button on the alignment chunk -- it should be in the
+                    depressed state, showing that the current selection is already merged. Click on <em>Merge and center</em> to unmerge
+                    the cells.</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-AfterDayUnmerge.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>After the day-of-the-week cells are unmerged, you should still have the cells selected which will make it easier to
+                    merge both days all together. If all the cells aren't selected, that's ok -- you just have to reselect them. Be sure
+                    to select <em>all</em> of the cell between the lines (in this example, select M5:Q5)</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-ExcelError.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>Now we want to merge both days together. With the cells selected from the previous step, click the
+                    <em>Merge and center</em> button again.  When you do this, you will get an Excel warning about
+                    merging contents, click OK. We will fix up the formulas in the next step.</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-AfterDayMerge.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>The day-of-week cells are now merged together. We still have to deal with the date cells.</p>
+            </steps>
+
+            <steps>
+                <iconic>
+                    <img src="Images/DH-AfterAllMerge.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>Repeat this same procedure for the date cells in Row 6 that you want to merge together.</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-BrokenDay.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>With the day-of-week and the date cells merged together, we have now created multiple columns for
+                    a single day. Unfortunately, that warning that Excel gave about merging cells actually mattered.
+                    When we merged the cells, we broke the date formulas for the later days.
+                    To fix this, we have to fixup the formula for the broken day.<br/><br/>Click on the cell with the broken date (S6 in this example)</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-BeforeFormula.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>The formula bar will show the current (broken) forumula ("=P6 + 1" in this example)</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-AfterFormula.png" class="whiteBackSmaller" />
+                </iconic>
+                <p>Type the correct formula, using the correct column for the previous day ("=M6 + 1" in this example)</p>
+            </steps>
+            <steps>
+                <iconic>
+                    <img src="Images/DH-Done.png" class="whiteBackSmaller"/>
+                </iconic>
+                <p>All done!</p>
+            </steps>
+
+        </article>
+
+    </main>
+</body>
+</html>

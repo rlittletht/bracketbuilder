@@ -20,6 +20,7 @@ import { PerfTimer } from "../../PerfTimer";
 import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
 import { HelpTopic, HelpInfo } from "../../HelpInfo";
+import { SetupState } from "../../Setup";
 
 let _moveSelection: RangeInfo = null;
 
@@ -27,6 +28,9 @@ export class StructureEditor
 {
     static async copySelectionToClipboardClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.copySelectionToClipboard(appContext, context);
@@ -44,6 +48,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async syncBracketChangesFromGameSheetClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.syncBracketChangesFromGameSheet(appContext, context);
@@ -60,6 +67,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async toggleShowDataSheetsClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.toggleShowDataSheets(appContext, context);
@@ -76,6 +86,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async undoClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             context.pushTrackingBookmark('undo');
@@ -96,6 +109,9 @@ export class StructureEditor
 
     static async finalizeClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.applyFinalFormatting(appContext, context, await this.getBracketName(context));
@@ -112,6 +128,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async redoClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             context.pushTrackingBookmark('redo');
@@ -134,6 +153,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async insertGameAtSelectionClick(appContext: IAppContext, game: IBracketGame)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const timer: PerfTimer = new PerfTimer();
@@ -163,6 +185,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async repairGameAtSelectionClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "repairGameAtSelectionClick";
@@ -181,6 +206,9 @@ export class StructureEditor
 
     static async captureSelectionForMove(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             _moveSelection = await Ranges.createRangeInfoForSelection(context);
@@ -204,6 +232,9 @@ export class StructureEditor
 
     static async moveGameAtSelectionClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         if (_moveSelection == null)
         {
             appContext.Messages.error(
@@ -229,6 +260,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async removeGameAtSelectionClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "removeGameAtSelectionClick";
@@ -252,6 +286,9 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame1)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "removeGameAtSelectionClick";

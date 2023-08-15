@@ -6,8 +6,7 @@ import { DurableState } from "../DurableState";
 import { s_staticConfig } from "../StaticConfig";
 import { IAppContextMessages, AppContextMessages, SetMessageDelegate, ClearMessageDelegate } from "./AppContextMessages";
 import { IAppContextTeaching, AppContextTeaching } from "./AppContextTeaching";
-
-import * as fs from 'fs';
+import { SetupState } from "../Setup";
 
 
 export interface IAppContext
@@ -24,6 +23,7 @@ export interface IAppContext
     getGames(): IBracketGame[];
     setProgressVisible(visible: boolean);
     setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
+    get SetupStateFromState(): SetupState;
 }
 
 export interface InvalidateHeroListDelegate
@@ -46,6 +46,11 @@ export interface ProgressVisibilityDelegate
     (visible: boolean, teachbleId?: string): void;
 }
 
+export interface GetSetupStateDelegate
+{
+    (): SetupState;
+}
+
 export class AppContext implements IAppContext
 {
     Messages: AppContextMessages = new AppContextMessages();
@@ -57,6 +62,8 @@ export class AppContext implements IAppContext
     m_invalidateHeroListDelegate: InvalidateHeroListDelegate;
     m_getSelectedBracket: GetSelectedBracketDelegate;
     m_getGames: GetGamesDelegate;
+    m_getSetupStateDelegate: GetSetupStateDelegate;
+
     m_perfTimer: PerfTimer = new PerfTimer();
 
     constructor()
@@ -67,6 +74,10 @@ export class AppContext implements IAppContext
 
 
     get Timer(): PerfTimer { return this.m_perfTimer; }
+    get SetupStateFromState(): SetupState
+    {
+        return this.m_getSetupStateDelegate?.() ?? "U";
+    }
 
     setProgressVisible(visible: boolean)
     {
@@ -105,13 +116,15 @@ export class AppContext implements IAppContext
         clearMessageDelegate: ClearMessageDelegate,
         invalidateHeroList: InvalidateHeroListDelegate,
         getSelectedBracket: GetSelectedBracketDelegate,
-        getGames: GetGamesDelegate
+        getGames: GetGamesDelegate,
+        getSetupState: GetSetupStateDelegate
         )
     {
         this.Messages.setMessageDelegates(addMessageDelegate, clearMessageDelegate);
         this.m_invalidateHeroListDelegate = invalidateHeroList;
         this.m_getSelectedBracket = getSelectedBracket;
         this.m_getGames = getGames;
+        this.m_getSetupStateDelegate = getSetupState;
     }
 
     setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)
