@@ -130,10 +130,27 @@ export class FormulaBuilder
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: FormulaBuilder.getTeamNumberFromTeamNum
+
+        TeamNum is "Team 1", "Team 2", etc. But the sheet stores "1", "2", etc.
+
+        This returns that number
+    ----------------------------------------------------------------------------*/
+    static getTeamNumberFromTeamNum(teamNum: string): number
+    {
+        if (teamNum.substring(0, 5).toUpperCase() == "TEAM ")
+            teamNum = teamNum.substring(5);
+
+        return +teamNum;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: FormulaBuilder.getTeamNameLookup
     ----------------------------------------------------------------------------*/
     static getTeamNameLookup(teamNum: string): string
     {
-        return `=INDEX(TeamNames[TeamName],MATCH("${teamNum}", TeamNames[TeamNum],0))`;
+        const teamNumber = FormulaBuilder.getTeamNumberFromTeamNum(teamNum);
+
+        return `=INDEX(TeamNames[Name],MATCH(${teamNumber}, TeamNames[Number],0))`;
     }
 }

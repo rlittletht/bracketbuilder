@@ -11,6 +11,7 @@ import { ApplyGridChange } from "./ApplyGridChange";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { HelpTopic } from "../../HelpInfo";
+import { FormulaBuilder } from "../FormulaBuilder";
 
 export class StructureRemove
 {
@@ -209,14 +210,14 @@ export class StructureRemove
         if (overrideText1 && overrideText1 != null && overrideText1 != "")
             map.push(
                 {
-                    teamNum: game.TopTeamName,
+                    teamNumber: FormulaBuilder.getTeamNumberFromTeamNum(game.TopTeamName),
                     name: overrideText1,
                     priority: 0
                 });
         if (overrideText2 && overrideText2 != null && overrideText2 != "")
             map.push(
                 {
-                    teamNum: game.BottomTeamName,
+                    teamNumber: FormulaBuilder.getTeamNumberFromTeamNum(game.BottomTeamName),
                     name: overrideText2,
                     priority: 0
                 });

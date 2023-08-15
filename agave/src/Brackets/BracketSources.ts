@@ -13,7 +13,7 @@ import { JsCtx } from "../Interop/JsCtx";
 
 export interface TeamNameMap
 {
-    teamNum: string;
+    teamNumber: number;
     name: string;
     priority: number;
 }
@@ -164,11 +164,11 @@ export class BracketSources
             if (nameMap.name == null || nameMap.name == "")
                 continue;
 
-            let comp: string = nameMap.teamNum.toUpperCase();
+            let comp: number = nameMap.teamNumber;
 
             for (let i = 0; i < range.rowCount; i++)
             {
-                if (range.values[i][0].toUpperCase() == comp)
+                if (range.values[i][0] == comp)
                 {
                     range.values[i][1] = nameMap.name;
                 }
@@ -255,15 +255,23 @@ export class BracketSources
             gameInfoHeader);
 
         let formulasTeamNames: any[][] = [];
-        const teamNameHeader: any[] = ["TeamNum", "TeamName", "Priority"];
+        const teamNameHeader: any[] = ["Number", "Name", "Priority"];
 
         for (let i: number = 0; i < bracketDefinition.teamCount; i++)
         {
-            formulasTeamNames.push([`Team ${i + 1}`, `Team ${i + 1}`, 0]);
+            formulasTeamNames.push([`${i + 1}`, `Team ${i + 1}`, 0]);
         }
 
         range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 3);
         range.formulas = formulasTeamNames;
+
+        const rangeFirstColumn = sheet.getRanges("A:A");
+        rangeFirstColumn.format.horizontalAlignment = Excel.HorizontalAlignment.left;
+        rangeFirstColumn.format.columnWidth = 70;
+
+        const rangeSecondColumn = sheet.getRanges("B:B");
+        rangeSecondColumn.format.columnWidth = 128;
+
         await context.sync();
 
         await Tables.ensureTableExists(
