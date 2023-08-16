@@ -66,7 +66,8 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
         const iconColors = mergeStyleSets(
             {
-                branchColor: [{ color: 'white' }, iconClass]
+                branchColor: [{ color: 'white' }, iconClass],
+                brokenColor: [{ color: 'black' }, iconClass]
             });
     
         let background = {};
@@ -78,17 +79,33 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 ? "Champion"
                 : `${this.props.game.TopTeamName} vs ${this.props.game.BottomTeamName}`;
 
+        const broken =
+            this.props.game.IsBroken
+                ? (
+                    <Teachable
+                        id={TeachableId.BrokenGame}
+                        idx={this.props.idx}
+                        isWide={true}
+                        title={"Broken Game!"}
+                        text={"This game (and maybe others) is broken and needs to be removed from the bracket. Click the - button to remove the game."}
+                        visibleDelay={1000}
+                        directionalHint={DirectionalHint.rightBottomEdge}>
+                        <FontIcon aria-label="Broken" iconName="HeartBroken" className={iconColors.brokenColor}></FontIcon>
+                    </Teachable>
+                )
+                : ( <span/> );
+
         const dirty =
-            this.props.game.NeedsRepair
+            this.props.game.NeedsDataPull && !this.props.game.IsBroken
                 ? (
                     <Teachable
                         id={TeachableId.DirtyGame}
                         idx={this.props.idx}
                         isWide={true}
                         title={"Needs updated"}
-                        text={"Some part of this game was manually changed, like the team name, field, or time. That's fine, but you should merge these changes into the bracket data. You can do this by clicking on the \"Update Brackets\" button on the top toolbar. Its next to the undo and redo buttons."}
-                        visibleDelay={3000}
-                        directionalHint={DirectionalHint.rightCenter}>
+                        text={"Some part of this game was manually changed, like the team name, field, or time. You can update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar. Its next to the undo and redo buttons."}
+                        visibleDelay={1000}
+                        directionalHint={DirectionalHint.rightBottomEdge}>
                         <FontIcon aria-label="Dirty" iconName="branchfork2" className={iconColors.branchColor}></FontIcon>
                     </Teachable>
                 )
@@ -160,7 +177,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
             <div className="singleGameItem" style={background}>
                 <Stack horizontal gap={8}>
                     <Stack.Item>
-                        {dirty}
+                        {dirty}{broken}
                     </Stack.Item>
                     <Stack.Item align="center" grow={0}>
                         {gameNumber}

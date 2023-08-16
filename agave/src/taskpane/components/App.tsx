@@ -439,18 +439,26 @@ export default class App extends React.Component<AppProps, AppState>
 
             let countGamesLinked = 0;
             let countGamesNeedRepair = 0;
+            let countGamesBroken = 0;
+
             for (let game of games)
             {
                 if (game.IsLinkedToBracket)
                 {
                     countGamesLinked++;
                 }
-                if (game.NeedsRepair)
+                if (game.NeedsDataPull)
                 {
                     countGamesNeedRepair++;
                 }
+                if (game.IsBroken)
+                {
+                    countGamesBroken++;
+                }
             }
-            if (countGamesNeedRepair > 0)
+            if (countGamesBroken > 0)
+                this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
+            else if (countGamesNeedRepair > 0)
                 this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
             else if (countGamesLinked == games.length)
             {

@@ -29,8 +29,8 @@ export class HelpInfo
 {
     static mapTopics = new Map<HelpTopic, string>(
         [
-            [HelpTopic.Root, "BracketBuilder-Help.html"],
-            [HelpTopic.Starting, "BracketBuilder-Help.html"],
+            [HelpTopic.Root, "BracketBuilder.html"],
+            [HelpTopic.Starting, "BracketBuilder.html"],
             [HelpTopic.Editing, "SheetEditing.html"],
             [HelpTopic.Commands, "Commands.html"],
             [HelpTopic.Commands_PickupGame, "Commands.html#PickUpGame"],

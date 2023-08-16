@@ -5,14 +5,14 @@
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
 	<Id>f4607fe8-d788-4c7e-95ee-3ba1f85b5566</Id>
-	<Version>1.0.14.4</Version>
+	<Version>1.0.14.5</Version>
 	<ProviderName>Thetasoft LLC</ProviderName>
 	<DefaultLocale>en-US</DefaultLocale>
 	<DisplayName DefaultValue="BracketBuilder" />
 	<Description DefaultValue="Build double elimination tournament brackets compatible with Little League double elimination brackets" />
-	<IconUrl DefaultValue="https://localhost:3000/assets/TR-logo.png" />
-	<HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/TR-logo.png" />
-	<SupportUrl DefaultValue="https://localhost:3000/help/TwBracketBuilder%20Help.html" />
+	<IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png" />
+	<HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png" />
+	<SupportUrl DefaultValue="https://localhost:3000/help/BracketBuilder.html" />
 	<Hosts>
 		<Host Name="Workbook" />
 	</Hosts>

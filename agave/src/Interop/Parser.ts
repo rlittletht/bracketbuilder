@@ -243,7 +243,18 @@ export class Parser
         Parses an optional sheet name before the address
     ----------------------------------------------------------------------------*/
     static parseExcelFullAddress(trim: TrimType, addr: string, ichCur: number, ichMax: number):
-        [string | undefined, string | undefined, boolean | undefined, number | undefined, boolean | undefined, string | undefined, boolean | undefined, number | undefined, boolean | undefined, number]
+        {
+            sheetName?: string,
+            colRef1?: string,
+            isColRef1Absolute?: boolean,
+            rowRef1?: number,
+            isRowRef1Absolute?: boolean,
+            colRef2?: string,
+            isColRef2Absolute?: boolean,
+            rowRef2?: number,
+            isRowRef2Absolute?: boolean,
+            ichCurAfter?: number
+        }
     {
         let sheetName: string;
         let ichAfterSheet: number;
@@ -264,7 +275,17 @@ export class Parser
         let [colRef1, fColAbsolute1, rowRef1, fRowAbsolute1, colRef2, fColAbsolute2, rowRef2, fRowAbsolute2, ichCurAfter] =
             Parser.parseExcelSimpleAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
 
-        return [sheetName, colRef1, fColAbsolute1, rowRef1, fRowAbsolute1, colRef2, fColAbsolute2, rowRef2, fRowAbsolute2, ichCurAfter];
+        return {
+            sheetName: sheetName,
+            colRef1: colRef1,
+            isColRef1Absolute: fColAbsolute1,
+            rowRef1: rowRef1,
+            isRowRef1Absolute: fRowAbsolute1,
+            colRef2: colRef2,
+            isColRef2Absolute: fColAbsolute2,
+            rowRef2: rowRef2,
+            isRowRef2Absolute: fRowAbsolute2,
+            ichCurAfter: ichCurAfter};
     }
 }
 
@@ -350,7 +371,7 @@ export class ParserTests
         fRowAbsoluteExpected2: boolean | undefined,
         ichExpected: number)
     {
-        let [colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] = Parser.parseExcelSimpleAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
+        const [colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] = Parser.parseExcelSimpleAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
 
         const prefix = `addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax})`;
 
@@ -381,21 +402,21 @@ export class ParserTests
         fRowAbsoluteExpected2: boolean | undefined,
         ichExpected: number)
     {
-        let [sheetNameActual, colRefActual1, fColAbsoluteActual1, rowRefActual1, fRowAbsoluteActual1, colRefActual2, fColAbsoluteActual2, rowRefActual2, fRowAbsoluteActual2, ichCurActual] =
+        const { sheetName, colRef1, isColRef1Absolute, rowRef1, isRowRef1Absolute, colRef2, isColRef2Absolute, rowRef2, isRowRef2Absolute, ichCurAfter } =
             Parser.parseExcelFullAddress(TrimType.LeadingSpace, addr, ichCur, ichMax);
 
         const prefix = `addr/ichCur/ichMax(${addr}, ${ichCur}, ${ichMax})`;
 
-        result.assertIsEqual(colRefExpected1, colRefActual1, prefix);
-        result.assertIsEqual(rowRefExpected1, rowRefActual1, prefix);
-        result.assertIsEqual(fRowAbsoluteExpected1, fRowAbsoluteActual1, prefix);
-        result.assertIsEqual(fColAbsoluteExpected1, fColAbsoluteActual1, prefix);
-        result.assertIsEqual(colRefExpected2, colRefActual2, prefix);
-        result.assertIsEqual(rowRefExpected2, rowRefActual2, prefix);
-        result.assertIsEqual(fRowAbsoluteExpected2, fRowAbsoluteActual2, prefix);
-        result.assertIsEqual(fColAbsoluteExpected2, fColAbsoluteActual2, prefix);
-        result.assertIsEqual(ichExpected, ichCurActual, prefix);
-        result.assertIsEqual(sheetNameExpected, sheetNameActual, prefix);
+        result.assertIsEqual(colRefExpected1, colRef1, prefix);
+        result.assertIsEqual(rowRefExpected1, rowRef1, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected1, isRowRef1Absolute, prefix);
+        result.assertIsEqual(fColAbsoluteExpected1, isColRef1Absolute, prefix);
+        result.assertIsEqual(colRefExpected2, colRef2, prefix);
+        result.assertIsEqual(rowRefExpected2, rowRef2, prefix);
+        result.assertIsEqual(fRowAbsoluteExpected2, isRowRef2Absolute, prefix);
+        result.assertIsEqual(fColAbsoluteExpected2, isColRef2Absolute, prefix);
+        result.assertIsEqual(ichExpected, ichCurAfter, prefix);
+        result.assertIsEqual(sheetNameExpected, sheetName, prefix);
     }
 
     static test_ParseExcelAddressTests(result: TestResult)

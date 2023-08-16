@@ -102,6 +102,24 @@ export class StructureRemove
             context.Ctx.trackedObjects.remove(mergedRange);
             context.Ctx.trackedObjects.remove(sheet);
         }
+
+        // lastly, deal with any named ranges in the range (the caller may have already dealt
+        // with the games expected ranges
+        const names = context.Ctx.workbook.names;
+        names.load("items, items.name, items.formula, items.type");
+        await context.sync();
+
+        for (let _item of names.items)
+        {
+            if (_item.type == Excel.NamedItemType.error)
+                _item.delete();
+            else if (_item.type == Excel.NamedItemType.range)
+            {
+                if (RangeInfo.isOverlapping(rangeInfo, Ranges.createRangeInfoFromFormula(_item.formula)) != RangeOverlapKind.None)
+                    _item.delete();
+            }
+        }
+        await context.sync();
     }
 
     /*----------------------------------------------------------------------------
@@ -252,7 +270,7 @@ export class StructureRemove
     {
         AppContext.checkpoint("remgm.1");
 
-        if (range != null && game != null && game.IsLinkedToBracket)
+        if (range != null && game != null && game.IsLinkedToBracket && !game.IsBroken)
         {
             AppContext.checkpoint("remgm.2");
             if (!range.isEqual(game.FullGameRange))
@@ -260,9 +278,11 @@ export class StructureRemove
             AppContext.checkpoint("remgm.3");
         }
 
-        if (game != null && game.IsLinkedToBracket)
+        if (game != null && (game.IsLinkedToBracket || game.IsBroken))
         {
-            await this.updateBracketSourcesWithOverrides(context, game)
+            if (!game.IsBroken)
+                await this.updateBracketSourcesWithOverrides(context, game)
+
             if (!liteRemove)
                 await this.removeNamedRanges(context, game);
             /*
@@ -284,61 +304,60 @@ export class StructureRemove
         AppContext.checkpoint("remgm.5");
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.findAndRemoveGame
-
-        If there is a selected range, and that range doesn't overlap any known
-        bracket games, then we will assume the user is trying to unformat a game
-        that is corrupted (missing name definitions). Remove all the game
-        formatting in the range
-
-        If there is no selected range, then find the given game and remove it.
-
-    ----------------------------------------------------------------------------*/
-    static async findAndRemoveGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
+    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo)
     {
-        const bookmark: string = "insertGameAtSelection";
-
-        context.pushTrackingBookmark(bookmark);
-
-        // load the grid
-        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
-        const rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(context);
-
-        if (game == null && rangeSelected.IsSingleCell)
+        if (game.IsBroken)
         {
-            // see if we are intersecting a game and that is what we will remove
-            const [item, kind] = grid.getFirstOverlappingItem(rangeSelected);
+            let topRow = Number.MAX_VALUE;
+            let bottomRow = 0;
+            let firstCol = Number.MAX_VALUE;
+            let lastCol = 0;
+            let setRange = false;
 
-            if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
+            // guess at the full range
+            if (game.TopTeamRange)
             {
-                game = await BracketGame.CreateFromGameId(context, bracketName, item.GameId);
+                topRow = Math.min(topRow, game.TopTeamRange.FirstRow);
+                firstCol = Math.min(firstCol, game.TopTeamRange.FirstColumn);
+                bottomRow = Math.max(bottomRow, game.TopTeamRange.LastRow + 1);
+                lastCol = Math.max(lastCol, game.TopTeamRange.LastColumn + 2);
+                setRange = true;
             }
-        }
+            if (game.GameIdRange)
+            {
+                topRow = Math.min(topRow, game.GameIdRange.FirstRow - 1);
+                firstCol = Math.min(firstCol, game.GameIdRange.FirstColumn - 1);
+                bottomRow = Math.max(bottomRow, game.GameIdRange.LastRow + 2); // check this
+                lastCol = Math.max(lastCol, game.GameIdRange.LastColumn + 1);
+                setRange = true;
+            }
+            if (game.BottomTeamRange)
+            {
+                topRow = Math.min(topRow, game.BottomTeamRange.FirstRow - 1);
+                firstCol = Math.min(firstCol, game.BottomTeamRange.FirstColumn);
+                bottomRow = Math.max(bottomRow, game.BottomTeamRange.LastRow);
+                lastCol = Math.max(lastCol, game.BottomTeamRange.LastColumn + 2);
+                setRange = true;
+            }
 
-        await game.Bind(context, appContext);
-        context.releaseTrackedItemsUntil(bookmark)
-        await context.sync();
+            if (!setRange)
+                throw new Error(`could not find any range for the broken game ${game.GameId.Value}`);
+
+            rangeSelected = new RangeInfo(topRow, bottomRow - topRow + 1, firstCol, lastCol - firstCol + 1);
+            // can't let the normal (undoable) remove happen. need to obliterate the selection
+            await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/);
+            return;
+        }
 
         // if we can't bind to the game, and if the selection is a single cell, then
         // we can't do anything
-        if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1)
+        if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1 && !game.IsBroken)
         {
             appContext.Messages.error(
                 [`Cannot find game ${game.GameId.Value} in the bracket`],
                 { topic: HelpTopic.FAQ_BrokenBracket });
 
             return;
-        }
-
-        // first, see if the selected range overlaps any known games
-        if (!rangeSelected.IsSingleCell)
-        {
-            if (grid.doesRangeOverlap(rangeSelected) == RangeOverlapKind.None)
-            {
-                await this.removeGame(appContext, context, null, rangeSelected, true, false /*liteRemove*/);
-                return;
-            }
         }
 
         // find the given game in the grid
@@ -355,10 +374,67 @@ export class StructureRemove
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
             return;
         }
+    }
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.findAndRemoveGame
 
-        // we're linked to a game, so we can go straight to it and obliterate it
-        //        await this.removeGame(appContext, context, game, rangeSelected);
+        If there is a selected range, and that range doesn't overlap any known
+        bracket games, then we will assume the user is trying to unformat a game
+        that is corrupted (missing name definitions). Remove all the game
+        formatting in the range
 
-        //        await game.Bind(context);
+        If there is no selected range, then find the given game and remove it.
+
+    ----------------------------------------------------------------------------*/
+    static async findAndRemoveGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
+    {
+        const bookmark: string = "findAndRemoveGame";
+
+        context.pushTrackingBookmark(bookmark);
+
+        // load the grid
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+        let rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+
+        if (game == null && rangeSelected.IsSingleCell)
+        {
+            // see if we are intersecting a game and that is what we will remove
+            const [item, kind] = grid.getFirstOverlappingItem(rangeSelected);
+
+            if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
+            {
+                game = await BracketGame.CreateFromGameId(context, bracketName, item.GameId);
+            }
+        }
+
+        const games: IBracketGame[] = [];
+
+        if (game != null)
+        {
+            await game.Bind(context, appContext);
+            games.push(game);
+        }
+
+        if (game == null)
+        {
+            // check for any games that overlap the selection
+            const items = grid.getOverlappingItems(rangeSelected);
+
+            for (let _item of items)
+            {
+                if (!_item.isLineRange)
+                    games.push(await BracketGame.CreateFromGameId(context, bracketName, _item.GameId));
+            }
+        }
+
+        context.releaseTrackedItemsUntil(bookmark)
+        await context.sync();
+
+        for (let _game of games)
+            await this.removeBoundGame(appContext, context, grid, _game, rangeSelected);
+
+        // last, obliterate the rest of the range
+        if (!rangeSelected.IsSingleCell)
+            await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/);
     }
 }

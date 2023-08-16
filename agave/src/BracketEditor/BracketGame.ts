@@ -42,7 +42,8 @@ export interface IBracketGame
     get IsChampionship(): boolean;
     get IsIfNecessaryGame(): boolean; // this is true if this game is the 'what-if' game before the championship
     get WinningTeamAdvancesToGameId(): GameId;
-    get NeedsRepair(): boolean; // has this game been manually edited? (and thus needs repair?
+    get NeedsDataPull(): boolean; // has this game been manually edited? (and thus needs repair?
+    get IsBroken(): boolean; // is this game broken (and needs to be deleted)
 
     FormatTime(): string;
     FormatLoser(): string;
@@ -89,8 +90,14 @@ export class BracketGame implements IBracketGame
     m_timeOverride: number;
     m_topTeamNameValue: string;
     m_bottomTeamNameValue: string;
+    m_isBroken: boolean = false;
 
-    get NeedsRepair(): boolean
+    get IsBroken(): boolean
+    {
+        return this.m_isBroken;
+    }
+
+    get NeedsDataPull(): boolean
     {
         if (this.IsChampionship)
             return false;
@@ -363,6 +370,13 @@ export class BracketGame implements IBracketGame
         AppContext.checkpoint("b.4");
         this.m_gameNumberLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.GameNumberCellName);
         AppContext.checkpoint("b.5");
+
+        if ((this.m_bottomTeamLocation || this.m_gameNumberLocation)
+            && (this.m_gameNumberLocation == null || this.m_topTeamLocation == null))
+        {
+            this.m_isBroken = true;
+            // we will still try to build as much as we can. but very carefully
+        }
 
         if (appContext != null)
             appContext.Timer.pauseAggregatedTimer("namedInner");

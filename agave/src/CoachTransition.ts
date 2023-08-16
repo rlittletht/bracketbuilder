@@ -12,4 +12,5 @@ export class CoachTransition
     static AllGamesLinked = 9;
     static NoGamesLinked = 10;
     static OneGameLinked = 11;
+    static BrokenGameFound = 12;
 }

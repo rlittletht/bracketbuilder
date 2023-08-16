@@ -18,6 +18,7 @@ export class CoachstateTransitions
                     [CoachTransition.Redo, Coachstate.DuringConstruction],
                     [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                     [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                    [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                     [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                     [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                     [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -35,6 +36,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -53,6 +55,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -71,6 +74,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -89,6 +93,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -107,6 +112,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -125,6 +131,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -143,6 +150,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -161,6 +169,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -179,6 +188,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -197,6 +207,26 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
+                        [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
+                        [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                    ]
+                )
+            ],
+            [
+                Coachstate.BrokenGame,
+                new Map<CoachTransition, Coachstate>(
+                    [
+                        [CoachTransition.AddGame, Coachstate.DuringConstruction],
+                        [CoachTransition.BuildBracket, Coachstate.Unknown],
+                        [CoachTransition.RemoveGame, Coachstate.Unknown],
+                        [CoachTransition.FinishTouches, Coachstate.Unknown],
+                        [CoachTransition.Undo, Coachstate.DuringConstruction],
+                        [CoachTransition.Redo, Coachstate.DuringConstruction],
+                        [CoachTransition.PullChanges, Coachstate.DuringConstruction],
+                        [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
@@ -215,6 +245,7 @@ export class CoachstateTransitions
                         [CoachTransition.Redo, Coachstate.DuringConstruction],
                         [CoachTransition.PullChanges, Coachstate.DuringConstruction],
                         [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
                         [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]

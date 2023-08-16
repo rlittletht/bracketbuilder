@@ -85,6 +85,9 @@
                     <li><a href="./FAQ.html#manuallySelect">Choosing insertion range</a></li>
                     <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
                     <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
+                    <li><a href="./FAQ.html#broken">Why is my bracket broken?</a></li>
+                    <li><a href="./FAQ.html#manualEditing">How do I ?</a></li>
+
                 </ul>
                 <li><a href="./Licenses.html">Licenses</a></li>
                 <li><a href="./Privacy.html">Privacy</a></li>
@@ -182,7 +185,7 @@
                 process. This is also a good step-by-step guide on how you can really tweak the schedule!
             </p>
             <h4>
-                Double header for the what-if game
+                Scenario: Double header for the what-if game
             </h4>
             <zoomable>
                 <floatRight style="width: 20vw">
@@ -203,39 +206,49 @@
                 <iconic>
                     <img src="Images/DH-TwoDays.png" class="whiteBackSmaller" />
                 </iconic>
-                <p>First, determine which days you want to merge. You can merge as many days as you want, but this example
-                    will only demonstrate two days.</p>
+                <p>
+                    First, determine which days you want to merge. You can merge as many days as you want, but this example
+                    will only demonstrate two days.
+                </p>
             </steps>
             <steps>
                 <iconic>
                     <img src="Images/DH-SelectBothDays.png" class="whiteBackSmaller" />
                 </iconic>
-                <p>Select the two cells for the day-of-week to merge. You have to merge the day-of-the week cells (Monday/Tuesday/Wednesday) 
-                    and the date cells (June 19, June 20, June 21) separately, so for the first step, only select the day-of-the-week cells.</p>
+                <p>
+                    Select the two cells for the day-of-week to merge. You have to merge the day-of-the week cells (Monday/Tuesday/Wednesday)
+                    and the date cells (June 19, June 20, June 21) separately, so for the first step, only select the day-of-the-week cells.
+                </p>
             </steps>
             <steps>
                 <iconic>
                     <img src="Images/DH-MergeAndCenterRibbon.png" class="whiteBackSmaller" />
                 </iconic>
-                <p>On the home tab, find <em>Merge and center</em> button on the alignment chunk -- it should be in the
+                <p>
+                    On the home tab, find <em>Merge and center</em> button on the alignment chunk -- it should be in the
                     depressed state, showing that the current selection is already merged. Click on <em>Merge and center</em> to unmerge
-                    the cells.</p>
+                    the cells.
+                </p>
             </steps>
             <steps>
                 <iconic>
                     <img src="Images/DH-AfterDayUnmerge.png" class="whiteBackSmaller" />
                 </iconic>
-                <p>After the day-of-the-week cells are unmerged, you should still have the cells selected which will make it easier to
+                <p>
+                    After the day-of-the-week cells are unmerged, you should still have the cells selected which will make it easier to
                     merge both days all together. If all the cells aren't selected, that's ok -- you just have to reselect them. Be sure
-                    to select <em>all</em> of the cell between the lines (in this example, select M5:Q5)</p>
+                    to select <em>all</em> of the cell between the lines (in this example, select M5:Q5)
+                </p>
             </steps>
             <steps>
                 <iconic>
                     <img src="Images/DH-ExcelError.png" class="whiteBackSmaller" />
                 </iconic>
-                <p>Now we want to merge both days together. With the cells selected from the previous step, click the
+                <p>
+                    Now we want to merge both days together. With the cells selected from the previous step, click the
                     <em>Merge and center</em> button again.  When you do this, you will get an Excel warning about
-                    merging contents, click OK. We will fix up the formulas in the next step.</p>
+                    merging contents, click OK. We will fix up the formulas in the next step.
+                </p>
             </steps>
             <steps>
                 <iconic>
@@ -254,10 +267,12 @@
                 <iconic>
                     <img src="Images/DH-BrokenDay.png" class="whiteBackSmaller" />
                 </iconic>
-                <p>With the day-of-week and the date cells merged together, we have now created multiple columns for
+                <p>
+                    With the day-of-week and the date cells merged together, we have now created multiple columns for
                     a single day. Unfortunately, that warning that Excel gave about merging cells actually mattered.
                     When we merged the cells, we broke the date formulas for the later days.
-                    To fix this, we have to fixup the formula for the broken day.<br/><br/>Click on the cell with the broken date (S6 in this example)</p>
+                    To fix this, we have to fixup the formula for the broken day.<br /><br />Click on the cell with the broken date (S6 in this example)
+                </p>
             </steps>
             <steps>
                 <iconic>
@@ -273,10 +288,34 @@
             </steps>
             <steps>
                 <iconic>
-                    <img src="Images/DH-Done.png" class="whiteBackSmaller"/>
+                    <img src="Images/DH-Done.png" class="whiteBackSmaller" />
                 </iconic>
                 <p>All done!</p>
             </steps>
+            <zoomable>
+                <floatRight style="width: 20vw">
+                    <img src="Images/DH-Done.png" class="whiteBack" />
+                </floatRight>
+            </zoomable>
+            <p>When all is said and done, this is what you will end up with.</p>
+            <br clear="all" />
+            <h3><a name="broken">Why is my bracket broken?</a></h3>
+            <p>
+                When you get an area about the bracket being broken, there's not a lot you can do to fix it. This error
+                means that something internal on the workbook has become broken or inconsistent. It might be that a part
+                of a game didn't get inserted, or a game was partially removed. It also could be that a game ended up getting
+                inserted on top of another game.
+            </p>
+            <p>
+                If you are really daring, you can try to erase the parts of the bracket that are confusing things. If you want to
+                do this, make sure to clear not just the contents of the cells, but also the names of the cells (remember that
+                BracketBuilder uses named cells in order to keep track of where games are on the bracket).
+            </p>
+            <p>
+                See the next section <a href="./SheetEditing.html#moving">Manual Editing</a> for tips on ways to manually edit the
+                bracket
+            </p>
+        <h3><a name="manualEditing">Why is my bracket broken?</a></h3>
 
         </article>
 

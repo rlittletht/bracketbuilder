@@ -390,7 +390,7 @@ export class RangeInfo
             return null;
         }
 
-        let [sheetName, colRef1, fColAbsolute1, rowRef1, fRowAbsolute1, colRef2, fColAbsolute2, rowRef2, fRowAbsolute2, ichCurAfter] =
+        const { colRef1, rowRef1, colRef2, rowRef2 } =
             Parser.parseExcelFullAddress(TrimType.LeadingSpace, formula, 1, formula.length);
 
         if (!colRef1 || !rowRef1)
@@ -551,16 +551,32 @@ export class Ranges
 
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.getRangeInfoForNamedCell
+
+        be robust against broken named ranges
     ----------------------------------------------------------------------------*/
     static async getRangeForNamedCell(context: JsCtx, name: string): Promise<Excel.Range>
     {
-        const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
-        await context.sync();
+        try
+        {
+            const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+            await context.sync();
 
-        if (nameObject.isNullObject)
+            if (nameObject.isNullObject)
+                return null;
+
+            const range: Excel.Range = nameObject.getRange();
+            range.load("rowIndex");
+            range.load("rowCount");
+            range.load("columnIndex");
+            range.load("columnCount");
+
+            await context.sync();
+            return nameObject.getRange();
+        }
+        catch (e)
+        {
             return null;
-
-        return nameObject.getRange();
+        }
     }
 
     /*----------------------------------------------------------------------------
@@ -616,8 +632,17 @@ export class Ranges
         if (s !== "=")
             return null;
 
-        [s, ichCur] = Parser.parseString(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, formula, ichCur, ichMax);
-        return null;
+        const { colRef1, rowRef1, colRef2, rowRef2 } =
+            Parser.parseExcelFullAddress(TrimType.LeadingSpace, formula, ichCur, ichMax);
 
+        if (!colRef1 || !rowRef1)
+            return null;
+
+        const colStart = this.getCoordFromColName_1Based(colRef1) - 1;
+        const colEnd = colRef2 ? this.getCoordFromColName_1Based(colRef2) - 1 : colStart;
+        const rowStart = rowRef1 - 1;
+        const rowEnd = rowRef2 ? rowRef2 - 1 : rowStart;
+
+        return new RangeInfo(rowStart, rowEnd - rowStart + 1, colStart, colEnd - colStart + 1);
     }
 }

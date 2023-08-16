@@ -15,5 +15,6 @@ export class Coachstate
     static AfterInsertGameFailed = 6;
     static AfterInsertGameFailedOverlapping = 7;
     static GameDirty = 8;
-    static Done = 9;
+    static BrokenGame = 9;
+    static Done = 10;
 }

@@ -20,6 +20,7 @@ export class TeachableId
     static ErrorMessage = "e";
     static DirtyGame = "d";
     static AddGame = "A";
+    static BrokenGame = "BROKE";
 
     static toString(): string
     {
@@ -190,6 +191,10 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
             [
                 TeachableId.DirtyGame,
                 { coachStates: [Coachstate.GameDirty], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 1, globalCountLimit: 3 }
+            ],
+            [
+                TeachableId.BrokenGame,
+                { coachStates: [Coachstate.BrokenGame], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 5, globalCountLimit: 10 }
             ]
         ]);
 

@@ -354,7 +354,7 @@ export class StructureEditor
         {
             const game: IBracketGame = await BracketGame.CreateFromGameId(context, bracketName, item.GameId);
 
-            if (game.NeedsRepair)
+            if (game.NeedsDataPull)
             {
                 changes.push(new GridChange(GridChangeOperation.RemoveLite, GridItem.createFromItem(item)));
                 changes.push(new GridChange(GridChangeOperation.InsertLite, GridItem.createFromItem(item)));
