@@ -474,7 +474,7 @@ export class StructureRemove
             }
         }
 
-        context.releaseTrackedItemsUntil(bookmark)
+        context.releaseCacheObjectsUntil(bookmark)
         await context.sync();
 
         for (let _game of games)

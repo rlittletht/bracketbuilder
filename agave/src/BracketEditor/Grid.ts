@@ -943,7 +943,7 @@ export class Grid
         const timer: PerfTimer = new PerfTimer();
         const priorityMap: Map<string, number> = await Prioritizer.getTeamPriorityMap(context, null);
 
-        timer.pushTimer("buld fastRangeAreas");
+        timer.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         const fastRangeAreas: FastRangeAreas =
             await FastRangeAreas.getRangeAreasGridForRangeInfo(

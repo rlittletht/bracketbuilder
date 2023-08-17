@@ -1,4 +1,4 @@
-import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate } from "./TrackingCache";
+import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, CacheObject, ObjectType } from "./TrackingCache";
 
 export class JsCtx
 {
@@ -24,44 +24,64 @@ export class JsCtx
         this.m_cache.pushBookmark(bookmark);
     }
 
-    addTrackedItem(key: string, item: any)
+    addCacheObject(key: string, item: CacheObject)
     {
-        this.m_cache.addTrackedItem(this, key, item);
+        this.m_cache.addCacheObject(this, key, item);
     }
 
-    addTrackedItems(key: string, items: any[])
+    addCacheObjects(key: string, items: CacheObject[])
     {
-        this.m_cache.addTrackedItems(this, key, items);
+        this.m_cache.addCacheObjects(this, key, items);
     }
 
-    releaseTrackedItemsUntil(bookmark: string)
+    releaseCacheObjectsUntil(bookmark: string)
     {
         this.m_cache.releaseUntil(this, bookmark);
     }
 
-    releaseAllTrackedItems()
+    releaseAllCacheObjects()
     {
         this.m_cache.releaseAll(this);
     }
 
-    async getTrackedItem(key: string, del: PopulateCacheDelegate): Promise<any>
+    async getTrackedItemOrPopulate(key: string, del: PopulateCacheDelegate): Promise<any>
     {
-        return await this.m_cache.getTrackedItem(this, key, del);
+        const obj: CacheObject = await this.m_cache.getCacheItemOrPopulate(this, key, del);
+
+        if (obj == null)
+            return null;
+
+        return obj.o;
     }
 
-    async getTrackedItems(key: string, del: PopulateCacheWithArrayDelegate): Promise<any[]>
+    async getTrackedItemsOrPopulate(key: string, del: PopulateCacheWithArrayDelegate): Promise<any[]>
     {
-        return await this.m_cache.getTrackedItems(this, key, del);
+        const objs = await this.m_cache.getCacheObjectsOrPopulate(this, key, del);
+
+        if (objs == null || objs.length == 0)
+            return null;
+
+        return objs.map((_obj) => _obj.o);
     }
 
     getTrackedItemOrNull(key: string): any
     {
-        return this.m_cache.getTrackedItemOrNull(key);
+        const obj: CacheObject = this.m_cache.getCacheObjectOrNull(key);
+
+        if (obj == null)
+            return null;
+
+        return obj.o;
     }
 
     getTrackedItemsOrNull(key: string): any[]
     {
-        return this.m_cache.getTrackedItemsOrNull(key);
+        const objs: CacheObject[] = this.m_cache.getCacheObjectsOrNull(key);
+
+        if (objs == null || objs.length == 0)
+            return null;
+
+        return objs.map((_obj) => _obj.o);
     }
 }
 

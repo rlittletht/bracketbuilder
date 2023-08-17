@@ -193,7 +193,7 @@ export class SetupBook
 
                 await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
                 await appContext.invalidateHeroList(context);
-                context.releaseAllTrackedItems();
+                context.releaseAllCacheObjects();
             });
         }
         catch (error)
@@ -229,7 +229,7 @@ export class SetupBook
                 const context: JsCtx = new JsCtx(ctx);
                 await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
                 await appContext.invalidateHeroList(context);
-                context.releaseAllTrackedItems();
+                context.releaseAllCacheObjects();
             });
         }
         catch (error)

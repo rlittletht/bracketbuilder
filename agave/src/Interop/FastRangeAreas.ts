@@ -4,6 +4,7 @@ import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
 import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
+import { ObjectType } from "./TrackingCache";
 
 class AreasItem
 {
@@ -162,7 +163,7 @@ export class FastRangeAreas
             range = new RangeInfo(lastRow.LastRow + 1, rowCount, lastRow.FirstColumn, lastRow.ColumnCount);
         }
 
-        const areas = await context.getTrackedItem(
+        const areas = await context.getTrackedItemOrPopulate(
                 key,
                 async (context) =>
                 {
@@ -179,8 +180,11 @@ export class FastRangeAreas
                         rangeAreasAry.push(rangeAreas);
                     }
                     await context.sync();
-                    return rangeAreasAry;
+                    return { type: ObjectType.JsObject, o: rangeAreasAry };
                 });
+
+        if (!areas)
+            throw new Error("could not get areas from worksheet");
 
         this.m_areasItems.push(new AreasItem(areas, range));
     }

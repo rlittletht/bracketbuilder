@@ -93,7 +93,7 @@ export class StructureEditor
         {
             context.pushTrackingBookmark('undo');
             await _undoManager.undo(appContext, context);
-            context.releaseTrackedItemsUntil('undo');
+            context.releaseCacheObjectsUntil('undo');
 
             await appContext.invalidateHeroList(context);
         };
@@ -135,7 +135,7 @@ export class StructureEditor
         {
             context.pushTrackingBookmark('redo');
             await _undoManager.redo(appContext, context);
-            context.releaseTrackedItemsUntil('redo');
+            context.releaseCacheObjectsUntil('redo');
 
             await appContext.invalidateHeroList(context);
         };
@@ -164,7 +164,7 @@ export class StructureEditor
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
             await StructureInsert.insertGameAtSelection(appContext, context, game);
-            context.releaseTrackedItemsUntil(bookmark);
+            context.releaseCacheObjectsUntil(bookmark);
             timer.popTimer();
 
             timer.pushTimer("insertGameAtSelectionClick PART 2");
@@ -193,7 +193,7 @@ export class StructureEditor
             const bookmark: string = "repairGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
             await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
-            context.releaseTrackedItemsUntil(bookmark);
+            context.releaseCacheObjectsUntil(bookmark);
 
             appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
@@ -268,7 +268,7 @@ export class StructureEditor
             const bookmark: string = "removeGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
             await StructureRemove.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
-            context.releaseTrackedItemsUntil(bookmark);
+            context.releaseCacheObjectsUntil(bookmark);
 
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
@@ -295,7 +295,7 @@ export class StructureEditor
             context.pushTrackingBookmark(bookmark);
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
-            context.releaseTrackedItemsUntil(bookmark);
+            context.releaseCacheObjectsUntil(bookmark);
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
             await appContext.invalidateHeroList(context);
@@ -364,7 +364,7 @@ export class StructureEditor
         await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
         appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
     }
 
 

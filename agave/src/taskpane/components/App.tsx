@@ -148,7 +148,7 @@ export default class App extends React.Component<AppProps, AppState>
                     const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
 
                     grid.logGridCondensed();
-                    context.releaseAllTrackedItems();
+                    context.releaseAllCacheObjects();
                 });
 
             StructureInsertTests.runAllTests(appContext, outStream);
@@ -544,7 +544,7 @@ export default class App extends React.Component<AppProps, AppState>
             games.push(temp);
         }
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
         appContext.Timer.stopAllAggregatedTimers();
         appContext.Timer.popTimer();
@@ -572,7 +572,7 @@ export default class App extends React.Component<AppProps, AppState>
                 const context: JsCtx = new JsCtx(ctx);
 
                 [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context)
-                context.releaseAllTrackedItems();
+                context.releaseAllCacheObjects();
             });
         AppContext.checkpoint("gss.2");
 
@@ -626,7 +626,7 @@ export default class App extends React.Component<AppProps, AppState>
                     const context: JsCtx = new JsCtx(ctx);
 
                     await this.invalidateHeroList(context);
-                    context.releaseAllTrackedItems();
+                    context.releaseAllCacheObjects();
                 }
                 catch (e)
                 {
@@ -665,7 +665,7 @@ export default class App extends React.Component<AppProps, AppState>
 
                 await context.sync();
                 AppContext.checkpoint(`The range address was ${range.address}.`);
-                context.releaseAllTrackedItems();
+                context.releaseAllCacheObjects();
             });
         }
         catch (error)

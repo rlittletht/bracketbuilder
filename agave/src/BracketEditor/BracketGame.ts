@@ -9,7 +9,7 @@ import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
 import { OADate } from "../Interop/Dates";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
-import { TrackingCache } from "../Interop/TrackingCache";
+import { TrackingCache, ObjectType } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
@@ -406,14 +406,14 @@ export class BracketGame implements IBracketGame
                     appContext.Timer.startAggregatedTimer("innerBind", "inner bind");
 
                 AppContext.checkpoint("b.7");
-                const sheet: Excel.Worksheet =
-                    await context.getTrackedItem(
+                const sheet =
+                    await context.getTrackedItemOrPopulate(
                         BracketSources.SheetName,
                         async (context): Promise<any> =>
                         {
                             const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
                             await context.sync();
-                            return sheetGet;
+                            return { type: ObjectType.JsObject, o: sheetGet };
                         });
 
                 //                if (sheet == null)
@@ -424,33 +424,36 @@ export class BracketGame implements IBracketGame
 
                 AppContext.checkpoint("b.8");
 
-                if (!sheet.isNullObject)
+                if (sheet && !sheet.isNullObject)
                 {
                     const tableName: string = "BracketSourceData";
 
-                    const table: Excel.Table =
-                        await context.getTrackedItem(
+                    const table=
+                        await context.getTrackedItemOrPopulate(
                             tableName,
                             async (context): Promise<any> =>
                             {
                                 const tableGet = sheet.tables.getItemOrNullObject(tableName);
                                 await context.sync();
-                                return tableGet;
+                                return { type: ObjectType.JsObject, o: tableGet };
                             }
                         );
 
-                    if (!table.isNullObject)
+                    if (table && !table.isNullObject)
                     {
-                        const range: Excel.Range =
-                            await context.getTrackedItem(
+                        const range =
+                            await context.getTrackedItemOrPopulate(
                                 "tableBodyRange",
                                 async (context): Promise<any> =>
                                 {
                                     const rangeGet: Excel.Range = table.getDataBodyRange();
                                     rangeGet.load("values");
                                     await context.sync();
-                                    return rangeGet;
+                                    return { type: ObjectType.JsObject, o: rangeGet };
                                 });
+
+                        if (!range)
+                            throw new Error("could not get range from worksheet");
 
                         const data: any[][] = range.values;
 

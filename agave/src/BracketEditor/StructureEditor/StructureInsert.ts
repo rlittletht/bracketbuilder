@@ -87,7 +87,7 @@ export class StructureInsert
         context.Ctx.trackedObjects.remove(rng);
         context.Ctx.trackedObjects.remove(sheet);
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
 
     }
@@ -291,7 +291,7 @@ export class StructureInsert
         context.Ctx.trackedObjects.remove(rngTarget);
         context.Ctx.trackedObjects.remove(rng);
         context.Ctx.trackedObjects.remove(sheet);
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
 
     }
@@ -464,7 +464,7 @@ export class StructureInsert
         {
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
             // need to release any of our cached items since we just edited the book
-            context.releaseTrackedItemsUntil(bookmark);
+            context.releaseCacheObjectsUntil(bookmark);
             context.pushTrackingBookmark(bookmark);
         }
 

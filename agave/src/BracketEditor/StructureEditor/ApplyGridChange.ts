@@ -62,7 +62,7 @@ export class ApplyGridChange
 
         let game: IBracketGame = await BracketGame.CreateFromGameId(context, bracketName, change.GameId);
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
 
         AppContext.checkpoint("appc.7");
@@ -156,7 +156,7 @@ export class ApplyGridChange
 
         AppContext.checkpoint("appc.18");
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
 
         return undoGameDataItem;
@@ -184,7 +184,7 @@ export class ApplyGridChange
         }
 
         // must invalidate all of our caches
-        context.releaseAllTrackedItems();
+        context.releaseAllCacheObjects();
         // and now do all the adds
 
         AppContext.checkpoint("appc.12");

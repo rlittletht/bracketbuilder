@@ -67,7 +67,7 @@ export class GameLines
             }
         }
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
 
         return [topSource, bottomSource, winnerTarget];

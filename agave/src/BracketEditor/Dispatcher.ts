@@ -100,7 +100,7 @@ export class Dispatcher
                             appContext,
                             context);
 
-                        context.releaseAllTrackedItems();
+                        context.releaseAllCacheObjects();
                     })
             });
     }

@@ -1,4 +1,4 @@
-import { TrackingCache } from "./TrackingCache";
+import { TrackingCache, ObjectType } from "./TrackingCache";
 import { Parser, Quoting, TrimType, ParseStringAccepts } from "./Parser";
 import { JsCtx } from "./JsCtx";
 
@@ -361,15 +361,18 @@ export class RangeInfo
 
     static async getRangeInfoForNamedCellFaster(context: JsCtx, name: string): Promise<RangeInfo>
     {
-        const items: Excel.NamedItem[] =
-            await context.getTrackedItem(
+        const items =
+            await context.getTrackedItemOrPopulate(
                 "workbookNamesItems",
                 async (context): Promise<any> =>
                 {
                     context.Ctx.workbook.load("names");
                     await context.sync();
-                    return context.Ctx.workbook.names.items;
+                    return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
                 });
+
+        if (!items)
+            throw new Error("could not get NamedItems from worksheet");
 
         let i: number = 0;
 
