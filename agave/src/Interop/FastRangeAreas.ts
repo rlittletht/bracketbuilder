@@ -119,6 +119,16 @@ export class FastRangeAreas
         return this.getRangeForRangeInfo(range).format;
     }
 
+    getFormulasForRangeInfo(range: RangeInfo): any[][]
+    {
+        return this.getRangeForRangeInfo(range).formulas;
+    }
+
+    getValuesForRangeInfo(range: RangeInfo): any[][]
+    {
+        return this.getRangeForRangeInfo(range).values;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: RangeInfo.getRangeAreasGridForRangeInfo
 
@@ -164,7 +174,7 @@ export class FastRangeAreas
                         const rangeAreas: Excel.RangeAreas = sheet.getRanges(addr);
                         let props =
                             //                            'format, areaCount, areas, areas.items, areas.items.format, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
-                            'areas.items, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
+                            'areas.items, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values, areas.items.formulas';
                         rangeAreas.load(props);
                         rangeAreasAry.push(rangeAreas);
                     }

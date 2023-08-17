@@ -981,7 +981,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(context, null, bracketName, new GameNum(i));
+            await game.Load(context, null, bracketName, new GameNum(i), fastRangeAreas);
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {

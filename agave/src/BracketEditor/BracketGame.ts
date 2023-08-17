@@ -13,6 +13,7 @@ import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
 
 export interface IBracketGame
 {
@@ -350,7 +351,7 @@ export class BracketGame implements IBracketGame
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.Bind
     ----------------------------------------------------------------------------*/
-    async Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
+    async Bind(context: JsCtx, appContext: IAppContext, fastRangeAreas?: FastRangeAreas): Promise<IBracketGame>
     {
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
@@ -491,14 +492,14 @@ export class BracketGame implements IBracketGame
             }
             // now figure out if we need to repair this game
             if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
-                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName);
+                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName, fastRangeAreas);
 
-            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName);
+            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName, fastRangeAreas);
 
             if (BracketGame.IsTeamSourceStatic(this.BottomTeamName))
-                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
+                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName, fastRangeAreas);
 
-            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName);
+            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName, fastRangeAreas);
 
             let timeOverride: number;
 
@@ -510,7 +511,7 @@ export class BracketGame implements IBracketGame
         return this;
     }
 
-    async Load(context: JsCtx, appContext: IAppContext, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
+    async Load(context: JsCtx, appContext: IAppContext, bracketName: string, gameNum: GameNum, fastRangeAreas?: FastRangeAreas): Promise<IBracketGame>
     {
         this.LoadSync(bracketName, gameNum);
 
@@ -522,7 +523,7 @@ export class BracketGame implements IBracketGame
         // for the parts of this game
 
         AppContext.checkpoint("l.4");
-        return await this.Bind(context, appContext);
+        return await this.Bind(context, appContext, fastRangeAreas);
     }
 
     /*----------------------------------------------------------------------------

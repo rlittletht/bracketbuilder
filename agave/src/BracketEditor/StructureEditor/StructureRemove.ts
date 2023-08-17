@@ -12,6 +12,7 @@ import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { HelpTopic } from "../../HelpInfo";
 import { FormulaBuilder } from "../FormulaBuilder";
+import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 
 export class StructureRemove
 {
@@ -129,18 +130,33 @@ export class StructureRemove
         as well as the override (directly edited) value; or [null, null]
         if not overridden
     ----------------------------------------------------------------------------*/
-    static async getTeamSourceNameOverrideValueForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
+    static async getTeamSourceNameOverrideValueForNamedRange(context: JsCtx, cellName: string, gameTeamName: string, fastRangeAreas?: FastRangeAreas)
         : Promise<string>
     {
-        let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
-
-        if (range == null)
+        const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
+        if (rangeInfo == null)
             return null;
 
-        range.load("formulas");
-        await context.sync();
+        let formulas: any[][];
 
-        const value: string = range.formulas[0][0];
+        if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
+        {
+            formulas = fastRangeAreas.getFormulasForRangeInfo(rangeInfo);
+        }
+        else
+        {
+            let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
+
+            if (range == null)
+                return null;
+
+            range.load("formulas");
+            await context.sync();
+
+            formulas = range.formulas;
+        }
+
+        const value: string = formulas[0][0];
 
         // if this team name is not static, then we don't propagate any direct typing
         if (!BracketGame.IsTeamSourceStatic(gameTeamName))
@@ -160,17 +176,31 @@ export class StructureRemove
 
         returns the calculated value for the game
     ----------------------------------------------------------------------------*/
-    static async getTeamSourceNameValueForNamedRange(context: JsCtx, cellName: string): Promise<string>
+    static async getTeamSourceNameValueForNamedRange(context: JsCtx, cellName: string, fastRangeAreas?: FastRangeAreas): Promise<string>
     {
-        let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
-
-        if (range == null)
+        const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
+        if (rangeInfo == null)
             return "";
 
-        range.load("values");
-        await context.sync();
+        let values: any[][];
 
-        return range.values[0][0];
+        if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
+        {
+            values = fastRangeAreas.getValuesForRangeInfo(rangeInfo);
+        }
+        else
+        {
+            let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
+
+            if (range == null)
+                return "";
+
+            range.load("values");
+            await context.sync();
+            values = range.values;
+        }
+
+        return values[0][0];
     }
 
     /*----------------------------------------------------------------------------
@@ -179,26 +209,43 @@ export class StructureRemove
         Given the name of the gameinfo cell, remove the named range and return
         the values for the field# and the time
     ----------------------------------------------------------------------------*/
-    static async getFieldAndTimeOverrideValuesForNamedRange(context: JsCtx, cellName: string): Promise<[any, any]>
+    static async getFieldAndTimeOverrideValuesForNamedRange(context: JsCtx, cellName: string, fastRangeAreas?: FastRangeAreas): Promise<[any, any]>
     {
-        let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
-
-        if (range == null)
+        const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
+        if (rangeInfo == null)
             return [null, 0];
 
-        range.load("address, rowIndex, rowCount, columnIndex, columnCount");
-        await context.sync();
-        const gameNumRange: RangeInfo = RangeInfo.createFromRange(range);
+        let formulas: any[][];
 
-        range = Ranges.rangeFromRangeInfo(
-            range.worksheet,
-            gameNumRange.offset(0, 3, -1, 1));
+        if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
+        {
+            const gameNumRange = rangeInfo.offset(0, 3, -1, 1);
 
-        range.load("formulas");
-        await context.sync();
+            formulas = fastRangeAreas.getFormulasForRangeInfo(gameNumRange);
+        }
+        else
+        {
+            let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
-        const field: any = range.formulas[0][0];
-        const time: any = range.formulas[2][0];
+            if (range == null)
+                return [null, 0];
+
+            range.load("address, rowIndex, rowCount, columnIndex, columnCount");
+            await context.sync();
+            const gameNumRange: RangeInfo = RangeInfo.createFromRange(range);
+
+            range = Ranges.rangeFromRangeInfo(
+                range.worksheet,
+                gameNumRange.offset(0, 3, -1, 1));
+
+            range.load("formulas");
+            await context.sync();
+
+            formulas = range.formulas;
+        }
+
+        const field: any = formulas[0][0];
+        const time: any = formulas[2][0];
 
         return [field, time];
     }

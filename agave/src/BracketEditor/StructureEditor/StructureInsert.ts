@@ -455,6 +455,8 @@ export class StructureInsert
 
         game.Unbind();
 
+        context.pushTrackingBookmark(bookmark);
+
         // first, see if this game is already on the bracket, and if so, delete it
         await game.Bind(context, appContext);
 
