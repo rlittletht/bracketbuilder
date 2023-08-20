@@ -28,7 +28,7 @@ export interface StaticConfig
     appLogging: boolean;
 }
 
-const isLocalHost = window.location.host.indexOf('localhost') > -1;
+const isLocalHost = true; //  window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
@@ -53,7 +53,7 @@ export const s_staticConfig: StaticConfig =
     championSize: 12,
     advanceSize: 8,
     logMoveKeySetting: false && isLocalHost,
-    perfTimers: false,
+    perfTimers: true,
     logTrackingCache: isLocalHost && true,
     logMoveTree: true && isLocalHost,
     appLogging: true && isLocalHost
