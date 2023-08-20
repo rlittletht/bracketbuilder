@@ -5,7 +5,7 @@ import { StreamWriter } from "../Support/StreamWriter";
 import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
 import { ObjectType, CacheObject } from "./TrackingCache";
-import { PerfTimer } from "../PerfTimer";
+import { PerfTimer, _TimerStack } from "../PerfTimer";
 
 class FormulaAreasItem
 {
@@ -184,9 +184,7 @@ export class FastFormulaAreas
                 key,
                 async (context) =>
                 {
-                    const timer = new PerfTimer();
-
-                    timer.pushTimer("fastFormulas addMoreRowsToRangeAreaGrid sync");
+                    _TimerStack.pushTimer("fastFormulas addMoreRowsToRangeAreaGrid sync");
                     const addr: string = Ranges.addressFromCoordinates([range.FirstRow, range.FirstColumn], [range.LastRow, range.LastColumn]);
 
                     const rangeAreas: Excel.RangeAreas = sheet.getRanges(addr);
@@ -194,7 +192,7 @@ export class FastFormulaAreas
                     rangeAreas.load(props);
 
                     await context.sync();
-                    timer.popTimer();
+                    _TimerStack.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreas};
                 });
 

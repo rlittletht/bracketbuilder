@@ -13,6 +13,7 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { GridItem } from "../GridItem";
 import { Coachstate } from "../../Coachstate";
 import { HelpTopic } from "../../HelpInfo";
+import { _TimerStack } from "../../PerfTimer";
 
 export class StructureInsert
 {
@@ -480,12 +481,12 @@ export class StructureInsert
             context.pushTrackingBookmark(bookmark);
         }
 
-        appContext.Timer.pushTimer("insertGameAtSelection:gridBuildFromBracket");
+        _TimerStack.pushTimer("insertGameAtSelection:gridBuildFromBracket");
         // first make sure we have a complete grid for the bracket
         let grid: Grid = await StructureEditor.gridBuildFromBracket(context);
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
-        appContext.Timer.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
+        _TimerStack.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
 
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
@@ -501,7 +502,7 @@ export class StructureInsert
         }
 
         const { gridNew, failReason, coachState, topic } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
        
         // caller 
         if (failReason)
@@ -516,12 +517,12 @@ export class StructureInsert
             return false;
         }
 
-        appContext.Timer.pushTimer("insertGameAtSelection:diffAndApplyChanges");
+        _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
 
         let undoGameDataItems: UndoGameDataItem[] =
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
 
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);

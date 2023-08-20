@@ -16,7 +16,7 @@ import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
 import { JsCtx } from "../../Interop/JsCtx";
-import { PerfTimer } from "../../PerfTimer";
+import { PerfTimer, _TimerStack } from "../../PerfTimer";
 import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
 import { HelpTopic, HelpInfo } from "../../HelpInfo";
@@ -162,23 +162,25 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            appContext.Timer.pushTimer("insertGameAtSelectionClick PART 1");
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1");
 
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
 
+            _TimerStack.pushTimer("populate FastFormulas");
             await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
+            _TimerStack.popTimer();
 
             await StructureInsert.insertGameAtSelection(appContext, context, game);
             context.releaseCacheObjectsUntil(bookmark);
-            appContext.Timer.popTimer();
+            _TimerStack.popTimer();
 
-            appContext.Timer.pushTimer("insertGameAtSelectionClick PART 2");
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2");
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
             await appContext.invalidateHeroList(context);
-            appContext.Timer.popTimer();
+            _TimerStack.popTimer();
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

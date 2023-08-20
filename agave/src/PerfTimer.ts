@@ -28,9 +28,20 @@ export class PerfTimer
 
         timer.timerName = message;
         PerfTimer.startTimer(timer);
+        if (this.m_perfTimerStack.length == 0)
+        {
+            console.log(`++++ START: Timer Start: ${message}`);
+        }
+        else
+        {
+            const itemNames = this.m_perfTimerStack.map((_item) => _item.timerName);
+
+            const logOut = `+- Start: ${itemNames.join(" -> ")} -> ${ message }`;
+            console.log(`${" ".padStart(this.m_perfTimerStack.length * 2, " ")}${logOut}`);
+        }
+
         this.m_perfTimerStack.push(timer);
 
-        console.log(`++++ START: Timer Start: ${message}`);
     }
 
     static startTimer(timer: PerfTimerItem)
@@ -62,8 +73,9 @@ export class PerfTimer
 
     appendSummaryToRemainingTimers(childSummary: string)
     {
-        for (let _item of this.m_perfTimerStack)
+        if (this.m_perfTimerStack.length > 0)
         {
+            const _item = this.m_perfTimerStack[this.m_perfTimerStack.length - 1];
             _item.childResults.push(childSummary);
         }
     }
@@ -76,7 +88,7 @@ export class PerfTimer
         let timer: PerfTimerItem = this.m_perfTimerStack.pop();
         PerfTimer.pauseTimerAndAccumulate(timer);
 
-        const childSummary = PerfTimer.reportPerfTimerItem(timer);
+        const childSummary = this.reportPerfTimerItem(timer);
         this.appendSummaryToRemainingTimers(childSummary);
     }
 
@@ -125,28 +137,42 @@ export class PerfTimer
 
             // make sure timer is accumulated. if its already paused, its a noop
             PerfTimer.pauseTimerAndAccumulate(timer);
-            const childSummary = PerfTimer.reportPerfTimerItem(timer);
+            const childSummary = this.reportPerfTimerItem(timer);
             this.appendSummaryToRemainingTimers(childSummary);
         }
 
         this.m_aggregatedTimers.clear();
     }
 
-    static reportPerfTimerItem(item: PerfTimerItem): string
+    reportPerfTimerItem(item: PerfTimerItem): string
     {
         if (!s_staticConfig.perfTimers)
             return "";
 
+        let prefix = "";
+        if (this.m_perfTimerStack.length != 0)
+        {
+            const logOut = `+-`;
+            prefix = `${" ".padStart(this.m_perfTimerStack.length * 2, " ")}${logOut}`;
+        }
+
         if (item.count > 1)
         {
-            console.log(`Timer: ${item.timerName}: total: ${item.msecCumulative}, min/max: (${item.msecMin}, ${item.msecMax}), avergage: ${item.msecCumulative / item.count}, count: ${item.count}`);
+            console.log(`${prefix} Stop: ${item.timerName}: total: ${item.msecCumulative}, min/max: (${item.msecMin}, ${item.msecMax}), avergage: ${item.msecCumulative / item.count}, count: ${item.count}`);
         }
         else
         {
             const childResults = item.childResults.length > 0 ? `(${item.childResults.join("+")})` : "";
-            console.log(`----- STOP: Timer ${item.timerName}: ${item.msecCumulative}${childResults}`);
+            const itemNames = this.m_perfTimerStack.map((_item) => _item.timerName);
+
+            if (this.m_perfTimerStack.length == 0)
+                console.log(`----- STOP: ${item.msecCumulative}ms ${item.timerName}${childResults}`);
+            else
+                console.log(`${prefix} Stop : ${item.msecCumulative}ms ${itemNames.join(" -> ")} -> ${item.timerName}${childResults}`);
         }
         return `${item.timerName}(${item.msecCumulative})`;
     }
 
 }
+
+export const _TimerStack = new PerfTimer();

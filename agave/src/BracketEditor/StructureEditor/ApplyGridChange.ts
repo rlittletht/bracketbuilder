@@ -11,6 +11,7 @@ import { UndoGameDataItem, UndoManager } from "../Undo";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { Grid, GridColumnType } from "../Grid";
+import { _TimerStack } from "../../PerfTimer";
 
 export class ApplyGridChange
 {
@@ -180,7 +181,7 @@ export class ApplyGridChange
 
         AppContext.checkpoint("appc.1");
 
-        appContext.Timer.pushTimer("applyChanges:executeRemoveChange");
+        _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
         // do all the removes first
         for (let item of changes)
@@ -191,13 +192,13 @@ export class ApplyGridChange
 
             await this.executeRemoveChange(appContext, context, item, bracketName);
         }
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
         // must invalidate all of our caches
         context.releaseAllCacheObjects();
         // and now do all the adds
 
-        appContext.Timer.pushTimer("applyChanges:executeAddChange");
+        _TimerStack.pushTimer("applyChanges:executeAddChange");
         AppContext.checkpoint("appc.12");
         for (let item of changes)
         {
@@ -211,7 +212,7 @@ export class ApplyGridChange
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);
         }
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
         return undoGameDataItems;
     }

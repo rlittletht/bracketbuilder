@@ -17,7 +17,7 @@ import { s_staticConfig } from "../StaticConfig";
 import { OADate } from "../Interop/Dates";
 import { TrackingCache, CacheObject, ObjectType } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
-import { PerfTimer } from "../PerfTimer";
+import { PerfTimer, _TimerStack } from "../PerfTimer";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { TrError } from "../Exceptions";
@@ -997,10 +997,9 @@ export class Grid
     ----------------------------------------------------------------------------*/
     async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
-        const timer: PerfTimer = new PerfTimer();
         const priorityMap: Map<string, number> = await Prioritizer.getTeamPriorityMap(context, null);
 
-        timer.pushTimer("build fastRangeAreas");
+        _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
 
         const fastFormulaAreas = await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
@@ -1017,28 +1016,28 @@ export class Grid
 
                     return { type: ObjectType.TrObject, o: areas };
                 });
-        timer.popTimer();
+        _TimerStack.popTimer();
 
         AppContext.checkpoint("lgfb.1");
-        timer.pushTimer("getFirstGridPatternCell");
+        _TimerStack.pushTimer("getFirstGridPatternCell");
         this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreasSmaller);
 
         if (this.m_firstGridPattern == null)
             throw new Error("could not load grid pattern");
 
-        timer.popTimer();
-        timer.pushTimer("getGridColumnDateValues");
+        _TimerStack.popTimer();
+        _TimerStack.pushTimer("getGridColumnDateValues");
         this.m_datesForGrid = await this.getGridColumnDateValues(context);
-        timer.popTimer();
-        timer.pushTimer("getFieldCount");
+        _TimerStack.popTimer();
+        _TimerStack.pushTimer("getFieldCount");
         this.m_fieldsToUse = await StructureEditor.getFieldCount(context);
-        timer.popTimer();
+        _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("lgfb.2");
-        timer.pushTimer("loadGridFromBracket::loop");
+        _TimerStack.pushTimer("loadGridFromBracket::loop");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
             let game: BracketGame = new BracketGame()
@@ -1123,9 +1122,9 @@ export class Grid
 
                 this.m_mapGameItem.set(gameItem.GameId.Value, gameItem);
             }
-            timer.stopAllAggregatedTimers();
+            _TimerStack.stopAllAggregatedTimers();
         }
-        timer.popTimer();
+        _TimerStack.popTimer();
         this.logGrid();
     }
 

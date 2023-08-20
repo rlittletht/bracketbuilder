@@ -10,6 +10,7 @@ import { mergeStyles, mergeStyleSets } from '@fluentui/react/lib/Styling';
 import { Teachable, TeachableActiveDelegate, TeachableId } from "./Teachable";
 import { DirectionalHint } from '@fluentui/react';
 import { Coachstate } from "../../Coachstate";
+import { _TimerStack } from "../../PerfTimer";
 
 export interface GameItemProps
 {
@@ -37,20 +38,20 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
     static async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
-        appContext.Timer.pushTimer("DoInsertGame");
+        _TimerStack.pushTimer("DoInsertGame");
         appContext.Teaching.clearCoachmark();
         await StructureEditor.insertGameAtSelectionClick(appContext, bracketGame);
 
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
         return true; // we don't get an error back...
     }
 
     static async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
-        appContext.Timer.pushTimer("DoRemoveGame");
+        _TimerStack.pushTimer("DoRemoveGame");
         appContext.Teaching.clearCoachmark();
         await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
         return true; // we don't get an error back...
     }
 

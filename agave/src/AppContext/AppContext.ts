@@ -17,7 +17,6 @@ export interface IAppContext
     Messages: IAppContextMessages;
     Teaching: IAppContextTeaching;
 
-    get Timer(): PerfTimer;
     /*async*/ invalidateHeroList(context: JsCtx);
     getSelectedBracket();
     getGames(): IBracketGame[];
@@ -72,8 +71,6 @@ export class AppContext implements IAppContext
         this.Teaching = new AppContextTeaching(this.m_durableState);
     }
 
-
-    get Timer(): PerfTimer { return this.m_perfTimer; }
     get SetupStateFromState(): SetupState
     {
         return this.m_getSetupStateDelegate?.() ?? "U";

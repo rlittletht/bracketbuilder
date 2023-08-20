@@ -14,6 +14,7 @@ import { JsCtx } from "../Interop/JsCtx";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
 import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { _TimerStack } from "../PerfTimer";
 
 export interface IBracketGame
 {
@@ -353,11 +354,12 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
     {
+        appContext;
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
             return this;
 
-        appContext?.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
+        _TimerStack.startAggregatedTimer("namedInner", "getNamedRanges inner");
 
         AppContext.checkpoint("b.2");
 
@@ -375,7 +377,7 @@ export class BracketGame implements IBracketGame
             // we will still try to build as much as we can. but very carefully
         }
 
-        appContext?.Timer.pauseAggregatedTimer("namedInner");
+        _TimerStack.pauseAggregatedTimer("namedInner");
 
         if (!this.IsChampionship)
         {
@@ -397,7 +399,7 @@ export class BracketGame implements IBracketGame
                 // we didn't bind to a game in the bracket. get the swap state from the source data
                 // table
 
-                appContext?.Timer.startAggregatedTimer("innerBind", "inner bind");
+                _TimerStack.startAggregatedTimer("innerBind", "inner bind");
 
                 AppContext.checkpoint("b.7");
                 const sheet =
@@ -461,12 +463,12 @@ export class BracketGame implements IBracketGame
                         }
                     }
                 }
-                appContext?.Timer.pauseAggregatedTimer("innerBind");
+                _TimerStack.pauseAggregatedTimer("innerBind");
             }
 
             if (this.m_gameNumberLocation != null)
             {
-                appContext?.Timer.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
+                _TimerStack.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
 
                 const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
 
@@ -482,10 +484,10 @@ export class BracketGame implements IBracketGame
                 const mins = OADate.MinutesFromTimeString(time);
                 this.m_startTime = mins;
 
-                appContext?.Timer.pauseAggregatedTimer("innerGameNum");
+                _TimerStack.pauseAggregatedTimer("innerGameNum");
             }
 
-            appContext?.Timer.startAggregatedTimer("innerRepair", "check for repair inner");
+            _TimerStack.startAggregatedTimer("innerRepair", "check for repair inner");
             // now figure out if we need to repair this game
             if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
                 this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName);
@@ -496,14 +498,14 @@ export class BracketGame implements IBracketGame
                 this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
 
             this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName);
-            appContext?.Timer.pauseAggregatedTimer("innerRepair");
+            _TimerStack.pauseAggregatedTimer("innerRepair");
 
             let timeOverride: number;
-            appContext?.Timer.startAggregatedTimer("innerRepair2", "check for repair inner field/time");
+            _TimerStack.startAggregatedTimer("innerRepair2", "check for repair inner field/time");
 
             [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
             this.m_timeOverride = typeof timeOverride !== "number" ? 0 : timeOverride;
-            appContext?.Timer.pauseAggregatedTimer("innerRepair2");
+            _TimerStack.pauseAggregatedTimer("innerRepair2");
 
         }
 

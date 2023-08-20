@@ -5,7 +5,7 @@ import { StreamWriter } from "../Support/StreamWriter";
 import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
 import { ObjectType, CacheObject } from "./TrackingCache";
-import { PerfTimer } from "../PerfTimer";
+import { PerfTimer, _TimerStack } from "../PerfTimer";
 
 class AreasItem
 {
@@ -187,11 +187,9 @@ export class FastRangeAreas
                         rangeAreas.load(props);
                         rangeAreasAry.push(rangeAreas);
                     }
-                    const timer = new PerfTimer();
-
-                    timer.pushTimer("addMoreRowsToRangeAreaGrid sync");
+                    _TimerStack.pushTimer("addMoreRowsToRangeAreaGrid sync");
                     await context.sync();
-                    timer.popTimer();
+                    _TimerStack.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreasAry };
                 });
 

@@ -50,6 +50,7 @@ import { StructureInsertTests } from "../../BracketEditor/StructureEditor/Strutu
 import { ProductName } from "./ProductName";
 import { RangeInfo } from "../../Interop/Ranges";
 import { FastFormulaAreas, FastFormulaAreasTest } from "../../Interop/FastFormulaAreas";
+import { _TimerStack } from "../../PerfTimer";
 
 /* global console, Excel, require  */
 
@@ -411,22 +412,22 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     async invalidateHeroList(context: JsCtx)
     {
-        this.m_appContext.Timer.pushTimer("invalidateHeroList");
+        _TimerStack.pushTimer("invalidateHeroList");
 
         const bookmark: string = "invalidateHeroList";
         context.pushTrackingBookmark(bookmark);
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildFastFormulaAreas");
+        _TimerStack.pushTimer("invalidateHeroList.buildFastFormulaAreas");
         await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
-        this.m_appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
         AppContext.checkpoint("ihl.1");
         let setupState: SetupState;
         let bracketChoice: string;
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.getSetupState");
+        _TimerStack.pushTimer("invalidateHeroList.getSetupState");
         [setupState, bracketChoice] = await (this.getSetupState(context));
-        this.m_appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
         AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
@@ -438,15 +439,15 @@ export default class App extends React.Component<AppProps, AppState>
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.getGamesList");
+        _TimerStack.pushTimer("invalidateHeroList.getGamesList");
 
         AppContext.checkpoint("ihl.5");
         let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
         AppContext.checkpoint("ihl.6");
-        this.m_appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildToolbars");
+        _TimerStack.pushTimer("invalidateHeroList.buildToolbars");
 
         AppContext.checkpoint("ihl.7");
         [format, title, list] = HeroList.buildHeroList(setupState);
@@ -493,7 +494,7 @@ export default class App extends React.Component<AppProps, AppState>
             else if (countGamesLinked == 1)
                 this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
         }
-        this.m_appContext.Timer.popTimer();        
+        _TimerStack.popTimer();        
 
         // update the games list
 
@@ -509,7 +510,7 @@ export default class App extends React.Component<AppProps, AppState>
                 mainToolbar: items
             });
         context.releaseCacheObjectsUntil(bookmark);
-        this.m_appContext.Timer.popTimer();
+        _TimerStack.popTimer();
     }
 
     async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
@@ -548,7 +549,7 @@ export default class App extends React.Component<AppProps, AppState>
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        appContext.Timer.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
+        _TimerStack.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
         await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
 
@@ -556,13 +557,13 @@ export default class App extends React.Component<AppProps, AppState>
             return [];
 
         let games: IBracketGame[] = [];
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
         const bookmark: string = "getGamesList";
 
         context.pushTrackingBookmark(bookmark);
 
-        appContext.Timer.pushTimer("getGamesList - inner loop");
+        _TimerStack.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
             let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, bracket, new GameNum(i));
@@ -571,8 +572,8 @@ export default class App extends React.Component<AppProps, AppState>
 
         context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
-        appContext.Timer.stopAllAggregatedTimers();
-        appContext.Timer.popTimer();
+        _TimerStack.stopAllAggregatedTimers();
+        _TimerStack.popTimer();
 
         return games;
     }
