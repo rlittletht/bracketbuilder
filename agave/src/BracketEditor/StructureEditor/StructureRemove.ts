@@ -13,6 +13,7 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { HelpTopic } from "../../HelpInfo";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
 
 export class StructureRemove
 {
@@ -130,18 +131,20 @@ export class StructureRemove
         as well as the override (directly edited) value; or [null, null]
         if not overridden
     ----------------------------------------------------------------------------*/
-    static async getTeamSourceNameOverrideValueForNamedRange(context: JsCtx, cellName: string, gameTeamName: string, fastRangeAreas?: FastRangeAreas)
+    static async getTeamSourceNameOverrideValueForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
         : Promise<string>
     {
+        const fastFormulaAreas: FastFormulaAreas = context.getTrackedItemOrNull("grid-FastFormulaAreas");
+
         const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
         if (rangeInfo == null)
             return null;
 
         let formulas: any[][];
 
-        if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
+        if (fastFormulaAreas && fastFormulaAreas.rowCountNeededToExpand(rangeInfo) == 0)
         {
-            formulas = fastRangeAreas.getFormulasForRangeInfo(rangeInfo);
+            formulas = fastFormulaAreas.getFormulasForRangeInfo(rangeInfo);
         }
         else
         {
@@ -176,17 +179,19 @@ export class StructureRemove
 
         returns the calculated value for the game
     ----------------------------------------------------------------------------*/
-    static async getTeamSourceNameValueForNamedRange(context: JsCtx, cellName: string, fastRangeAreas?: FastRangeAreas): Promise<string>
+    static async getTeamSourceNameValueForNamedRange(context: JsCtx, cellName: string): Promise<string>
     {
+        const fastFormulaAreas: FastFormulaAreas = context.getTrackedItemOrNull("grid-FastFormulaAreas");
+
         const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
         if (rangeInfo == null)
             return "";
 
         let values: any[][];
 
-        if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
+        if (fastFormulaAreas && fastFormulaAreas.rowCountNeededToExpand(rangeInfo) == 0)
         {
-            values = fastRangeAreas.getValuesForRangeInfo(rangeInfo);
+            values = fastFormulaAreas.getValuesForRangeInfo(rangeInfo);
         }
         else
         {
@@ -209,22 +214,24 @@ export class StructureRemove
         Given the name of the gameinfo cell, remove the named range and return
         the values for the field# and the time
     ----------------------------------------------------------------------------*/
-    static async getFieldAndTimeOverrideValuesForNamedRange(context: JsCtx, cellName: string, fastRangeAreas?: FastRangeAreas): Promise<[any, any]>
+    static async getFieldAndTimeOverrideValuesForNamedRange(context: JsCtx, cellName: string): Promise<[any, any]>
     {
+        const fastFormulaAreas: FastFormulaAreas = context.getTrackedItemOrNull("grid-FastFormulaAreas");
+
         const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
         if (rangeInfo == null)
             return [null, 0];
 
         let formulas: any[][];
 
-        if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
+        if (fastFormulaAreas && fastFormulaAreas.rowCountNeededToExpand(rangeInfo) == 0)
         {
             const gameNumRange = rangeInfo.offset(0, 1, -1, 1);
 
             // we cam only get formulas for one cell at a time, so get the ones we want and push them
             // into the formulas so we can deconstruct later
-            const f1 = fastRangeAreas.getFormulasForRangeInfo(gameNumRange.offset(0, 1, 0, 1));
-            const f2 = fastRangeAreas.getFormulasForRangeInfo(gameNumRange.offset(2, 1, 0, 1));
+            const f1 = fastFormulaAreas.getFormulasForRangeInfo(gameNumRange.offset(0, 1, 0, 1));
+            const f2 = fastFormulaAreas.getFormulasForRangeInfo(gameNumRange.offset(2, 1, 0, 1));
             formulas =
                 [
                     [f1[0][0]],

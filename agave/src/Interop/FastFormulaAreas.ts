@@ -43,7 +43,14 @@ class FormulaAreasItem
         const fmlas = [];
 
         for (let iRow = 0; iRow < range.RowCount; iRow++)
-            fmlas.push([...this.m_rangeAreas.areas.items[0].formulas[iRow + dRow]]);
+        {
+            const row = [];
+
+            for (let iCol = 0; iCol < range.ColumnCount; iCol++)
+                row.push(this.m_rangeAreas.areas.items[0].formulas[iRow + dRow][iCol + dCol]);
+
+            fmlas.push(row);
+        }
 
         return fmlas;
     }

@@ -416,8 +416,8 @@ export default class App extends React.Component<AppProps, AppState>
         const bookmark: string = "invalidateHeroList";
         context.pushTrackingBookmark(bookmark);
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildFastRangeAreas");
-        await FastRangeAreas.populateGridFastRangeAreaCache(context);
+        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildFastFormulaAreas");
+        await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
         this.m_appContext.Timer.popTimer();
 
         AppContext.checkpoint("ihl.1");

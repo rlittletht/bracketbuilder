@@ -13,7 +13,7 @@ import { TrackingCache, ObjectType } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
-import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
 
 export interface IBracketGame
 {
@@ -353,8 +353,6 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
     {
-        const fastRangeAreas: FastRangeAreas = context.getTrackedItemOrNull("grid-fastRangeAreas");
-
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
             return this;
@@ -490,20 +488,20 @@ export class BracketGame implements IBracketGame
             appContext?.Timer.startAggregatedTimer("innerRepair", "check for repair inner");
             // now figure out if we need to repair this game
             if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
-                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName, fastRangeAreas);
+                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName);
 
-            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName, fastRangeAreas);
+            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName);
 
             if (BracketGame.IsTeamSourceStatic(this.BottomTeamName))
-                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName, fastRangeAreas);
+                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
 
-            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName, fastRangeAreas);
+            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName);
             appContext?.Timer.pauseAggregatedTimer("innerRepair");
 
             let timeOverride: number;
             appContext?.Timer.startAggregatedTimer("innerRepair2", "check for repair inner field/time");
 
-            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName, fastRangeAreas);
+            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
             this.m_timeOverride = typeof timeOverride !== "number" ? 0 : timeOverride;
             appContext?.Timer.pauseAggregatedTimer("innerRepair2");
 
