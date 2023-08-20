@@ -4,7 +4,7 @@ import { IBracketGame, BracketGame } from "../BracketGame";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
 import { Spacer } from "./Spacer";
 import { GridAdjust } from "./GridAdjust";
-import { IAppContext} from "../../AppContext/AppContext";
+import { IAppContext, AppContext } from "../../AppContext/AppContext";
 import { GridItem } from "../GridItem";
 import { GameNum } from "../GameNum";
 import { GameId } from "../GameId";
@@ -107,7 +107,7 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
 
         if (this.doesAdjusterApply(gridTry, game, column))
         {
-            console.log("inserting space at top of grid didn't help");
+            AppContext.log("inserting space at top of grid didn't help");
             return false;
         }
 

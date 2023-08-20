@@ -1,3 +1,4 @@
+import { s_staticConfig } from "../StaticConfig";
 import { JsCtx } from "./JsCtx";
 
 export interface PopulateCacheDelegate
@@ -63,7 +64,8 @@ export class TrackingCache
         const bkmk: string = `__bkmk:${bookmark}`;
 
         this.m_order.push(bkmk);
-        console.log(`push bookmark: ${bkmk}`);
+        if (s_staticConfig.logTrackingCache)
+            console.log(`push bookmark: ${bkmk}`);
     }
 
     addCacheObjects(context: JsCtx, key: string, items: CacheObject[])
@@ -73,19 +75,22 @@ export class TrackingCache
 //            console.log(`tracking an item already tracked: [${key}]->${item}`)
 //        }
 
-//        console.log(`adding tracked item key ${key}, type ${typeof (item)}`);
         for (let item of items)
         {
+            if (s_staticConfig.logTrackingCache)
+                console.log(`adding tracked item key ${key}, type ${typeof (item.o)}`);
+
             if (item.type != ObjectType.JsObject)
                 continue;
-
+            
             try
             {
-                context.Ctx.trackedObjects.add(item);
+                context.Ctx.trackedObjects.add(item.o);
             }
             catch (e)
             {
-                console.log(`caught ${e} trying to track ${key}`);
+                if (s_staticConfig.logTrackingCache)
+                    console.log(`caught ${e} trying to track ${key}`);
                 return; // don't record this as tracked...'
             }
         }
@@ -102,11 +107,17 @@ export class TrackingCache
     {
         const item: CacheItem = this.m_trackedItems.get(key);
 
-        //            console.log(`releasing tracked item key ${key}, type ${typeof (item)}`);
+        // item could still be null here -- it might have been released
+        if (item == null)
+            return;
+
+        if (s_staticConfig.logTrackingCache)
+            console.log(`releasing tracked item key ${key}, type ${typeof (item)}`);
+
         for (let object of item.Objects)
         {
             if (object.type == ObjectType.JsObject)
-                context.Ctx.trackedObjects.remove(object);
+                context.Ctx.trackedObjects.remove(object.o);
         }
 
         this.m_trackedItems.set(key, null);
@@ -122,7 +133,8 @@ export class TrackingCache
 
             if (bookmark != null && bookmark == key)
             {
-                console.log(`released until: ${bookmark}`);
+                if (s_staticConfig.logTrackingCache)
+                    console.log(`released until: ${bookmark}`);
                 return;
             }
 
@@ -155,9 +167,10 @@ export class TrackingCache
         {
             const item: CacheItem = this.m_trackedItems.get(key);
 
+            // item could still be null here -- it might have been released
             if (item == null)
-                throw new Error("can't get item we just verified we had!");
- 
+                return null;
+
             return item.Objects[0];
         }
 
@@ -170,8 +183,9 @@ export class TrackingCache
         {
             const item:CacheItem = this.m_trackedItems.get(key);
 
+            // item could still be null here -- it might have been released
             if (item == null)
-                throw new Error("can't get item we just verified we had!");
+                return null;
 
             return item.Objects;
         }

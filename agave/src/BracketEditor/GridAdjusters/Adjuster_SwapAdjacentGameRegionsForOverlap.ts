@@ -10,6 +10,7 @@ import { GameNum } from "../GameNum";
 import { TestResult } from "../../Support/TestResult";
 import { TestRunner } from "../../Support/TestRunner";
 import { StreamWriter } from "../../Support/StreamWriter";
+import { s_staticConfig } from "../../StaticConfig";
 
 // THIS ADJUSTER IS is for the insert of Game 16 on a 14 team bracket
 // W12 and L10. Since L10 is unanchored, it just needs space to insert into
@@ -193,7 +194,8 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
 
         if (doesApply)
         {
-            console.log("failed to correct after max retries");
+            if (s_staticConfig.logGrid)
+                console.log("failed to correct after max retries");
             return false;
         }
 

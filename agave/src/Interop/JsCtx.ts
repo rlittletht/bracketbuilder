@@ -1,3 +1,4 @@
+import { s_staticConfig } from "../StaticConfig";
 import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, CacheObject, ObjectType } from "./TrackingCache";
 
 export class JsCtx
@@ -9,7 +10,8 @@ export class JsCtx
     {
         this.m_ctx = ctx;
         this.m_cache = new TrackingCache();
-        console.log("------ New context");
+        if (s_staticConfig.logTrackingCache)
+            console.log("------ New context");
     }
 
     get Ctx(): any { return this.m_ctx; }

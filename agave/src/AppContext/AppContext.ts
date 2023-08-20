@@ -140,7 +140,8 @@ export class AppContext implements IAppContext
 
     static log(log: string)
     {
-        console.log(log);
+        if (s_staticConfig.appLogging)
+            console.log(log);
     }
 
 }

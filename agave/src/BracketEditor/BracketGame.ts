@@ -351,19 +351,17 @@ export class BracketGame implements IBracketGame
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.Bind
     ----------------------------------------------------------------------------*/
-    async Bind(context: JsCtx, appContext: IAppContext, fastRangeAreas?: FastRangeAreas): Promise<IBracketGame>
+    async Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
     {
+        const fastRangeAreas: FastRangeAreas = context.getTrackedItemOrNull("grid-fastRangeAreas");
+
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
             return this;
 
-        if (appContext != null)
-            appContext.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
+        appContext?.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
 
         AppContext.checkpoint("b.2");
-        const test: RangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.BottomTeamCellName);
-
-        console.log("got here!");
 
         this.m_bottomTeamLocation = await RangeInfo.getRangeInfoForNamedCellFaster(context, this.BottomTeamCellName);
         AppContext.checkpoint("b.3");
@@ -379,8 +377,7 @@ export class BracketGame implements IBracketGame
             // we will still try to build as much as we can. but very carefully
         }
 
-        if (appContext != null)
-            appContext.Timer.pauseAggregatedTimer("namedInner");
+        appContext?.Timer.pauseAggregatedTimer("namedInner");
 
         if (!this.IsChampionship)
         {
@@ -402,8 +399,7 @@ export class BracketGame implements IBracketGame
                 // we didn't bind to a game in the bracket. get the swap state from the source data
                 // table
 
-                if (appContext != null)
-                    appContext.Timer.startAggregatedTimer("innerBind", "inner bind");
+                appContext?.Timer.startAggregatedTimer("innerBind", "inner bind");
 
                 AppContext.checkpoint("b.7");
                 const sheet =
@@ -467,14 +463,12 @@ export class BracketGame implements IBracketGame
                         }
                     }
                 }
-                if (appContext != null)
-                    appContext.Timer.pauseAggregatedTimer("innerBind");
+                appContext?.Timer.pauseAggregatedTimer("innerBind");
             }
 
             if (this.m_gameNumberLocation != null)
             {
-                if (appContext != null)
-                    appContext.Timer.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
+                appContext?.Timer.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
 
                 const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
 
@@ -490,9 +484,10 @@ export class BracketGame implements IBracketGame
                 const mins = OADate.MinutesFromTimeString(time);
                 this.m_startTime = mins;
 
-                if (appContext != null)
-                    appContext.Timer.pauseAggregatedTimer("innerGameNum");
+                appContext?.Timer.pauseAggregatedTimer("innerGameNum");
             }
+
+            appContext?.Timer.startAggregatedTimer("innerRepair", "check for repair inner");
             // now figure out if we need to repair this game
             if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
                 this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName, fastRangeAreas);
@@ -503,18 +498,22 @@ export class BracketGame implements IBracketGame
                 this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName, fastRangeAreas);
 
             this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName, fastRangeAreas);
+            appContext?.Timer.pauseAggregatedTimer("innerRepair");
 
             let timeOverride: number;
+            appContext?.Timer.startAggregatedTimer("innerRepair2", "check for repair inner field/time");
 
-            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
+            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName, fastRangeAreas);
             this.m_timeOverride = typeof timeOverride !== "number" ? 0 : timeOverride;
+            appContext?.Timer.pauseAggregatedTimer("innerRepair2");
+
         }
 
         AppContext.checkpoint("b.13");
         return this;
     }
 
-    async Load(context: JsCtx, appContext: IAppContext, bracketName: string, gameNum: GameNum, fastRangeAreas?: FastRangeAreas): Promise<IBracketGame>
+    async Load(context: JsCtx, appContext: IAppContext, bracketName: string, gameNum: GameNum): Promise<IBracketGame>
     {
         this.LoadSync(bracketName, gameNum);
 
@@ -526,7 +525,7 @@ export class BracketGame implements IBracketGame
         // for the parts of this game
 
         AppContext.checkpoint("l.4");
-        return await this.Bind(context, appContext, fastRangeAreas);
+        return await this.Bind(context, appContext);
     }
 
     /*----------------------------------------------------------------------------

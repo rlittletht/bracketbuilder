@@ -1,3 +1,4 @@
+import { s_staticConfig } from "./StaticConfig";
 
 
 class PerfTimerItem
@@ -10,6 +11,7 @@ class PerfTimerItem
     count: number = 0;
 
     timerName: string;
+    childResults: string[] = [];
 }
 
 export class PerfTimer
@@ -19,6 +21,9 @@ export class PerfTimer
 
     pushTimer(message: string)
     {
+        if (!s_staticConfig.perfTimers)
+            return;
+
         let timer: PerfTimerItem = new PerfTimerItem();
 
         timer.timerName = message;
@@ -35,6 +40,9 @@ export class PerfTimer
 
     static pauseTimerAndAccumulate(timer: PerfTimerItem)
     {
+        if (!s_staticConfig.perfTimers)
+            return;
+
         if (timer.msecStart == 0)
             return;
 
@@ -52,15 +60,31 @@ export class PerfTimer
         timer.msecStart = 0;
     }
 
+    appendSummaryToRemainingTimers(childSummary: string)
+    {
+        for (let _item of this.m_perfTimerStack)
+        {
+            _item.childResults.push(childSummary);
+        }
+    }
+
     popTimer()
     {
+        if (!s_staticConfig.perfTimers)
+            return;
+
         let timer: PerfTimerItem = this.m_perfTimerStack.pop();
         PerfTimer.pauseTimerAndAccumulate(timer);
-        PerfTimer.reportPerfTimerItem(timer);
+
+        const childSummary = PerfTimer.reportPerfTimerItem(timer);
+        this.appendSummaryToRemainingTimers(childSummary);
     }
 
     startAggregatedTimer(key: string, message: string)
     {
+        if (!s_staticConfig.perfTimers)
+            return;
+
         let timer: PerfTimerItem;
 
         if (this.m_aggregatedTimers.has(key))
@@ -79,6 +103,9 @@ export class PerfTimer
 
     pauseAggregatedTimer(key: string)
     {
+        if (!s_staticConfig.perfTimers)
+            return;
+
         if (this.m_aggregatedTimers.has(key))
         {
             const timer: PerfTimerItem = this.m_aggregatedTimers.get(key);
@@ -89,28 +116,37 @@ export class PerfTimer
 
     stopAllAggregatedTimers()
     {
+        if (!s_staticConfig.perfTimers)
+            return;
+
         for (let key of this.m_aggregatedTimers.keys())
         {
             const timer: PerfTimerItem = this.m_aggregatedTimers.get(key);
 
             // make sure timer is accumulated. if its already paused, its a noop
             PerfTimer.pauseTimerAndAccumulate(timer);
-            PerfTimer.reportPerfTimerItem(timer);
+            const childSummary = PerfTimer.reportPerfTimerItem(timer);
+            this.appendSummaryToRemainingTimers(childSummary);
         }
 
         this.m_aggregatedTimers.clear();
     }
 
-    static reportPerfTimerItem(item: PerfTimerItem)
+    static reportPerfTimerItem(item: PerfTimerItem): string
     {
+        if (!s_staticConfig.perfTimers)
+            return "";
+
         if (item.count > 1)
         {
             console.log(`Timer: ${item.timerName}: total: ${item.msecCumulative}, min/max: (${item.msecMin}, ${item.msecMax}), avergage: ${item.msecCumulative / item.count}, count: ${item.count}`);
         }
         else
         {
-            console.log(`----- STOP: Timer ${item.timerName}: ${item.msecCumulative}`);
+            const childResults = item.childResults.length > 0 ? `(${item.childResults.join("+")})` : "";
+            console.log(`----- STOP: Timer ${item.timerName}: ${item.msecCumulative}${childResults}`);
         }
+        return `${item.timerName}(${item.msecCumulative})`;
     }
 
 }

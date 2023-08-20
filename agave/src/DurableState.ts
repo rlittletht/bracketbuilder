@@ -1,4 +1,5 @@
 import { TeachableId } from "./taskpane/components/Teachable";
+import { AppContext } from "./AppContext/AppContext";
 
 // This is the durable state for BracketBuilder, stored in local storage
 // DO NOT STORE PII in this state
@@ -127,7 +128,7 @@ export class DurableState implements IDurableState
         }
         catch (e)
         {
-            console.log(`caught exception: ${e}`);
+            AppContext.log(`caught exception: ${e}`);
             this.m_data = DurableState.DefaultData();
         }
     }

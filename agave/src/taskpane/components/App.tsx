@@ -31,7 +31,7 @@ import { GameNum } from "../../BracketEditor/GameNum";
 import { GridTests } from "../../BracketEditor/GridTests";
 import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
 import { OADateTests } from "../../Interop/Dates";
-import { TrackingCache } from "../../Interop/TrackingCache";
+import { TrackingCache, CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { BracketSources } from "../../Brackets/BracketSources";
 import { ParserTests } from "../../Interop/Parser";
 import { JsCtx } from "../../Interop/JsCtx";
@@ -48,6 +48,7 @@ import { StreamWriter } from "../../Support/StreamWriter";
 import { About } from "./About";
 import { StructureInsertTests } from "../../BracketEditor/StructureEditor/StrutureInsertTests";
 import { ProductName } from "./ProductName";
+import { RangeInfo } from "../../Interop/Ranges";
 
 /* global console, Excel, require  */
 
@@ -408,11 +409,23 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     async invalidateHeroList(context: JsCtx)
     {
+        this.m_appContext.Timer.pushTimer("invalidateHeroList");
+
+        const bookmark: string = "invalidateHeroList";
+        context.pushTrackingBookmark(bookmark);
+
+        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildFastRangeAreas");
+        await FastRangeAreas.populateGridFastRangeAreaCache(context);
+        this.m_appContext.Timer.popTimer();
+
         AppContext.checkpoint("ihl.1");
         let setupState: SetupState;
         let bracketChoice: string;
 
+        this.m_appContext.Timer.pushTimer("invalidateHeroList.getSetupState");
         [setupState, bracketChoice] = await (this.getSetupState(context));
+        this.m_appContext.Timer.popTimer();
+
         AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
@@ -423,15 +436,21 @@ export default class App extends React.Component<AppProps, AppState>
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
+        this.m_appContext.Timer.pushTimer("invalidateHeroList.getGamesList");
+
         AppContext.checkpoint("ihl.5");
         let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
         AppContext.checkpoint("ihl.6");
+        this.m_appContext.Timer.popTimer();
 
+
+        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildToolbars");
 
         AppContext.checkpoint("ihl.7");
         [format, title, list] = HeroList.buildHeroList(setupState);
         AppContext.checkpoint("ihl.8");
         let items: ToolbarItem[] = [];
+
 
         if (setupState == SetupState.Ready)
         {
@@ -472,7 +491,7 @@ export default class App extends React.Component<AppProps, AppState>
             else if (countGamesLinked == 1)
                 this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
         }
-        
+        this.m_appContext.Timer.popTimer();        
 
         // update the games list
 
@@ -487,6 +506,8 @@ export default class App extends React.Component<AppProps, AppState>
                 selectedBracket: bracketChoice,
                 mainToolbar: items
             });
+        context.releaseCacheObjectsUntil(bookmark);
+        this.m_appContext.Timer.popTimer();
     }
 
     async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
@@ -525,6 +546,7 @@ export default class App extends React.Component<AppProps, AppState>
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
+        appContext.Timer.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
         await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
         let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
 
@@ -532,6 +554,7 @@ export default class App extends React.Component<AppProps, AppState>
             return [];
 
         let games: IBracketGame[] = [];
+        appContext.Timer.popTimer();
 
         const bookmark: string = "getGamesList";
 
@@ -784,9 +807,9 @@ export default class App extends React.Component<AppProps, AppState>
         };
 
         const welcome = this.state.setupState == SetupState.Ready
-            ? (<span />)
+            ? ""
             : (
-                <>
+                <Stack.Item styles={welcomeItemStyle}>
                     <h1>Welcome!</h1>
                     <p>
                     </p>
@@ -795,7 +818,7 @@ export default class App extends React.Component<AppProps, AppState>
                     <p>For help, click on the ? button on the toolbar, or just hover over a button to get
                         a tip about what it does.
                     </p>
-                </>
+                </Stack.Item>
             );
         const stackStyles: IStackStyles =
         {
@@ -830,9 +853,7 @@ export default class App extends React.Component<AppProps, AppState>
                             </HeroList>
                             {maybeToolbar}
                         </Stack.Item>
-                        <Stack.Item styles={welcomeItemStyle}>
-                            {welcome}
-                        </Stack.Item>
+                        {welcome}
                         <Stack.Item styles={bodyItemStyle}>
                             <div style={ gamesStyle }>
                                 {games}

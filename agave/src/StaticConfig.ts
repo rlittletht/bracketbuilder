@@ -23,13 +23,16 @@ export interface StaticConfig
     advanceSize: number;
     logMoveKeySetting: boolean;
     logMoveTree: boolean;
+    perfTimers: boolean;
+    logTrackingCache: boolean;
+    appLogging: boolean;
 }
 
 const isLocalHost = window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
-    version: "1.0.14.5",
+    version: "1.0.14.6",
     maxGameMoves: 6000,
     globalLogging: true && isLocalHost,
     logGridChanges: false && isLocalHost,
@@ -40,7 +43,7 @@ export const s_staticConfig: StaticConfig =
     debuggingInfo: false && isLocalHost,
     topLevelStateName: "traynrex-red",
     logCheckpoints: false,
-    isLocalHost: window.location.host.indexOf('localhost') > -1,
+    isLocalHost: isLocalHost,
     cdnRoot: window.location.host.indexOf('localhost') ? "https://localhost" : "https://twbbldcdnendpoint.azureedge.net",
     bodyFont: "Aptos Narrow",
     bodySize: 9,
@@ -50,5 +53,8 @@ export const s_staticConfig: StaticConfig =
     championSize: 12,
     advanceSize: 8,
     logMoveKeySetting: false && isLocalHost,
-    logMoveTree: true // false && isLocalHost,
+    perfTimers: false,
+    logTrackingCache: isLocalHost && true,
+    logMoveTree: true && isLocalHost,
+    appLogging: true && isLocalHost
 }

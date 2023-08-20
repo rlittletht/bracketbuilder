@@ -4,7 +4,8 @@ import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
 import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
-import { ObjectType } from "./TrackingCache";
+import { ObjectType, CacheObject } from "./TrackingCache";
+import { PerfTimer } from "../PerfTimer";
 
 class AreasItem
 {
@@ -179,7 +180,11 @@ export class FastRangeAreas
                         rangeAreas.load(props);
                         rangeAreasAry.push(rangeAreas);
                     }
+                    const timer = new PerfTimer();
+
+                    timer.pushTimer("addRangeAreaGridForRangeInfo sync");
                     await context.sync();
+                    timer.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreasAry };
                 });
 
@@ -224,6 +229,24 @@ export class FastRangeAreas
         cellsCollection.push(cells);
 
         return cellsCollection;
+    }
+
+    static async populateGridFastRangeAreaCache(context: JsCtx)
+    {
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+
+        await context.getTrackedItemOrPopulate(
+            "grid-fastRangeAreas",
+            async (context): Promise<CacheObject> =>
+            {
+                const areas = await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                    context,
+                    "bigGridCache",
+                    sheet,
+                    new RangeInfo(8, 150, 0, 50));
+
+                return { type: ObjectType.TrObject, o: areas };
+            });
     }
 }
 

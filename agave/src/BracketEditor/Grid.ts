@@ -15,7 +15,7 @@ import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { s_staticConfig } from "../StaticConfig";
 import { OADate } from "../Interop/Dates";
-import { TrackingCache } from "../Interop/TrackingCache";
+import { TrackingCache, CacheObject, ObjectType } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { PerfTimer } from "../PerfTimer";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
@@ -857,7 +857,8 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            console.log('returning null for gridPattern');
+            if (s_staticConfig.logGrid)
+                console.log('returning null for gridPattern');
             return null;
         }
 
@@ -902,12 +903,14 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            console.log('returning null for gridPattern');
+            if (s_staticConfig.logGrid)
+                console.log('returning null for gridPattern');
             return null;
         }
 
         const rangeReturn: RangeInfo = new RangeInfo(firstMatchedRow, 1, firstMatchedColumn, 1);
-        console.log(`returning ${rangeReturn.toString()} for gridPattern`);
+        if (s_staticConfig.logGrid)
+            console.log(`returning ${rangeReturn.toString()} for gridPattern`);
 
         return rangeReturn;
     }
@@ -945,12 +948,20 @@ export class Grid
 
         timer.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+
         const fastRangeAreas: FastRangeAreas =
-            await FastRangeAreas.getRangeAreasGridForRangeInfo(
-                context,
-                "bigGridCache",
-                sheet,
-                new RangeInfo(8, 150, 0, 50));
+            await context.getTrackedItemOrPopulate(
+                "grid-fastRangeAreas",
+                async (context): Promise<CacheObject> =>
+                {
+                    const areas = await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                        context,
+                        "bigGridCache",
+                        sheet,
+                        new RangeInfo(8, 150, 0, 50));
+
+                    return { type: ObjectType.TrObject, o: areas };
+                });
 
         timer.popTimer();
 
@@ -981,7 +992,7 @@ export class Grid
             let feederWinner: RangeInfo = null;
 
             AppContext.checkpoint("lgfb.3");
-            await game.Load(context, null, bracketName, new GameNum(i), fastRangeAreas);
+            await game.Load(context, null, bracketName, new GameNum(i));
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {

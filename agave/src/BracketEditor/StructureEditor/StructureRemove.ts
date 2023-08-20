@@ -219,9 +219,24 @@ export class StructureRemove
 
         if (fastRangeAreas && fastRangeAreas.rowCountNeededToExpand(rangeInfo) == 0)
         {
-            const gameNumRange = rangeInfo.offset(0, 3, -1, 1);
+            const gameNumRange = rangeInfo.offset(0, 1, -1, 1);
 
-            formulas = fastRangeAreas.getFormulasForRangeInfo(gameNumRange);
+            // we cam only get formulas for one cell at a time, so get the ones we want and push them
+            // into the formulas so we can deconstruct later
+            const f1 = fastRangeAreas.getFormulasForRangeInfo(gameNumRange.offset(0, 1, 0, 1));
+            const f2 = fastRangeAreas.getFormulasForRangeInfo(gameNumRange.offset(2, 1, 0, 1));
+            formulas =
+                [
+                    [f1[0][0]],
+                    [],
+                    [f2[0][0]]
+                ];
+//            formulas.push([]);
+//            formulas[0] = [];
+//            formulas[0].push(f1[0][0]);
+//            formulas.push([]);
+//            formulas.push([]);
+//            formulas[2].push(f2[0][0]);
         }
         else
         {
@@ -291,7 +306,7 @@ export class StructureRemove
         if (field && field != null && field != "")
             await BracketSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom);
 
-        console.log(`saved: ${game.TopTeamName}=${overrideText1}, ${game.BottomTeamName}=${overrideText2}, field=${field}, time=${time}`);
+        AppContext.log(`saved: ${game.TopTeamName}=${overrideText1}, ${game.BottomTeamName}=${overrideText2}, field=${field}, time=${time}`);
     }
 
     /*----------------------------------------------------------------------------

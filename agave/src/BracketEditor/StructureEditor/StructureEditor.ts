@@ -21,6 +21,9 @@ import { Coachstate } from "../../Coachstate";
 import { CoachTransition } from "../../CoachTransition";
 import { HelpTopic, HelpInfo } from "../../HelpInfo";
 import { SetupState } from "../../Setup";
+import { FastRangeAreas } from "../../Interop/FastRangeAreas";
+import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
+import { s_staticConfig } from "../../StaticConfig";
 
 let _moveSelection: RangeInfo = null;
 
@@ -158,21 +161,23 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            const timer: PerfTimer = new PerfTimer();
+            appContext.Timer.pushTimer("insertGameAtSelectionClick PART 1");
 
-            timer.pushTimer("insertGameAtSelectionClick PART 1");
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
+
+            await FastRangeAreas.populateGridFastRangeAreaCache(context);
+
             await StructureInsert.insertGameAtSelection(appContext, context, game);
             context.releaseCacheObjectsUntil(bookmark);
-            timer.popTimer();
+            appContext.Timer.popTimer();
 
-            timer.pushTimer("insertGameAtSelectionClick PART 2");
+            appContext.Timer.pushTimer("insertGameAtSelectionClick PART 2");
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
             await appContext.invalidateHeroList(context);
-            timer.popTimer();
+            appContext.Timer.popTimer();
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -544,15 +549,20 @@ export class StructureEditor
         grid.adjustSelectionForGameInsertOrMove(newSelection);
         newSelection.setLastColumn(newSelection.FirstColumn + 2);
 
-        // let's log some things useful for unit test building
-        console.log("MOVE: Original grid");
-        grid.logGridCondensed();
+        if (s_staticConfig.logGrid)
+        {
+            // let's log some things useful for unit test building
+            console.log("MOVE: Original grid");
+            grid.logGridCondensed();
+        }
         // now make the selection a happy selection
         const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(newSelection);
 
-        console.log("MOVE: RequestedTarget:");
-        console.log(`${itemNew.GameId == null ? -1 : itemNew.GameId.Value}:${itemNew.SwapTopBottom ? "S" : ""} ${itemNew.Range.toString()}`);
-
+        if (s_staticConfig.logGrid)
+        {
+            console.log("MOVE: RequestedTarget:");
+            console.log(`${itemNew.GameId == null ? -1 : itemNew.GameId.Value}:${itemNew.SwapTopBottom ? "S" : ""} ${itemNew.Range.toString()}`);
+        }
         const mover: GameMover = new GameMover(grid);
         const gridNew = mover.moveGame(itemOld, itemNew, bracketName);
 
@@ -598,7 +608,7 @@ export class StructureEditor
             gridArea.topLeft().newSetRow(0),
             gridArea.bottomRight().offset(0, 1, 0, 1));
 
-        console.log(`gridArea: ${gridArea.toString()}`);
+        AppContext.log(`gridArea: ${gridArea.toString()}`);
 
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         sheet.pageLayout.centerHorizontally = true;

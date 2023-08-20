@@ -5,7 +5,7 @@ import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
 import { GridAdjust } from "./GridAdjust";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext } from "../../AppContext/AppContext";
+import { IAppContext, AppContext } from "../../AppContext/AppContext";
 import { GameNum } from "../GameNum";
 import { TestResult } from "../../Support/TestResult";
 import { TestRunner } from "../../Support/TestRunner";
@@ -184,7 +184,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         // now, see if we still have an overlap problem. if we do, well, we failed...
         if (this.doesAdjusterApply(gridTry, game, column))
         {
-            console.log(`region swapping didn't help.`);
+            AppContext.log(`region swapping didn't help.`);
             return false;
         }
 

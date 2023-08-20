@@ -1,6 +1,7 @@
 import { TrackingCache, ObjectType } from "./TrackingCache";
 import { Parser, Quoting, TrimType, ParseStringAccepts } from "./Parser";
 import { JsCtx } from "./JsCtx";
+import { AppContext } from "../AppContext/AppContext";
 
 export enum RangeOverlapKind
 {
@@ -389,7 +390,7 @@ export class RangeInfo
 
         if (formula == null || formula[0] != "=")
         {
-            console.log("bad formula in named reference");
+            AppContext.log("bad formula in named reference");
             return null;
         }
 
@@ -398,7 +399,7 @@ export class RangeInfo
 
         if (!colRef1 || !rowRef1)
         {
-            console.log("bad formula in named reference");
+            AppContext.log("bad formula in named reference");
             return null;
         }
 

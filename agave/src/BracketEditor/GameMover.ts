@@ -11,6 +11,7 @@ import { TopBottomSwapper } from "./GameMovers/TopBottomSwapper";
 import { s_staticConfig } from "../StaticConfig";
 import { StreamWriter } from "../Support/StreamWriter";
 import { v4 as uuidv4 } from 'uuid';
+import { AppContext } from "../AppContext/AppContext";
 
 export interface GridOption
 {
@@ -105,7 +106,7 @@ export class GameMover
         }
 
         if (this.Warning != "")
-            console.log(`WARNING: ${this.Warning}`);
+            AppContext.log(`WARNING: ${this.Warning}`);
 
         if (s_staticConfig.logMoveTree)
         {

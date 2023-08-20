@@ -173,6 +173,8 @@ export class ApplyGridChange
 
         AppContext.checkpoint("appc.1");
 
+        appContext.Timer.pushTimer("applyChanges:executeRemoveChange");
+
         // do all the removes first
         for (let item of changes)
         {
@@ -182,11 +184,13 @@ export class ApplyGridChange
 
             await this.executeRemoveChange(appContext, context, item, bracketName);
         }
+        appContext.Timer.popTimer();
 
         // must invalidate all of our caches
         context.releaseAllCacheObjects();
         // and now do all the adds
 
+        appContext.Timer.pushTimer("applyChanges:executeAddChange");
         AppContext.checkpoint("appc.12");
         for (let item of changes)
         {
@@ -200,6 +204,7 @@ export class ApplyGridChange
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);
         }
+        appContext.Timer.popTimer();
 
         return undoGameDataItems;
     }
