@@ -14,6 +14,7 @@ import { HelpTopic } from "../../HelpInfo";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { _TimerStack } from "../../PerfTimer";
 
 export class StructureRemove
 {
@@ -465,6 +466,7 @@ export class StructureRemove
         let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         let rangeSelected: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
+        _TimerStack.pushTimer("findAndRemove - prep");
         if (game == null && rangeSelected.IsSingleCell)
         {
             // see if we are intersecting a game and that is what we will remove
@@ -499,11 +501,17 @@ export class StructureRemove
         context.releaseCacheObjectsUntil(bookmark)
         await context.sync();
 
+        _TimerStack.popTimer();
+
+        _TimerStack.pushTimer("removeBoundGames");
         for (let _game of games)
             await this.removeBoundGame(appContext, context, grid, _game, rangeSelected);
+        _TimerStack.popTimer();
 
         // last, obliterate the rest of the range
+        _TimerStack.pushTimer("obliterate selection");
         if (!rangeSelected.IsSingleCell)
             await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/);
+        _TimerStack.popTimer();
     }
 }
