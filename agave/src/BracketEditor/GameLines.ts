@@ -6,6 +6,8 @@ import { BracketManager } from "../Brackets/BracketDefinitions";
 import { TrackingCache } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { GridColumnType } from "./Grid";
 
 export class GameLines
 {
@@ -124,7 +126,7 @@ export class GameLines
         Simiar tofindMatchingGameConnections, but this function finds the already
         existing lines feeding into and out of this game
     ----------------------------------------------------------------------------*/
-    static async getInAndOutLinesForGame(context: JsCtx, fastRangeAreas: FastRangeAreas, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    static async getInAndOutLinesForGame(context: JsCtx, fastFormulaAreas: FastFormulaAreas, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]>
     {
         let feederTop: RangeInfo = null;
         let feederBottom: RangeInfo = null;
@@ -143,14 +145,14 @@ export class GameLines
         let feederLine: RangeInfo;
 
         AppContext.checkpoint("giaolfg.5");
-        feederTop = GameLines.getFeedingLineRangeInfo(fastRangeAreas, game.TopTeamRange.offset(1, 1, 0, 1), true);
+        feederTop = GameLines.getFeedingLineRangeInfo(fastFormulaAreas, game.TopTeamRange.offset(1, 1, 0, 1), true);
         AppContext.checkpoint("giaolfg.6");
 
         if (!game.IsChampionship)
         {
-            feederBottom = GameLines.getFeedingLineRangeInfo(fastRangeAreas, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
+            feederBottom = GameLines.getFeedingLineRangeInfo(fastFormulaAreas, game.BottomTeamRange.offset(-1, 1, 0, 1), false);
             AppContext.checkpoint("giaolfg.7");
-            feederWinner = GameLines.getOutgoingLineRange(fastRangeAreas, game.GameIdRange.offset(1, 1, 1, 1));
+            feederWinner = GameLines.getOutgoingLineRange(fastFormulaAreas, game.GameIdRange.offset(1, 1, 1, 1));
             AppContext.checkpoint("giaolfg.8");
         }
 
@@ -176,11 +178,11 @@ export class GameLines
     /*----------------------------------------------------------------------------
         %%Function: GameLines.isCellEmpty
     ----------------------------------------------------------------------------*/
-    static isCellEmpty(fastRangeAreas: FastRangeAreas, rangeCheck: RangeInfo): boolean
+    static isCellEmpty(fastFormulaAreas: FastFormulaAreas, rangeCheck: RangeInfo): boolean
     {
-        let range: Excel.Range = fastRangeAreas.getRangeForRangeInfo(rangeCheck);
+        const contentCheck = fastFormulaAreas.getValuesForRangeInfo(rangeCheck);
 
-        if (range.values[0][0] != "")
+        if (contentCheck[0][0] != "")
             return false;
 
         return true;
@@ -243,7 +245,7 @@ export class GameLines
         return null if there is no feeder line
     ----------------------------------------------------------------------------*/
     static getFeedingLineRangeInfo(
-        fastRangeAreas: FastRangeAreas,
+        fastFormulaAreas: FastFormulaAreas,
         rangeGameLine: RangeInfo,
         topTeam: boolean): RangeInfo
     {
@@ -252,17 +254,19 @@ export class GameLines
 
         while (curColumn > 0)
         {
-            const format: Excel.RangeFormat = fastRangeAreas.getFormatForRangeInfo(new RangeInfo(rangeGameLine.FirstRow, 1, curColumn, 1));
+            const lineCheck = fastFormulaAreas.getFormulasForRangeInfo(new RangeInfo(rangeGameLine.FirstRow, 1, curColumn, 1));
+            const contentCheck = fastFormulaAreas.getFormulasForRangeInfo(new RangeInfo(rangeGameLine.FirstRow + (topTeam ? -1 : 1), 1, curColumn, 1));
 
-            if ((format.fill.color !== "black" && format.fill.color !== "#000000")
-                || !GameLines.isCellEmpty(fastRangeAreas, new RangeInfo(rangeGameLine.FirstRow + (topTeam ? -1 : 1), 1, curColumn, 1)))
+            // check to see if we are at the next game (either we don't have a line anymore, or we have content in the team cell)
+            if (!GameFormatting.isLineFormula(lineCheck[0][0]
+                || (contentCheck[0][0]?.length ?? 0) > 0))
             {
                 break;
             }
 
             // we don't want to include this cell quite yet -- only if the
             // next cell beyond is also filled...
-            if (!(GameFormatting.isRangeFormatInLineColumn(format)))
+            if (!GameFormatting.isLineColumnTypeMatch(lineCheck[0][0], GridColumnType.Line))
                 outColumn = curColumn;
 
             curColumn--;
@@ -351,7 +355,7 @@ export class GameLines
         then 3 filled cells will be left around
     ----------------------------------------------------------------------------*/
     static getOutgoingLineRange(
-        fastRangeAreas: FastRangeAreas,
+        fastFormulaAreas: FastFormulaAreas,
         rangeGameLine: RangeInfo): RangeInfo
     {
         let curColumn: number = rangeGameLine.FirstColumn + 1;
@@ -362,11 +366,12 @@ export class GameLines
         while (curColumn < 10000) // just an arbitrarily large number
         {
             const range: RangeInfo = new RangeInfo(rangeGameLine.FirstRow, 1, curColumn, 1);
-            const format: Excel.RangeFormat = fastRangeAreas.getFormatForRangeInfo(range);
+            const lineCheck = fastFormulaAreas.getFormulasForRangeInfo(range);
+//            const format: Excel.RangeFormat = fastRangeAreas.getFormatForRangeInfo(range);
 
             // an unfilled range marks the end of a title range, which means that the
             // 3 previous filled cells should be discounted
-            if ((format.fill.color !== "black" && format.fill.color !== "#000000"))
+            if (!GameFormatting.isLineFormula(lineCheck[0][0]))
                 break;
 
             if (fLastWasLineColumn)
@@ -377,13 +382,13 @@ export class GameLines
                 fLastWasLineColumn = false;
             }
 
-            if ((GameFormatting.isRangeFormatInLineColumn(format)))
+            if (GameFormatting.isLineColumnTypeMatch(lineCheck[0][0], GridColumnType.Line))
                 fLastWasLineColumn = true;
 
             // if there is text above or below us, this means we are in the first cell
             // of a title range. which means this cell should be discounted
-            if (!GameLines.isCellEmpty(fastRangeAreas, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
-                || !GameLines.isCellEmpty(fastRangeAreas, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
+            if (!GameLines.isCellEmpty(fastFormulaAreas, new RangeInfo(rangeGameLine.FirstRow - 1, 1, curColumn, 1))
+                || !GameLines.isCellEmpty(fastFormulaAreas, new RangeInfo(rangeGameLine.FirstRow + 1, 1, curColumn, 1)))
             {
                 break;
             }

@@ -21,6 +21,7 @@ import { PerfTimer } from "../PerfTimer";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { TrError } from "../Exceptions";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -223,6 +224,9 @@ export class Grid
             },
             (item: GridItem) =>
             {
+                if (item.isLineRange)
+                    return false;
+
                 const itemDate = this.getDateFromGridItem(item);
 
                 return itemDate.valueOf() == date.valueOf();
@@ -999,7 +1003,8 @@ export class Grid
         timer.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
 
-        const fastRangeAreas: FastRangeAreas =
+        const fastFormulaAreas = await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
+        const fastRangeAreasSmaller: FastRangeAreas =
             await context.getTrackedItemOrPopulate(
                 "grid-fastRangeAreas",
                 async (context): Promise<CacheObject> =>
@@ -1008,16 +1013,16 @@ export class Grid
                         context,
                         "bigGridCache",
                         sheet,
-                        new RangeInfo(8, 150, 0, 50));
+                        new RangeInfo(8, 28, 0, 25));
 
                     return { type: ObjectType.TrObject, o: areas };
                 });
-
         timer.popTimer();
 
         AppContext.checkpoint("lgfb.1");
         timer.pushTimer("getFirstGridPatternCell");
-        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreas);
+        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreasSmaller);
+
         if (this.m_firstGridPattern == null)
             throw new Error("could not load grid pattern");
 
@@ -1059,11 +1064,11 @@ export class Grid
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
                 // before we try this, check to see if we need to expand our fastRangeAreas
-                const moreRowsNeeded = fastRangeAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
+                const moreRowsNeeded = fastFormulaAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
                 if (moreRowsNeeded)
-                    await fastRangeAreas.addMoreRowsToRangeAreaGrid(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
+                    await fastFormulaAreas.addMoreRowsToRangeAreaGrid(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
 
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastFormulaAreas, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations

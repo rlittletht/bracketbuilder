@@ -24,6 +24,7 @@ import { SetupState } from "../../Setup";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { s_staticConfig } from "../../StaticConfig";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
 
 let _moveSelection: RangeInfo = null;
 
@@ -166,7 +167,7 @@ export class StructureEditor
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
 
-            await FastRangeAreas.populateGridFastRangeAreaCache(context);
+            await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
 
             await StructureInsert.insertGameAtSelection(appContext, context, game);
             context.releaseCacheObjectsUntil(bookmark);

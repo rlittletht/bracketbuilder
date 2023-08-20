@@ -284,15 +284,9 @@ export class StructureInsert
             const vertLineRange = rng.worksheet.getRangeByIndexes(vertLineFirstRow, insertRangeInfo.FirstColumn + 2, vertLineRowCount, 1);
             GameFormatting.formatConnectingLineRangeRequest(vertLineRange);
 
-            const mapLine = new Map<GridRowType, string>(
-                [
-                    [GridRowType.Text, GameFormatting.s_vLineText],
-                    [GridRowType.Line, GameFormatting.s_vLineLine],
-                ]);
-
             const linesText = [];
             for (let i = 0; i < vertLineRowCount; i++)
-                linesText.push([mapLine.get(gridRef.getRowType(vertLineFirstRow + i))]);
+                linesText.push([GameFormatting.s_mapGridRowType.get(gridRef.getRowType(vertLineFirstRow + i))]);
 
             vertLineRange.formulas = linesText;
 

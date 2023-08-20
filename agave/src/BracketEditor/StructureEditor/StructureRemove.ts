@@ -134,7 +134,7 @@ export class StructureRemove
     static async getTeamSourceNameOverrideValueForNamedRange(context: JsCtx, cellName: string, gameTeamName: string)
         : Promise<string>
     {
-        const fastFormulaAreas: FastFormulaAreas = context.getTrackedItemOrNull("grid-FastFormulaAreas");
+        const fastFormulaAreas = FastFormulaAreas.getGridFastFormulaAreaCache(context);
 
         const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
         if (rangeInfo == null)

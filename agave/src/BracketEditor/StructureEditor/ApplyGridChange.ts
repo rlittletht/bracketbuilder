@@ -114,16 +114,9 @@ export class ApplyGridChange
             // just format the range as an underline
             GameFormatting.formatConnectingLineRangeRequest(range);
 
-            const mapLine = new Map<GridColumnType, string>(
-                [
-                    [GridColumnType.Team, GameFormatting.s_hLineTeam],
-                    [GridColumnType.Score, GameFormatting.s_hLineScore],
-                    [GridColumnType.Line, GameFormatting.s_vLineLine], // vLineLine and hLineLine are the same (intersectionality)
-                ]);
-
             const linesText = [];
             for (let i = 0; i < change.Range.ColumnCount; i++)
-                linesText.push(mapLine.get(gridRef.getColumnType(change.Range.FirstColumn + i)));
+                linesText.push(GameFormatting.s_mapGridColumnType.get(gridRef.getColumnType(change.Range.FirstColumn + i)));
 
             range.formulas = [linesText];
 

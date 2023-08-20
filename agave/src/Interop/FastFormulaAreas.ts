@@ -151,29 +151,29 @@ export class FastFormulaAreas
     {
         const areas: FastFormulaAreas = new FastFormulaAreas();
 
-        await areas.addRangeAreaGridForRangeInfo(context, key, sheet, 150, range);
+        await areas.addMoreRowsToRangeAreaGrid(context, key, sheet, 150, range);
 
         return areas;
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: FastFormulaAreas.addRangeAreaGridForRangeInfo
+        %%Function: FastFormulaAreas.addMoreRowsToRangeAreaGrid
         
         Add more rows (rowCount) to the current RangeAreas grid. If there isn't
         a current grid (which is true if this is the first call ever for this
         FastRangeAreas), then caller MUST supply a range to start the grid at.
     ----------------------------------------------------------------------------*/
-    async addRangeAreaGridForRangeInfo(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeRef?: RangeInfo)
+    async addMoreRowsToRangeAreaGrid(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeGridStart?: RangeInfo)
     {
         let lastRow = this.lastAreaCached();
         let range: RangeInfo;
 
         if (!lastRow)
         {
-            if (!rangeRef)
+            if (!rangeGridStart)
                 throw new Error("must provide a reference range for the first addRange");
 
-            range = rangeRef.offset(0, rangeRef.RowCount, 0, rangeRef.ColumnCount);
+            range = rangeGridStart.offset(0, rangeGridStart.RowCount, 0, rangeGridStart.ColumnCount);
         }
         else
         {
@@ -207,17 +207,24 @@ export class FastFormulaAreas
         this.m_areasItems.push(new FormulaAreasItem(areas, range));
     }
 
-    static async populateGridFastFormulaAreaCache(context: JsCtx)
+    static s_fastFormulaAreaBigGrid = "grid-FastFormulaAreas";
+
+    static getGridFastFormulaAreaCache(context: JsCtx): FastFormulaAreas
+    {
+        return context.getTrackedItemOrNull("grid-FastFormulaAreas");
+    }
+
+    static async populateGridFastFormulaAreaCache(context: JsCtx): Promise<FastFormulaAreas>
     {
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
 
-        await context.getTrackedItemOrPopulate(
-            "grid-FastFormulaAreas",
+        return await context.getTrackedItemOrPopulate(
+            this.s_fastFormulaAreaBigGrid,
             async (context): Promise<CacheObject> =>
             {
                 const areas = await FastFormulaAreas.getRangeAreasGridForRangeInfo(
                     context,
-                    "bigGridCache",
+                    `${this.s_fastFormulaAreaBigGrid}-rangeAreas`,
                     sheet,
                     new RangeInfo(8, 250, 0, 50));
 

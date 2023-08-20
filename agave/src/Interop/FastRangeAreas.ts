@@ -238,6 +238,8 @@ export class FastRangeAreas
         return cellsCollection;
     }
 
+    static s_fastRangeAreaBigGrid = "grid-fastRangeAreas";
+
     static async populateGridFastRangeAreaCache(context: JsCtx)
     {
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
@@ -248,7 +250,7 @@ export class FastRangeAreas
             {
                 const areas = await FastRangeAreas.getRangeAreasGridForRangeInfo(
                     context,
-                    "bigGridCache",
+                    `${this.s_fastRangeAreaBigGrid}-rangeAreas`,
                     sheet,
                     new RangeInfo(8, 150, 0, 50));
 
