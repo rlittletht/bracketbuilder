@@ -5,6 +5,31 @@ import { s_staticConfig } from "../StaticConfig";
 
 export class GameFormatting
 {
+    static s_lineText = "Line";
+
+    static s_vLinePrefix = `v${GameFormatting.s_lineText}`;
+    static s_vLineText = `${GameFormatting.s_vLinePrefix}T`; // a line in a text row
+    static s_vLineLine = `${GameFormatting.s_vLinePrefix}L`; // a line in a horizontal line row
+
+    static s_hLinePrefix = `h${GameFormatting.s_lineText}`;
+    static s_hLineTeam =  `${GameFormatting.s_hLinePrefix}T`; // a line in the TeamName column
+    static s_hLineScore = `${GameFormatting.s_hLinePrefix}S`; // a line in the Score column
+    static s_hLineLine =  `${GameFormatting.s_vLinePrefix}L`; // a line in the vertical line column -- same as vertical line in a line row
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.isLineFormula
+
+        Does the given formula string correspond to any of our line cells?
+    ----------------------------------------------------------------------------*/
+    static isLineFormula(fmla: string): boolean
+    {
+        if (fmla == null || fmla.length < 5)
+            return false;
+
+        return fmla.toUpperCase().startsWith(GameFormatting.s_lineText, 1);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatTeamNameRange
     ----------------------------------------------------------------------------*/
@@ -20,12 +45,6 @@ export class GameFormatting
         %%Function: GameFormatting.formatConnectingLineRange
     ----------------------------------------------------------------------------*/
     static formatConnectingLineRangeRequest(lineRange: Excel.Range)
-    {
-        lineRange.format.fill.color = "black";
-        lineRange.format.font.color = "white";
-    }
-
-    static formatConnectingLineRangeSync(lineRange: Excel.Range)
     {
         lineRange.format.fill.color = "black";
         lineRange.format.font.color = "white";
@@ -122,17 +141,6 @@ export class GameFormatting
     static isRangeFormatInLineRow(format: Excel.RangeFormat): boolean
     {
         return format.rowHeight <= 1;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: GameFormatting.isCellInLineRow
-    ----------------------------------------------------------------------------*/
-    static async isCellInLineRow(context: JsCtx, range: Excel.Range): Promise<boolean>
-    {
-        range.load("format");
-        await context.sync();
-
-        return this.isRangeFormatInLineRow(range.format);
     }
 
     static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean

@@ -3,7 +3,7 @@ import { IBracketGame } from "../BracketGame";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { GameFormatting } from "../GameFormatting";
-import { Grid } from "../Grid";
+import { Grid, GridRowType, GridColumnType } from "../Grid";
 import { StructureRemove } from "./StructureRemove";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { _undoManager, UndoGameDataItem } from "../Undo";
@@ -56,7 +56,7 @@ export class StructureInsert
 
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
-        formulas.push(["line", ""]);
+        formulas.push([GameFormatting.s_hLineTeam, ""]);
         formulas.push(["Champion", ""]);
 
         let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
@@ -151,7 +151,7 @@ export class StructureInsert
         formulas.push([FormulaBuilder.getTimeFormulaFromGameId(game.GameId)]);
 
         this.pushPadding(formulas, [""], gameInfoRange.LastRow - gameInfoRangeInfo.LastRow);
-        formulas.push(["line"]);
+        formulas.push([GameFormatting.s_hLineTeam]);
         formulas.push([bottomString]);
 
         const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, gameInfoRange);
@@ -179,7 +179,7 @@ export class StructureInsert
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
 
-        formulas.push(["line", "line"]);
+        formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
         // push padding for the underline row AND the number of blank lines 
         this.pushPadding(
             formulas,
@@ -191,7 +191,7 @@ export class StructureInsert
         // we will fill in the game info text later. for now just push space
 
         this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 2);
-        formulas.push(["line", "line"]);
+        formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
 
@@ -215,6 +215,7 @@ export class StructureInsert
     static async insertGameAtRange(
         appContext: IAppContext,
         context: JsCtx,
+        gridRef: Grid,
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
@@ -279,12 +280,19 @@ export class StructureInsert
             GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
 
             const vertLineRowCount = insertRangeInfo.RowCount - 2;
-            const vertLineRange = rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, vertLineRowCount, 1);
+            const vertLineFirstRow = insertRangeInfo.FirstRow + 1;
+            const vertLineRange = rng.worksheet.getRangeByIndexes(vertLineFirstRow, insertRangeInfo.FirstColumn + 2, vertLineRowCount, 1);
             GameFormatting.formatConnectingLineRangeRequest(vertLineRange);
+
+            const mapLine = new Map<GridRowType, string>(
+                [
+                    [GridRowType.Text, GameFormatting.s_vLineText],
+                    [GridRowType.Line, GameFormatting.s_vLineLine],
+                ]);
 
             const linesText = [];
             for (let i = 0; i < vertLineRowCount; i++)
-                linesText.push(["line"]);
+                linesText.push([mapLine.get(gridRef.getRowType(vertLineFirstRow + i))]);
 
             vertLineRange.formulas = linesText;
 

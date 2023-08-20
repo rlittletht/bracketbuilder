@@ -44,6 +44,21 @@ export interface RangeOverlapMatch
     delegate: RangeOverlapDelegate
 }
 
+export class GridColumnType
+{
+    static Invalid = null;
+    static Team = "T";
+    static Score = "S";
+    static Line = "L";
+}
+
+export class GridRowType
+{
+    static Invalid = null;
+    static Text = "T";
+    static Line = "L";
+}
+
 export class Grid
 {
     m_gridItems: GridItem[] = [];
@@ -120,6 +135,36 @@ export class Grid
             return this.m_mapGameItem.get(gameId.Value);
 
         return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getColumnType
+
+        Return the column type for the given column
+    ----------------------------------------------------------------------------*/
+    getColumnType(col: number): GridColumnType
+    {
+        if (col < this.m_firstGridPattern.FirstColumn)
+            return GridColumnType.Invalid;
+
+        const mp = [GridColumnType.Team, GridColumnType.Score, GridColumnType.Line];
+
+        return mp[(col - this.m_firstGridPattern.FirstColumn) % 3];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getRowType
+
+        Return the row type for the given row
+    ----------------------------------------------------------------------------*/
+    getRowType(row: number): GridRowType
+    {
+        if (row < this.m_firstGridPattern.FirstRow)
+            return GridRowType.Invalid;
+
+        const mp = [GridRowType.Text, GridRowType.Line];
+
+        return mp[(row - this.m_firstGridPattern.FirstRow) % 2];
     }
 
     /*----------------------------------------------------------------------------

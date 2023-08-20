@@ -366,7 +366,7 @@ export class StructureEditor
             }
         }
 
-        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
         appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
         context.releaseCacheObjectsUntil(bookmark);
@@ -499,7 +499,7 @@ export class StructureEditor
         changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
         changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
 
-        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
     }
 
     static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)

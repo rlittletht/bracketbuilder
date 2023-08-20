@@ -10,7 +10,7 @@ import { OADate } from "../../Interop/Dates";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
-import { Grid } from "../Grid";
+import { Grid, GridColumnType } from "../Grid";
 
 export class ApplyGridChange
 {
@@ -26,7 +26,7 @@ export class ApplyGridChange
 
         grid.logChanges(changes);
 
-        return await this.applyChanges(appContext, context, changes, bracketName);
+        return await this.applyChanges(appContext, context, gridNew, changes, bracketName);
     }
 
     /*----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ export class ApplyGridChange
         the formulas and text. The names and structure are assumed to already
         be there.
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
+    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
     {
         const bookmark: string = "executeAddChange";
 
@@ -114,9 +114,16 @@ export class ApplyGridChange
             // just format the range as an underline
             GameFormatting.formatConnectingLineRangeRequest(range);
 
+            const mapLine = new Map<GridColumnType, string>(
+                [
+                    [GridColumnType.Team, GameFormatting.s_hLineTeam],
+                    [GridColumnType.Score, GameFormatting.s_hLineScore],
+                    [GridColumnType.Line, GameFormatting.s_vLineLine], // vLineLine and hLineLine are the same (intersectionality)
+                ]);
+
             const linesText = [];
             for (let i = 0; i < change.Range.ColumnCount; i++)
-                linesText.push("line");
+                linesText.push(mapLine.get(gridRef.getColumnType(change.Range.FirstColumn + i)));
 
             range.formulas = [linesText];
 
@@ -159,7 +166,7 @@ export class ApplyGridChange
         if (game.IsChampionship)
             await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range);
         else
-            await StructureInsert.insertGameAtRange(appContext, context, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite);
+            await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite);
 
         AppContext.checkpoint("appc.18");
 
@@ -174,7 +181,7 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext, context: JsCtx, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
+    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
     {
         let undoGameDataItems: UndoGameDataItem[] = [];
 
@@ -206,7 +213,7 @@ export class ApplyGridChange
                 continue;
 
             let undoGameDataItem: UndoGameDataItem =
-                await this.executeAddChange(appContext, context, item, bracketName);
+                await this.executeAddChange(appContext, context, gridRef, item, bracketName);
 
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);
