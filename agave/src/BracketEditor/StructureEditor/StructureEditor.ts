@@ -420,44 +420,6 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.isRangeValidForTopOrBottomGame
-    ----------------------------------------------------------------------------*/
-    static async isRangeValidForTopOrBottomGame(context: JsCtx, range: Excel.Range): Promise<boolean>
-    {
-        range.load("address");
-        await context.sync();
-
-        if (!await GameFormatting.isCellInLineRow(context, range.getOffsetRange(-1, 0)) || !await GameFormatting.isCellInLineRow(context, range.getOffsetRange(1, 0)))
-        {
-            return false;
-        }
-
-        return await StructureEditor.isRangeValidForAnyGame(context, range);
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.getValidRangeInfoForGameInsert
-    ----------------------------------------------------------------------------*/
-    static async getValidRangeInfoForGameInsert(context: JsCtx, range: Excel.Range): Promise<RangeInfo>
-    {
-        range.load("rowIndex");
-        range.load("rowCount");
-        range.load("columnIndex");
-        await context.sync();
-
-        const rowCount: number = range.rowCount == 1 ? 11 : range.rowCount;
-
-        if (rowCount >= 9
-            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(0, 0))
-            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(rowCount - 1, 0)))
-        {
-            return new RangeInfo(range.rowIndex, rowCount, range.columnIndex, 3);
-        }
-
-        return null
-    }
-
-    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.getBracketName
 
         get the bracketName from the workbook

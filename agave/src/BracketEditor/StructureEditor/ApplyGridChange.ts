@@ -107,11 +107,18 @@ export class ApplyGridChange
 
             AppContext.checkpoint("appc.14.1");
 
+            const range: Excel.Range = Ranges.rangeFromRangeInfo(
+                context.Ctx.workbook.worksheets.getActiveWorksheet(),
+                change.Range);
+
             // just format the range as an underline
-            GameFormatting.formatConnectingLineRangeRequest(
-                Ranges.rangeFromRangeInfo(
-                    context.Ctx.workbook.worksheets.getActiveWorksheet(),
-                    change.Range));
+            GameFormatting.formatConnectingLineRangeRequest(range);
+
+            const linesText = [];
+            for (let i = 0; i < change.Range.ColumnCount; i++)
+                linesText.push("line");
+
+            range.formulas = [linesText];
 
             AppContext.checkpoint("appc.14.2");
             return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);

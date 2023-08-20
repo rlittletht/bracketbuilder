@@ -809,6 +809,11 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.getFirstGridPatternCell
 
+        (IF THIS GETS SLOW, we can use FastRangeAreas for 0,15,0,25 -- its not a
+        huge area, and it is representative enough to find the first pattern.
+
+        IF we need to know the rowheights and colwidths for the whole big grid,
+        we can use two range areas:  0, 250, 0, 1 and 0, 1, 0, 50
         we rely on a regular pattern of cell formatting to make the bracket work.
 
         to be robust with users inserting extra rows at the top and the left,
@@ -1011,7 +1016,7 @@ export class Grid
                 // before we try this, check to see if we need to expand our fastRangeAreas
                 const moreRowsNeeded = fastRangeAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
                 if (moreRowsNeeded)
-                    await fastRangeAreas.addRangeAreaGridForRangeInfo(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
+                    await fastRangeAreas.addMoreRowsToRangeAreaGrid(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
 
                 [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
                 AppContext.checkpoint("lgfb.6");

@@ -22,11 +22,13 @@ export class GameFormatting
     static formatConnectingLineRangeRequest(lineRange: Excel.Range)
     {
         lineRange.format.fill.color = "black";
+        lineRange.format.font.color = "white";
     }
 
     static formatConnectingLineRangeSync(lineRange: Excel.Range)
     {
         lineRange.format.fill.color = "black";
+        lineRange.format.font.color = "white";
     }
 
     /*----------------------------------------------------------------------------

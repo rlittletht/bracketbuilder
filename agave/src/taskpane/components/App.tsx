@@ -49,6 +49,7 @@ import { About } from "./About";
 import { StructureInsertTests } from "../../BracketEditor/StructureEditor/StrutureInsertTests";
 import { ProductName } from "./ProductName";
 import { RangeInfo } from "../../Interop/Ranges";
+import { FastFormulaAreas, FastFormulaAreasTest } from "../../Interop/FastFormulaAreas";
 
 /* global console, Excel, require  */
 
@@ -153,6 +154,7 @@ export default class App extends React.Component<AppProps, AppState>
                 });
 
             StructureInsertTests.runAllTests(appContext, outStream);
+            FastFormulaAreasTest.runAllTests(appContext, outStream);
             FastRangeAreasTest.runAllTests(appContext, outStream);
             ParserTests.runAllTests(appContext, outStream);
             OADateTests.runAllTests(appContext, outStream);

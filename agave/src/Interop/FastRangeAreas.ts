@@ -142,22 +142,29 @@ export class FastRangeAreas
     {
         const areas: FastRangeAreas = new FastRangeAreas();
 
-        await areas.addRangeAreaGridForRangeInfo(context, key, sheet, 150, range);
+        await areas.addMoreRowsToRangeAreaGrid(context, key, sheet, 150, range);
 
         return areas;
     }
 
-    async addRangeAreaGridForRangeInfo(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeRef?: RangeInfo)
+    /*----------------------------------------------------------------------------
+        %%Function: FastRangeAreas.addMoreRowsToRangeAreaGrid
+
+        Add more rows (rowCount) to the current RangeAreas grid. If there isn't
+        a current grid (which is true if this is the first call ever for this
+        FastRangeAreas), then caller MUST supply a range to start the grid at.
+    ----------------------------------------------------------------------------*/
+    async addMoreRowsToRangeAreaGrid(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeGridStart?: RangeInfo)
     {
         let lastRow = this.lastAreaCached();
         let range: RangeInfo;
 
         if (!lastRow)
         {
-            if (!rangeRef)
+            if (!rangeGridStart)
                 throw new Error("must provide a reference range for the first addRange");
 
-            range = rangeRef.offset(0, rangeRef.RowCount, 0, rangeRef.ColumnCount);
+            range = rangeGridStart.offset(0, rangeGridStart.RowCount, 0, rangeGridStart.ColumnCount);
         }
         else
         {
@@ -182,7 +189,7 @@ export class FastRangeAreas
                     }
                     const timer = new PerfTimer();
 
-                    timer.pushTimer("addRangeAreaGridForRangeInfo sync");
+                    timer.pushTimer("addMoreRowsToRangeAreaGrid sync");
                     await context.sync();
                     timer.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreasAry };

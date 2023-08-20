@@ -56,7 +56,7 @@ export class StructureInsert
 
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
-        formulas.push(["", ""]);
+        formulas.push(["line", ""]);
         formulas.push(["Champion", ""]);
 
         let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
@@ -151,7 +151,7 @@ export class StructureInsert
         formulas.push([FormulaBuilder.getTimeFormulaFromGameId(game.GameId)]);
 
         this.pushPadding(formulas, [""], gameInfoRange.LastRow - gameInfoRangeInfo.LastRow);
-        formulas.push([""]);
+        formulas.push(["line"]);
         formulas.push([bottomString]);
 
         const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, gameInfoRange);
@@ -179,18 +179,19 @@ export class StructureInsert
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
 
+        formulas.push(["line", "line"]);
         // push padding for the underline row AND the number of blank lines 
         this.pushPadding(
             formulas,
             ["", ""],
             gameInfoRangeInfo.FirstRow
-            - (insertRangeInfo.FirstRow + 1));
+            - (insertRangeInfo.FirstRow + 2));
 
         formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId.Value}`]);
         // we will fill in the game info text later. for now just push space
 
-        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
-
+        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 2);
+        formulas.push(["line", "line"]);
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
 
@@ -276,7 +277,16 @@ export class StructureInsert
 
             GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
             GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
+
+            const vertLineRowCount = insertRangeInfo.RowCount - 2;
+            const vertLineRange = rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, vertLineRowCount, 1);
+            GameFormatting.formatConnectingLineRangeRequest(vertLineRange);
+
+            const linesText = [];
+            for (let i = 0; i < vertLineRowCount; i++)
+                linesText.push(["line"]);
+
+            vertLineRange.formulas = linesText;
 
             context.Ctx.trackedObjects.remove(rngTarget);
             rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
