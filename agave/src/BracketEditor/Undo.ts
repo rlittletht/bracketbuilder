@@ -132,13 +132,11 @@ export class UndoManager
         let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         let undoItem: UndoItem = this.m_redoStack.pop();
 
-        let undoneGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, undoItem.grid, bracketName);
+        // don't bother to get the undoneGameDataItems here -- we don't care about them on redo
+        await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, undoItem.grid, bracketName);
 
-        if (undoneGameDataItems.length != 0)
-            throw new Error("apply undo changes should not result in UndoGameDataItems!");
-
-        undoneGameDataItems = await UndoManager.applyUndoGameDataItems(context, undoItem.gameData);
+        const undoneGameDataItems: UndoGameDataItem[] =
+            await UndoManager.applyUndoGameDataItems(context, undoItem.gameData);
 
         this.m_undoStack.push(this.createUndoItem(grid.clone(), undoneGameDataItems));
     }
