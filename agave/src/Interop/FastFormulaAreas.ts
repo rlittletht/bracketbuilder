@@ -151,7 +151,7 @@ export class FastFormulaAreas
     {
         const areas: FastFormulaAreas = new FastFormulaAreas();
 
-        await areas.addMoreRowsToRangeAreaGrid(context, key, sheet, 150, range);
+        await areas.addMoreRowsToRangeAreaGrid(context, key, sheet, 250, range);
 
         return areas;
     }
@@ -184,15 +184,15 @@ export class FastFormulaAreas
                 key,
                 async (context) =>
                 {
+                    const timer = new PerfTimer();
+
+                    timer.pushTimer("fastFormulas addMoreRowsToRangeAreaGrid sync");
                     const addr: string = Ranges.addressFromCoordinates([range.FirstRow, range.FirstColumn], [range.LastRow, range.LastColumn]);
 
                     const rangeAreas: Excel.RangeAreas = sheet.getRanges(addr);
                     const props = 'areas.items, areas.items.values, areas.items.formulas';
                     rangeAreas.load(props);
 
-                    const timer = new PerfTimer();
-
-                    timer.pushTimer("addMoreRowsToRangeAreaGrid sync");
                     await context.sync();
                     timer.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreas};
@@ -201,7 +201,7 @@ export class FastFormulaAreas
         if (!areas)
             throw new Error("could not get areas from worksheet");
 
-        //at this point we have a 1:1 mapping of rangeINfo to areas. still need to teach the rest of the code that there isn't
+        //at this point we have a 1:1 mapping of rangeInfo to areas. still need to teach the rest of the code that there isn't
         // and array of rangeAreas that we have to map to, but rather a single rangeArea we have to just index into. get rid of the 
         // formatting returns as we didn't cache it.
         this.m_areasItems.push(new FormulaAreasItem(areas, range));

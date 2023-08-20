@@ -1066,7 +1066,7 @@ export class Grid
                 // before we try this, check to see if we need to expand our fastRangeAreas
                 const moreRowsNeeded = fastFormulaAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
                 if (moreRowsNeeded)
-                    await fastFormulaAreas.addMoreRowsToRangeAreaGrid(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
+                    await fastFormulaAreas.addMoreRowsToRangeAreaGrid(context, `bigFormulaGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
 
                 [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastFormulaAreas, game);
                 AppContext.checkpoint("lgfb.6");
