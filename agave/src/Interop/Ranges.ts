@@ -368,7 +368,7 @@ export class RangeInfo
                 async (context): Promise<any> =>
                 {
                     context.Ctx.workbook.load("names");
-                    await context.sync();
+                    await context.sync("GTI names");
                     return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
                 });
 

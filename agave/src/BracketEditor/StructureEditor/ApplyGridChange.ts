@@ -14,6 +14,7 @@ import { Grid, GridColumnType } from "../Grid";
 import { _TimerStack } from "../../PerfTimer";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { IIntention } from "../../Interop/Intentions/IIntention";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
 
 export class ApplyGridChange
 {
@@ -169,7 +170,7 @@ export class ApplyGridChange
         AppContext.checkpoint("appc.18");
 
         context.releaseCacheObjectsUntil(bookmark);
-        await context.sync();
+        await context.sync("EAC release");
 
         return undoGameDataItem;
     }
@@ -188,6 +189,7 @@ export class ApplyGridChange
         _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
         const removeTns: Intentions = new Intentions();
+        await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
 
         // do all the removes first
         for (let item of changes)

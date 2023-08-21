@@ -137,7 +137,7 @@ export class StructureRemove
             async (context): Promise<any> =>
             {
                 context.Ctx.workbook.load("names");
-                await context.sync();
+                await context.sync("GTI names");
                 return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
             });
 
@@ -184,7 +184,7 @@ export class StructureRemove
                 return null;
 
             range.load("formulas");
-            await context.sync();
+            await context.sync("ovr namedCell");
 
             formulas = range.formulas;
         }
@@ -231,7 +231,7 @@ export class StructureRemove
                 return "";
 
             range.load("values");
-            await context.sync();
+            await context.sync("gm namedCell");
             values = range.values;
         }
 
@@ -283,7 +283,7 @@ export class StructureRemove
                 return [null, 0];
 
             range.load("address, rowIndex, rowCount, columnIndex, columnCount");
-            await context.sync();
+            await context.sync("fld ovr");
             const gameNumRange: RangeInfo = RangeInfo.createFromRange(range);
 
             range = Ranges.rangeFromRangeInfo(
@@ -291,7 +291,7 @@ export class StructureRemove
                 gameNumRange.offset(0, 3, -1, 1));
 
             range.load("formulas");
-            await context.sync();
+            await context.sync("fld ovr vals");
 
             formulas = range.formulas;
         }
@@ -390,7 +390,7 @@ export class StructureRemove
             async (context): Promise<any> =>
             {
                 context.Ctx.workbook.load("names");
-                await context.sync();
+                await context.sync("names");
                 return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
             });
 
@@ -554,7 +554,7 @@ export class StructureRemove
         }
 
         context.releaseCacheObjectsUntil(bookmark)
-        await context.sync();
+        await context.sync("FAR release");
 
         _TimerStack.popTimer();
 

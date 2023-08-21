@@ -408,7 +408,7 @@ export class BracketGame implements IBracketGame
                         async (context): Promise<any> =>
                         {
                             const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                            await context.sync();
+                            await context.sync("GTI sheet(bracketSrc)");
                             return { type: ObjectType.JsObject, o: sheetGet };
                         });
 
@@ -430,7 +430,7 @@ export class BracketGame implements IBracketGame
                             async (context): Promise<any> =>
                             {
                                 const tableGet = sheet.tables.getItemOrNullObject(tableName);
-                                await context.sync();
+                                await context.sync("GTI brk table");
                                 return { type: ObjectType.JsObject, o: tableGet };
                             }
                         );
@@ -444,7 +444,7 @@ export class BracketGame implements IBracketGame
                                 {
                                     const rangeGet: Excel.Range = table.getDataBodyRange();
                                     rangeGet.load("values");
-                                    await context.sync();
+                                    await context.sync("GTI brk body");
                                     return { type: ObjectType.JsObject, o: rangeGet };
                                 });
 

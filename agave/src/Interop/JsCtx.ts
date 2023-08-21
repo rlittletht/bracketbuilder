@@ -19,7 +19,11 @@ export class JsCtx
 
     async sync(name?: string)
     {
-        _TimerStack.pushTimer(`context.sync(${name ?? ""})`);
+        // this is an explicit if to allow easier breakpoints
+        if (name == undefined || name == null)
+            name = "";
+
+        _TimerStack.pushTimer(`context.sync(${name})`);
         await this.m_ctx.sync();
         _TimerStack.popTimer();
     }

@@ -46,6 +46,6 @@ export class Intentions
             tn.Execute(context);
 
         _TimerStack.popTimer();
-        await context.sync();
+        await context.sync("tnsX");
     }
 }
