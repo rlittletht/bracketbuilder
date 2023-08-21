@@ -12,6 +12,8 @@ import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { Grid, GridColumnType } from "../Grid";
 import { _TimerStack } from "../../PerfTimer";
+import { Intentions } from "../../Interop/Intentions/Intentions";
+import { IIntention } from "../../Interop/Intentions/IIntention";
 
 export class ApplyGridChange
 {
@@ -36,22 +38,22 @@ export class ApplyGridChange
         if the Op is RemoveLite, there's really nothing to do -- the Insert is
         going to assume all the named ranges are already there
     ----------------------------------------------------------------------------*/
-    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string)
+    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         if (change.IsLine)
         {
             if (change.ChangeOp == GridChangeOperation.RemoveLite)
-                return;
+                return tns;;
 
             AppContext.checkpoint("appc.3");
             // simple, just remove the line formatting
-            GameFormatting.removeAllGameFormatting(
-                Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), change.Range));
+            const removeFormattingTns = GameFormatting.tnsRemoveAllGameFormatting(change.Range);
+            tns.push(...removeFormattingTns);
 
-            AppContext.checkpoint("appc.4");
-            await context.sync();
             AppContext.checkpoint("appc.5");
-            return;
+            return tns;
         }
 
         AppContext.checkpoint("appc.6");
@@ -64,7 +66,7 @@ export class ApplyGridChange
         let game: IBracketGame = await BracketGame.CreateFromGameId(context, bracketName, change.GameId);
 
         context.releaseCacheObjectsUntil(bookmark);
-        await context.sync();
+//        await context.sync();
 
         AppContext.checkpoint("appc.7");
         // if we couldn't create the game, or if its not linked to the bracket, then
@@ -72,18 +74,20 @@ export class ApplyGridChange
         if (game == null || !game.IsLinkedToBracket)
         {
             if (change.ChangeOp == GridChangeOperation.RemoveLite)
-                return;
+                return tns;
 
             AppContext.checkpoint("appc.8");
-            await StructureRemove.removeGame(appContext, context, null, change.Range, false, false);
+            tns.push(...await StructureRemove.removeGame(appContext, context, null, change.Range, false, false));
             AppContext.checkpoint("appc.9");
         }
         else
         {
             AppContext.checkpoint("appc.10");
-            await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite);
+            tns.push(...await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite));
             AppContext.checkpoint("appc.11");
         }
+
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -183,6 +187,8 @@ export class ApplyGridChange
 
         _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
+        const removeTns: Intentions = new Intentions();
+
         // do all the removes first
         for (let item of changes)
         {
@@ -190,8 +196,10 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
                 continue;
 
-            await this.executeRemoveChange(appContext, context, item, bracketName);
+            removeTns.AddTns(await this.executeRemoveChange(appContext, context, item, bracketName));
         }
+
+        await removeTns.Execute(context);
         _TimerStack.popTimer();
 
         // must invalidate all of our caches

@@ -19,6 +19,11 @@ export class PerfTimer
     m_perfTimerStack: PerfTimerItem[] = [];
     m_aggregatedTimers: Map<string, PerfTimerItem> = new Map<string, PerfTimerItem>();
 
+    clear()
+    {
+        this.m_perfTimerStack = [];
+    }
+
     pushTimer(message: string)
     {
         if (!s_staticConfig.perfTimers)

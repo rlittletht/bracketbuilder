@@ -1,5 +1,6 @@
 import { s_staticConfig } from "../StaticConfig";
 import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, CacheObject, ObjectType } from "./TrackingCache";
+import { _TimerStack } from "../PerfTimer";
 
 export class JsCtx
 {
@@ -16,9 +17,11 @@ export class JsCtx
 
     get Ctx(): any { return this.m_ctx; }
 
-    async sync()
+    async sync(name?: string)
     {
+        _TimerStack.pushTimer(`context.sync(${name})`);
         await this.m_ctx.sync();
+        _TimerStack.popTimer();
     }
 
     pushTrackingBookmark(bookmark: string)

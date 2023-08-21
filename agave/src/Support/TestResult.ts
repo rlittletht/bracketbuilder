@@ -21,6 +21,11 @@ export class TestResult
         this.appContext = appContext;
     }
 
+    get AppContext(): IAppContext
+    {
+        return this.appContext;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: TestResult.setText
     ----------------------------------------------------------------------------*/

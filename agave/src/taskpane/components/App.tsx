@@ -51,6 +51,7 @@ import { ProductName } from "./ProductName";
 import { RangeInfo } from "../../Interop/Ranges";
 import { FastFormulaAreas, FastFormulaAreasTest } from "../../Interop/FastFormulaAreas";
 import { _TimerStack } from "../../PerfTimer";
+import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 
 /* global console, Excel, require  */
 
@@ -134,6 +135,24 @@ export default class App extends React.Component<AppProps, AppState>
         window.open(HelpLink.buildHelpLink("BracketBuilder-Help.html"));
     }
 
+    static async doIntegrationTests(appContext: IAppContext)
+    {
+        const results = [];
+
+        const outStream = new StreamWriter((line) => results.push(line));
+
+        try
+        {
+            await IntentionsTest.runAllTests(appContext, outStream);
+        }
+        catch (e)
+        {
+            results.push(`EXCEPTION CAUGHT: ${e}`);
+        }
+
+        appContext.Messages.message([...results, "Integration Tests Complete"]);
+    }
+
     static async doUnitTests(appContext: IAppContext)
     {
         const results = [];
@@ -154,19 +173,19 @@ export default class App extends React.Component<AppProps, AppState>
                     context.releaseAllCacheObjects();
                 });
 
-            StructureInsertTests.runAllTests(appContext, outStream);
-            FastFormulaAreasTest.runAllTests(appContext, outStream);
-            FastRangeAreasTest.runAllTests(appContext, outStream);
-            ParserTests.runAllTests(appContext, outStream);
-            OADateTests.runAllTests(appContext, outStream);
-            GameMoverTests.runAllTests(appContext, outStream);
-            GridRankerTests.runAllTests(appContext, outStream);
-            GridTests.runAllTests(appContext, outStream);
-            RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
-            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
-            Adjuster_SwapAdjacentGameRegonsForOverlapTests.runAllTests(appContext, outStream);
+            await StructureInsertTests.runAllTests(appContext, outStream);
+            await FastFormulaAreasTest.runAllTests(appContext, outStream);
+            await FastRangeAreasTest.runAllTests(appContext, outStream);
+            await ParserTests.runAllTests(appContext, outStream);
+            await OADateTests.runAllTests(appContext, outStream);
+            await GameMoverTests.runAllTests(appContext, outStream);
+            await GridRankerTests.runAllTests(appContext, outStream);
+            await GridTests.runAllTests(appContext, outStream);
+            await RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
+            await Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
+            await Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
+            await Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
+            await Adjuster_SwapAdjacentGameRegonsForOverlapTests.runAllTests(appContext, outStream);
 
         }
         catch (e)
@@ -314,13 +333,26 @@ export default class App extends React.Component<AppProps, AppState>
 
             listItems.push(
                 {
-                    icon: "Bug",
+                    icon: "LadybugSolid",
                     primaryText: "Run Unit Tests",
                     cursor: "cursorPointer",
                     stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
                         await App.doUnitTests(appContext);
+                        return true;
+                    }
+                });
+
+            listItems.push(
+                {
+                    icon: "Bug",
+                    primaryText: "Run Integration Tests",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await App.doIntegrationTests(appContext);
                         return true;
                     }
                 });

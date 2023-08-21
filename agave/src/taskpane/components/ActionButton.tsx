@@ -3,6 +3,7 @@ import { IconButton } from "@fluentui/react";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { TooltipHost, ITooltipHostStyles } from "@fluentui/react/lib/Tooltip";
+import { _TimerStack } from "../../PerfTimer";
 
 export interface ActionButtonProps
 {
@@ -34,6 +35,15 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
         }
     }
 
+    async onButtonClick()
+    {
+        _TimerStack.clear();
+        _TimerStack.pushTimer("actionButton");
+        await this.props.delegate(this.context, this.state.bracketGame);
+        _TimerStack.popTimer();
+        _TimerStack.clear();
+    }
+
     render()
     {
 
@@ -45,7 +55,7 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
                     iconProps={{ iconName: this.props.icon }}
                     size={100}
                     disabled={this.props.disabled}
-                    onClick={async () => await this.props.delegate(this.context, this.state.bracketGame)}/>
+                    onClick={this.onButtonClick.bind(this)}/>
             </TooltipHost>
         );
     }

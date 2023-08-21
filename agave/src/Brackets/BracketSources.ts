@@ -1,7 +1,7 @@
 
 import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { Ranges } from "../Interop/Ranges";
+import { Ranges, RangeInfo } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 import { IFastTables } from "../Interop/FastTables";
 import { Tables } from "../Interop/Tables";
@@ -10,6 +10,8 @@ import { GameNum } from "../BracketEditor/GameNum";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { UndoGameDataItem } from "../BracketEditor/Undo";
 import { JsCtx } from "../Interop/JsCtx";
+import { IIntention } from "../Interop/Intentions/IIntention";
+import { TnSetValues } from "../Interop/Intentions/TnSetValue";
 
 export interface TeamNameMap
 {
@@ -42,13 +44,15 @@ export class BracketSources
         gameNum: GameNum,
         field: any,
         time: any,
-        swapHomeAway: any)
+        swapHomeAway: any): Promise<IIntention[]>
     {
+        const tns = [];
+
         // find the team names table
         let table: Excel.Table = await BracketSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
-        range.load("values, rowCount");
+        range.load("values, rowCount, rowIndex, columnIndex, columnCount, worksheet");
         await context.sync();
 
         let newValues: any[][] = [];
@@ -70,8 +74,10 @@ export class BracketSources
             }
         }
 
-        range.values = newValues;
-        await context.sync();
+        tns.push(TnSetValues.Create(RangeInfo.createFromRange(range), newValues, range.worksheet.name));
+//        range.values = newValues;
+//        await context.sync();
+        return tns;
     }
 
     static async updateGameInfoIfNotSet(

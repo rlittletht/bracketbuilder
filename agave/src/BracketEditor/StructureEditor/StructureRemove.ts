@@ -4,17 +4,20 @@ import { GameLines } from "../GameLines";
 import { GameFormatting } from "../GameFormatting";
 import { BracketGame, IBracketGame } from "../BracketGame";
 import { TeamNameMap, BracketSources } from "../../Brackets/BracketSources";
-import { Grid } from "../Grid";
+import { Grid, GridColumnType } from "../Grid";
 import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { TrackingCache } from "../../Interop/TrackingCache";
+import { TrackingCache, ObjectType } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { HelpTopic } from "../../HelpInfo";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
 import { _TimerStack } from "../../PerfTimer";
+import { IIntention } from "../../Interop/Intentions/IIntention";
+import { TnDeleteGlobalName } from "../../Interop/Intentions/TnDeleteGlobalName";
+import { TnUnmergeRange } from "../../Interop/Intentions/TnUmergeRange";
 
 export class StructureRemove
 {
@@ -35,8 +38,11 @@ export class StructureRemove
         (there doesn't appear to be an API for this in javascript, so we will
         rely on the caller to cleanup the names)
     ----------------------------------------------------------------------------*/
-    static async obliterateGameRangeFromSheet(context: JsCtx, appContext: IAppContext, rangeInfo: RangeInfo, removeConnections: boolean)
+    static async obliterateGameRangeFromSheet(context: JsCtx, appContext: IAppContext, rangeInfo: RangeInfo, removeConnections: boolean): Promise<IIntention[]>
     {
+        const tns = [];
+        const fastFormulaAreas = FastFormulaAreas.getGridFastFormulaAreaCache(context);
+
         appContext;
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         context.Ctx.trackedObjects.add(sheet);
@@ -46,83 +52,106 @@ export class StructureRemove
             // now go looking for connecting lines
             let feederLine: RangeInfo;
 
-            feederLine = await GameLines.getFeedingLineRangeInfoNoCache(context, sheet, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
-            GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+            feederLine = GameLines.getFeedingLineRangeInfo(fastFormulaAreas, new RangeInfo(rangeInfo.FirstRow + 1, 1, rangeInfo.FirstColumn, 1), true);
+            tns.push(...GameFormatting.tnsRemoveAllGameFormatting(feederLine));
 
-            feederLine = await GameLines.getFeedingLineRangeInfoNoCache(context, sheet, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
-            GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+            feederLine = GameLines.getFeedingLineRangeInfo(fastFormulaAreas, new RangeInfo(rangeInfo.LastRow - 1, 1, rangeInfo.FirstColumn, 1), false);
+            tns.push(...GameFormatting.tnsRemoveAllGameFormatting(feederLine));
         }
 
-        let range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfo);
-        context.Ctx.trackedObjects.add(range);
-        GameFormatting.removeAllGameFormatting(range);
+        //        let range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfo);
+        //        context.Ctx.trackedObjects.add(range);
+        tns.push(...GameFormatting.tnsRemoveAllGameFormatting(rangeInfo));
 
-        //        await this.removeAllGameFormatting(context, range);
-        range.load("rowIndex");
-        range.load("columnIndex");
-
-        // and now look for merged regions so we can find the outgoing line
-        let areas: Excel.RangeAreas = range.getMergedAreasOrNullObject();
-
-        await context.sync();
-
-        if (!areas.isNullObject)
+//        await this.removeAllGameFormatting(context, range);
+        // don't try to remove the outgoing feed if we don't have at least 9 rows (we are either broken,
+        // or we are the championship game)
+        if (rangeInfo.RowCount >= 9)
         {
-            let mergedRange: Excel.Range = areas.areas.getItemAt(0);
-            context.Ctx.trackedObjects.add(mergedRange);
+            const gameInfoRange = Grid.getRangeInfoForGameInfo(rangeInfo);
+            //        range.load("rowIndex");
+            //        range.load("columnIndex");
 
-            GameFormatting.removeAllGameFormatting(mergedRange);
+            // and now look for merged regions so we can find the outgoing line
+            //        let areas: Excel.RangeAreas = range.getMergedAreasOrNullObject();
+            //
+            //        await context.sync();
 
-            mergedRange.load("address");
-            mergedRange.load("rowIndex");
-            mergedRange.load("columnIndex");
-
-            await context.sync();
             if (removeConnections)
             {
                 // the middle row is the outgoing row
-                let rangeLine: Excel.Range =
-                    sheet.getRangeByIndexes(mergedRange.rowIndex + 1, mergedRange.columnIndex + 1, 1, 1);
+                const rangeLine = new RangeInfo(gameInfoRange.FirstRow + 1, 1, gameInfoRange.FirstColumn + 1, 1);
 
-                rangeLine.load("rowIndex");
-                rangeLine.load("columnIndex");
-
-                if (await GameFormatting.isCellInLineColumn(context, rangeLine))
+                const checkLine = fastFormulaAreas.getFormulasForRangeInfo(rangeLine);
+                if (GameFormatting.isLineColumnTypeMatch(checkLine[0][0], GridColumnType.Line))
                 {
-                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRangeNoCache(
-                        context,
-                        sheet,
-                        new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
-
-                    GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+                    const feederLine = GameLines.getOutgoingLineRange(fastFormulaAreas, rangeLine)
+                    tns.push(...GameFormatting.tnsRemoveAllGameFormatting(feederLine));
                 }
+                //        if (!areas.isNullObject)
+                //        {
+                //            let mergedRange: Excel.Range = areas.areas.getItemAt(0);
+                //            context.Ctx.trackedObjects.add(mergedRange);
+                //
+                //            GameFormatting.removeAllGameFormatting(mergedRange);
+                //
+                //            mergedRange.load("address");
+                //            mergedRange.load("rowIndex");
+                //            mergedRange.load("columnIndex");
+                //
+                //            await context.sync();
+                //            if (removeConnections)
+                //            {
+                //                // the middle row is the outgoing row
+                //                let rangeLine: Excel.Range =
+                //                    sheet.getRangeByIndexes(mergedRange.rowIndex + 1, mergedRange.columnIndex + 1, 1, 1);
+                //
+                //                rangeLine.load("rowIndex");
+                //                rangeLine.load("columnIndex");
+                //
+                //                if (await GameFormatting.isCellInLineColumn(context, rangeLine))
+                //                {
+                //                    let feederLine: RangeInfo = await GameLines.getOutgoingLineRangeNoCache(
+                //                        context,
+                //                        sheet,
+                //                        new RangeInfo(rangeLine.rowIndex, 1, rangeLine.columnIndex, 1));
+                //
+                //                    GameFormatting.removeAllGameFormatting(Ranges.rangeFromRangeInfo(sheet, feederLine));
+                //                }
+                //            }
             }
-
-            mergedRange.unmerge();
-            await context.sync();
-
-            context.Ctx.trackedObjects.remove(range);
-            context.Ctx.trackedObjects.remove(mergedRange);
-            context.Ctx.trackedObjects.remove(sheet);
         }
+        tns.push(TnUnmergeRange.Create(rangeInfo));
+        //            mergedRange.unmerge();
+        //            await context.sync();
+        //
+        //            context.Ctx.trackedObjects.remove(range);
+        //            context.Ctx.trackedObjects.remove(mergedRange);
+        //            context.Ctx.trackedObjects.remove(sheet);
+
 
         // lastly, deal with any named ranges in the range (the caller may have already dealt
         // with the games expected ranges
-        const names = context.Ctx.workbook.names;
-        names.load("items, items.name, items.formula, items.type");
-        await context.sync();
+        const names = await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync();
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
 
-        for (let _item of names.items)
+        for (let _item of names)
         {
             if (_item.type == Excel.NamedItemType.error)
-                _item.delete();
+                tns.push(TnDeleteGlobalName.Create(_item.name));
             else if (_item.type == Excel.NamedItemType.range)
             {
                 if (RangeInfo.isOverlapping(rangeInfo, Ranges.createRangeInfoFromFormula(_item.formula)) != RangeOverlapKind.None)
-                    _item.delete();
+                    tns.push(TnDeleteGlobalName.Create(_item.name));
             }
         }
-        await context.sync();
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -279,15 +308,17 @@ export class StructureRemove
         get any direct edits from these ranges and propagate these edits to the
         bracket sources table
     ----------------------------------------------------------------------------*/
-    static async updateBracketSourcesWithOverrides(context: JsCtx, game: IBracketGame)
+    static async updateBracketSourcesWithOverrides(context: JsCtx, game: IBracketGame): Promise<IIntention[]>
     {
+        const tns = [];
+
         let overrideText1: string;
         let overrideText2: string;
         let field: string;
         let time: number;
 
         if (game.IsChampionship)
-            return;
+            return tns;
 
         overrideText1 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.TopTeamCellName, game.TopTeamName);
         overrideText2 = await this.getTeamSourceNameOverrideValueForNamedRange(context, game.BottomTeamCellName, game.BottomTeamName);
@@ -312,9 +343,11 @@ export class StructureRemove
 
         await BracketSources.updateBracketSourcesTeamNames(context, map);
         if (field && field != null && field != "")
-            await BracketSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom);
+            tns.push(...await BracketSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom));
 
         AppContext.log(`saved: ${game.TopTeamName}=${overrideText1}, ${game.BottomTeamName}=${overrideText2}, field=${field}, time=${time}`);
+
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -322,11 +355,21 @@ export class StructureRemove
 
         remove the named ranges for this game. 
     ----------------------------------------------------------------------------*/
-    static async removeNamedRanges(context: JsCtx, game: IBracketGame)
+    static async removeNamedRanges(context: JsCtx, game: IBracketGame): Promise<IIntention[]>
     {
-        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
-        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
-        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
+        const tns = [];
+
+        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.TopTeamCellName) != null)
+            tns.push(TnDeleteGlobalName.Create(game.TopTeamCellName));
+        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.BottomTeamCellName) != null)
+            tns.push(TnDeleteGlobalName.Create(game.BottomTeamCellName));
+        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.GameNumberCellName) != null)
+            tns.push(TnDeleteGlobalName.Create(game.GameNumberCellName));
+
+        return tns;
+//        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
+//        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
+//        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
     }
 
     /*----------------------------------------------------------------------------
@@ -336,9 +379,20 @@ export class StructureRemove
         If only the rangeinfo is provided, then use that as the range to remove.
         If both are provided, they must be consistent.
     ----------------------------------------------------------------------------*/
-    static async removeGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, range: RangeInfo, removeConnections: boolean, liteRemove: boolean)
+    static async removeGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, range: RangeInfo, removeConnections: boolean, liteRemove: boolean): Promise<IIntention[]>
     {
+        const tns = [];
+
         AppContext.checkpoint("remgm.1");
+
+        await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync();
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
 
         if (range != null && game != null && game.IsLinkedToBracket && !game.IsBroken)
         {
@@ -351,10 +405,10 @@ export class StructureRemove
         if (game != null && (game.IsLinkedToBracket || game.IsBroken))
         {
             if (!game.IsBroken)
-                await this.updateBracketSourcesWithOverrides(context, game)
+                tns.push(...await this.updateBracketSourcesWithOverrides(context, game));
 
             if (!liteRemove)
-                await this.removeNamedRanges(context, game);
+                tns.push(...await this.removeNamedRanges(context, game));
             /*
                         // obliterate can't deal with the named ranges (there's no way to map
                         // range back to named item), but we know the names, so we can delete them
@@ -369,9 +423,10 @@ export class StructureRemove
 
         AppContext.checkpoint("remgm.4");
         if (!liteRemove)
-            await this.obliterateGameRangeFromSheet(context, appContext, range == null ? game.FullGameRange : range, removeConnections);
+            tns.push(...await this.obliterateGameRangeFromSheet(context, appContext, range == null ? game.FullGameRange : range, removeConnections));
 
         AppContext.checkpoint("remgm.5");
+        return tns;
     }
 
     static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo)

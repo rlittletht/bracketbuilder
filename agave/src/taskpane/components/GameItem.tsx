@@ -176,7 +176,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
         return (
             <div className="singleGameItem" style={background}>
-                <Stack horizontal gap={8}>
+                <Stack horizontal tokens={{ childrenGap: 8 }}>
                     <Stack.Item>
                         {dirty}{broken}
                     </Stack.Item>

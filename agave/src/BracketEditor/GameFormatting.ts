@@ -3,6 +3,8 @@ import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { RangeInfo } from "../Interop/Ranges";
 import { s_staticConfig } from "../StaticConfig";
 import { GridColumnType, GridRowType } from "./Grid";
+import { IIntention } from "../Interop/Intentions/IIntention";
+import { TnClearRange } from "../Interop/Intentions/TnClearRange";
 
 export class GameFormatting
 {
@@ -254,11 +256,24 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.removeAllGameFormatting
     ----------------------------------------------------------------------------*/
-    static removeAllGameFormatting(range: Excel.Range)
+    static removeAllGameFormattingNoTn(range: Excel.Range)
     {
         if (range == null)
             return;
 
         range.clear();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.tnsRemoveAllGameFormatting
+
+        return intentions to remove all game formatting for the range
+    ----------------------------------------------------------------------------*/
+    static tnsRemoveAllGameFormatting(range: RangeInfo): IIntention[]
+    {
+        if (range == null)
+            return [];
+
+        return [TnClearRange.Create(range)];
     }
 }
