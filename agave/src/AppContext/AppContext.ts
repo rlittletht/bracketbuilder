@@ -17,7 +17,7 @@ export interface IAppContext
     Messages: IAppContextMessages;
     Teaching: IAppContextTeaching;
 
-    /*async*/ invalidateHeroList(context: JsCtx);
+    setHeroListDirty(isDirty?: boolean);
     /*async*/ rebuildHeroListIfNeeded(context: JsCtx);
     getSelectedBracket();
     getGames(): IBracketGame[];
@@ -78,10 +78,9 @@ export class AppContext implements IAppContext
         return this.m_getSetupStateDelegate?.() ?? "U";
     }
 
-    async invalidateHeroList(context: JsCtx)
+    async setHeroListDirty(isDirty?: boolean)
     {
-        await this.rebuildHeroListIfNeeded(context);
-        this.m_heroListNeedsRebuilt = true;
+        this.m_heroListNeedsRebuilt = isDirty ?? true;
     }
 
     setProgressVisible(visible: boolean)
@@ -97,8 +96,9 @@ export class AppContext implements IAppContext
 
     async rebuildHeroListIfNeeded(context: JsCtx)
     {
-//        if (this.m_heroListNeedsRebuilt)
-        await this.m_rebuildHeroListDelegate?.(context);
+        if (this.m_heroListNeedsRebuilt)
+            await this.m_rebuildHeroListDelegate?.(context);
+
         this.m_heroListNeedsRebuilt = false;
     }
 

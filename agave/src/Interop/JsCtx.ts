@@ -19,7 +19,7 @@ export class JsCtx
 
     async sync(name?: string)
     {
-        _TimerStack.pushTimer(`context.sync(${name})`);
+        _TimerStack.pushTimer(`context.sync(${name ?? ""})`);
         await this.m_ctx.sync();
         _TimerStack.popTimer();
     }

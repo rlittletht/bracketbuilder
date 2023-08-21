@@ -110,7 +110,7 @@ export default class App extends React.Component<AppProps, AppState>
         this.m_appContext.setDelegates(
             null,
             null,
-            this.invalidateHeroList.bind(this),
+            this.rebuildHeroList.bind(this),
             this.getSelectedBracket.bind(this),
             this.getGames.bind(this),
             this.getSetupStateFromState.bind(this));
@@ -437,19 +437,21 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
 
     /*----------------------------------------------------------------------------
-        %%Function: App.invalidateHeroList
+        %%Function: App.rebuildHeroList
 
         Invalidate the top level hero list (and maybe supporting parameters
         below in the UI)
     ----------------------------------------------------------------------------*/
-    async invalidateHeroList(context: JsCtx)
+    async rebuildHeroList(context: JsCtx)
     {
-        _TimerStack.pushTimer("invalidateHeroList");
+        this.m_appContext.setHeroListDirty(false);
 
-        const bookmark: string = "invalidateHeroList";
+        _TimerStack.pushTimer("rebuildHeroList", true);
+
+        const bookmark: string = "rebuildHeroList";
         context.pushTrackingBookmark(bookmark);
 
-        _TimerStack.pushTimer("invalidateHeroList.buildFastFormulaAreas");
+        _TimerStack.pushTimer("buildFastFormulaAreas");
         await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
         _TimerStack.popTimer();
 
@@ -457,7 +459,7 @@ export default class App extends React.Component<AppProps, AppState>
         let setupState: SetupState;
         let bracketChoice: string;
 
-        _TimerStack.pushTimer("invalidateHeroList.getSetupState");
+        _TimerStack.pushTimer("rebuildHeroList.getSetupState");
         [setupState, bracketChoice] = await (this.getSetupState(context));
         _TimerStack.popTimer();
 
@@ -471,7 +473,7 @@ export default class App extends React.Component<AppProps, AppState>
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
-        _TimerStack.pushTimer("invalidateHeroList.getGamesList");
+        _TimerStack.pushTimer("getGamesList");
 
         AppContext.checkpoint("ihl.5");
         let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
@@ -479,7 +481,7 @@ export default class App extends React.Component<AppProps, AppState>
         _TimerStack.popTimer();
 
 
-        _TimerStack.pushTimer("invalidateHeroList.buildToolbars");
+        _TimerStack.pushTimer("buildToolbars");
 
         AppContext.checkpoint("ihl.7");
         [format, title, list] = HeroList.buildHeroList(setupState);
@@ -683,7 +685,7 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     const context: JsCtx = new JsCtx(ctx);
 
-                    await this.invalidateHeroList(context);
+                    await this.rebuildHeroList(context);
                     context.releaseAllCacheObjects();
                 }
                 catch (e)

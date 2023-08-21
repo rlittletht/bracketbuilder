@@ -53,7 +53,8 @@ export class Prioritizer
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.shadeGamesByPriority(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

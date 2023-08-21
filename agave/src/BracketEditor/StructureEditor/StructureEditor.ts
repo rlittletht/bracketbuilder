@@ -38,7 +38,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.copySelectionToClipboard(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -58,7 +59,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.syncBracketChangesFromGameSheet(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -77,7 +79,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.toggleShowDataSheets(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -99,7 +102,8 @@ export class StructureEditor
             await _undoManager.undo(appContext, context);
             context.releaseCacheObjectsUntil('undo');
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -119,7 +123,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.applyFinalFormatting(appContext, context, await this.getBracketName(context));
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -141,7 +146,8 @@ export class StructureEditor
             await _undoManager.redo(appContext, context);
             context.releaseCacheObjectsUntil('redo');
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -162,7 +168,7 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1");
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", true);
 
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
@@ -175,11 +181,12 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
             _TimerStack.popTimer();
 
-            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2");
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", true);
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
             _TimerStack.popTimer();
         };
 
@@ -205,7 +212,8 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -232,7 +240,8 @@ export class StructureEditor
 
                 await context.sync();
             }
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -255,7 +264,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.doGameMoveToSelection(appContext, context, _moveSelection, await this.getBracketName(context));
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -280,7 +290,8 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -306,7 +317,8 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -557,6 +569,7 @@ export class StructureEditor
             grid.logGrid();
             
             console.log(`rank: ${GridRanker.getGridRank(grid, await this.getBracketName(context))}`)
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
