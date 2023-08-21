@@ -24,7 +24,7 @@ import { SetupState } from "../../Setup";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { s_staticConfig } from "../../StaticConfig";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 
 let _moveSelection: RangeInfo = null;
 
@@ -174,7 +174,7 @@ export class StructureEditor
             context.pushTrackingBookmark(bookmark);
 
             _TimerStack.pushTimer("populate FastFormulas");
-            await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
+            await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
             _TimerStack.popTimer();
 
             await StructureInsert.insertGameAtSelection(appContext, context, game);

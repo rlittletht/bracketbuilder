@@ -14,7 +14,7 @@ import { Grid, GridColumnType } from "../Grid";
 import { _TimerStack } from "../../PerfTimer";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { IIntention } from "../../Interop/Intentions/IIntention";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 
 export class ApplyGridChange
 {
@@ -189,7 +189,7 @@ export class ApplyGridChange
         _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
         const removeTns: Intentions = new Intentions();
-        await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
+        await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
 
         // do all the removes first
         for (let item of changes)

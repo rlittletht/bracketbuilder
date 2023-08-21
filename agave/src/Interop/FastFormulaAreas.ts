@@ -7,6 +7,14 @@ import { TestResult } from "../Support/TestResult";
 import { ObjectType, CacheObject } from "./TrackingCache";
 import { PerfTimer, _TimerStack } from "../PerfTimer";
 
+
+export class FastFormulaAreasItems
+{
+    static GameGrid = "gamegrid";
+    static Teams = "teams";
+    static BracketSources = "bracket-sources";
+}
+
 class FormulaAreasItem
 {
     m_rangeAreas: Excel.RangeAreas;
@@ -205,30 +213,63 @@ export class FastFormulaAreas
         this.m_areasItems.push(new FormulaAreasItem(areas, range));
     }
 
-    static s_fastFormulaAreaBigGrid = "grid-FastFormulaAreas";
+    static s_gridCacheName = "gamegrid-FastFormulaAreas";
+    static s_teamsSheetCacheName = "teams-FastFormulaAreas";
+    static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
 
+    static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
+        [
+            [FastFormulaAreasItems.GameGrid, FastFormulaAreas.s_gridCacheName],
+            [FastFormulaAreasItems.Teams, FastFormulaAreas.s_teamsSheetCacheName],
+            [FastFormulaAreasItems.BracketSources, FastFormulaAreas.s_bracketDefCacheName],
+        ]
+    );
+
+    static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
+        [
+            [FastFormulaAreasItems.GameGrid, new RangeInfo(8, 250, 0, 50)],
+            [FastFormulaAreasItems.Teams, new RangeInfo(0, 60, 0, 7)],
+            [FastFormulaAreasItems.BracketSources, new RangeInfo(0, 100, 0, 15)],
+        ]
+        )
     static getGridFastFormulaAreaCache(context: JsCtx): FastFormulaAreas
     {
         return context.getTrackedItemOrNull("grid-FastFormulaAreas");
     }
 
-    static async populateGridFastFormulaAreaCache(context: JsCtx): Promise<FastFormulaAreas>
+    static getFastFormulaAreaCacheForType(context: JsCtx, type: FastFormulaAreasItems): FastFormulaAreas
+    {
+        return context.getTrackedItemOrNull(this.s_mapTypeName.get(type));
+    }
+
+    static async populateFastFormulaAreaCache(context: JsCtx, range: RangeInfo, name: string): Promise<FastFormulaAreas>
     {
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
 
         return await context.getTrackedItemOrPopulate(
-            this.s_fastFormulaAreaBigGrid,
+            name,
             async (context): Promise<CacheObject> =>
             {
                 const areas = await FastFormulaAreas.getRangeAreasGridForRangeInfo(
                     context,
-                    `${this.s_fastFormulaAreaBigGrid}-rangeAreas`,
+                    `${name}-rangeAreas`,
                     sheet,
-                    new RangeInfo(8, 250, 0, 50));
+                    range);
 
                 return { type: ObjectType.TrObject, o: areas };
             });
     }
+
+    static async populateGridFastFormulaAreaCache(context: JsCtx): Promise<FastFormulaAreas>
+    {
+        return await this.populateFastFormulaAreaCache(context, new RangeInfo(8, 250, 0, 50), this.s_gridCacheName);
+    }
+
+    static async populateFastFormulaAreaCacheForType(context: JsCtx, type: FastFormulaAreasItems): Promise<FastFormulaAreas>
+    {
+        return await this.populateFastFormulaAreaCache(context, this.s_mapTypeRange.get(type), this.s_mapTypeName.get(type));
+    }
+
 }
 
 export class FastFormulaAreasTest

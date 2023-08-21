@@ -49,7 +49,7 @@ import { About } from "./About";
 import { StructureInsertTests } from "../../BracketEditor/StructureEditor/StrutureInsertTests";
 import { ProductName } from "./ProductName";
 import { RangeInfo } from "../../Interop/Ranges";
-import { FastFormulaAreas, FastFormulaAreasTest } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasTest, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { _TimerStack } from "../../PerfTimer";
 import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 
@@ -452,7 +452,7 @@ export default class App extends React.Component<AppProps, AppState>
         context.pushTrackingBookmark(bookmark);
 
         _TimerStack.pushTimer("buildFastFormulaAreas");
-        await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
+        await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         _TimerStack.popTimer();
 
         AppContext.checkpoint("ihl.1");

@@ -21,7 +21,7 @@ import { PerfTimer, _TimerStack } from "../PerfTimer";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { TrError } from "../Exceptions";
-import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -1002,7 +1002,7 @@ export class Grid
         _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
 
-        const fastFormulaAreas = await FastFormulaAreas.populateGridFastFormulaAreaCache(context);
+        const fastFormulaAreas = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         const fastRangeAreasSmaller: FastRangeAreas =
             await context.getTrackedItemOrPopulate(
                 "grid-fastRangeAreas",
