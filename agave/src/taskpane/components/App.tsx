@@ -52,6 +52,7 @@ import { RangeInfo } from "../../Interop/Ranges";
 import { FastFormulaAreas, FastFormulaAreasTest, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { _TimerStack } from "../../PerfTimer";
 import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
+import { RangeCaches } from "../../Interop/RangeCaches";
 
 /* global console, Excel, require  */
 
@@ -446,7 +447,7 @@ export default class App extends React.Component<AppProps, AppState>
     {
         this.m_appContext.setHeroListDirty(false);
 
-        _TimerStack.pushTimer("rebuildHeroList", true);
+        _TimerStack.pushTimer("rebuildHeroList", false);
 
         const bookmark: string = "rebuildHeroList";
         context.pushTrackingBookmark(bookmark);
@@ -461,6 +462,9 @@ export default class App extends React.Component<AppProps, AppState>
 
         _TimerStack.pushTimer("rebuildHeroList.getSetupState");
         [setupState, bracketChoice] = await (this.getSetupState(context));
+
+        // await RangeCaches.Populate(context, this.state.selectedBracket);
+
         _TimerStack.popTimer();
 
         AppContext.checkpoint("ihl.2");

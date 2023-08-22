@@ -152,7 +152,7 @@ export class StructureInsert
         formulas.push([FormulaBuilder.getTimeFormulaFromGameId(game.GameId)]);
 
         this.pushPadding(formulas, [""], gameInfoRange.LastRow - gameInfoRangeInfo.LastRow);
-        formulas.push([GameFormatting.s_hLineTeam]);
+        formulas.push([""]);
         formulas.push([bottomString]);
 
         const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, gameInfoRange);

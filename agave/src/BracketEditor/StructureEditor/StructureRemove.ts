@@ -13,7 +13,7 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { HelpTopic } from "../../HelpInfo";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { _TimerStack } from "../../PerfTimer";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnDeleteGlobalName } from "../../Interop/Intentions/TnDeleteGlobalName";
@@ -211,7 +211,7 @@ export class StructureRemove
     ----------------------------------------------------------------------------*/
     static async getTeamSourceNameValueForNamedRange(context: JsCtx, cellName: string): Promise<string>
     {
-        const fastFormulaAreas: FastFormulaAreas = context.getTrackedItemOrNull("grid-FastFormulaAreas");
+        const fastFormulaAreas: FastFormulaAreas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
 
         const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
         if (rangeInfo == null)
@@ -246,7 +246,7 @@ export class StructureRemove
     ----------------------------------------------------------------------------*/
     static async getFieldAndTimeOverrideValuesForNamedRange(context: JsCtx, cellName: string): Promise<[any, any]>
     {
-        const fastFormulaAreas: FastFormulaAreas = context.getTrackedItemOrNull("grid-FastFormulaAreas");
+        const fastFormulaAreas: FastFormulaAreas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
 
         const rangeInfo = await RangeInfo.getRangeInfoForNamedCellFaster(context, cellName);
         if (rangeInfo == null)

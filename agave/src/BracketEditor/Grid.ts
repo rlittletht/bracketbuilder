@@ -1050,11 +1050,11 @@ export class Grid
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
-                let overlapKind: RangeOverlapKind = this.doesRangeOverlap(game.FullGameRange);
+                let [item, overlapKind] = this.getFirstOverlappingItem(game.FullGameRange);
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`);
+                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value} overlaps with ${item.Range.toFriendlyString()}`);
 
                 const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
 
@@ -1065,7 +1065,7 @@ export class Grid
                 // before we try this, check to see if we need to expand our fastRangeAreas
                 const moreRowsNeeded = fastFormulaAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
                 if (moreRowsNeeded)
-                    await fastFormulaAreas.addMoreRowsToRangeAreaGrid(context, `bigFormulaGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
+                    await fastFormulaAreas.addMoreRows(context, `bigFormulaGridCache${game.FullGameRange.bottomRight().FirstRow}`, moreRowsNeeded);
 
                 [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastFormulaAreas, game);
                 AppContext.checkpoint("lgfb.6");

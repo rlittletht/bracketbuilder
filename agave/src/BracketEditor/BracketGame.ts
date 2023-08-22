@@ -13,8 +13,9 @@ import { TrackingCache, ObjectType } from "../Interop/TrackingCache";
 import { JsCtx } from "../Interop/JsCtx";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
-import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 import { _TimerStack } from "../PerfTimer";
+import { RangeCaches } from "../Interop/RangeCaches";
 
 export interface IBracketGame
 {
@@ -401,68 +402,85 @@ export class BracketGame implements IBracketGame
 
                 _TimerStack.startAggregatedTimer("innerBind", "inner bind");
 
-                AppContext.checkpoint("b.7");
-                const sheet =
-                    await context.getTrackedItemOrPopulate(
-                        BracketSources.SheetName,
-                        async (context): Promise<any> =>
-                        {
-                            const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                            await context.sync("GTI sheet(bracketSrc)");
-                            return { type: ObjectType.JsObject, o: sheetGet };
-                        });
+                let data = null;
 
-                //                if (sheet == null)
-                //                {
-                //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                //                    await context.sync();
-                //                }
-
-                AppContext.checkpoint("b.8");
-
-                if (sheet && !sheet.isNullObject)
+                const { rangeInfo: gameDataRange, formulaCacheName: cacheName } = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+                if (gameDataRange != null)
                 {
-                    const tableName: string = "BracketSourceData";
+                    const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForName(context, cacheName);
+                    if (areasCache != null)
+                        data = areasCache.getValuesForRangeInfo(gameDataRange);
+                }
 
-                    const table=
+                if (data == null)
+                {
+                    AppContext.checkpoint("b.7");
+                    const sheet =
                         await context.getTrackedItemOrPopulate(
-                            tableName,
+                            BracketSources.SheetName,
                             async (context): Promise<any> =>
                             {
-                                const tableGet = sheet.tables.getItemOrNullObject(tableName);
-                                await context.sync("GTI brk table");
-                                return { type: ObjectType.JsObject, o: tableGet };
-                            }
-                        );
+                                const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                                await context.sync("GTI sheet(bracketSrc)");
+                                return { type: ObjectType.JsObject, o: sheetGet };
+                            });
 
-                    if (table && !table.isNullObject)
+                    //                if (sheet == null)
+                    //                {
+                    //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                    //                    await context.sync();
+                    //                }
+
+                    AppContext.checkpoint("b.8");
+
+                    if (sheet && !sheet.isNullObject)
                     {
-                        const range =
+                        const tableName: string = "BracketSourceData";
+
+                        const table =
                             await context.getTrackedItemOrPopulate(
-                                "tableBodyRange",
+                                tableName,
                                 async (context): Promise<any> =>
                                 {
-                                    const rangeGet: Excel.Range = table.getDataBodyRange();
-                                    rangeGet.load("values");
-                                    await context.sync("GTI brk body");
-                                    return { type: ObjectType.JsObject, o: rangeGet };
-                                });
+                                    const tableGet = sheet.tables.getItemOrNullObject(tableName);
+                                    await context.sync("GTI brk table");
+                                    return { type: ObjectType.JsObject, o: tableGet };
+                                }
+                            );
 
-                        if (!range)
-                            throw new Error("could not get range from worksheet");
-
-                        const data: any[][] = range.values;
-
-                        // sadly we have to go searching for this on our own...
-                        for (let i: number = 0; i < data.length; i++)
+                        if (table && !table.isNullObject)
                         {
-                            if (data[i][0] == this.m_gameNum.Value)
-                            {
-                                this.m_swapTopBottom = data[i][3];
-                            }
+                            const range =
+                                await context.getTrackedItemOrPopulate(
+                                    "tableBodyRange",
+                                    async (context): Promise<any> =>
+                                    {
+                                        const rangeGet: Excel.Range = table.getDataBodyRange();
+                                        rangeGet.load("values");
+                                        await context.sync("GTI brk body");
+                                        return { type: ObjectType.JsObject, o: rangeGet };
+                                    });
+
+                            if (!range)
+                                throw new Error("could not get range from worksheet");
+
+                            data = range.values;
                         }
                     }
                 }
+
+                if (data != null)
+                {
+                    // sadly we have to go searching for this on our own...
+                    for (let i: number = 0; i < data.length; i++)
+                    {
+                        if (data[i][0] == this.m_gameNum.Value)
+                        {
+                            this.m_swapTopBottom = data[i][3];
+                        }
+                    }
+                }
+
                 _TimerStack.pauseAggregatedTimer("innerBind");
             }
 
@@ -472,13 +490,24 @@ export class BracketGame implements IBracketGame
 
                 const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
 
-                const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-                const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
-                range.load("values");
+                const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+                let data = null;
 
-                await context.sync();
+                if (areasCache != null)
+                {
+                    data = areasCache.getValuesForRangeInfo(fieldTimeRange);
+                }
+                else
+                {
+                    const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+                    const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
+                    range.load("values");
 
-                const data: any[][] = range.values;
+                    await context.sync("gamenum loc values");
+
+                    data = range.values;
+                }
+
                 this.m_field = data[0][0];
                 const time: string = data[2][0];
                 const mins = OADate.MinutesFromTimeString(time);

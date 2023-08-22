@@ -53,7 +53,7 @@ export class BracketSources
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount, rowIndex, columnIndex, columnCount, worksheet");
-        await context.sync();
+        await context.sync("UGI values ranges");
 
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
@@ -94,7 +94,7 @@ export class BracketSources
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await context.sync();
+        await context.sync("UGINS values, rows");
 
         let newValues: any[][] = [];
         for (let i = 0; i < range.rowCount; i++)
@@ -145,7 +145,7 @@ export class BracketSources
         }
 
         range.values = newValues;
-        await context.sync();
+        await context.sync("UGINS newVals");
         return undoGameDataItem;
     }
 
@@ -162,7 +162,7 @@ export class BracketSources
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
-        await context.sync();
+        await context.sync("UBS values, rows");
 
         // now update the values
         for (let nameMap of teamNames)
@@ -194,7 +194,7 @@ export class BracketSources
 
         range.values = newValues; // this is what will get picked up
 
-        await context.sync();
+        await context.sync("UBS newvals");
     }
 
     /*----------------------------------------------------------------------------
@@ -246,11 +246,11 @@ export class BracketSources
 
         let range: Excel.Range = sheet.getRangeByIndexes(0, 0, formulasGameInfo.length, 4);
         range.formulas = formulasGameInfo;
-        await context.sync();
+        await context.sync("BBS formulas");
 
         range = sheet.getRangeByIndexes(0, 2, formulasGameInfo.length, 1);
         range.numberFormat = [["h:mm AM/PM"]];
-        await context.sync();
+        await context.sync("BBS new num format");
 
         await Tables.ensureTableExists(
             context,
@@ -278,7 +278,7 @@ export class BracketSources
         const rangeSecondColumn = sheet.getRanges("B:B");
         rangeSecondColumn.format.columnWidth = 128;
 
-        await context.sync();
+        await context.sync("BBS set colwidth");
 
         await Tables.ensureTableExists(
             context,

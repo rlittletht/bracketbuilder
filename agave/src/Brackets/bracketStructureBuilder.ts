@@ -313,5 +313,4 @@ export class BracketStructureBuilder
         await BracketDataBuilder.buildBracketDataSheet(context, bracketChoice, bracketDefinition);
         await BracketSources.buildBracketSourcesSheet(context, fastTables, bracketDefinition);
     }
-
 }
