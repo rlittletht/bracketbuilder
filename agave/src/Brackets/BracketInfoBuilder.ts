@@ -1,6 +1,6 @@
 
 import { JsCtx } from "../Interop/JsCtx";
-import { Ranges } from "../Interop/Ranges";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { EnsureSheetPlacement, Sheets } from "../Interop/Sheets";
 import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
 import { GridBuilder } from "./GridBuilder";
@@ -8,6 +8,7 @@ import { GridBuilder } from "./GridBuilder";
 export class BracketInfoBuilder
 {
     static SheetName: string = "BracketInfo";
+    static s_bracketChoiceRange = new RangeInfo(0, 1, 1, 1);
 
     /*----------------------------------------------------------------------------
         %%Function: BracketInfoBuilder.buildBracketInfoSheet
@@ -25,7 +26,7 @@ export class BracketInfoBuilder
 
         await context.sync();
 
-        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", sheet.getRangeByIndexes(0, 1, 1, 1));
+        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", Ranges.rangeFromRangeInfo(sheet, BracketInfoBuilder.s_bracketChoiceRange));
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading

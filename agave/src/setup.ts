@@ -1,6 +1,6 @@
 
 import { IAppContext } from "./AppContext/AppContext";
-import { BracketInfoBuilder as BracketDataBuilder } from "./Brackets/BracketInfoBuilder";
+import { BracketInfoBuilder as BracketDataBuilder, BracketInfoBuilder } from "./Brackets/BracketInfoBuilder";
 import { BracketDefBuilder } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
@@ -9,6 +9,7 @@ import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAr
 import { FastTables } from "./Interop/FastTables";
 import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";
+import { RangeInfo } from "./Interop/Ranges";
 
 export class SetupState
 {
@@ -62,23 +63,10 @@ export class SetupBook
     {
         try
         {
-            const bracketChoiceNameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject("BracketChoice");
-            await context.sync();
+            const infoSheet = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketInfo);
+            const bracket = infoSheet.getValuesForRangeInfo(BracketInfoBuilder.s_bracketChoiceRange);
 
-            if (bracketChoiceNameObject.isNullObject)
-                return null;
-
-            bracketChoiceNameObject.load("type");
-            await context.sync();
-            if (bracketChoiceNameObject.type == "Error")
-                return null;
-
-            const bracketChoiceRange: Excel.Range = bracketChoiceNameObject.getRange();
-            bracketChoiceRange.load("values");
-            await context.sync();
-            const bracketChoice: string = bracketChoiceRange.values[0][0];
-
-            return bracketChoice;
+            return bracket[0][0];
         }
         catch (_error)
         {
