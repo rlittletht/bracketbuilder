@@ -1,6 +1,6 @@
 import { JsCtx } from "../../Interop/JsCtx";
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
-import { BracketSources } from "../../Brackets/BracketSources";
+import { GameDataSources } from "../../Brackets/GameDataSources";
 import { Grid } from "../Grid";
 import { StructureEditor } from "./StructureEditor";
 import { GridItem } from "../GridItem";
@@ -19,7 +19,7 @@ export class Prioritizer
     {
         appContext;
         // first, get all the teamName info
-        const table: Excel.Table = await BracketSources.getTeamNameTable(context);
+        const table: Excel.Table = await GameDataSources.getTeamNameTable(context);
         const tableRange: Excel.Range = table.getDataBodyRange();
         tableRange.load("values, rowCount");
         await context.sync();

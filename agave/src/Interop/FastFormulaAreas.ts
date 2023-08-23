@@ -6,16 +6,12 @@ import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
 import { ObjectType, CacheObject } from "./TrackingCache";
 import { PerfTimer, _TimerStack } from "../PerfTimer";
-import { GridBuilder } from "../Brackets/GridBuilder";
-import { BracketInfoBuilder as BracketDataBuilder } from "../Brackets/BracketInfoBuilder";
-import { BracketSources } from "../Brackets/BracketSources";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 
 export class FastFormulaAreasItems
 {
     static GameGrid = "gamegrid";
-    static Teams = "teams";
-    static BracketSources = "bracket-sources";
+    static GameData = "gameData";
+    static BracketDefs = "bracket-defs";
     static BracketInfo = "bracket-info";
 }
 
@@ -89,7 +85,7 @@ class FormulaAreasItem
 export class FastFormulaAreas
 {
     static s_gridCacheName = "gamegrid-FastFormulaAreas";
-    static s_teamsSheetCacheName = "teams-FastFormulaAreas";
+    static s_gameDataSheetCacheName = "gameData-FastFormulaAreas";
     static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
     static s_bracketInfoCacheName = "bracketInfo-FastFormulaAreas";
 
@@ -98,8 +94,8 @@ export class FastFormulaAreas
     static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
         [
             [FastFormulaAreasItems.GameGrid, FastFormulaAreas.s_gridCacheName],
-            [FastFormulaAreasItems.Teams, FastFormulaAreas.s_teamsSheetCacheName],
-            [FastFormulaAreasItems.BracketSources, FastFormulaAreas.s_bracketDefCacheName],
+            [FastFormulaAreasItems.GameData, FastFormulaAreas.s_gameDataSheetCacheName],
+            [FastFormulaAreasItems.BracketDefs, FastFormulaAreas.s_bracketDefCacheName],
             [FastFormulaAreasItems.BracketInfo, FastFormulaAreas.s_bracketInfoCacheName],
         ]
     );
@@ -107,8 +103,8 @@ export class FastFormulaAreas
     static s_mapTypeSheet = new Map<FastFormulaAreasItems, string>(
         [
             [FastFormulaAreasItems.GameGrid, "Games"],
-            [FastFormulaAreasItems.Teams, "TeamsAndFields"],
-            [FastFormulaAreasItems.BracketSources, "BracketDefs"],
+            [FastFormulaAreasItems.GameData, "TeamsAndFields"],
+            [FastFormulaAreasItems.BracketDefs, "BracketDefs"],
             [FastFormulaAreasItems.BracketInfo, "BracketInfo"],
         ]
     );
@@ -116,8 +112,8 @@ export class FastFormulaAreas
     static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
         [
             [FastFormulaAreasItems.GameGrid, new RangeInfo(8, 250, 0, 50)],
-            [FastFormulaAreasItems.Teams, new RangeInfo(0, 60, 0, 7)],
-            [FastFormulaAreasItems.BracketSources, new RangeInfo(0, 100, 0, 15)],
+            [FastFormulaAreasItems.GameData, new RangeInfo(0, 60, 0, 7)],
+            [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 100, 0, 15)],
             [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],
         ]
     )
@@ -353,7 +349,7 @@ export class FastFormulaAreas
 
                 context.pushTrackingBookmark(bkmk);
 
-                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.Teams, FastFormulaAreasItems.BracketSources])
+                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.GameData, FastFormulaAreasItems.BracketDefs])
                 {
                     const sheetName = FastFormulaAreas.s_mapTypeSheet.get(type);
                     const range = FastFormulaAreas.s_mapTypeRange.get(type);

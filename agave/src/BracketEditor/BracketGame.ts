@@ -4,7 +4,7 @@ import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { Grid } from "./Grid";
 import { AppContext, IAppContext } from "../AppContext/AppContext";
-import { BracketSources } from "../Brackets/BracketSources";
+import { GameDataSources } from "../Brackets/GameDataSources";
 import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
 import { OADate } from "../Interop/Dates";
@@ -417,17 +417,17 @@ export class BracketGame implements IBracketGame
                     AppContext.checkpoint("b.7");
                     const sheet =
                         await context.getTrackedItemOrPopulate(
-                            BracketSources.SheetName,
+                            GameDataSources.SheetName,
                             async (context): Promise<any> =>
                             {
-                                const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                                const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(GameDataSources.SheetName);
                                 await context.sync("GTI sheet(bracketSrc)");
                                 return { type: ObjectType.JsObject, o: sheetGet };
                             });
 
                     //                if (sheet == null)
                     //                {
-                    //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+                    //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(GameDataSources.SheetName);
                     //                    await context.sync();
                     //                }
 

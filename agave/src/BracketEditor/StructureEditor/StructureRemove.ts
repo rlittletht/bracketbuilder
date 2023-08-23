@@ -3,7 +3,7 @@ import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
 import { GameLines } from "../GameLines";
 import { GameFormatting } from "../GameFormatting";
 import { BracketGame, IBracketGame } from "../BracketGame";
-import { TeamNameMap, BracketSources } from "../../Brackets/BracketSources";
+import { TeamNameMap, GameDataSources } from "../../Brackets/GameDataSources";
 import { Grid, GridColumnType } from "../Grid";
 import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
@@ -303,12 +303,12 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureRemove.updateBracketSourcesWithOverrides
+        %%Function: StructureRemove.updateGameDataSourcesWithOverrides
 
         get any direct edits from these ranges and propagate these edits to the
         bracket sources table
     ----------------------------------------------------------------------------*/
-    static async updateBracketSourcesWithOverrides(context: JsCtx, game: IBracketGame): Promise<IIntention[]>
+    static async updateGameDataSourcesWithOverrides(context: JsCtx, game: IBracketGame): Promise<IIntention[]>
     {
         const tns = [];
 
@@ -341,9 +341,9 @@ export class StructureRemove
                     priority: 0
                 });
 
-        await BracketSources.updateBracketSourcesTeamNames(context, map);
+        await GameDataSources.updateGameDataSourcesTeamNames(context, map);
         if (field && field != null && field != "")
-            tns.push(...await BracketSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom));
+            tns.push(...await GameDataSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom));
 
         AppContext.log(`saved: ${game.TopTeamName}=${overrideText1}, ${game.BottomTeamName}=${overrideText2}, field=${field}, time=${time}`);
 
@@ -351,7 +351,7 @@ export class StructureRemove
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.removeNamedRangesAndUpdateBracketSources
+        %%Function: StructureEditor.removeNamedRanges
 
         remove the named ranges for this game. 
     ----------------------------------------------------------------------------*/
@@ -405,7 +405,7 @@ export class StructureRemove
         if (game != null && (game.IsLinkedToBracket || game.IsBroken))
         {
             if (!game.IsBroken)
-                tns.push(...await this.updateBracketSourcesWithOverrides(context, game));
+                tns.push(...await StructureRemove.updateGameDataSourcesWithOverrides(context, game));
 
             if (!liteRemove)
                 tns.push(...await this.removeNamedRanges(context, game));

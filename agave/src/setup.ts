@@ -144,7 +144,7 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getWorkbookSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
-        const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketSources);
+        const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketDefs);
 
         if (areasCache)
         {

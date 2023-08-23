@@ -3,7 +3,7 @@ import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { IAppContext } from "../AppContext/AppContext";
 import { ApplyGridChange } from "./StructureEditor/ApplyGridChange";
 import { GameNum } from "./GameNum";
-import { BracketSources } from "../Brackets/BracketSources";
+import { GameDataSources } from "../Brackets/GameDataSources";
 import { JsCtx } from "../Interop/JsCtx";
 
 export class UndoGameDataItem
@@ -91,7 +91,7 @@ export class UndoManager
         for (let item of items)
         {
             let undoneGameDataItem: UndoGameDataItem =
-                await BracketSources.updateGameInfoIfNotSet(context, item.gameNum, item.fieldOriginal, item.startTimeOriginal, true);
+                await GameDataSources.updateGameInfoIfNotSet(context, item.gameNum, item.fieldOriginal, item.startTimeOriginal, true);
 
             if (UndoManager.shouldPushGameDataItems(undoneGameDataItem))
                 undoneGameDataItems.push(undoneGameDataItem);

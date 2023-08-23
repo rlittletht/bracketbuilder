@@ -20,7 +20,7 @@ export interface TeamNameMap
     priority: number;
 }
 
-export class BracketSources
+export class GameDataSources
 {
     static SheetName: string = "TeamsAndFields";
 
@@ -35,9 +35,9 @@ export class BracketSources
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketSources.updateGameInfo
+        %%Function: GameDataSources.updateGameInfo
 
-        update the given game information in the bracketsourcedata table
+        update the given game information in the GameDataSources table
     ----------------------------------------------------------------------------*/
     static async updateGameInfo(
         context: JsCtx,
@@ -49,7 +49,7 @@ export class BracketSources
         const tns = [];
 
         // find the team names table
-        let table: Excel.Table = await BracketSources.getGameInfoTable(context);
+        let table: Excel.Table = await GameDataSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount, rowIndex, columnIndex, columnCount, worksheet");
@@ -90,7 +90,7 @@ export class BracketSources
         let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(gameNum, undefined, undefined, undefined, undefined);
 
         // find the team names table
-        let table: Excel.Table = await BracketSources.getGameInfoTable(context);
+        let table: Excel.Table = await GameDataSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
@@ -150,15 +150,15 @@ export class BracketSources
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.updateBracketSourcesTeamNames
+        %%Function: StructureEditor.updateGameDataSourcesTeamNames
 
         Update the given team names in the bracket sources team names. Its an
         array of maps (and array of [][])
     ----------------------------------------------------------------------------*/
-    static async updateBracketSourcesTeamNames(context: JsCtx, teamNames: TeamNameMap[])
+    static async updateGameDataSourcesTeamNames(context: JsCtx, teamNames: TeamNameMap[])
     {
         // find the team names table
-        let table: Excel.Table = await BracketSources.getTeamNameTable(context);
+        let table: Excel.Table = await GameDataSources.getTeamNameTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
         range.load("values, rowCount");
@@ -198,7 +198,7 @@ export class BracketSources
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketSources.buildBracketSourcesSheet
+        %%Function: GameDataSources.buildGameDataSourcesSheet
 
         Build the bracket sources sheet. This is the durable source of data for
         the bracket grid. On creation it has the default values for populating
@@ -223,9 +223,9 @@ export class BracketSources
         most up-to-date info, even if it hasn't been pushed back to this bracket
         source sheet.
     ----------------------------------------------------------------------------*/
-    static async buildBracketSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: BracketDefinition)
+    static async buildGameDataSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GameDataSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let formulasGameInfo: any[][] = [];
         const gameInfoHeader: any[] = ["GameID", "Field", "Time", "SwapTopBottom"];

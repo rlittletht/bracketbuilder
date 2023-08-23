@@ -32,7 +32,6 @@ import { GridTests } from "../../BracketEditor/GridTests";
 import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
 import { OADateTests } from "../../Interop/Dates";
 import { TrackingCache, CacheObject, ObjectType } from "../../Interop/TrackingCache";
-import { BracketSources } from "../../Brackets/BracketSources";
 import { ParserTests } from "../../Interop/Parser";
 import { JsCtx } from "../../Interop/JsCtx";
 import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";

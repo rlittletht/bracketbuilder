@@ -5,7 +5,7 @@ import { Ranges } from "../../Interop/Ranges";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
-import { BracketSources } from "../../Brackets/BracketSources";
+import { GameDataSources } from "../../Brackets/GameDataSources";
 import { OADate } from "../../Interop/Dates";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { TrackingCache } from "../../Interop/TrackingCache";
@@ -159,7 +159,7 @@ export class ApplyGridChange
             AppContext.checkpoint("appc.17");
 
             undoGameDataItem =
-                await BracketSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+                await GameDataSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
         }
 
         if (game.IsChampionship)

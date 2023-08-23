@@ -9,7 +9,7 @@ import { SetupBook } from "../Setup";
 import { BracketInfoBuilder } from "./BracketInfoBuilder";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { GridBuilder } from "./GridBuilder";
-import { BracketSources } from "./BracketSources";
+import { GameDataSources } from "./GameDataSources";
 import { JsCtx } from "../Interop/JsCtx";
 import { StatusBox } from "../taskpane/components/StatusBox";
 import { HelpTopic } from "../Coaching/HelpInfo";
@@ -311,6 +311,6 @@ export class BracketStructureBuilder
 
         await GridBuilder.buildGridSheet(context);
         await BracketInfoBuilder.buildBracketInfoSheet(context, bracketChoice, bracketDefinition);
-        await BracketSources.buildBracketSourcesSheet(context, fastTables, bracketDefinition);
+        await GameDataSources.buildGameDataSourcesSheet(context, fastTables, bracketDefinition);
     }
 }

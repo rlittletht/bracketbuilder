@@ -5,7 +5,7 @@
 // this cache can be setup when we load (and are refreshed), and referenced to get the ranges
 import { RangeInfo } from "./Ranges";
 import { JsCtx } from "./JsCtx";
-import { BracketSources } from "../Brackets/BracketSources";
+import { GameDataSources } from "../Brackets/GameDataSources";
 import { ObjectType } from "./TrackingCache";
 import { FastFormulaAreas, FastFormulaAreasItems } from "./FastFormulaAreas";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
@@ -73,7 +73,7 @@ export class RangeCaches
 
     static getBracketBodyAndTeamNamesBodyRange(context: JsCtx): { bracketBodyRange: Excel.Range, teamNamesBodyRange: Excel.Range }
     {
-        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(GameDataSources.SheetName);
         const fieldsTimesTableName: string = "BracketSourceData";
         const fieldsTimesTable = sheetGet.tables.getItem(fieldsTimesTableName);
         const fieldsTimesRange: Excel.Range = fieldsTimesTable.getDataBodyRange();
@@ -163,20 +163,20 @@ export class RangeCaches
 
         if (bracketBodyRange)
         {
-            this.add(this.s_gameFieldsAndTimesDataBody, BracketSources.SheetName, bracketBodyRange, FastFormulaAreasItems.Teams);
-            this.add(this.s_gameFieldsAndTimesHeader, BracketSources.SheetName, bracketBodyRange.offset(-1, 1), FastFormulaAreasItems.Teams);
+            this.add(this.s_gameFieldsAndTimesDataBody, GameDataSources.SheetName, bracketBodyRange, FastFormulaAreasItems.GameData);
+            this.add(this.s_gameFieldsAndTimesHeader, GameDataSources.SheetName, bracketBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
         }
 
         if (teamNamesBodyRange)
         {
-            this.add(this.s_gameFieldsAndTimesDataBody, BracketSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.Teams);
-            this.add(this.s_gameFieldsAndTimesHeader, BracketSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.Teams);
+            this.add(this.s_gameFieldsAndTimesDataBody, GameDataSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.GameData);
+            this.add(this.s_gameFieldsAndTimesHeader, GameDataSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
         }
 
         if (bracketDefRange)
         {
-            this.add(this.s_bracketDefDataBody, BracketStructureBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketSources);
-            this.add(this.s_bracketDefHeader, BracketStructureBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketSources);
+            this.add(this.s_bracketDefDataBody, BracketStructureBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketDefs);
+            this.add(this.s_bracketDefHeader, BracketStructureBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketDefs);
         }
     }
 }
