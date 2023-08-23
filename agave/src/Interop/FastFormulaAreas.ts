@@ -16,6 +16,7 @@ export class FastFormulaAreasItems
     static GameGrid = "gamegrid";
     static Teams = "teams";
     static BracketSources = "bracket-sources";
+    static BracketInfo = "bracket-info";
 }
 
 class FormulaAreasItem
@@ -87,6 +88,40 @@ class FormulaAreasItem
 
 export class FastFormulaAreas
 {
+    static s_gridCacheName = "gamegrid-FastFormulaAreas";
+    static s_teamsSheetCacheName = "teams-FastFormulaAreas";
+    static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
+    static s_bracketInfoCacheName = "bracketInfo-FastFormulaAreas";
+
+    static s_allSheetsCache = "allsheets-FastFormulaAreasCollection";
+
+    static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
+        [
+            [FastFormulaAreasItems.GameGrid, FastFormulaAreas.s_gridCacheName],
+            [FastFormulaAreasItems.Teams, FastFormulaAreas.s_teamsSheetCacheName],
+            [FastFormulaAreasItems.BracketSources, FastFormulaAreas.s_bracketDefCacheName],
+            [FastFormulaAreasItems.BracketInfo, FastFormulaAreas.s_bracketInfoCacheName],
+        ]
+    );
+
+    static s_mapTypeSheet = new Map<FastFormulaAreasItems, string>(
+        [
+            [FastFormulaAreasItems.GameGrid, "Games"],
+            [FastFormulaAreasItems.Teams, "TeamsAndFields"],
+            [FastFormulaAreasItems.BracketSources, "BracketDefs"],
+            [FastFormulaAreasItems.BracketInfo, "BracketInfo"],
+        ]
+    );
+
+    static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
+        [
+            [FastFormulaAreasItems.GameGrid, new RangeInfo(8, 250, 0, 50)],
+            [FastFormulaAreasItems.Teams, new RangeInfo(0, 60, 0, 7)],
+            [FastFormulaAreasItems.BracketSources, new RangeInfo(0, 100, 0, 15)],
+            [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],
+        ]
+    )
+
     static itemMax: number = 1000; // only 2000 items per rangearea...
 
     m_areasItems: FormulaAreasItem[] = [];
@@ -238,36 +273,6 @@ export class FastFormulaAreas
         // formatting returns as we didn't cache it.
         this.m_areasItems.push(new FormulaAreasItem(areas, range));
     }
-
-    static s_gridCacheName = "gamegrid-FastFormulaAreas";
-    static s_teamsSheetCacheName = "teams-FastFormulaAreas";
-    static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
-
-    static s_allSheetsCache = "allsheets-FastFormulaAreasCollection";
-
-    static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, FastFormulaAreas.s_gridCacheName],
-            [FastFormulaAreasItems.Teams, FastFormulaAreas.s_teamsSheetCacheName],
-            [FastFormulaAreasItems.BracketSources, FastFormulaAreas.s_bracketDefCacheName],
-        ]
-    );
-
-    static s_mapTypeSheet = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, "Games"],
-            [FastFormulaAreasItems.Teams, "TeamsAndFields"],
-            [FastFormulaAreasItems.BracketSources, "BracketDefs"],
-        ]
-    );
-
-    static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
-        [
-            [FastFormulaAreasItems.GameGrid, new RangeInfo(8, 250, 0, 50)],
-            [FastFormulaAreasItems.Teams, new RangeInfo(0, 60, 0, 7)],
-            [FastFormulaAreasItems.BracketSources, new RangeInfo(0, 100, 0, 15)],
-        ]
-        )
 
     static getGridFastFormulaAreaCache(context: JsCtx): FastFormulaAreas
     {
