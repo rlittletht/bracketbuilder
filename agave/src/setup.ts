@@ -1,14 +1,15 @@
 
-import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
-import { FastTables } from "./Interop/FastTables";
-import { IAppContext, AppContext } from "./AppContext/AppContext";
-import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
-import { JsCtx } from "./Interop/JsCtx";
-import { Coachstate } from "./Coachstate";
-import { CoachTransition } from "./CoachTransition";
-import { StatusBox } from "./taskpane/components/StatusBox";
-import { HelpTopic } from "./HelpInfo";
+import { IAppContext } from "./AppContext/AppContext";
+import { BracketInfoBuilder as BracketDataBuilder, BracketInfoBuilder } from "./Brackets/BracketInfoBuilder";
+import { BracketDefBuilder } from "./Brackets/BracketDefBuilder";
+import { CoachTransition } from "./Coaching/CoachTransition";
+import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
+import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas";
+import { FastTables } from "./Interop/FastTables";
+import { JsCtx } from "./Interop/JsCtx";
+import { StatusBox } from "./taskpane/components/StatusBox";
+import { RangeInfo } from "./Interop/Ranges";
 
 export class SetupState
 {
@@ -29,7 +30,7 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getBracketsStructureSheetOrNull(context: JsCtx): Promise<Excel.Worksheet>
     {
-        const bracketStructureSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
+        const bracketStructureSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketDefBuilder.SheetName);
         await context.sync();
 
         if (bracketStructureSheet.isNullObject)
@@ -62,23 +63,10 @@ export class SetupBook
     {
         try
         {
-            const bracketChoiceNameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject("BracketChoice");
-            await context.sync();
+            const infoSheet = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketInfo);
+            const bracket = infoSheet.getValuesForRangeInfo(BracketInfoBuilder.s_bracketChoiceRange);
 
-            if (bracketChoiceNameObject.isNullObject)
-                return null;
-
-            bracketChoiceNameObject.load("type");
-            await context.sync();
-            if (bracketChoiceNameObject.type == "Error")
-                return null;
-
-            const bracketChoiceRange: Excel.Range = bracketChoiceNameObject.getRange();
-            bracketChoiceRange.load("values");
-            await context.sync();
-            const bracketChoice: string = bracketChoiceRange.values[0][0];
-
-            return bracketChoice;
+            return bracket[0][0];
         }
         catch (_error)
         {
@@ -143,6 +131,12 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getWorkbookSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
+        const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketDefs);
+
+        if (areasCache)
+        {
+            // we have a workbook structure. see if we have 
+        }
         // any bracket workbook has to have a BracketStructure sheet
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(context);
 
@@ -191,8 +185,9 @@ export class SetupBook
             {
                 const context: JsCtx = new JsCtx(ctx);
 
-                await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
-                await appContext.invalidateHeroList(context);
+                await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
+                appContext.setHeroListDirty();
+                await appContext.rebuildHeroListIfNeeded(context);
                 context.releaseAllCacheObjects();
             });
         }
@@ -227,8 +222,9 @@ export class SetupBook
             await Excel.run(async (ctx) =>
             {
                 const context: JsCtx = new JsCtx(ctx);
-                await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
-                await appContext.invalidateHeroList(context);
+                await BracketDefBuilder.buildSpecificBracketCore(context, appContext, fastTables);
+                appContext.setHeroListDirty();
+                await appContext.rebuildHeroListIfNeeded(context);
                 context.releaseAllCacheObjects();
             });
         }

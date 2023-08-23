@@ -1,15 +1,14 @@
-import * as React from "react";
-import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
-import { InsertButton } from "./InsertButton";
-import { ActionButton } from "./ActionButton";
-import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import { DirectionalHint, Stack } from '@fluentui/react';
 import { FontIcon } from '@fluentui/react/lib/Icon';
 import { mergeStyles, mergeStyleSets } from '@fluentui/react/lib/Styling';
+import * as React from "react";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
+import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { _TimerStack } from "../../PerfTimer";
+import { ActionButton } from "./ActionButton";
 import { Teachable, TeachableActiveDelegate, TeachableId } from "./Teachable";
-import { DirectionalHint } from '@fluentui/react';
-import { Coachstate } from "../../Coachstate";
 
 export interface GameItemProps
 {
@@ -37,20 +36,20 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
     static async DoInsertGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
-        appContext.Timer.pushTimer("DoInsertGame");
+        _TimerStack.pushTimer("DoInsertGame");
         appContext.Teaching.clearCoachmark();
         await StructureEditor.insertGameAtSelectionClick(appContext, bracketGame);
 
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
         return true; // we don't get an error back...
     }
 
     static async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
-        appContext.Timer.pushTimer("DoRemoveGame");
+        _TimerStack.pushTimer("DoRemoveGame");
         appContext.Teaching.clearCoachmark();
         await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
         return true; // we don't get an error back...
     }
 
@@ -175,7 +174,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
         return (
             <div className="singleGameItem" style={background}>
-                <Stack horizontal gap={8}>
+                <Stack horizontal tokens={{ childrenGap: 8 }}>
                     <Stack.Item>
                         {dirty}{broken}
                     </Stack.Item>

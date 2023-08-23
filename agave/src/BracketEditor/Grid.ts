@@ -1,26 +1,28 @@
-import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
-import { BracketDefinition, BracketManager } from "../Brackets/BracketDefinitions";
-import { BracketGame, IBracketGame } from "./BracketGame";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { StructureEditor } from "./StructureEditor/StructureEditor";
-import { GameLines } from "./GameLines";
-import { GameFormatting } from "./GameFormatting";
-import { GridGameInsert } from "./GridGameInsert";
-import { FormulaBuilder } from "./FormulaBuilder";
-import { GridItem } from "./GridItem";
-import { GridChange, GridChangeOperation } from "./GridChange";
 import { AppContext } from "../AppContext/AppContext";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameId } from "./GameId";
-import { GameNum } from "./GameNum";
-import { s_staticConfig } from "../StaticConfig";
-import { OADate } from "../Interop/Dates";
-import { TrackingCache, CacheObject, ObjectType } from "../Interop/TrackingCache";
-import { JsCtx } from "../Interop/JsCtx";
-import { PerfTimer } from "../PerfTimer";
-import { FastRangeAreas } from "../Interop/FastRangeAreas";
-import { Prioritizer } from "./StructureEditor/Prioritizer";
+import { BracketDefinition } from "../Brackets/BracketDefinitions";
+import { BracketManager } from "../Brackets/BracketManager";
+import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
+import { OADate } from "../Interop/Dates";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { JsCtx } from "../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
+import { CacheObject, ObjectType } from "../Interop/TrackingCache";
+import { _TimerStack } from "../PerfTimer";
+import { s_staticConfig } from "../StaticConfig";
+import { BracketGame, IBracketGame } from "./BracketGame";
+import { FormulaBuilder } from "./FormulaBuilder";
+import { GameFormatting } from "./GameFormatting";
+import { GameId } from "./GameId";
+import { GameLines } from "./GameLines";
+import { GameNum } from "./GameNum";
+import { GridAdjust } from "./GridAdjusters/GridAdjust";
+import { GridChange, GridChangeOperation } from "./GridChange";
+import { GridGameInsert } from "./GridGameInsert";
+import { GridItem } from "./GridItem";
+import { Prioritizer } from "./StructureEditor/Prioritizer";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -42,6 +44,21 @@ export interface RangeOverlapMatch
 {
     range: RangeInfo;
     delegate: RangeOverlapDelegate
+}
+
+export class GridColumnType
+{
+    static Invalid = null;
+    static Team = "T";
+    static Score = "S";
+    static Line = "L";
+}
+
+export class GridRowType
+{
+    static Invalid = null;
+    static Text = "T";
+    static Line = "L";
 }
 
 export class Grid
@@ -123,6 +140,36 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Grid.getColumnType
+
+        Return the column type for the given column
+    ----------------------------------------------------------------------------*/
+    getColumnType(col: number): GridColumnType
+    {
+        if (col < this.m_firstGridPattern.FirstColumn)
+            return GridColumnType.Invalid;
+
+        const mp = [GridColumnType.Team, GridColumnType.Score, GridColumnType.Line];
+
+        return mp[(col - this.m_firstGridPattern.FirstColumn) % 3];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getRowType
+
+        Return the row type for the given row
+    ----------------------------------------------------------------------------*/
+    getRowType(row: number): GridRowType
+    {
+        if (row < this.m_firstGridPattern.FirstRow)
+            return GridRowType.Invalid;
+
+        const mp = [GridRowType.Text, GridRowType.Line];
+
+        return mp[(row - this.m_firstGridPattern.FirstRow) % 2];
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Grid.getFeedingGamesForGame
 
         return the source game items for this game's feeding games.
@@ -178,6 +225,9 @@ export class Grid
             },
             (item: GridItem) =>
             {
+                if (item.isLineRange)
+                    return false;
+
                 const itemDate = this.getDateFromGridItem(item);
 
                 return itemDate.valueOf() == date.valueOf();
@@ -809,6 +859,11 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.getFirstGridPatternCell
 
+        (IF THIS GETS SLOW, we can use FastRangeAreas for 0,15,0,25 -- its not a
+        huge area, and it is representative enough to find the first pattern.
+
+        IF we need to know the rowheights and colwidths for the whole big grid,
+        we can use two range areas:  0, 250, 0, 1 and 0, 1, 0, 50
         we rely on a regular pattern of cell formatting to make the bracket work.
 
         to be robust with users inserting extra rows at the top and the left,
@@ -943,13 +998,15 @@ export class Grid
     ----------------------------------------------------------------------------*/
     async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
-        const timer: PerfTimer = new PerfTimer();
         const priorityMap: Map<string, number> = await Prioritizer.getTeamPriorityMap(context, null);
 
-        timer.pushTimer("build fastRangeAreas");
+        _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
 
-        const fastRangeAreas: FastRangeAreas =
+        // the following should just get what we already populated above
+        const fastFormulaAreas = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const fastRangeAreasSmaller: FastRangeAreas =
             await context.getTrackedItemOrPopulate(
                 "grid-fastRangeAreas",
                 async (context): Promise<CacheObject> =>
@@ -958,32 +1015,32 @@ export class Grid
                         context,
                         "bigGridCache",
                         sheet,
-                        new RangeInfo(8, 150, 0, 50));
+                        new RangeInfo(8, 28, 0, 25));
 
                     return { type: ObjectType.TrObject, o: areas };
                 });
-
-        timer.popTimer();
+        _TimerStack.popTimer();
 
         AppContext.checkpoint("lgfb.1");
-        timer.pushTimer("getFirstGridPatternCell");
-        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreas);
+        _TimerStack.pushTimer("getFirstGridPatternCell");
+        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreasSmaller);
+
         if (this.m_firstGridPattern == null)
             throw new Error("could not load grid pattern");
 
-        timer.popTimer();
-        timer.pushTimer("getGridColumnDateValues");
+        _TimerStack.popTimer();
+        _TimerStack.pushTimer("getGridColumnDateValues");
         this.m_datesForGrid = await this.getGridColumnDateValues(context);
-        timer.popTimer();
-        timer.pushTimer("getFieldCount");
+        _TimerStack.popTimer();
+        _TimerStack.pushTimer("getFieldCount");
         this.m_fieldsToUse = await StructureEditor.getFieldCount(context);
-        timer.popTimer();
+        _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("lgfb.2");
-        timer.pushTimer("loadGridFromBracket::loop");
+        _TimerStack.pushTimer("loadGridFromBracket::loop");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
             let game: BracketGame = new BracketGame()
@@ -996,11 +1053,11 @@ export class Grid
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
-                let overlapKind: RangeOverlapKind = this.doesRangeOverlap(game.FullGameRange);
+                let [item, overlapKind] = this.getFirstOverlappingItem(game.FullGameRange);
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`);
+                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value} overlaps with ${item.Range.toFriendlyString()}`);
 
                 const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
 
@@ -1009,11 +1066,11 @@ export class Grid
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
                 // before we try this, check to see if we need to expand our fastRangeAreas
-                const moreRowsNeeded = fastRangeAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
+                const moreRowsNeeded = fastFormulaAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
                 if (moreRowsNeeded)
-                    await fastRangeAreas.addRangeAreaGridForRangeInfo(context, `bigGridCache${game.FullGameRange.bottomRight().FirstRow}`, sheet, moreRowsNeeded);
+                    await fastFormulaAreas.addMoreRows(context, `bigFormulaGridCache${game.FullGameRange.bottomRight().FirstRow}`, moreRowsNeeded);
 
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastFormulaAreas, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -1068,9 +1125,9 @@ export class Grid
 
                 this.m_mapGameItem.set(gameItem.GameId.Value, gameItem);
             }
-            timer.stopAllAggregatedTimers();
+            _TimerStack.stopAllAggregatedTimers();
         }
-        timer.popTimer();
+        _TimerStack.popTimer();
         this.logGrid();
     }
 

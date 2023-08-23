@@ -1,9 +1,9 @@
+import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
 import { IBracketGame } from "./BracketGame";
-import { Grid } from "./Grid";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
-import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
+import { Grid } from "./Grid";
 
 export class GridItem
 {

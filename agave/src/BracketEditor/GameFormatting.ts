@@ -1,10 +1,69 @@
-import { JsCtx } from "../Interop/JsCtx";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { IIntention } from "../Interop/Intentions/IIntention";
+import { TnClearRange } from "../Interop/Intentions/TnClearRange";
+import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo } from "../Interop/Ranges";
 import { s_staticConfig } from "../StaticConfig";
+import { GridColumnType, GridRowType } from "./Grid";
 
 export class GameFormatting
 {
+    static s_lineText = "line";
+
+    static s_vLinePrefix = `v${GameFormatting.s_lineText}`;
+    static s_vLineText = `${GameFormatting.s_vLinePrefix}t`; // a line in a text row
+    static s_vLineLine = `${GameFormatting.s_vLinePrefix}l`; // a line in a horizontal line row
+
+    static s_hLinePrefix = `h${GameFormatting.s_lineText}`;
+    static s_hLineTeam =  `${GameFormatting.s_hLinePrefix}t`; // a line in the TeamName column
+    static s_hLineScore = `${GameFormatting.s_hLinePrefix}s`; // a line in the Score column
+    static s_hLineLine =  `${GameFormatting.s_vLinePrefix}l`; // a line in the vertical line column -- same as vertical line in a line row
+
+    static s_mapGridRowType = new Map<GridRowType, string>(
+        [
+            [GridRowType.Text, GameFormatting.s_vLineText],
+            [GridRowType.Line, GameFormatting.s_vLineLine],
+        ]);
+
+    static s_mapGridColumnType = new Map<GridColumnType, string>(
+        [
+            [GridColumnType.Team, GameFormatting.s_hLineTeam],
+            [GridColumnType.Score, GameFormatting.s_hLineScore],
+            [GridColumnType.Line, GameFormatting.s_vLineLine], // vLineLine and hLineLine are the same (intersectionality)
+        ]);
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.isLineFormula
+
+        Does the given formula string correspond to any of our line cells?
+
+        These functions have to be very careful about operating on non-strings
+    ----------------------------------------------------------------------------*/
+    static isLineFormula(fmla: string | any): boolean
+    {
+        if (fmla == null || (fmla?.length ?? 0)< 5)
+            return false;
+
+        return fmla.toLowerCase().startsWith(GameFormatting.s_lineText, 1);
+    }
+
+    static isLineColumnTypeMatch(fmla: string | any, colType: GridColumnType): boolean
+    {
+        if (fmla == null || (fmla?.length ?? 0) < 5)
+            return false;
+
+        return fmla.toLowerCase() == GameFormatting.s_mapGridColumnType.get(colType);
+    }
+
+    static isLineRowTypeMatch(fmla: string | any, rowType: GridRowType): boolean
+    {
+        if (fmla == null || (fmla?.length ?? 0) < 5)
+            return false;
+
+        return fmla.toLowerCase() == GameFormatting.s_mapGridColumnType.get(rowType);
+    }
+
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatTeamNameRange
     ----------------------------------------------------------------------------*/
@@ -22,11 +81,7 @@ export class GameFormatting
     static formatConnectingLineRangeRequest(lineRange: Excel.Range)
     {
         lineRange.format.fill.color = "black";
-    }
-
-    static formatConnectingLineRangeSync(lineRange: Excel.Range)
-    {
-        lineRange.format.fill.color = "black";
+        lineRange.format.font.color = "white";
     }
 
     /*----------------------------------------------------------------------------
@@ -122,17 +177,6 @@ export class GameFormatting
         return format.rowHeight <= 1;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: GameFormatting.isCellInLineRow
-    ----------------------------------------------------------------------------*/
-    static async isCellInLineRow(context: JsCtx, range: Excel.Range): Promise<boolean>
-    {
-        range.load("format");
-        await context.sync();
-
-        return this.isRangeFormatInLineRow(range.format);
-    }
-
     static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean
     {
         const format: Excel.RangeFormat = areas.getFormatForRangeInfo(range);
@@ -212,11 +256,24 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.removeAllGameFormatting
     ----------------------------------------------------------------------------*/
-    static removeAllGameFormatting(range: Excel.Range)
+    static removeAllGameFormattingNoTn(range: Excel.Range)
     {
         if (range == null)
             return;
 
         range.clear();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.tnsRemoveAllGameFormatting
+
+        return intentions to remove all game formatting for the range
+    ----------------------------------------------------------------------------*/
+    static tnsRemoveAllGameFormatting(range: RangeInfo): IIntention[]
+    {
+        if (range == null)
+            return [];
+
+        return [TnClearRange.Create(range)];
     }
 }

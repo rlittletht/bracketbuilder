@@ -1,15 +1,14 @@
-import { IGridAdjuster } from "./IGridAdjuster";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GridItem } from "../GridItem";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GridAdjust } from "./GridAdjust";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext, AppContext } from "../../AppContext/AppContext";
-import { GameNum } from "../GameNum";
+import { StreamWriter } from "../../Support/StreamWriter";
 import { TestResult } from "../../Support/TestResult";
 import { TestRunner } from "../../Support/TestRunner";
-import { StreamWriter } from "../../Support/StreamWriter";
+import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameNum } from "../GameNum";
+import { AdjustRangeGrowExtraRow, Grid } from "../Grid";
+import { GridAdjust } from "./GridAdjust";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { RegionSwapper } from "./RegionSwapper";
 
 // THIS ADJUSTER IS is for the insert of Game 19 on a 14 team bracket
 // W15 and W13 will overlap game 16.  To fix this (and to fix the next problem

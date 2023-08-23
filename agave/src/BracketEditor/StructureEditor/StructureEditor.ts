@@ -1,29 +1,26 @@
 
-import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
-import { IAppContext, AppContext } from "../../AppContext/AppContext";
-import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GameFormatting } from "../GameFormatting";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
+import { GridBuilder } from "../../Brackets/GridBuilder";
+import { CoachTransition } from "../../Coaching/CoachTransition";
+import { HelpTopic } from "../../Coaching/HelpInfo";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { JsCtx } from "../../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
+import { _TimerStack } from "../../PerfTimer";
+import { s_staticConfig } from "../../StaticConfig";
+import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
+import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
+import { GameFormatting } from "../GameFormatting";
+import { GameMover } from "../GameMover";
+import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";
-import { _undoManager } from "../Undo";
-import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
 import { GridRanker } from "../GridRanker";
-import { GameMover } from "../GameMover";
-import { GridBuilder } from "../../Brackets/GridBuilder";
+import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
-import { JsCtx } from "../../Interop/JsCtx";
-import { PerfTimer } from "../../PerfTimer";
-import { Coachstate } from "../../Coachstate";
-import { CoachTransition } from "../../CoachTransition";
-import { HelpTopic, HelpInfo } from "../../HelpInfo";
-import { SetupState } from "../../Setup";
-import { FastRangeAreas } from "../../Interop/FastRangeAreas";
-import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
-import { s_staticConfig } from "../../StaticConfig";
+import { StructureRemove } from "./StructureRemove";
 
 let _moveSelection: RangeInfo = null;
 
@@ -37,7 +34,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.copySelectionToClipboard(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -57,7 +55,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.syncBracketChangesFromGameSheet(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -76,7 +75,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.toggleShowDataSheets(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -98,7 +98,8 @@ export class StructureEditor
             await _undoManager.undo(appContext, context);
             context.releaseCacheObjectsUntil('undo');
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -118,7 +119,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.applyFinalFormatting(appContext, context, await this.getBracketName(context));
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -140,7 +142,8 @@ export class StructureEditor
             await _undoManager.redo(appContext, context);
             context.releaseCacheObjectsUntil('redo');
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -161,23 +164,26 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            appContext.Timer.pushTimer("insertGameAtSelectionClick PART 1");
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", true);
 
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
 
-            await FastRangeAreas.populateGridFastRangeAreaCache(context);
+            _TimerStack.pushTimer("populate FastFormulas");
+            await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+            _TimerStack.popTimer();
 
             await StructureInsert.insertGameAtSelection(appContext, context, game);
             context.releaseCacheObjectsUntil(bookmark);
-            appContext.Timer.popTimer();
+            _TimerStack.popTimer();
 
-            appContext.Timer.pushTimer("insertGameAtSelectionClick PART 2");
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", true);
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
-            await appContext.invalidateHeroList(context);
-            appContext.Timer.popTimer();
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
+            _TimerStack.popTimer();
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -202,7 +208,8 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -229,7 +236,8 @@ export class StructureEditor
 
                 await context.sync();
             }
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -252,7 +260,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.doGameMoveToSelection(appContext, context, _moveSelection, await this.getBracketName(context));
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -277,7 +286,8 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -303,7 +313,8 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -366,7 +377,7 @@ export class StructureEditor
             }
         }
 
-        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
         appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
         context.releaseCacheObjectsUntil(bookmark);
@@ -417,44 +428,6 @@ export class StructureEditor
         return await GameFormatting.isCellInGameTitleColumn(context, range)
             && await GameFormatting.isCellInGameScoreColumn(context, range.getOffsetRange(0, 1))
             && await GameFormatting.isCellInLineColumn(context, range.getOffsetRange(0, 2));
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.isRangeValidForTopOrBottomGame
-    ----------------------------------------------------------------------------*/
-    static async isRangeValidForTopOrBottomGame(context: JsCtx, range: Excel.Range): Promise<boolean>
-    {
-        range.load("address");
-        await context.sync();
-
-        if (!await GameFormatting.isCellInLineRow(context, range.getOffsetRange(-1, 0)) || !await GameFormatting.isCellInLineRow(context, range.getOffsetRange(1, 0)))
-        {
-            return false;
-        }
-
-        return await StructureEditor.isRangeValidForAnyGame(context, range);
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.getValidRangeInfoForGameInsert
-    ----------------------------------------------------------------------------*/
-    static async getValidRangeInfoForGameInsert(context: JsCtx, range: Excel.Range): Promise<RangeInfo>
-    {
-        range.load("rowIndex");
-        range.load("rowCount");
-        range.load("columnIndex");
-        await context.sync();
-
-        const rowCount: number = range.rowCount == 1 ? 11 : range.rowCount;
-
-        if (rowCount >= 9
-            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(0, 0))
-            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(rowCount - 1, 0)))
-        {
-            return new RangeInfo(range.rowIndex, rowCount, range.columnIndex, 3);
-        }
-
-        return null
     }
 
     /*----------------------------------------------------------------------------
@@ -537,7 +510,7 @@ export class StructureEditor
         changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
         changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
 
-        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
     }
 
     static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
@@ -592,6 +565,7 @@ export class StructureEditor
             grid.logGrid();
             
             console.log(`rank: ${GridRanker.getGridRank(grid, await this.getBracketName(context))}`)
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

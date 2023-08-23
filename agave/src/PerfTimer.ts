@@ -12,25 +12,53 @@ class PerfTimerItem
 
     timerName: string;
     childResults: string[] = [];
+    summarizeChildrenOnly: boolean;
 }
 
 export class PerfTimer
 {
     m_perfTimerStack: PerfTimerItem[] = [];
     m_aggregatedTimers: Map<string, PerfTimerItem> = new Map<string, PerfTimerItem>();
+    m_summarizeChildrenCount = 0;
 
-    pushTimer(message: string)
+    clear()
+    {
+        this.m_perfTimerStack = [];
+    }
+
+    pushTimer(message: string, summarizeChildrenOnly?: boolean)
     {
         if (!s_staticConfig.perfTimers)
             return;
 
+        const summarizeChildrenCurrent = this.m_perfTimerStack.length == 0 ? 0 : this.m_perfTimerStack[this.m_perfTimerStack.length - 1].summarizeChildrenOnly;
+
         let timer: PerfTimerItem = new PerfTimerItem();
 
         timer.timerName = message;
+        timer.summarizeChildrenOnly = summarizeChildrenOnly ?? false;
+
         PerfTimer.startTimer(timer);
+        if (this.m_summarizeChildrenCount == 0)
+        {
+            if (this.m_perfTimerStack.length == 0)
+            {
+                console.log(`++++ START: Timer Start: ${message}`);
+            }
+            else
+            {
+                const itemNames = this.m_perfTimerStack.map((_item) => _item.timerName);
+
+                const logOut = `+- Start: ${itemNames.join(" -> ")} -> ${message}`;
+                console.log(`${" ".padStart(this.m_perfTimerStack.length * 2, " ")}${logOut}`);
+            }
+        }
+
+        if (timer.summarizeChildrenOnly)
+            this.m_summarizeChildrenCount++;
+
         this.m_perfTimerStack.push(timer);
 
-        console.log(`++++ START: Timer Start: ${message}`);
     }
 
     static startTimer(timer: PerfTimerItem)
@@ -62,8 +90,9 @@ export class PerfTimer
 
     appendSummaryToRemainingTimers(childSummary: string)
     {
-        for (let _item of this.m_perfTimerStack)
+        if (this.m_perfTimerStack.length > 0)
         {
+            const _item = this.m_perfTimerStack[this.m_perfTimerStack.length - 1];
             _item.childResults.push(childSummary);
         }
     }
@@ -75,8 +104,10 @@ export class PerfTimer
 
         let timer: PerfTimerItem = this.m_perfTimerStack.pop();
         PerfTimer.pauseTimerAndAccumulate(timer);
+        if (timer.summarizeChildrenOnly)
+            this.m_summarizeChildrenCount--;
 
-        const childSummary = PerfTimer.reportPerfTimerItem(timer);
+        const childSummary = this.reportPerfTimerItem(timer);
         this.appendSummaryToRemainingTimers(childSummary);
     }
 
@@ -125,28 +156,60 @@ export class PerfTimer
 
             // make sure timer is accumulated. if its already paused, its a noop
             PerfTimer.pauseTimerAndAccumulate(timer);
-            const childSummary = PerfTimer.reportPerfTimerItem(timer);
+            const childSummary = this.reportPerfTimerItem(timer);
             this.appendSummaryToRemainingTimers(childSummary);
         }
 
         this.m_aggregatedTimers.clear();
     }
 
-    static reportPerfTimerItem(item: PerfTimerItem): string
+    reportPerfTimerItem(item: PerfTimerItem): string
     {
         if (!s_staticConfig.perfTimers)
             return "";
 
+        let prefix = "";
+        if (this.m_perfTimerStack.length != 0)
+        {
+            const logOut = `+-`;
+            prefix = `${" ".padStart(this.m_perfTimerStack.length * 2, " ")}${logOut}`;
+        }
+
         if (item.count > 1)
         {
-            console.log(`Timer: ${item.timerName}: total: ${item.msecCumulative}, min/max: (${item.msecMin}, ${item.msecMax}), avergage: ${item.msecCumulative / item.count}, count: ${item.count}`);
+            if (this.m_summarizeChildrenCount == 0)
+                console.log(`${prefix} Stop: ${item.timerName}: total: ${item.msecCumulative}, min/max: (${item.msecMin}, ${item.msecMax}), avergage: ${item.msecCumulative / item.count}, count: ${item.count}`);
         }
         else
         {
             const childResults = item.childResults.length > 0 ? `(${item.childResults.join("+")})` : "";
-            console.log(`----- STOP: Timer ${item.timerName}: ${item.msecCumulative}${childResults}`);
+            const itemNames = this.m_perfTimerStack.map((_item) => _item.timerName);
+
+            if (this.m_summarizeChildrenCount == 0)
+            {
+                if (this.m_perfTimerStack.length == 0)
+                    console.log(`----- STOP: ${item.msecCumulative}ms ${item.timerName}${childResults}`);
+                else
+                    console.log(`${prefix} Stop : ${item.msecCumulative}ms ${itemNames.join(" -> ")} -> ${item.timerName}${childResults}`);
+            }
         }
         return `${item.timerName}(${item.msecCumulative})`;
     }
 
+    timeThis(name: string, delegate: () => void, summaryChildrenOnly?: boolean)
+    {
+        _TimerStack.pushTimer(name, summaryChildrenOnly);
+        delegate();
+        _TimerStack.popTimer();
+    }
+
+    async timeThisAsync(name: string, delegate: () => void, summaryChildrenOnly?: boolean)
+    {
+        this.pushTimer(name, summaryChildrenOnly);
+        await delegate();
+        this.popTimer();
+    }
+
 }
+
+export const _TimerStack = new PerfTimer();

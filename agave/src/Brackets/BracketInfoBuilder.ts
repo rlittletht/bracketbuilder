@@ -1,30 +1,32 @@
 
-import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
-import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { Ranges } from "../Interop/Ranges";
-import { GridBuilder } from "./GridBuilder";
 import { JsCtx } from "../Interop/JsCtx";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
+import { EnsureSheetPlacement, Sheets } from "../Interop/Sheets";
+import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
+import { GridBuilder } from "./GridBuilder";
 
-export class BracketDataBuilder
+export class BracketInfoBuilder
 {
     static SheetName: string = "BracketInfo";
+    static s_bracketChoiceRange = new RangeInfo(0, 1, 1, 1);
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketDataBuilder.buildBracketDataSheet
+        %%Function: BracketInfoBuilder.buildBracketInfoSheet
 
         Build the Bracket Data sheet (which has results and field schedule times
         in it)
     ----------------------------------------------------------------------------*/
-    static async buildBracketDataSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
+    static async buildBracketInfoSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDataBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
-        let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketInfoBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 2);
         await context.sync();
 
-        rng.values = [[bracketChoice]];
+        rng.values = [["Bracket", bracketChoice]];
+
         await context.sync();
 
-        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", rng);
+        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", Ranges.rangeFromRangeInfo(sheet, BracketInfoBuilder.s_bracketChoiceRange));
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading

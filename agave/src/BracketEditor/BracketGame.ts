@@ -1,19 +1,20 @@
 
-import { BracketDefinition, GameDefinition, s_brackets, BracketManager } from "../Brackets/BracketDefinitions";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { RangeInfo, Ranges } from "../Interop/Ranges";
-import { Grid } from "./Grid";
 import { AppContext, IAppContext } from "../AppContext/AppContext";
-import { BracketSources } from "../Brackets/BracketSources";
-import { GameNum } from "./GameNum";
-import { GameId } from "./GameId";
-import { OADate } from "../Interop/Dates";
+import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
+import { BracketManager } from "../Brackets/BracketManager";
+import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
+import { GameDataSources } from "../Brackets/GameDataSources";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
-import { TrackingCache, ObjectType } from "../Interop/TrackingCache";
+import { OADate } from "../Interop/Dates";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 import { JsCtx } from "../Interop/JsCtx";
-import { StructureEditor } from "./StructureEditor/StructureEditor";
+import { RangeCaches } from "../Interop/RangeCaches";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
+import { ObjectType } from "../Interop/TrackingCache";
+import { _TimerStack } from "../PerfTimer";
+import { GameId } from "./GameId";
+import { GameNum } from "./GameNum";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
-import { FastRangeAreas } from "../Interop/FastRangeAreas";
 
 export interface IBracketGame
 {
@@ -353,13 +354,12 @@ export class BracketGame implements IBracketGame
     ----------------------------------------------------------------------------*/
     async Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
     {
-        const fastRangeAreas: FastRangeAreas = context.getTrackedItemOrNull("grid-fastRangeAreas");
-
+        appContext;
         AppContext.checkpoint("b.1");
         if (this.IsLinkedToBracket)
             return this;
 
-        appContext?.Timer.startAggregatedTimer("namedInner", "getNamedRanges inner");
+        _TimerStack.startAggregatedTimer("namedInner", "getNamedRanges inner");
 
         AppContext.checkpoint("b.2");
 
@@ -377,7 +377,7 @@ export class BracketGame implements IBracketGame
             // we will still try to build as much as we can. but very carefully
         }
 
-        appContext?.Timer.pauseAggregatedTimer("namedInner");
+        _TimerStack.pauseAggregatedTimer("namedInner");
 
         if (!this.IsChampionship)
         {
@@ -399,113 +399,141 @@ export class BracketGame implements IBracketGame
                 // we didn't bind to a game in the bracket. get the swap state from the source data
                 // table
 
-                appContext?.Timer.startAggregatedTimer("innerBind", "inner bind");
+                _TimerStack.startAggregatedTimer("innerBind", "inner bind");
 
-                AppContext.checkpoint("b.7");
-                const sheet =
-                    await context.getTrackedItemOrPopulate(
-                        BracketSources.SheetName,
-                        async (context): Promise<any> =>
-                        {
-                            const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                            await context.sync();
-                            return { type: ObjectType.JsObject, o: sheetGet };
-                        });
+                let data = null;
 
-                //                if (sheet == null)
-                //                {
-                //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                //                    await context.sync();
-                //                }
-
-                AppContext.checkpoint("b.8");
-
-                if (sheet && !sheet.isNullObject)
+                const { rangeInfo: gameDataRange, formulaCacheType: type } = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+                if (gameDataRange != null)
                 {
-                    const tableName: string = "BracketSourceData";
+                    const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, type);
+                    if (areasCache != null)
+                        data = areasCache.getValuesForRangeInfo(gameDataRange);
+                }
 
-                    const table=
+                if (data == null)
+                {
+                    AppContext.checkpoint("b.7");
+                    const sheet =
                         await context.getTrackedItemOrPopulate(
-                            tableName,
+                            GameDataSources.SheetName,
                             async (context): Promise<any> =>
                             {
-                                const tableGet = sheet.tables.getItemOrNullObject(tableName);
-                                await context.sync();
-                                return { type: ObjectType.JsObject, o: tableGet };
-                            }
-                        );
+                                const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(GameDataSources.SheetName);
+                                await context.sync("GTI sheet(bracketSrc)");
+                                return { type: ObjectType.JsObject, o: sheetGet };
+                            });
 
-                    if (table && !table.isNullObject)
+                    //                if (sheet == null)
+                    //                {
+                    //                    sheet = context.Ctx.workbook.worksheets.getItemOrNullObject(GameDataSources.SheetName);
+                    //                    await context.sync();
+                    //                }
+
+                    AppContext.checkpoint("b.8");
+
+                    if (sheet && !sheet.isNullObject)
                     {
-                        const range =
+                        const tableName: string = "BracketSourceData";
+
+                        const table =
                             await context.getTrackedItemOrPopulate(
-                                "tableBodyRange",
+                                tableName,
                                 async (context): Promise<any> =>
                                 {
-                                    const rangeGet: Excel.Range = table.getDataBodyRange();
-                                    rangeGet.load("values");
-                                    await context.sync();
-                                    return { type: ObjectType.JsObject, o: rangeGet };
-                                });
+                                    const tableGet = sheet.tables.getItemOrNullObject(tableName);
+                                    await context.sync("GTI brk table");
+                                    return { type: ObjectType.JsObject, o: tableGet };
+                                }
+                            );
 
-                        if (!range)
-                            throw new Error("could not get range from worksheet");
-
-                        const data: any[][] = range.values;
-
-                        // sadly we have to go searching for this on our own...
-                        for (let i: number = 0; i < data.length; i++)
+                        if (table && !table.isNullObject)
                         {
-                            if (data[i][0] == this.m_gameNum.Value)
-                            {
-                                this.m_swapTopBottom = data[i][3];
-                            }
+                            const range =
+                                await context.getTrackedItemOrPopulate(
+                                    "tableBodyRange",
+                                    async (context): Promise<any> =>
+                                    {
+                                        const rangeGet: Excel.Range = table.getDataBodyRange();
+                                        rangeGet.load("values");
+                                        await context.sync("GTI brk body");
+                                        return { type: ObjectType.JsObject, o: rangeGet };
+                                    });
+
+                            if (!range)
+                                throw new Error("could not get range from worksheet");
+
+                            data = range.values;
                         }
                     }
                 }
-                appContext?.Timer.pauseAggregatedTimer("innerBind");
+
+                if (data != null)
+                {
+                    // sadly we have to go searching for this on our own...
+                    for (let i: number = 0; i < data.length; i++)
+                    {
+                        if (data[i][0] == this.m_gameNum.Value)
+                        {
+                            this.m_swapTopBottom = data[i][3];
+                        }
+                    }
+                }
+
+                _TimerStack.pauseAggregatedTimer("innerBind");
             }
 
             if (this.m_gameNumberLocation != null)
             {
-                appContext?.Timer.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
+                _TimerStack.startAggregatedTimer("innerGameNum", "gameNumberLocation inner");
 
                 const fieldTimeRange: RangeInfo = this.m_gameNumberLocation.offset(0, 3, -1, 1);
 
-                const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-                const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
-                range.load("values");
+                const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+                let data = null;
 
-                await context.sync();
+                if (areasCache != null)
+                {
+                    data = areasCache.getValuesForRangeInfo(fieldTimeRange);
+                }
+                else
+                {
+                    const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+                    const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, fieldTimeRange);
+                    range.load("values");
 
-                const data: any[][] = range.values;
+                    await context.sync("gamenum loc values");
+
+                    data = range.values;
+                }
+
                 this.m_field = data[0][0];
                 const time: string = data[2][0];
                 const mins = OADate.MinutesFromTimeString(time);
                 this.m_startTime = mins;
 
-                appContext?.Timer.pauseAggregatedTimer("innerGameNum");
+                _TimerStack.pauseAggregatedTimer("innerGameNum");
             }
 
-            appContext?.Timer.startAggregatedTimer("innerRepair", "check for repair inner");
+            _TimerStack.startAggregatedTimer("innerRepair", "check for repair inner");
             // now figure out if we need to repair this game
             if (BracketGame.IsTeamSourceStatic(this.TopTeamName))
-                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName, fastRangeAreas);
+                this.m_topTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.TopTeamCellName, this.TopTeamName);
 
-            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName, fastRangeAreas);
+            this.m_topTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.TopTeamCellName);
 
             if (BracketGame.IsTeamSourceStatic(this.BottomTeamName))
-                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName, fastRangeAreas);
+                this.m_bottomTeamOverride = await StructureRemove.getTeamSourceNameOverrideValueForNamedRange(context, this.BottomTeamCellName, this.BottomTeamName);
 
-            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName, fastRangeAreas);
-            appContext?.Timer.pauseAggregatedTimer("innerRepair");
+            this.m_bottomTeamNameValue = await StructureRemove.getTeamSourceNameValueForNamedRange(context, this.BottomTeamCellName);
+            _TimerStack.pauseAggregatedTimer("innerRepair");
 
             let timeOverride: number;
-            appContext?.Timer.startAggregatedTimer("innerRepair2", "check for repair inner field/time");
+            _TimerStack.startAggregatedTimer("innerRepair2", "check for repair inner field/time");
 
-            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName, fastRangeAreas);
+            [this.m_fieldOverride, timeOverride] = await StructureRemove.getFieldAndTimeOverrideValuesForNamedRange(context, this.GameNumberCellName);
             this.m_timeOverride = typeof timeOverride !== "number" ? 0 : timeOverride;
-            appContext?.Timer.pauseAggregatedTimer("innerRepair2");
+            _TimerStack.pauseAggregatedTimer("innerRepair2");
 
         }
 
@@ -538,7 +566,7 @@ export class BracketGame implements IBracketGame
     {
         AppContext.checkpoint("l.1");
 
-        let bracketDefinition: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        let bracketDefinition: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("l.2");
         this.m_gameNum = gameNum;

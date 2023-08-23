@@ -1,16 +1,15 @@
-import { Grid } from "../Grid";
-import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { RangeInfo } from "../../Interop/Ranges";
 import { IBracketGame } from "../BracketGame";
-import { GridItem } from "../GridItem";
-import { IGridAdjuster } from "./IGridAdjuster";
-import { RegionSwapper_BottomGame } from "./RegionSwapper_BottomGame";
-import { Adjuster_WantToGrowUpAtTopOfGrid } from "./Adjuster_WantToGrowUpAtTopOfGrid";
+import { Grid } from "../Grid";
 import { GridGameInsert } from "../GridGameInsert";
-import { IGridAdjuster2 } from "./IGridAdjuster2";
 import { Adjuster2_InsertRowForSeparation } from "./Adjuster2_InsertRowForSeparation";
-import { Adjuster_SwapGameRegonsForOverlap } from "./Adjuster_SwapGameRegonsForOverlap";
-import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "./Adjuster_SwapAdjacentGameRegionsForOverlap";
 import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "./Adjuster_NeedExtraSpaceBelowRegionForGameInsert";
+import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "./Adjuster_SwapAdjacentGameRegionsForOverlap";
+import { Adjuster_SwapGameRegonsForOverlap } from "./Adjuster_SwapGameRegonsForOverlap";
+import { Adjuster_WantToGrowUpAtTopOfGrid } from "./Adjuster_WantToGrowUpAtTopOfGrid";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { IGridAdjuster2 } from "./IGridAdjuster2";
+import { RegionSwapper_BottomGame } from "./RegionSwapper_BottomGame";
 
 export class GridAdjust
 {

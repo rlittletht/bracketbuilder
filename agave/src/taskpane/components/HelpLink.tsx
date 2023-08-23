@@ -1,10 +1,8 @@
-import * as React from "react";
 import * as CSS from "csstype";
+import * as React from "react";
 
-import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { Teachable, TeachableId } from "./Teachable";
 import { Link } from '@fluentui/react';
-import { Coachstate } from "../../Coachstate";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { s_staticConfig } from "../../StaticConfig";
 
 export interface HelpLinkInfo

@@ -1,14 +1,12 @@
-import { JsCtx } from "../../Interop/JsCtx";
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
-import { BracketSources } from "../../Brackets/BracketSources";
-import { Grid } from "../Grid";
-import { StructureEditor } from "./StructureEditor";
-import { GridItem } from "../GridItem";
+import { GameDataSources } from "../../Brackets/GameDataSources";
+import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { GridChange, GridChangeOperation } from "../GridChange";
+import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
 import { GameFormatting } from "../GameFormatting";
-import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
+import { StructureEditor } from "./StructureEditor";
 
 /* 
     A note on team priorities...
@@ -19,7 +17,7 @@ export class Prioritizer
     {
         appContext;
         // first, get all the teamName info
-        const table: Excel.Table = await BracketSources.getTeamNameTable(context);
+        const table: Excel.Table = await GameDataSources.getTeamNameTable(context);
         const tableRange: Excel.Range = table.getDataBodyRange();
         tableRange.load("values, rowCount");
         await context.sync();
@@ -53,7 +51,8 @@ export class Prioritizer
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.shadeGamesByPriority(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.setHeroListDirty();
+            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

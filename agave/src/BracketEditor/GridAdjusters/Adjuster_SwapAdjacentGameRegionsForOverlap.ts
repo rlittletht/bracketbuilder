@@ -1,16 +1,15 @@
-import { IGridAdjuster } from "./IGridAdjuster";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GridItem } from "../GridItem";
-import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GridAdjust } from "./GridAdjust";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { RegionSwapper } from "./RegionSwapper";
 import { IAppContext } from "../../AppContext/AppContext";
-import { GameNum } from "../GameNum";
+import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { s_staticConfig } from "../../StaticConfig";
+import { StreamWriter } from "../../Support/StreamWriter";
 import { TestResult } from "../../Support/TestResult";
 import { TestRunner } from "../../Support/TestRunner";
-import { StreamWriter } from "../../Support/StreamWriter";
-import { s_staticConfig } from "../../StaticConfig";
+import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameNum } from "../GameNum";
+import { AdjustRangeGrowExtraRow, Grid } from "../Grid";
+import { GridAdjust } from "./GridAdjust";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { RegionSwapper } from "./RegionSwapper";
 
 // THIS ADJUSTER IS is for the insert of Game 16 on a 14 team bracket
 // W12 and L10. Since L10 is unanchored, it just needs space to insert into

@@ -1,7 +1,7 @@
+import { Alignment, IStackItemStyles, Stack } from '@fluentui/react';
 import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { ActionButton } from "./ActionButton";
-import { Stack, Alignment, IStackItemStyles } from '@fluentui/react';
 import { Teachable, TeachableProps } from "./Teachable";
 
 export interface ToolbarItem

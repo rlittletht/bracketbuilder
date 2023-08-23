@@ -13,7 +13,7 @@ export class TestRunner
 
     // this clever hackery is courtesy chatgpt...i admit I don't understand how the various templating
     // interacts with the arguments (which are classes, but not objects, but treated as objects??)
-    static runAllTests<T1 extends new() => any, T2 extends TestResult>(staticClassType: T1, ctor: new(testName: string, appContext: IAppContext) => T2, appContext: IAppContext, outStream: StreamWriter)
+    static async runAllTests<T1 extends new() => any, T2 extends TestResult>(staticClassType: T1, ctor: new(testName: string, appContext: IAppContext) => T2, appContext: IAppContext, outStream: StreamWriter)
     {
         let output: string = `${staticClassType.name}:`;
         if (TestRunner.verbose)
@@ -30,7 +30,7 @@ export class TestRunner
             const result = new ctor(testFunctionName, appContext);
 
             setupTest();
-            staticClassType[testFunctionName](result);
+            await staticClassType[testFunctionName](result);
 
             if (result.Failed || TestRunner.verbose)
                 output += "\n";

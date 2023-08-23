@@ -2,13 +2,12 @@
 
 // this class holds the support for a single game move invocation, including
 // the growing number of options...
-import { GridOption, GameMover } from "../GameMover";
-import { Grid } from "../Grid";
-import { GridItem } from "../GridItem";
-import { GameId } from "../GameId";
 import { RangeOverlapKind } from "../../Interop/Ranges";
 import { s_staticConfig } from "../../StaticConfig";
-import { v4 as uuidv4 } from 'uuid';
+import { GameId } from "../GameId";
+import { GameMover, GridOption } from "../GameMover";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,

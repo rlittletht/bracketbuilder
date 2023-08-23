@@ -1,5 +1,6 @@
+import { _TimerStack } from "../PerfTimer";
 import { s_staticConfig } from "../StaticConfig";
-import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, CacheObject, ObjectType } from "./TrackingCache";
+import { CacheObject, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, TrackingCache } from "./TrackingCache";
 
 export class JsCtx
 {
@@ -16,9 +17,15 @@ export class JsCtx
 
     get Ctx(): any { return this.m_ctx; }
 
-    async sync()
+    async sync(name?: string)
     {
+        // this is an explicit if to allow easier breakpoints
+        if (name == undefined || name == null)
+            name = "";
+
+        _TimerStack.pushTimer(`context.sync(${name})`);
         await this.m_ctx.sync();
+        _TimerStack.popTimer();
     }
 
     pushTrackingBookmark(bookmark: string)
@@ -74,6 +81,16 @@ export class JsCtx
             return null;
 
         return obj.o;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: JsCtx.isKeyMoreRecent
+
+        Is the left key more recent than the right key?
+    ----------------------------------------------------------------------------*/
+    compareKeyOrder(left: string, right: string): number
+    {
+        return this.m_cache.compareKeyOrder(left, right);
     }
 
     getTrackedItemsOrNull(key: string): any[]

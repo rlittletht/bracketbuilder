@@ -1,18 +1,18 @@
 import { IAppContext } from "../../AppContext/AppContext";
-import { IBracketGame } from "../BracketGame";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { HelpTopic } from "../../Coaching/HelpInfo";
+import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
+import { _TimerStack } from "../../PerfTimer";
+import { IBracketGame } from "../BracketGame";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { GameFormatting } from "../GameFormatting";
 import { Grid } from "../Grid";
-import { StructureRemove } from "./StructureRemove";
-import { ApplyGridChange } from "./ApplyGridChange";
-import { _undoManager, UndoGameDataItem } from "../Undo";
-import { StructureEditor } from "./StructureEditor";
-import { TrackingCache } from "../../Interop/TrackingCache";
-import { JsCtx } from "../../Interop/JsCtx";
 import { GridItem } from "../GridItem";
-import { Coachstate } from "../../Coachstate";
-import { HelpTopic } from "../../HelpInfo";
+import { UndoGameDataItem, _undoManager } from "../Undo";
+import { ApplyGridChange } from "./ApplyGridChange";
+import { StructureEditor } from "./StructureEditor";
+import { StructureRemove } from "./StructureRemove";
 
 export class StructureInsert
 {
@@ -56,7 +56,7 @@ export class StructureInsert
 
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
-        formulas.push(["", ""]);
+        formulas.push([GameFormatting.s_hLineTeam, ""]);
         formulas.push(["Champion", ""]);
 
         let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
@@ -179,18 +179,19 @@ export class StructureInsert
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
 
+        formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
         // push padding for the underline row AND the number of blank lines 
         this.pushPadding(
             formulas,
             ["", ""],
             gameInfoRangeInfo.FirstRow
-            - (insertRangeInfo.FirstRow + 1));
+            - (insertRangeInfo.FirstRow + 2));
 
         formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId.Value}`]);
         // we will fill in the game info text later. for now just push space
 
-        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
-
+        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 2);
+        formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
 
@@ -214,6 +215,7 @@ export class StructureInsert
     static async insertGameAtRange(
         appContext: IAppContext,
         context: JsCtx,
+        gridRef: Grid,
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
@@ -276,7 +278,17 @@ export class StructureInsert
 
             GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
             GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
+
+            const vertLineRowCount = insertRangeInfo.RowCount - 2;
+            const vertLineFirstRow = insertRangeInfo.FirstRow + 1;
+            const vertLineRange = rng.worksheet.getRangeByIndexes(vertLineFirstRow, insertRangeInfo.FirstColumn + 2, vertLineRowCount, 1);
+            GameFormatting.formatConnectingLineRangeRequest(vertLineRange);
+
+            const linesText = [];
+            for (let i = 0; i < vertLineRowCount; i++)
+                linesText.push([GameFormatting.s_mapGridRowType.get(gridRef.getRowType(vertLineFirstRow + i))]);
+
+            vertLineRange.formulas = linesText;
 
             context.Ctx.trackedObjects.remove(rngTarget);
             rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
@@ -468,12 +480,12 @@ export class StructureInsert
             context.pushTrackingBookmark(bookmark);
         }
 
-        appContext.Timer.pushTimer("insertGameAtSelection:gridBuildFromBracket");
+        _TimerStack.pushTimer("insertGameAtSelection:gridBuildFromBracket");
         // first make sure we have a complete grid for the bracket
         let grid: Grid = await StructureEditor.gridBuildFromBracket(context);
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
-        appContext.Timer.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
+        _TimerStack.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
 
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
@@ -489,7 +501,7 @@ export class StructureInsert
         }
 
         const { gridNew, failReason, coachState, topic } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
        
         // caller 
         if (failReason)
@@ -504,12 +516,12 @@ export class StructureInsert
             return false;
         }
 
-        appContext.Timer.pushTimer("insertGameAtSelection:diffAndApplyChanges");
+        _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
 
         let undoGameDataItems: UndoGameDataItem[] =
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
 
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);

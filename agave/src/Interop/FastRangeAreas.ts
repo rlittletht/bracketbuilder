@@ -1,11 +1,11 @@
-import { RangeInfo, Ranges } from "./Ranges";
-import { JsCtx } from "./JsCtx";
 import { IAppContext } from "../AppContext/AppContext";
+import { _TimerStack } from "../PerfTimer";
 import { StreamWriter } from "../Support/StreamWriter";
-import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
-import { ObjectType, CacheObject } from "./TrackingCache";
-import { PerfTimer } from "../PerfTimer";
+import { TestRunner } from "../Support/TestRunner";
+import { JsCtx } from "./JsCtx";
+import { RangeInfo, Ranges } from "./Ranges";
+import { CacheObject, ObjectType } from "./TrackingCache";
 
 class AreasItem
 {
@@ -142,22 +142,29 @@ export class FastRangeAreas
     {
         const areas: FastRangeAreas = new FastRangeAreas();
 
-        await areas.addRangeAreaGridForRangeInfo(context, key, sheet, 150, range);
+        await areas.addMoreRowsToRangeAreaGrid(context, key, sheet, 150, range);
 
         return areas;
     }
 
-    async addRangeAreaGridForRangeInfo(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeRef?: RangeInfo)
+    /*----------------------------------------------------------------------------
+        %%Function: FastRangeAreas.addMoreRowsToRangeAreaGrid
+
+        Add more rows (rowCount) to the current RangeAreas grid. If there isn't
+        a current grid (which is true if this is the first call ever for this
+        FastRangeAreas), then caller MUST supply a range to start the grid at.
+    ----------------------------------------------------------------------------*/
+    async addMoreRowsToRangeAreaGrid(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeGridStart?: RangeInfo)
     {
         let lastRow = this.lastAreaCached();
         let range: RangeInfo;
 
         if (!lastRow)
         {
-            if (!rangeRef)
+            if (!rangeGridStart)
                 throw new Error("must provide a reference range for the first addRange");
 
-            range = rangeRef.offset(0, rangeRef.RowCount, 0, rangeRef.ColumnCount);
+            range = rangeGridStart.offset(0, rangeGridStart.RowCount, 0, rangeGridStart.ColumnCount);
         }
         else
         {
@@ -180,11 +187,9 @@ export class FastRangeAreas
                         rangeAreas.load(props);
                         rangeAreasAry.push(rangeAreas);
                     }
-                    const timer = new PerfTimer();
-
-                    timer.pushTimer("addRangeAreaGridForRangeInfo sync");
+                    _TimerStack.pushTimer("addMoreRowsToRangeAreaGrid sync");
                     await context.sync();
-                    timer.popTimer();
+                    _TimerStack.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreasAry };
                 });
 
@@ -231,6 +236,8 @@ export class FastRangeAreas
         return cellsCollection;
     }
 
+    static s_fastRangeAreaBigGrid = "grid-fastRangeAreas";
+
     static async populateGridFastRangeAreaCache(context: JsCtx)
     {
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
@@ -241,7 +248,7 @@ export class FastRangeAreas
             {
                 const areas = await FastRangeAreas.getRangeAreasGridForRangeInfo(
                     context,
-                    "bigGridCache",
+                    `${this.s_fastRangeAreaBigGrid}-rangeAreas`,
                     sheet,
                     new RangeInfo(8, 150, 0, 50));
 

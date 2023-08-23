@@ -1,7 +1,7 @@
-import { IGridAdjuster2 } from "./IGridAdjuster2";
+import { RangeInfo } from "../../Interop/Ranges";
 import { Grid } from "../Grid";
 import { GridGameInsert } from "../GridGameInsert";
-import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { IGridAdjuster2 } from "./IGridAdjuster2";
 import { Spacer } from "./Spacer";
 
 /*----------------------------------------------------------------------------

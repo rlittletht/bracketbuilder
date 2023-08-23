@@ -1,8 +1,7 @@
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { GameMover, GridOption } from "../GameMover";
 import { GridItem } from "../GridItem";
-import { GridOption, GameMover } from "../GameMover";
 import { Mover } from "./Mover";
-import { Grid } from "../Grid";
 
 export class PushAway
 {

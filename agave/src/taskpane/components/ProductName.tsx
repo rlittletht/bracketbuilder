@@ -1,6 +1,5 @@
-import * as React from "react";
 import * as CSS from "csstype";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import * as React from "react";
 
 export interface ProductNameProps
 {

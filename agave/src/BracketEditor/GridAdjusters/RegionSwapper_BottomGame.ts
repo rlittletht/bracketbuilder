@@ -1,15 +1,15 @@
-import { IGridAdjuster } from "./IGridAdjuster";
+import { IAppContext as IAppContext1 } from "../../AppContext/AppContext";
+import { RangeInfo } from "../../Interop/Ranges";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameNum } from "../GameNum";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
-import { RangeInfo } from "../../Interop/Ranges";
 import { GridAdjust } from "./GridAdjust";
-import { IBracketGame, BracketGame } from "../BracketGame";
+import { IGridAdjuster } from "./IGridAdjuster";
 import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext, IAppContext as IAppContext1 } from "../../AppContext/AppContext";
-import { GameNum } from "../GameNum";
-import { StreamWriter } from "../../Support/StreamWriter";
-import { TestRunner } from "../../Support/TestRunner";
-import { TestResult } from "../../Support/TestResult";
 
 export class RegionSwapper_BottomGame implements IGridAdjuster
 {

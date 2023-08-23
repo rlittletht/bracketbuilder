@@ -1,8 +1,8 @@
 
-import { BracketDefinition, BracketManager } from "../Brackets/BracketDefinitions";
+import { BracketManager } from "../Brackets/BracketManager";
 import { BracketGame } from "./BracketGame";
-import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
+import { GameNum } from "./GameNum";
 
 export class FormulaBuilder
 {

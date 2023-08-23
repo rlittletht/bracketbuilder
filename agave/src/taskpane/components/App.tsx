@@ -1,54 +1,40 @@
-import * as React from "react";
 import * as CSS from "csstype";
+import * as React from "react";
 
-import { DefaultButton } from "@fluentui/react";
-import { ComboBox, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps } from "@fluentui/react";
+import { DirectionalHint } from "@fluentui/react";
 
-import { HeroList, HeroListItem, HeroListFormat } from "./HeroList";
-import { Progress } from "./Progress";
-import { SetupState } from "../../Setup";
-import { SetupBook } from "../../Setup";
-import { IAppContext, AppContext, TheAppContext } from "../../AppContext/AppContext";
-import { BracketChooser, UpdateBracketChoiceDelegate } from "./BracketChooser";
-import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
-import { GameItem } from "./GameItem";
-import { Games } from "./Games";
-import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
-import { BracketDefinition, _bracketManager } from "../../Brackets/BracketDefinitions";
-import { RegionSwapper_BottomGameTests } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
-import { Adjuster_WantToGrowUpAtTopOfGridTests } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
-import { TableIO } from "../../Interop/TableIO";
-import { Adjuster_SwapGameRegonsForOverlapTests } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
-import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
-import { Adjuster_SwapAdjacentGameRegionsForOverlapTests as Adjuster_SwapAdjacentGameRegonsForOverlapTests } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
-import { Toolbar, ToolbarItem } from "./Toolbar";
-import { LogoHeader } from "./LogoHeader";
-import { StatusBox } from "./StatusBox";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
-import { Grid } from "../../BracketEditor/Grid";
+import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
+import { AppContext, IAppContext, TheAppContext } from "../../AppContext/AppContext";
+import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
 import { GameNum } from "../../BracketEditor/GameNum";
-import { GridTests } from "../../BracketEditor/GridTests";
-import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
-import { OADateTests } from "../../Interop/Dates";
-import { TrackingCache, CacheObject, ObjectType } from "../../Interop/TrackingCache";
-import { BracketSources } from "../../Brackets/BracketSources";
-import { ParserTests } from "../../Interop/Parser";
-import { JsCtx } from "../../Interop/JsCtx";
-import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
+import { Grid } from "../../BracketEditor/Grid";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
+import { BracketDefinition } from "../../Brackets/BracketDefinitions";
+import { _bracketManager } from "../../Brackets/BracketManager";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { CoachTransition } from "../../Coaching/CoachTransition";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
+import { JsCtx } from "../../Interop/JsCtx";
+import { RangeCaches } from "../../Interop/RangeCaches";
+import { TableIO } from "../../Interop/TableIO";
+import { _TimerStack } from "../../PerfTimer";
+import { SetupBook, SetupState } from "../../Setup";
 import { s_staticConfig } from "../../StaticConfig";
-import { Teachable, TeachableId } from "./Teachable";
-import { Coachstate } from "../../Coachstate";
-import { CoachTransition } from "../../CoachTransition";
-import { HelpLink } from "./HelpLink";
-import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "../../BracketEditor/GridAdjusters/Adjuster_NeedExtraSpaceBelowRegionForGameInsert";
-import { TestRunner } from "../../Support/TestRunner";
 import { StreamWriter } from "../../Support/StreamWriter";
+import { UnitTests } from "../../Tests/UnitTests";
+import { BracketOption, BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
 import { About } from "./About";
-import { StructureInsertTests } from "../../BracketEditor/StructureEditor/StrutureInsertTests";
-import { ProductName } from "./ProductName";
-import { RangeInfo } from "../../Interop/Ranges";
+import { BracketChooser } from "./BracketChooser";
+import { Games } from "./Games";
+import { HelpLink } from "./HelpLink";
+import { HeroList, HeroListFormat, HeroListItem } from "./HeroList";
+import { LogoHeader } from "./LogoHeader";
+import { Progress } from "./Progress";
+import { StatusBox } from "./StatusBox";
+import { Teachable, TeachableId } from "./Teachable";
+import { Toolbar, ToolbarItem } from "./Toolbar";
 
 /* global console, Excel, require  */
 
@@ -94,7 +80,7 @@ export default class App extends React.Component<AppProps, AppState>
             setupState: SetupState.Unknown,
             errorMessage: "",
             selectedBracket: "T8",
-            bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
+            bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
@@ -107,7 +93,7 @@ export default class App extends React.Component<AppProps, AppState>
         this.m_appContext.setDelegates(
             null,
             null,
-            this.invalidateHeroList.bind(this),
+            this.rebuildHeroList.bind(this),
             this.getSelectedBracket.bind(this),
             this.getGames.bind(this),
             this.getSetupStateFromState.bind(this));
@@ -132,7 +118,7 @@ export default class App extends React.Component<AppProps, AppState>
         window.open(HelpLink.buildHelpLink("BracketBuilder-Help.html"));
     }
 
-    static async doUnitTests(appContext: IAppContext)
+    static async doIntegrationTests(appContext: IAppContext)
     {
         const results = [];
 
@@ -140,39 +126,14 @@ export default class App extends React.Component<AppProps, AppState>
 
         try
         {
-            // first, dump the grid for the current sheet. this is handy if you are building
-            // unit tests since it gives you a way to generate a grid...
-            await Excel.run(
-                async (ctx) =>
-                {
-                    const context: JsCtx = new JsCtx(ctx);
-                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
-
-                    grid.logGridCondensed();
-                    context.releaseAllCacheObjects();
-                });
-
-            StructureInsertTests.runAllTests(appContext, outStream);
-            FastRangeAreasTest.runAllTests(appContext, outStream);
-            ParserTests.runAllTests(appContext, outStream);
-            OADateTests.runAllTests(appContext, outStream);
-            GameMoverTests.runAllTests(appContext, outStream);
-            GridRankerTests.runAllTests(appContext, outStream);
-            GridTests.runAllTests(appContext, outStream);
-            RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
-            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
-            Adjuster_SwapAdjacentGameRegonsForOverlapTests.runAllTests(appContext, outStream);
-
+            await IntentionsTest.runAllTests(appContext, outStream);
         }
         catch (e)
         {
             results.push(`EXCEPTION CAUGHT: ${e}`);
         }
 
-        appContext.Messages.message([...results, "Unit Tests Complete"]);
-
+        appContext.Messages.message([...results, "Integration Tests Complete"]);
     }
 
     buildTopToolbar(): ToolbarItem[]
@@ -295,7 +256,6 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     appContext;
                     this.showAboutDialog();
-//                    await App.launchHelp(appContext);
                     return true;
                 }
             });
@@ -311,13 +271,26 @@ export default class App extends React.Component<AppProps, AppState>
 
             listItems.push(
                 {
-                    icon: "Bug",
+                    icon: "LadybugSolid",
                     primaryText: "Run Unit Tests",
                     cursor: "cursorPointer",
                     stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
-                        await App.doUnitTests(appContext);
+                        await UnitTests.doUnitTests(appContext);
+                        return true;
+                    }
+                });
+
+            listItems.push(
+                {
+                    icon: "Bug",
+                    primaryText: "Run Integration Tests",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await App.doIntegrationTests(appContext);
                         return true;
                     }
                 });
@@ -402,29 +375,37 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
 
     /*----------------------------------------------------------------------------
-        %%Function: App.invalidateHeroList
+        %%Function: App.rebuildHeroList
 
         Invalidate the top level hero list (and maybe supporting parameters
         below in the UI)
     ----------------------------------------------------------------------------*/
-    async invalidateHeroList(context: JsCtx)
+    async rebuildHeroList(context: JsCtx)
     {
-        this.m_appContext.Timer.pushTimer("invalidateHeroList");
+        this.m_appContext.setHeroListDirty(false);
 
-        const bookmark: string = "invalidateHeroList";
+        _TimerStack.pushTimer("rebuildHeroList", false);
+
+        const bookmark: string = "rebuildHeroList";
         context.pushTrackingBookmark(bookmark);
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildFastRangeAreas");
-        await FastRangeAreas.populateGridFastRangeAreaCache(context);
-        this.m_appContext.Timer.popTimer();
-
+        await _TimerStack.timeThisAsync(
+            "buildFastFormulaAreas",
+            async () =>
+            {
+                await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+            });
+        
         AppContext.checkpoint("ihl.1");
         let setupState: SetupState;
         let bracketChoice: string;
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.getSetupState");
+        _TimerStack.pushTimer("rebuildHeroList.getSetupState");
         [setupState, bracketChoice] = await (this.getSetupState(context));
-        this.m_appContext.Timer.popTimer();
+
+        await RangeCaches.PopulateIfNeeded(context, bracketChoice);
+
+        _TimerStack.popTimer();
 
         AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
@@ -436,15 +417,15 @@ export default class App extends React.Component<AppProps, AppState>
         if (bracketChoice == null)
             bracketChoice = this.state.selectedBracket;
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.getGamesList");
+        _TimerStack.pushTimer("getGamesList");
 
         AppContext.checkpoint("ihl.5");
         let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
         AppContext.checkpoint("ihl.6");
-        this.m_appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
 
-        this.m_appContext.Timer.pushTimer("invalidateHeroList.buildToolbars");
+        _TimerStack.pushTimer("buildToolbars");
 
         AppContext.checkpoint("ihl.7");
         [format, title, list] = HeroList.buildHeroList(setupState);
@@ -491,7 +472,7 @@ export default class App extends React.Component<AppProps, AppState>
             else if (countGamesLinked == 1)
                 this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
         }
-        this.m_appContext.Timer.popTimer();        
+        _TimerStack.popTimer();        
 
         // update the games list
 
@@ -507,14 +488,14 @@ export default class App extends React.Component<AppProps, AppState>
                 mainToolbar: items
             });
         context.releaseCacheObjectsUntil(bookmark);
-        this.m_appContext.Timer.popTimer();
+        _TimerStack.popTimer();
     }
 
     async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
     {
         if (!_bracketManager.IsCached(bracketTableName))
         {
-            let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(bracketTableName);
+            let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(bracketTableName);
             let loading: BracketDefinition =
             {
                 name: bracketDef.name,
@@ -523,11 +504,36 @@ export default class App extends React.Component<AppProps, AppState>
                 games: []
             };
 
-            let gameDefs: any[] = await TableIO.readDataFromExcelTable(
-                context,
-                bracketDef.tableName,
-                ["Game", "Winner", "Loser", "Top", "Bottom"],
-                true);
+            let gameDefs: any[] = null;
+
+            const { rangeInfo: rangeBracketDataBody, formulaCacheType: rangeBracketCacheType } = RangeCaches.get(RangeCaches.s_bracketDefDataBody);
+            const { rangeInfo: rangeBracketHeader } = RangeCaches.get(RangeCaches.s_bracketDefHeader);
+            if (rangeBracketDataBody && rangeBracketHeader)
+            {
+                const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeBracketCacheType);
+
+                if (areas)
+                {
+                    const header = areas.getValuesForRangeInfo(rangeBracketHeader);
+                    const dataBody = areas.getValuesForRangeInfo(rangeBracketDataBody);
+
+                    gameDefs = TableIO.readDataFromCachedExcelTable(
+                        bracketDef.tableName,
+                        header,
+                        dataBody,
+                        ["Game", "Winner", "Loser", "Top", "Bottom"],
+                        true);
+                }
+            }
+
+            if (!gameDefs)
+            {
+                gameDefs = await TableIO.readDataFromExcelTable(
+                    context,
+                    bracketDef.tableName,
+                    ["Game", "Winner", "Loser", "Top", "Bottom"],
+                    true);
+            }
 
             for (let game of gameDefs)
             {
@@ -546,21 +552,21 @@ export default class App extends React.Component<AppProps, AppState>
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        appContext.Timer.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
+        _TimerStack.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
         await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
-        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
+        let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracket}Bracket`);
 
         if (bracketDef == null)
             return [];
 
         let games: IBracketGame[] = [];
-        appContext.Timer.popTimer();
+        _TimerStack.popTimer();
 
         const bookmark: string = "getGamesList";
 
         context.pushTrackingBookmark(bookmark);
 
-        appContext.Timer.pushTimer("getGamesList - inner loop");
+        _TimerStack.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
             let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, bracket, new GameNum(i));
@@ -569,8 +575,8 @@ export default class App extends React.Component<AppProps, AppState>
 
         context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
-        appContext.Timer.stopAllAggregatedTimers();
-        appContext.Timer.popTimer();
+        _TimerStack.stopAllAggregatedTimers();
+        _TimerStack.popTimer();
 
         return games;
     }
@@ -648,7 +654,7 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     const context: JsCtx = new JsCtx(ctx);
 
-                    await this.invalidateHeroList(context);
+                    await this.rebuildHeroList(context);
                     context.releaseAllCacheObjects();
                 }
                 catch (e)

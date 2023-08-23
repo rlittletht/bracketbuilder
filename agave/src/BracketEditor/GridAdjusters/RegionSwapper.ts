@@ -1,5 +1,5 @@
-import { Grid } from "../Grid";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 
 export class RegionSwapper
