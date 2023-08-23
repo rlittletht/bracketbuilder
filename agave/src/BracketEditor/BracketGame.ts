@@ -2,7 +2,7 @@
 import { AppContext, IAppContext } from "../AppContext/AppContext";
 import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
 import { BracketManager } from "../Brackets/BracketManager";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
+import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { OADate } from "../Interop/Dates";
@@ -566,7 +566,7 @@ export class BracketGame implements IBracketGame
     {
         AppContext.checkpoint("l.1");
 
-        let bracketDefinition: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        let bracketDefinition: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("l.2");
         this.m_gameNum = gameNum;

@@ -22,12 +22,12 @@ export interface BracketOption
     name: string;
 }
 
-export class BracketStructureBuilder
+export class BracketDefBuilder
 {
     static SheetName: string = "BracketDefs";
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.getArrayValuesFromBracketDefinition
+        %%Function: BracketDefBuilder.getArrayValuesFromBracketDefinition
     ----------------------------------------------------------------------------*/
     static getArrayValuesFromBracketDefinition(
         bracketDefinition: BracketDefinition): any[][]
@@ -44,7 +44,7 @@ export class BracketStructureBuilder
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.getStaticAvailableBrackets
+        %%Function: BracketDefBuilder.getStaticAvailableBrackets
 
         return an array of bracket options for the static brackets we can create
     ----------------------------------------------------------------------------*/
@@ -103,7 +103,7 @@ export class BracketStructureBuilder
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.verifyBracketConsistency
+        %%Function: BracketDefBuilder.verifyBracketConsistency
 
         Verify that the bracket is internally consistent
     ----------------------------------------------------------------------------*/
@@ -150,7 +150,7 @@ export class BracketStructureBuilder
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.getBracketDefinition
+        %%Function: BracketDefBuilder.getBracketDefinition
     ----------------------------------------------------------------------------*/
     static getBracketDefinition(bracketTableName: string): BracketDefinition
     {
@@ -173,7 +173,7 @@ export class BracketStructureBuilder
 
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.insertBracketDefinitionAtRow
+        %%Function: BracketDefBuilder.insertBracketDefinitionAtRow
 
         insert the bracket definition into the given sheet at the given row.
         this will insert the validation formulas as well
@@ -253,7 +253,7 @@ export class BracketStructureBuilder
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.buildBracketsSheet
+        %%Function: BracketDefBuilder.buildBracketsSheet
 
         build the brackets structure sheet, populating with all of the brackets
         we know about
@@ -262,7 +262,7 @@ export class BracketStructureBuilder
     {
         try
         {
-            let sheetBrackets: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketStructureBuilder.SheetName);
+            let sheetBrackets: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName);
             let row: number = 1;
 
             for (const bracketNum in s_brackets)
@@ -281,7 +281,7 @@ export class BracketStructureBuilder
 
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketStructureBuilder.buildSpecificBracketCore
+        %%Function: BracketDefBuilder.buildSpecificBracketCore
 
         Build a specific bracket, including making the bracket grid, data sheet,
         etc.
@@ -289,7 +289,7 @@ export class BracketStructureBuilder
     static async buildSpecificBracketCore(context: JsCtx, appContext: IAppContext, fastTables: IFastTables)
     {
         const bracketChoice: string = appContext.getSelectedBracket();
-        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketStructureBuilder.SheetName, null, EnsureSheetPlacement.Last);
+        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
 
         let bracketTable: Excel.Table =
             await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketChoice);

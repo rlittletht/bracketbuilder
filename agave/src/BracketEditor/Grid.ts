@@ -1,7 +1,7 @@
 import { AppContext } from "../AppContext/AppContext";
 import { BracketDefinition } from "../Brackets/BracketDefinitions";
 import { BracketManager } from "../Brackets/BracketManager";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
+import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
 import { OADate } from "../Interop/Dates";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
@@ -1037,7 +1037,7 @@ export class Grid
         _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracketName}Bracket`);
 
         AppContext.checkpoint("lgfb.2");
         _TimerStack.pushTimer("loadGridFromBracket::loop");

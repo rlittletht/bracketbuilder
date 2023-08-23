@@ -1,12 +1,10 @@
-import { RangeInfo, Ranges } from "../Interop/Ranges";
-import { GameFormatting } from "./GameFormatting";
-import { IBracketGame, IBracketGame as IBracketGame1, BracketGame } from "./BracketGame";
 import { AppContext } from "../AppContext/AppContext";
 import { BracketManager } from "../Brackets/BracketManager";
-import { TrackingCache } from "../Interop/TrackingCache";
-import { JsCtx } from "../Interop/JsCtx";
-import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { JsCtx } from "../Interop/JsCtx";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
+import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
+import { GameFormatting } from "./GameFormatting";
 import { GridColumnType } from "./Grid";
 
 export class GameLines

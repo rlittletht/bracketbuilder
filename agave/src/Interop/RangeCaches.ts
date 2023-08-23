@@ -3,7 +3,7 @@
 // frustrating when the range doesn't change once the workbook has been initially created.
 
 // this cache can be setup when we load (and are refreshed), and referenced to get the ranges
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
+import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
 import { FastFormulaAreasItems } from "./FastFormulaAreas";
 import { JsCtx } from "./JsCtx";
@@ -93,7 +93,7 @@ export class RangeCaches
 //        if ((bracketChoice ?? "") === "")
 //            return null;
 
-        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
+        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketDefBuilder.SheetName);
         const defTableName: string = `${bracketChoice}Bracket`
         const defTable = sheetGet.tables.getItem(defTableName);
         const defRange: Excel.Range = defTable.getDataBodyRange();
@@ -174,8 +174,8 @@ export class RangeCaches
 
         if (bracketDefRange)
         {
-            this.add(this.s_bracketDefDataBody, BracketStructureBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketDefs);
-            this.add(this.s_bracketDefHeader, BracketStructureBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketDefs);
+            this.add(this.s_bracketDefDataBody, BracketDefBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketDefs);
+            this.add(this.s_bracketDefHeader, BracketDefBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketDefs);
         }
     }
 }

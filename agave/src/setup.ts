@@ -1,7 +1,7 @@
 
 import { IAppContext } from "./AppContext/AppContext";
 import { BracketInfoBuilder as BracketDataBuilder } from "./Brackets/BracketInfoBuilder";
-import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
+import { BracketDefBuilder } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
@@ -29,7 +29,7 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getBracketsStructureSheetOrNull(context: JsCtx): Promise<Excel.Worksheet>
     {
-        const bracketStructureSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
+        const bracketStructureSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketDefBuilder.SheetName);
         await context.sync();
 
         if (bracketStructureSheet.isNullObject)
@@ -197,7 +197,7 @@ export class SetupBook
             {
                 const context: JsCtx = new JsCtx(ctx);
 
-                await BracketStructureBuilder.buildBracketsSheet(context, fastTables, appContext);
+                await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
                 appContext.setHeroListDirty();
                 await appContext.rebuildHeroListIfNeeded(context);
                 context.releaseAllCacheObjects();
@@ -234,7 +234,7 @@ export class SetupBook
             await Excel.run(async (ctx) =>
             {
                 const context: JsCtx = new JsCtx(ctx);
-                await BracketStructureBuilder.buildSpecificBracketCore(context, appContext, fastTables);
+                await BracketDefBuilder.buildSpecificBracketCore(context, appContext, fastTables);
                 appContext.setHeroListDirty();
                 await appContext.rebuildHeroListIfNeeded(context);
                 context.releaseAllCacheObjects();

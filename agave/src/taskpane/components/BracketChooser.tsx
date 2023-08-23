@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { ComboBox, IComboBox, IComboBoxOption, IComboBoxStyles, IStackItemStyles, Stack } from '@fluentui/react';
-import { BracketOption } from "../../Brackets/BracketStructureBuilder";
+import { BracketOption } from "../../Brackets/BracketDefBuilder";
 
 export interface BracketChooserProps
 {

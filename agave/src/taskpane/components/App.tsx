@@ -24,7 +24,7 @@ import { SetupBook, SetupState } from "../../Setup";
 import { s_staticConfig } from "../../StaticConfig";
 import { StreamWriter } from "../../Support/StreamWriter";
 import { UnitTests } from "../../Tests/UnitTests";
-import { BracketOption, BracketStructureBuilder } from "./../../Brackets/BracketStructureBuilder";
+import { BracketOption, BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
 import { About } from "./About";
 import { BracketChooser } from "./BracketChooser";
 import { Games } from "./Games";
@@ -80,7 +80,7 @@ export default class App extends React.Component<AppProps, AppState>
             setupState: SetupState.Unknown,
             errorMessage: "",
             selectedBracket: "T8",
-            bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
+            bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
@@ -495,7 +495,7 @@ export default class App extends React.Component<AppProps, AppState>
     {
         if (!_bracketManager.IsCached(bracketTableName))
         {
-            let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(bracketTableName);
+            let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(bracketTableName);
             let loading: BracketDefinition =
             {
                 name: bracketDef.name,
@@ -554,7 +554,7 @@ export default class App extends React.Component<AppProps, AppState>
     {
         _TimerStack.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
         await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
-        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
+        let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracket}Bracket`);
 
         if (bracketDef == null)
             return [];
