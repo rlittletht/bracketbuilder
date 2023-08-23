@@ -5,7 +5,7 @@ import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 import { GameItem } from "./GameItem"
 import { Teachable } from "./Teachable";
 import { DirectionalHint } from '@fluentui/react';
-import { Coachstate } from "../../Coachstate";
+import { Coachstate } from "../../Coaching/Coachstate";
 
 // import styles from '../taskpane.css';
 

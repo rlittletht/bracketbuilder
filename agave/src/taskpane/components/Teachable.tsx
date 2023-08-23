@@ -5,7 +5,7 @@ import { ActionButton } from "./ActionButton";
 import { SetupState, SetupBook } from "../../Setup";
 import { RangeInfo } from "../../Interop/Ranges";
 import { Stack, IStackStyles, IStackItemStyles, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps, IContextualMenuProps } from '@fluentui/react';
-import { Coachstate } from "../../Coachstate";
+import { Coachstate } from "../../Coaching/Coachstate";
 
 export class TeachableId
 {

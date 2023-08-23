@@ -39,8 +39,8 @@ import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
 import { s_staticConfig } from "../../StaticConfig";
 import { Teachable, TeachableId } from "./Teachable";
-import { Coachstate } from "../../Coachstate";
-import { CoachTransition } from "../../CoachTransition";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { CoachTransition } from "../../Coaching/CoachTransition";
 import { HelpLink } from "./HelpLink";
 import { Adjuster_NeedExtraSpaceBelowRegionForGameInsert } from "../../BracketEditor/GridAdjusters/Adjuster_NeedExtraSpaceBelowRegionForGameInsert";
 import { TestRunner } from "../../Support/TestRunner";

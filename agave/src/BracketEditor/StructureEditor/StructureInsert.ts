@@ -11,8 +11,8 @@ import { StructureEditor } from "./StructureEditor";
 import { TrackingCache } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
 import { GridItem } from "../GridItem";
-import { Coachstate } from "../../Coachstate";
-import { HelpTopic } from "../../HelpInfo";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { HelpTopic } from "../../Coaching/HelpInfo";
 import { _TimerStack } from "../../PerfTimer";
 
 export class StructureInsert

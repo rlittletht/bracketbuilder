@@ -1,4 +1,4 @@
-import { IHelpInfo } from "../HelpInfo";
+import { IHelpInfo } from "../Coaching/HelpInfo";
 import { MessageBarType } from '@fluentui/react';
 
 export interface ClearMessageDelegate

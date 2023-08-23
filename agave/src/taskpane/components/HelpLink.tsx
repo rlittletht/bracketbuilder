@@ -4,7 +4,7 @@ import * as CSS from "csstype";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { Teachable, TeachableId } from "./Teachable";
 import { Link } from '@fluentui/react';
-import { Coachstate } from "../../Coachstate";
+import { Coachstate } from "../../Coaching/Coachstate";
 import { s_staticConfig } from "../../StaticConfig";
 
 export interface HelpLinkInfo

@@ -4,7 +4,7 @@ import { DialogType, IModalProps, IDialogContentProps, Stack, IStackStyles, ISta
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { s_staticConfig } from "../../StaticConfig";
 import { HelpLink } from "./HelpLink";
-import { HelpInfo, HelpTopic } from "../../HelpInfo";
+import { HelpInfo, HelpTopic } from "../../Coaching/HelpInfo";
 import { ProductName } from "./ProductName";
 
 export interface CloseAboutDelegate

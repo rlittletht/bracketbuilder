@@ -12,7 +12,7 @@ import { GridBuilder } from "./GridBuilder";
 import { BracketSources } from "./BracketSources";
 import { JsCtx } from "../Interop/JsCtx";
 import { StatusBox } from "../taskpane/components/StatusBox";
-import { HelpTopic } from "../HelpInfo";
+import { HelpTopic } from "../Coaching/HelpInfo";
 import { TrError} from "../Exceptions";
 import { GameNum } from "../BracketEditor/GameNum";
 

@@ -2,7 +2,7 @@
 import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
 import { IAppContext } from "../AppContext/AppContext";
 import { JsCtx } from "../Interop/JsCtx";
-import { HelpTopic } from "../HelpInfo";
+import { HelpTopic } from "../Coaching/HelpInfo";
 import { StatusBox } from "../taskpane/components/StatusBox";
 import { TrError } from "../Exceptions";
 import { SetupState } from "../Setup";

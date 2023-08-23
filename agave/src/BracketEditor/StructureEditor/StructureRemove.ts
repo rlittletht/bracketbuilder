@@ -10,7 +10,7 @@ import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { TrackingCache, ObjectType } from "../../Interop/TrackingCache";
 import { JsCtx } from "../../Interop/JsCtx";
-import { HelpTopic } from "../../HelpInfo";
+import { HelpTopic } from "../../Coaching/HelpInfo";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";

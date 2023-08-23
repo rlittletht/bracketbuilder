@@ -9,7 +9,7 @@ import { FontIcon } from '@fluentui/react/lib/Icon';
 import { mergeStyles, mergeStyleSets } from '@fluentui/react/lib/Styling';
 import { Teachable, TeachableActiveDelegate, TeachableId } from "./Teachable";
 import { DirectionalHint } from '@fluentui/react';
-import { Coachstate } from "../../Coachstate";
+import { Coachstate } from "../../Coaching/Coachstate";
 import { _TimerStack } from "../../PerfTimer";
 
 export interface GameItemProps

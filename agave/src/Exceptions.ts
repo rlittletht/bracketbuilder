@@ -1,4 +1,4 @@
-import { HelpInfo } from "./HelpInfo";
+import { HelpInfo } from "./Coaching/HelpInfo";
 
 export class TrError extends Error
 {

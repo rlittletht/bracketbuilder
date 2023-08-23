@@ -4,10 +4,10 @@ import { FastTables } from "./Interop/FastTables";
 import { IAppContext, AppContext } from "./AppContext/AppContext";
 import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
 import { JsCtx } from "./Interop/JsCtx";
-import { Coachstate } from "./Coachstate";
-import { CoachTransition } from "./CoachTransition";
+import { Coachstate } from "./Coaching/Coachstate";
+import { CoachTransition } from "./Coaching/CoachTransition";
 import { StatusBox } from "./taskpane/components/StatusBox";
-import { HelpTopic } from "./HelpInfo";
+import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
 
 export class SetupState
