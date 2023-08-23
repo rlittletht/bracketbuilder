@@ -1,11 +1,6 @@
 import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { BracketStructureBuilder } from "../../Brackets/BracketStructureBuilder";
-import { BracketDefinition } from "../../Brackets/BracketDefinitions";
-import { GameItem } from "./GameItem"
-import { Teachable } from "./Teachable";
-import { DirectionalHint } from '@fluentui/react';
-import { Coachstate } from "../../Coaching/Coachstate";
+import { GameItem } from "./GameItem";
 
 // import styles from '../taskpane.css';
 

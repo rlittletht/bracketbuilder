@@ -1,9 +1,9 @@
 
-import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
-import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { Ranges } from "../Interop/Ranges";
-import { GridBuilder } from "./GridBuilder";
 import { JsCtx } from "../Interop/JsCtx";
+import { Ranges } from "../Interop/Ranges";
+import { EnsureSheetPlacement, Sheets } from "../Interop/Sheets";
+import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
+import { GridBuilder } from "./GridBuilder";
 
 export class BracketInfoBuilder
 {

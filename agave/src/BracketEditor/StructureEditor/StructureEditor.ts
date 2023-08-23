@@ -1,30 +1,26 @@
 
-import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
-import { IAppContext, AppContext } from "../../AppContext/AppContext";
-import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GameFormatting } from "../GameFormatting";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
+import { GridBuilder } from "../../Brackets/GridBuilder";
+import { CoachTransition } from "../../Coaching/CoachTransition";
+import { HelpTopic } from "../../Coaching/HelpInfo";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { JsCtx } from "../../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
+import { _TimerStack } from "../../PerfTimer";
+import { s_staticConfig } from "../../StaticConfig";
+import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
+import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
+import { GameFormatting } from "../GameFormatting";
+import { GameMover } from "../GameMover";
+import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";
-import { _undoManager } from "../Undo";
-import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
 import { GridRanker } from "../GridRanker";
-import { GameMover } from "../GameMover";
-import { GridBuilder } from "../../Brackets/GridBuilder";
+import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
-import { JsCtx } from "../../Interop/JsCtx";
-import { PerfTimer, _TimerStack } from "../../PerfTimer";
-import { Coachstate } from "../../Coaching/Coachstate";
-import { CoachTransition } from "../../Coaching/CoachTransition";
-import { HelpTopic, HelpInfo } from "../../Coaching/HelpInfo";
-import { SetupState } from "../../Setup";
-import { FastRangeAreas } from "../../Interop/FastRangeAreas";
-import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
-import { s_staticConfig } from "../../StaticConfig";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { StructureRemove } from "./StructureRemove";
 
 let _moveSelection: RangeInfo = null;
 

@@ -1,5 +1,5 @@
 
-import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
+import { BracketDefinition } from "./BracketDefinitions";
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges, RangeInfo } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";

@@ -1,7 +1,6 @@
+import { JsCtx } from "../JsCtx";
 import { IIntention } from "./IIntention";
 import { IntentionType } from "./IntentionType";
-import { RangeInfo, Ranges } from "../Ranges";
-import { JsCtx } from "../JsCtx";
 
 // BE CAREFUL WITH THIS INTENTION
 // It will throw an exception if the name doesn't exist, so be sure to check if the name

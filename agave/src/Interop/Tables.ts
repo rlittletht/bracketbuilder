@@ -1,8 +1,8 @@
 
-import { IFastTables } from "./FastTables";
 import { Arrays } from "./Arrays";
-import { Ranges } from "./Ranges";
+import { IFastTables } from "./FastTables";
 import { JsCtx } from "./JsCtx";
+import { Ranges } from "./Ranges";
 
 export class Tables
 {

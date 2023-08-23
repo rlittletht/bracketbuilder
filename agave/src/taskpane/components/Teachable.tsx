@@ -1,10 +1,7 @@
 import * as React from "react";
 
+import { Coachmark, DirectionalHint, IButtonProps, IContextualMenuProps, TeachingBubbleContent } from '@fluentui/react';
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { ActionButton } from "./ActionButton";
-import { SetupState, SetupBook } from "../../Setup";
-import { RangeInfo } from "../../Interop/Ranges";
-import { Stack, IStackStyles, IStackItemStyles, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps, IContextualMenuProps } from '@fluentui/react';
 import { Coachstate } from "../../Coaching/Coachstate";
 
 export class TeachableId

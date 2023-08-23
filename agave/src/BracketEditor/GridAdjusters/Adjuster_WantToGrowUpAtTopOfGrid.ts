@@ -1,16 +1,16 @@
-import { IGridAdjuster } from "./IGridAdjuster";
-import { Grid } from "../Grid";
-import { IBracketGame, BracketGame } from "../BracketGame";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { Spacer } from "./Spacer";
-import { GridAdjust } from "./GridAdjust";
-import { IAppContext, AppContext } from "../../AppContext/AppContext";
-import { GridItem } from "../GridItem";
-import { GameNum } from "../GameNum";
-import { GameId } from "../GameId";
 import { StreamWriter } from "../../Support/StreamWriter";
-import { TestRunner } from "../../Support/TestRunner";
 import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameId } from "../GameId";
+import { GameNum } from "../GameNum";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
+import { GridAdjust } from "./GridAdjust";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { Spacer } from "./Spacer";
 
 /*----------------------------------------------------------------------------
     Adjuster_WantToGrowUpAtTopOfGrid.Adjuster_WantToGrowUpAtTopOfGrid

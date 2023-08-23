@@ -1,15 +1,13 @@
 import { IAppContext } from "../../AppContext/AppContext";
 import { StreamWriter } from "../../Support/StreamWriter";
-import { TestRunner } from "../../Support/TestRunner";
 import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
 import { JsCtx } from "../JsCtx";
-import { Grid } from "../../BracketEditor/Grid";
+import { RangeInfo } from "../Ranges";
 import { Sheets } from "../Sheets";
-import { Ranges, RangeInfo } from "../Ranges";
 import { Intentions } from "./Intentions";
-import { TnSetFormulas } from "./TnSetFormula";
 import { TnClearRange } from "./TnClearRange";
-import { TnDeleteGlobalName } from "./TnDeleteGlobalName";
+import { TnSetFormulas } from "./TnSetFormula";
 import { TnUnmergeRange } from "./TnUmergeRange";
 
 export class IntentionsTest

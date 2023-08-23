@@ -1,7 +1,7 @@
+import { JsCtx } from "../JsCtx";
+import { RangeInfo, Ranges } from "../Ranges";
 import { IIntention } from "./IIntention";
 import { IntentionType } from "./IntentionType";
-import { RangeInfo, Ranges } from "../Ranges";
-import { JsCtx } from "../JsCtx";
 
 export class TnUnmergeRange implements IIntention
 {

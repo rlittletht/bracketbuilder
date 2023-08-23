@@ -1,6 +1,6 @@
-import * as React from "react";
+import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
 import * as CSS from "csstype";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import * as React from "react";
 import { ProductName } from "./ProductName";
 
 export interface LogoHeaderProps

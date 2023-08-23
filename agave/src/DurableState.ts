@@ -1,5 +1,5 @@
-import { TeachableId } from "./taskpane/components/Teachable";
 import { AppContext } from "./AppContext/AppContext";
+import { TeachableId } from "./taskpane/components/Teachable";
 
 // This is the durable state for BracketBuilder, stored in local storage
 // DO NOT STORE PII in this state

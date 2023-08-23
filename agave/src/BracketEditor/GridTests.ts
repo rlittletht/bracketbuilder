@@ -1,16 +1,12 @@
 import { IAppContext } from "../AppContext/AppContext";
-import { Grid } from "./Grid";
 import { RangeInfo } from "../Interop/Ranges";
-import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
-import { GridItem } from "./GridItem";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameMover } from "./GameMover";
-import { GridChange } from "./GridChange";
-import { GameId } from "./GameId";
-import * as GridRanker from "./GridRanker";
+import { StreamWriter } from "../Support/StreamWriter";
 import { TestResult } from "../Support/TestResult";
 import { TestRunner } from "../Support/TestRunner";
-import { StreamWriter } from "../Support/StreamWriter";
+import { BracketGame, IBracketGame } from "./BracketGame";
+import { GameId } from "./GameId";
+import { Grid } from "./Grid";
+import { GridItem } from "./GridItem";
 
 interface SetupGridTestDelegate
 {

@@ -1,23 +1,22 @@
-import { IAppContext, AppContext } from "../../AppContext/AppContext";
-import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
-import { GameLines } from "../GameLines";
-import { GameFormatting } from "../GameFormatting";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
+import { GameDataSources, TeamNameMap } from "../../Brackets/GameDataSources";
+import { HelpTopic } from "../../Coaching/HelpInfo";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { IIntention } from "../../Interop/Intentions/IIntention";
+import { TnDeleteGlobalName } from "../../Interop/Intentions/TnDeleteGlobalName";
+import { TnUnmergeRange } from "../../Interop/Intentions/TnUmergeRange";
+import { JsCtx } from "../../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
+import { ObjectType } from "../../Interop/TrackingCache";
+import { _TimerStack } from "../../PerfTimer";
 import { BracketGame, IBracketGame } from "../BracketGame";
-import { TeamNameMap, GameDataSources } from "../../Brackets/GameDataSources";
+import { FormulaBuilder } from "../FormulaBuilder";
+import { GameFormatting } from "../GameFormatting";
+import { GameLines } from "../GameLines";
 import { Grid, GridColumnType } from "../Grid";
 import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { TrackingCache, ObjectType } from "../../Interop/TrackingCache";
-import { JsCtx } from "../../Interop/JsCtx";
-import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FormulaBuilder } from "../FormulaBuilder";
-import { FastRangeAreas } from "../../Interop/FastRangeAreas";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
-import { _TimerStack } from "../../PerfTimer";
-import { IIntention } from "../../Interop/Intentions/IIntention";
-import { TnDeleteGlobalName } from "../../Interop/Intentions/TnDeleteGlobalName";
-import { TnUnmergeRange } from "../../Interop/Intentions/TnUmergeRange";
 
 export class StructureRemove
 {

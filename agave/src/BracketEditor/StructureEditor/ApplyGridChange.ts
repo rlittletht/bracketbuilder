@@ -1,20 +1,19 @@
-import { IAppContext, AppContext } from "../../AppContext/AppContext";
-import { GridChange, GridChangeOperation } from "../GridChange";
-import { GameFormatting } from "../GameFormatting";
-import { Ranges } from "../../Interop/Ranges";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { StructureRemove } from "./StructureRemove";
-import { StructureInsert } from "./StructureInsert";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources } from "../../Brackets/GameDataSources";
 import { OADate } from "../../Interop/Dates";
-import { UndoGameDataItem, UndoManager } from "../Undo";
-import { TrackingCache } from "../../Interop/TrackingCache";
-import { JsCtx } from "../../Interop/JsCtx";
-import { Grid, GridColumnType } from "../Grid";
-import { _TimerStack } from "../../PerfTimer";
-import { Intentions } from "../../Interop/Intentions/Intentions";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { Intentions } from "../../Interop/Intentions/Intentions";
+import { JsCtx } from "../../Interop/JsCtx";
+import { Ranges } from "../../Interop/Ranges";
+import { _TimerStack } from "../../PerfTimer";
+import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameFormatting } from "../GameFormatting";
+import { Grid } from "../Grid";
+import { GridChange, GridChangeOperation } from "../GridChange";
+import { UndoGameDataItem, UndoManager } from "../Undo";
+import { StructureInsert } from "./StructureInsert";
+import { StructureRemove } from "./StructureRemove";
 
 export class ApplyGridChange
 {

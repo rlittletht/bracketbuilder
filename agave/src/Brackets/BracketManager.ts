@@ -1,7 +1,6 @@
 
-
-import { GameResultType, TeamPlacement, BracketDefinition } from "./BracketDefinitions";
 import { GameId } from "../BracketEditor/GameId";
+import { BracketDefinition, GameResultType, TeamPlacement } from "./BracketDefinitions";
 
 export class BracketManager
 {

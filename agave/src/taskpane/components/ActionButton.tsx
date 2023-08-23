@@ -1,8 +1,8 @@
-import * as React from "react";
 import { IconButton } from "@fluentui/react";
-import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { TooltipHost } from "@fluentui/react/lib/Tooltip";
+import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { TooltipHost, ITooltipHostStyles } from "@fluentui/react/lib/Tooltip";
+import { IBracketGame } from "../../BracketEditor/BracketGame";
 import { _TimerStack } from "../../PerfTimer";
 
 export interface ActionButtonProps

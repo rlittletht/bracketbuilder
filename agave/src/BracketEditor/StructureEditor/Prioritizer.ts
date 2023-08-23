@@ -1,14 +1,12 @@
-import { JsCtx } from "../../Interop/JsCtx";
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources } from "../../Brackets/GameDataSources";
-import { Grid } from "../Grid";
-import { StructureEditor } from "./StructureEditor";
-import { GridItem } from "../GridItem";
+import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { GridChange, GridChangeOperation } from "../GridChange";
+import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
 import { GameFormatting } from "../GameFormatting";
-import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
+import { StructureEditor } from "./StructureEditor";
 
 /* 
     A note on team priorities...

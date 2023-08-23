@@ -1,28 +1,28 @@
-import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
+import { AppContext } from "../AppContext/AppContext";
 import { BracketDefinition } from "../Brackets/BracketDefinitions";
 import { BracketManager } from "../Brackets/BracketManager";
-import { BracketGame, IBracketGame } from "./BracketGame";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { StructureEditor } from "./StructureEditor/StructureEditor";
-import { GameLines } from "./GameLines";
-import { GameFormatting } from "./GameFormatting";
-import { GridGameInsert } from "./GridGameInsert";
-import { FormulaBuilder } from "./FormulaBuilder";
-import { GridItem } from "./GridItem";
-import { GridChange, GridChangeOperation } from "./GridChange";
-import { AppContext } from "../AppContext/AppContext";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameId } from "./GameId";
-import { GameNum } from "./GameNum";
-import { s_staticConfig } from "../StaticConfig";
-import { OADate } from "../Interop/Dates";
-import { TrackingCache, CacheObject, ObjectType } from "../Interop/TrackingCache";
-import { JsCtx } from "../Interop/JsCtx";
-import { PerfTimer, _TimerStack } from "../PerfTimer";
-import { FastRangeAreas } from "../Interop/FastRangeAreas";
-import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { TrError } from "../Exceptions";
+import { OADate } from "../Interop/Dates";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
+import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { JsCtx } from "../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
+import { CacheObject, ObjectType } from "../Interop/TrackingCache";
+import { _TimerStack } from "../PerfTimer";
+import { s_staticConfig } from "../StaticConfig";
+import { BracketGame, IBracketGame } from "./BracketGame";
+import { FormulaBuilder } from "./FormulaBuilder";
+import { GameFormatting } from "./GameFormatting";
+import { GameId } from "./GameId";
+import { GameLines } from "./GameLines";
+import { GameNum } from "./GameNum";
+import { GridAdjust } from "./GridAdjusters/GridAdjust";
+import { GridChange, GridChangeOperation } from "./GridChange";
+import { GridGameInsert } from "./GridGameInsert";
+import { GridItem } from "./GridItem";
+import { Prioritizer } from "./StructureEditor/Prioritizer";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)

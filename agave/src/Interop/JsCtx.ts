@@ -1,6 +1,6 @@
-import { s_staticConfig } from "../StaticConfig";
-import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, CacheObject, ObjectType } from "./TrackingCache";
 import { _TimerStack } from "../PerfTimer";
+import { s_staticConfig } from "../StaticConfig";
+import { CacheObject, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, TrackingCache } from "./TrackingCache";
 
 export class JsCtx
 {

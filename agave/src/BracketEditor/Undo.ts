@@ -1,10 +1,10 @@
-import { Grid } from "./Grid";
-import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { IAppContext } from "../AppContext/AppContext";
-import { ApplyGridChange } from "./StructureEditor/ApplyGridChange";
-import { GameNum } from "./GameNum";
 import { GameDataSources } from "../Brackets/GameDataSources";
 import { JsCtx } from "../Interop/JsCtx";
+import { GameNum } from "./GameNum";
+import { Grid } from "./Grid";
+import { ApplyGridChange } from "./StructureEditor/ApplyGridChange";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
 
 export class UndoGameDataItem
 {

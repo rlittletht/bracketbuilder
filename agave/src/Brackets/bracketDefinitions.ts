@@ -1,5 +1,3 @@
-import { GameNum } from "../BracketEditor/GameNum";
-import { GameId } from "../BracketEditor/GameId";
 
 export interface GameDefinition
 {

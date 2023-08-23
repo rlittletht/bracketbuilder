@@ -1,8 +1,7 @@
-import { Grid, RangeOverlapDelegate, RangeOverlapMatch } from "./Grid";
-import { BracketDefinition } from "../Brackets/BracketDefinitions";
-import { GridItem } from "./GridItem";
-import { BracketGame, IBracketGame } from "./BracketGame";
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
+import { BracketGame, IBracketGame } from "./BracketGame";
+import { Grid, RangeOverlapDelegate, RangeOverlapMatch } from "./Grid";
+import { GridItem } from "./GridItem";
 
 export class GridRank
 {

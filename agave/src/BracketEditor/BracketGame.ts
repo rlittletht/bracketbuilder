@@ -1,22 +1,20 @@
 
-import { BracketDefinition, GameDefinition, s_brackets } from "../Brackets/BracketDefinitions";
+import { AppContext, IAppContext } from "../AppContext/AppContext";
+import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
 import { BracketManager } from "../Brackets/BracketManager";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { RangeInfo, Ranges } from "../Interop/Ranges";
-import { Grid } from "./Grid";
-import { AppContext, IAppContext } from "../AppContext/AppContext";
 import { GameDataSources } from "../Brackets/GameDataSources";
-import { GameNum } from "./GameNum";
-import { GameId } from "./GameId";
-import { OADate } from "../Interop/Dates";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
-import { TrackingCache, ObjectType } from "../Interop/TrackingCache";
-import { JsCtx } from "../Interop/JsCtx";
-import { StructureEditor } from "./StructureEditor/StructureEditor";
-import { StructureRemove } from "./StructureEditor/StructureRemove";
+import { OADate } from "../Interop/Dates";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
-import { _TimerStack } from "../PerfTimer";
+import { JsCtx } from "../Interop/JsCtx";
 import { RangeCaches } from "../Interop/RangeCaches";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
+import { ObjectType } from "../Interop/TrackingCache";
+import { _TimerStack } from "../PerfTimer";
+import { GameId } from "./GameId";
+import { GameNum } from "./GameNum";
+import { StructureRemove } from "./StructureEditor/StructureRemove";
 
 export interface IBracketGame
 {

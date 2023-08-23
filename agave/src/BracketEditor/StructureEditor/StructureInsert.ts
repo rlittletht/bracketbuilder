@@ -1,19 +1,18 @@
 import { IAppContext } from "../../AppContext/AppContext";
-import { IBracketGame } from "../BracketGame";
-import { RangeInfo, Ranges } from "../../Interop/Ranges";
-import { FormulaBuilder } from "../FormulaBuilder";
-import { GameFormatting } from "../GameFormatting";
-import { Grid, GridRowType, GridColumnType } from "../Grid";
-import { StructureRemove } from "./StructureRemove";
-import { ApplyGridChange } from "./ApplyGridChange";
-import { _undoManager, UndoGameDataItem } from "../Undo";
-import { StructureEditor } from "./StructureEditor";
-import { TrackingCache } from "../../Interop/TrackingCache";
-import { JsCtx } from "../../Interop/JsCtx";
-import { GridItem } from "../GridItem";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { HelpTopic } from "../../Coaching/HelpInfo";
+import { JsCtx } from "../../Interop/JsCtx";
+import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
+import { IBracketGame } from "../BracketGame";
+import { FormulaBuilder } from "../FormulaBuilder";
+import { GameFormatting } from "../GameFormatting";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
+import { UndoGameDataItem, _undoManager } from "../Undo";
+import { ApplyGridChange } from "./ApplyGridChange";
+import { StructureEditor } from "./StructureEditor";
+import { StructureRemove } from "./StructureRemove";
 
 export class StructureInsert
 {

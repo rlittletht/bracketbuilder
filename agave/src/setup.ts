@@ -1,15 +1,14 @@
 
-import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
-import { FastTables } from "./Interop/FastTables";
-import { IAppContext, AppContext } from "./AppContext/AppContext";
+import { IAppContext } from "./AppContext/AppContext";
 import { BracketInfoBuilder as BracketDataBuilder } from "./Brackets/BracketInfoBuilder";
-import { JsCtx } from "./Interop/JsCtx";
-import { Coachstate } from "./Coaching/Coachstate";
+import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
-import { StatusBox } from "./taskpane/components/StatusBox";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
 import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas";
+import { FastTables } from "./Interop/FastTables";
+import { JsCtx } from "./Interop/JsCtx";
+import { StatusBox } from "./taskpane/components/StatusBox";
 
 export class SetupState
 {

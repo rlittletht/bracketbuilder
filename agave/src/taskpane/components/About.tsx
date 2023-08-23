@@ -1,10 +1,10 @@
-import * as React from "react";
+import { DefaultButton, Dialog, DialogFooter, DialogType, IDialogContentProps, IModalProps } from '@fluentui/react';
 import * as CSS from "csstype";
-import { DialogType, IModalProps, IDialogContentProps, Stack, IStackStyles, IStackItemStyles, Coachmark, DirectionalHint, TeachingBubbleContent, IButtonProps, IContextualMenuProps, Dialog, DialogFooter, PrimaryButton, DefaultButton} from '@fluentui/react';
+import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
+import { HelpInfo, HelpTopic } from "../../Coaching/HelpInfo";
 import { s_staticConfig } from "../../StaticConfig";
 import { HelpLink } from "./HelpLink";
-import { HelpInfo, HelpTopic } from "../../Coaching/HelpInfo";
 import { ProductName } from "./ProductName";
 
 export interface CloseAboutDelegate

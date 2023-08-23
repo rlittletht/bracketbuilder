@@ -3,12 +3,11 @@
 // frustrating when the range doesn't change once the workbook has been initially created.
 
 // this cache can be setup when we load (and are refreshed), and referenced to get the ranges
-import { RangeInfo } from "./Ranges";
-import { JsCtx } from "./JsCtx";
-import { GameDataSources } from "../Brackets/GameDataSources";
-import { ObjectType } from "./TrackingCache";
-import { FastFormulaAreas, FastFormulaAreasItems } from "./FastFormulaAreas";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
+import { GameDataSources } from "../Brackets/GameDataSources";
+import { FastFormulaAreasItems } from "./FastFormulaAreas";
+import { JsCtx } from "./JsCtx";
+import { RangeInfo } from "./Ranges";
 
 export class RangeCacheItem
 {

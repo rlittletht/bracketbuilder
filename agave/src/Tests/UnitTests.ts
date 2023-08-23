@@ -1,19 +1,19 @@
 import { IAppContext } from "../AppContext/AppContext";
-import { StreamWriter } from "../Support/StreamWriter";
-import { JsCtx } from "../Interop/JsCtx";
-import { Grid } from "../BracketEditor/Grid";
-import { StructureInsertTests } from "../BracketEditor/StructureEditor/StrutureInsertTests";
-import { FastFormulaAreasTest } from "../Interop/FastFormulaAreas";
-import { FastRangeAreasTest } from "../Interop/FastRangeAreas";
-import { ParserTests } from "../Interop/Parser";
-import { OADateTests } from "../Interop/Dates";
 import { GameMoverTests } from "../BracketEditor/GameMoverTests";
+import { Grid } from "../BracketEditor/Grid";
+import { Adjuster_SwapAdjacentGameRegionsForOverlapTests } from "../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
+import { Adjuster_SwapGameRegonsForOverlapTests } from "../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
+import { Adjuster_WantToGrowUpAtTopOfGridTests } from "../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
+import { RegionSwapper_BottomGameTests } from "../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
 import { GridRankerTests } from "../BracketEditor/GridRankerTests";
 import { GridTests } from "../BracketEditor/GridTests";
-import { RegionSwapper_BottomGameTests } from "../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
-import { Adjuster_WantToGrowUpAtTopOfGridTests } from "../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
-import { Adjuster_SwapGameRegonsForOverlapTests } from "../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
-import { Adjuster_SwapAdjacentGameRegionsForOverlapTests } from "../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
+import { StructureInsertTests } from "../BracketEditor/StructureEditor/StrutureInsertTests";
+import { OADateTests } from "../Interop/Dates";
+import { FastFormulaAreasTest } from "../Interop/FastFormulaAreas";
+import { FastRangeAreasTest } from "../Interop/FastRangeAreas";
+import { JsCtx } from "../Interop/JsCtx";
+import { ParserTests } from "../Interop/Parser";
+import { StreamWriter } from "../Support/StreamWriter";
 
 export class UnitTests
 {

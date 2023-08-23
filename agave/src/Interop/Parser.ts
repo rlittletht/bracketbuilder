@@ -1,7 +1,7 @@
 import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
-import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
+import { TestRunner } from "../Support/TestRunner";
 
 export class AmPmDecoration
 {

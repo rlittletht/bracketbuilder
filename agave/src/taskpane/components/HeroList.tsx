@@ -1,11 +1,10 @@
 import * as React from "react";
 
+import { Stack } from '@fluentui/react';
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { ActionButton } from "./ActionButton";
-import { SetupState, SetupBook } from "../../Setup";
 import { RangeInfo } from "../../Interop/Ranges";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
-import { TeachableProps } from "./Teachable";
+import { SetupBook, SetupState } from "../../Setup";
+import { ActionButton } from "./ActionButton";
 
 export interface HeroListItem
 {

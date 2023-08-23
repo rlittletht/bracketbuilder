@@ -1,10 +1,10 @@
-import { JsCtx } from "../Interop/JsCtx";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { IIntention } from "../Interop/Intentions/IIntention";
+import { TnClearRange } from "../Interop/Intentions/TnClearRange";
+import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo } from "../Interop/Ranges";
 import { s_staticConfig } from "../StaticConfig";
 import { GridColumnType, GridRowType } from "./Grid";
-import { IIntention } from "../Interop/Intentions/IIntention";
-import { TnClearRange } from "../Interop/Intentions/TnClearRange";
 
 export class GameFormatting
 {

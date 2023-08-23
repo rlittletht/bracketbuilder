@@ -1,12 +1,12 @@
-import * as React from "react";
 import * as CSS from "csstype";
+import * as React from "react";
 
-import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { Teachable, TeachableId } from "./Teachable";
 import { DirectionalHint, MessageBar, MessageBarType } from '@fluentui/react';
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { Coachstate } from "../../Coaching/Coachstate";
+import { IHelpInfo } from "../../Coaching/HelpInfo";
 import { HelpLink } from "./HelpLink";
-import { IHelpInfo, HelpInfo } from "../../Coaching/HelpInfo";
+import { Teachable, TeachableId } from "./Teachable";
 
 export interface StatusBoxProps
 {

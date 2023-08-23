@@ -1,21 +1,20 @@
 
-import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { BracketDefinition, GameDefinition, s_brackets, TeamPlacement } from "./BracketDefinitions";
-import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
-import { Tables } from "../Interop/Tables";
-import { IFastTables } from "../Interop/FastTables";
-import { Ranges } from "../Interop/Ranges";
 import { IAppContext } from "../AppContext/AppContext";
-import { SetupBook } from "../Setup";
-import { BracketInfoBuilder } from "./BracketInfoBuilder";
-import { GlobalDataBuilder } from "./GlobalDataBuilder";
-import { GridBuilder } from "./GridBuilder";
-import { GameDataSources } from "./GameDataSources";
-import { JsCtx } from "../Interop/JsCtx";
-import { StatusBox } from "../taskpane/components/StatusBox";
-import { HelpTopic } from "../Coaching/HelpInfo";
-import { TrError} from "../Exceptions";
 import { GameNum } from "../BracketEditor/GameNum";
+import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
+import { HelpTopic } from "../Coaching/HelpInfo";
+import { TrError } from "../Exceptions";
+import { IFastTables } from "../Interop/FastTables";
+import { JsCtx } from "../Interop/JsCtx";
+import { Ranges } from "../Interop/Ranges";
+import { EnsureSheetPlacement, Sheets } from "../Interop/Sheets";
+import { Tables } from "../Interop/Tables";
+import { SetupBook } from "../Setup";
+import { StatusBox } from "../taskpane/components/StatusBox";
+import { BracketDefinition, GameDefinition, s_brackets, TeamPlacement } from "./BracketDefinitions";
+import { BracketInfoBuilder } from "./BracketInfoBuilder";
+import { GameDataSources } from "./GameDataSources";
+import { GridBuilder } from "./GridBuilder";
 
 export interface BracketOption
 {

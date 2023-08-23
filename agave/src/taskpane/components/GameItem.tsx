@@ -1,16 +1,14 @@
-import * as React from "react";
-import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
-import { InsertButton } from "./InsertButton";
-import { ActionButton } from "./ActionButton";
-import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import { DirectionalHint, Stack } from '@fluentui/react';
 import { FontIcon } from '@fluentui/react/lib/Icon';
 import { mergeStyles, mergeStyleSets } from '@fluentui/react/lib/Styling';
-import { Teachable, TeachableActiveDelegate, TeachableId } from "./Teachable";
-import { DirectionalHint } from '@fluentui/react';
+import * as React from "react";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
+import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { _TimerStack } from "../../PerfTimer";
+import { ActionButton } from "./ActionButton";
+import { Teachable, TeachableActiveDelegate, TeachableId } from "./Teachable";
 
 export interface GameItemProps
 {

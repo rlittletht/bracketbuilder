@@ -1,5 +1,4 @@
-import { IHelpInfo } from "../Coaching/HelpInfo";
-import { MessageBarType } from '@fluentui/react';
+
 import { TeachableId } from "../taskpane/components/Teachable";
 import { CoachTransition } from "../Coaching/CoachTransition";
 import { Coachstate } from "../Coaching/Coachstate";

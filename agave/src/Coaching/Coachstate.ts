@@ -1,6 +1,4 @@
 
-import { CoachTransition } from "./CoachTransition";
-import { CoachstateTransitions as coachstateTransitions } from "./CoachstateTransitions";
 
 export class Coachstate
 {

@@ -1,11 +1,11 @@
-import { RangeInfo, Ranges } from "./Ranges";
-import { JsCtx } from "./JsCtx";
 import { IAppContext } from "../AppContext/AppContext";
+import { _TimerStack } from "../PerfTimer";
 import { StreamWriter } from "../Support/StreamWriter";
-import { TestRunner } from "../Support/TestRunner";
 import { TestResult } from "../Support/TestResult";
-import { ObjectType, CacheObject } from "./TrackingCache";
-import { PerfTimer, _TimerStack } from "../PerfTimer";
+import { TestRunner } from "../Support/TestRunner";
+import { JsCtx } from "./JsCtx";
+import { RangeInfo, Ranges } from "./Ranges";
+import { CacheObject, ObjectType } from "./TrackingCache";
 
 class AreasItem
 {
