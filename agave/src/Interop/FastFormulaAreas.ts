@@ -320,17 +320,24 @@ export class FastFormulaAreas
     static async populateFastFormulaAreaCache(context: JsCtx, range: RangeInfo, sheetName: string, name: string): Promise<FastFormulaAreas>
     {
         return await context.getTrackedItemOrPopulate(
-            name,
-            async (context): Promise<CacheObject> =>
-            {
-                const areas = await FastFormulaAreas.createFastFormulaItemsForRangeInfo(
-                    context,
-                    `${name}-rangeAreas`,
-                    sheetName,
-                    range);
+                name,
+                async (context): Promise<CacheObject> =>
+                {
+                    try
+                    {
+                        const areas = await FastFormulaAreas.createFastFormulaItemsForRangeInfo(
+                            context,
+                            `${name}-rangeAreas`,
+                            sheetName,
+                            range);
 
-                return { type: ObjectType.TrObject, o: areas };
-            });
+                        return { type: ObjectType.TrObject, o: areas };
+                    }
+                    catch (e)
+                    {
+                        return null;
+                    }
+                });
     }
 
     static async populateFastFormulaAreaCachesForAllSheets(context: JsCtx): Promise<FastFormulaAreaCachesCollection>
@@ -342,6 +349,9 @@ export class FastFormulaAreas
             async (context): Promise<CacheObject> =>
             {
                 const collection = new FastFormulaAreaCachesCollection();
+                const bkmk = "allSheetsBookmark";
+
+                context.pushTrackingBookmark(bkmk);
 
                 for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.Teams, FastFormulaAreasItems.BracketSources])
                 {
@@ -357,8 +367,17 @@ export class FastFormulaAreas
 
                     collection.add(type, areas);
                 }
-                // one sync to rule them all
-                await context.sync();
+                try
+                {
+                    // one sync to rule them all
+                    await context.sync();
+                }
+                catch (e)
+                {
+                    // failure means we have to release everything we cached
+                    context.releaseCacheObjectsUntil(bkmk);
+                    return null;
+                }
 
                 return { type: ObjectType.TrObject, o: collection};
             });
@@ -388,8 +407,8 @@ export class FastFormulaAreaCachesCollection
     {
         return this.m_mapTypeAreas.get(type);
     }
-
 }
+
 export class FastFormulaAreasTest
 {
     static runAllTests(appContext: IAppContext, outStream: StreamWriter)

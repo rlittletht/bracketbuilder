@@ -9,6 +9,7 @@ import { CoachTransition } from "./Coaching/CoachTransition";
 import { StatusBox } from "./taskpane/components/StatusBox";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
+import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas";
 
 export class SetupState
 {
@@ -143,6 +144,8 @@ export class SetupBook
     ----------------------------------------------------------------------------*/
     static async getWorkbookSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
+        const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketSources);
+
         // any bracket workbook has to have a BracketStructure sheet
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(context);
 

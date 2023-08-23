@@ -203,7 +203,7 @@ export class PerfTimer
         _TimerStack.popTimer();
     }
 
-    async timeThisAsync(name: string, async delegate: () => void, summaryChildrenOnly?: boolean)
+    async timeThisAsync(name: string, delegate: () => void, summaryChildrenOnly?: boolean)
     {
         this.pushTimer(name, summaryChildrenOnly);
         await delegate();
