@@ -6,7 +6,7 @@ import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
 import { IAppContext } from "../AppContext/AppContext";
 import { SetupBook } from "../Setup";
-import { BracketDataBuilder } from "./BracketDataBuilder";
+import { BracketInfoBuilder } from "./BracketInfoBuilder";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { GridBuilder } from "./GridBuilder";
 import { BracketSources } from "./BracketSources";
@@ -310,7 +310,7 @@ export class BracketStructureBuilder
         }
 
         await GridBuilder.buildGridSheet(context);
-        await BracketDataBuilder.buildBracketDataSheet(context, bracketChoice, bracketDefinition);
+        await BracketInfoBuilder.buildBracketInfoSheet(context, bracketChoice, bracketDefinition);
         await BracketSources.buildBracketSourcesSheet(context, fastTables, bracketDefinition);
     }
 }

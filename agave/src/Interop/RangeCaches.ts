@@ -91,8 +91,8 @@ export class RangeCaches
 
     static getBracketDefRange(context: JsCtx, bracketChoice: string): Excel.Range
     {
-        if ((bracketChoice ?? "") === "")
-            return null;
+//        if ((bracketChoice ?? "") === "")
+//            return null;
 
         const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
         const defTableName: string = `${bracketChoice}Bracket`

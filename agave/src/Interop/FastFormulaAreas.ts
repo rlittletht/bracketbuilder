@@ -7,7 +7,7 @@ import { TestResult } from "../Support/TestResult";
 import { ObjectType, CacheObject } from "./TrackingCache";
 import { PerfTimer, _TimerStack } from "../PerfTimer";
 import { GridBuilder } from "../Brackets/GridBuilder";
-import { BracketDataBuilder } from "../Brackets/BracketDataBuilder";
+import { BracketInfoBuilder as BracketDataBuilder } from "../Brackets/BracketInfoBuilder";
 import { BracketSources } from "../Brackets/BracketSources";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 

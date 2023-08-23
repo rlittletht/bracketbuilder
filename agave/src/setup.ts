@@ -2,7 +2,7 @@
 import { BracketStructureBuilder } from "./Brackets/BracketStructureBuilder";
 import { FastTables } from "./Interop/FastTables";
 import { IAppContext, AppContext } from "./AppContext/AppContext";
-import { BracketDataBuilder } from "./Brackets/BracketDataBuilder";
+import { BracketInfoBuilder as BracketDataBuilder } from "./Brackets/BracketInfoBuilder";
 import { JsCtx } from "./Interop/JsCtx";
 import { Coachstate } from "./Coaching/Coachstate";
 import { CoachTransition } from "./Coaching/CoachTransition";
@@ -146,6 +146,10 @@ export class SetupBook
     {
         const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.BracketSources);
 
+        if (areasCache)
+        {
+            // we have a workbook structure. see if we have 
+        }
         // any bracket workbook has to have a BracketStructure sheet
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(context);
 

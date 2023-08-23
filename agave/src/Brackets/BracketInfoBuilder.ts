@@ -5,19 +5,19 @@ import { Ranges } from "../Interop/Ranges";
 import { GridBuilder } from "./GridBuilder";
 import { JsCtx } from "../Interop/JsCtx";
 
-export class BracketDataBuilder
+export class BracketInfoBuilder
 {
     static SheetName: string = "BracketInfo";
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketDataBuilder.buildBracketDataSheet
+        %%Function: BracketInfoBuilder.buildBracketInfoSheet
 
         Build the Bracket Data sheet (which has results and field schedule times
         in it)
     ----------------------------------------------------------------------------*/
-    static async buildBracketDataSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
+    static async buildBracketInfoSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDataBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketInfoBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
         await context.sync();
 

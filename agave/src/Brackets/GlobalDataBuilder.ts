@@ -1,7 +1,7 @@
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
-import { BracketDataBuilder } from "./BracketDataBuilder";
+import { BracketInfoBuilder as BracketDataBuilder } from "./BracketInfoBuilder";
 import { JsCtx } from "../Interop/JsCtx";
 
 export class GlobalDataBuilder
