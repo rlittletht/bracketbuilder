@@ -196,6 +196,20 @@ export class PerfTimer
         return `${item.timerName}(${item.msecCumulative})`;
     }
 
+    timeThis(name: string, delegate: () => void, summaryChildrenOnly?: boolean)
+    {
+        _TimerStack.pushTimer(name, summaryChildrenOnly);
+        delegate();
+        _TimerStack.popTimer();
+    }
+
+    async timeThisAsync(name: string, async delegate: () => void, summaryChildrenOnly?: boolean)
+    {
+        this.pushTimer(name, summaryChildrenOnly);
+        await delegate();
+        this.popTimer();
+    }
+
 }
 
 export const _TimerStack = new PerfTimer();

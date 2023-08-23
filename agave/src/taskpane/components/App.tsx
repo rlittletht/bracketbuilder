@@ -53,6 +53,7 @@ import { FastFormulaAreas, FastFormulaAreasTest, FastFormulaAreasItems } from ".
 import { _TimerStack } from "../../PerfTimer";
 import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 import { RangeCaches } from "../../Interop/RangeCaches";
+import { UnitTests } from "../../Tests/UnitTests";
 
 /* global console, Excel, require  */
 
@@ -152,50 +153,6 @@ export default class App extends React.Component<AppProps, AppState>
         }
 
         appContext.Messages.message([...results, "Integration Tests Complete"]);
-    }
-
-    static async doUnitTests(appContext: IAppContext)
-    {
-        const results = [];
-
-        const outStream = new StreamWriter((line) => results.push(line));
-
-        try
-        {
-            // first, dump the grid for the current sheet. this is handy if you are building
-            // unit tests since it gives you a way to generate a grid...
-            await Excel.run(
-                async (ctx) =>
-                {
-                    const context: JsCtx = new JsCtx(ctx);
-                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
-
-                    grid.logGridCondensed();
-                    context.releaseAllCacheObjects();
-                });
-
-            await StructureInsertTests.runAllTests(appContext, outStream);
-            await FastFormulaAreasTest.runAllTests(appContext, outStream);
-            await FastRangeAreasTest.runAllTests(appContext, outStream);
-            await ParserTests.runAllTests(appContext, outStream);
-            await OADateTests.runAllTests(appContext, outStream);
-            await GameMoverTests.runAllTests(appContext, outStream);
-            await GridRankerTests.runAllTests(appContext, outStream);
-            await GridTests.runAllTests(appContext, outStream);
-            await RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
-            await Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            await Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            await Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
-            await Adjuster_SwapAdjacentGameRegonsForOverlapTests.runAllTests(appContext, outStream);
-
-        }
-        catch (e)
-        {
-            results.push(`EXCEPTION CAUGHT: ${e}`);
-        }
-
-        appContext.Messages.message([...results, "Unit Tests Complete"]);
-
     }
 
     buildTopToolbar(): ToolbarItem[]
@@ -318,7 +275,6 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     appContext;
                     this.showAboutDialog();
-//                    await App.launchHelp(appContext);
                     return true;
                 }
             });
@@ -340,7 +296,7 @@ export default class App extends React.Component<AppProps, AppState>
                     stateChecker: null,
                     delegate: async (appContext: IAppContext): Promise<boolean> =>
                     {
-                        await App.doUnitTests(appContext);
+                        await UnitTests.doUnitTests(appContext);
                         return true;
                     }
                 });
@@ -452,10 +408,13 @@ export default class App extends React.Component<AppProps, AppState>
         const bookmark: string = "rebuildHeroList";
         context.pushTrackingBookmark(bookmark);
 
-        _TimerStack.pushTimer("buildFastFormulaAreas");
-        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
-        _TimerStack.popTimer();
-
+        await _TimerStack.timeThisAsync(
+            "buildFastFormulaAreas",
+            async () =>
+            {
+                await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+            });
+        
         AppContext.checkpoint("ihl.1");
         let setupState: SetupState;
         let bracketChoice: string;
