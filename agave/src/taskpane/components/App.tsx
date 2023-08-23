@@ -453,7 +453,7 @@ export default class App extends React.Component<AppProps, AppState>
         context.pushTrackingBookmark(bookmark);
 
         _TimerStack.pushTimer("buildFastFormulaAreas");
-        await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
         _TimerStack.popTimer();
 
         AppContext.checkpoint("ihl.1");
@@ -463,7 +463,7 @@ export default class App extends React.Component<AppProps, AppState>
         _TimerStack.pushTimer("rebuildHeroList.getSetupState");
         [setupState, bracketChoice] = await (this.getSetupState(context));
 
-        // await RangeCaches.Populate(context, this.state.selectedBracket);
+        await RangeCaches.PopulateIfNeeded(context, bracketChoice);
 
         _TimerStack.popTimer();
 
@@ -564,11 +564,36 @@ export default class App extends React.Component<AppProps, AppState>
                 games: []
             };
 
-            let gameDefs: any[] = await TableIO.readDataFromExcelTable(
-                context,
-                bracketDef.tableName,
-                ["Game", "Winner", "Loser", "Top", "Bottom"],
-                true);
+            let gameDefs: any[] = null;
+
+            const { rangeInfo: rangeBracketDataBody, formulaCacheType: rangeBracketCacheType } = RangeCaches.get(RangeCaches.s_bracketDefDataBody);
+            const { rangeInfo: rangeBracketHeader } = RangeCaches.get(RangeCaches.s_bracketDefHeader);
+            if (rangeBracketDataBody && rangeBracketHeader)
+            {
+                const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeBracketCacheType);
+
+                if (areas)
+                {
+                    const header = areas.getValuesForRangeInfo(rangeBracketHeader);
+                    const dataBody = areas.getValuesForRangeInfo(rangeBracketDataBody);
+
+                    gameDefs = TableIO.readDataFromCachedExcelTable(
+                        bracketDef.tableName,
+                        header,
+                        dataBody,
+                        ["Game", "Winner", "Loser", "Top", "Bottom"],
+                        true);
+                }
+            }
+
+            if (!gameDefs)
+            {
+                gameDefs = await TableIO.readDataFromExcelTable(
+                    context,
+                    bracketDef.tableName,
+                    ["Game", "Winner", "Loser", "Top", "Bottom"],
+                    true);
+            }
 
             for (let game of gameDefs)
             {

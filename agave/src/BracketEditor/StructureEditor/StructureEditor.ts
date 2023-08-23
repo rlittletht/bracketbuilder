@@ -174,7 +174,7 @@ export class StructureEditor
             context.pushTrackingBookmark(bookmark);
 
             _TimerStack.pushTimer("populate FastFormulas");
-            await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+            await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
             _TimerStack.popTimer();
 
             await StructureInsert.insertGameAtSelection(appContext, context, game);

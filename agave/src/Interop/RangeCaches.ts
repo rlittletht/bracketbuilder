@@ -7,7 +7,7 @@ import { RangeInfo } from "./Ranges";
 import { JsCtx } from "./JsCtx";
 import { BracketSources } from "../Brackets/BracketSources";
 import { ObjectType } from "./TrackingCache";
-import { FastFormulaAreas } from "./FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "./FastFormulaAreas";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 
 export class RangeCacheItem
@@ -15,19 +15,22 @@ export class RangeCacheItem
     Name: string;
     SheetName: string;
     RangeInfo: RangeInfo;
-    FormulaCacheName: string;
+    FormulaCacheType: FastFormulaAreasItems;
 
-    constructor(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCachename: string)
+    constructor(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems)
     {
         this.Name = name;
         this.SheetName = sheetName;
         this.RangeInfo = rangeInfo;
-        this.FormulaCacheName = formulaCachename;
+        this.FormulaCacheType = formulaCacheType;
     }
 }
 
 export class RangeCaches
 {
+    static s_gameFieldsAndTimesHeader = "bracketSourceHeader";
+    static s_teamNamesHeader = "teamNamesHeader";
+    static s_bracketDefHeader = "bracketDefHeader";
     static s_gameFieldsAndTimesDataBody = "bracketSourceDataRange";
     static s_teamNamesDataBody = "teamNamesDataRange";
     static s_bracketDefDataBody = "bracketDefDataRange";
@@ -36,19 +39,19 @@ export class RangeCaches
 
     static m_items = new Map<string, RangeCacheItem>();
 
-    static add(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCacheName: string)
+    static add(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems)
     {
-        this.m_items.set(name, new RangeCacheItem(name, sheetName, rangeInfo, formulaCacheName));
+        this.m_items.set(name, new RangeCacheItem(name, sheetName, rangeInfo, formulaCacheType));
     }
 
-    static get(name: string): { sheetName: string, rangeInfo: RangeInfo, formulaCacheName: string } | null
+    static get(name: string): { sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems } | null
     {
         if (!this.m_items.has(name))
-            return { sheetName: null, rangeInfo: null, formulaCacheName: null};
+            return { sheetName: null, rangeInfo: null, formulaCacheType: null};
 
         const item = this.m_items.get(name);
 
-        return { sheetName: item.SheetName, rangeInfo: item.RangeInfo, formulaCacheName: item.FormulaCacheName };
+        return { sheetName: item.SheetName, rangeInfo: item.RangeInfo, formulaCacheType: item.FormulaCacheType };
     }
 
     static async GetRange(context: JsCtx, delegate: (context: JsCtx) => Promise<any>): Promise<any>
@@ -68,57 +71,112 @@ export class RangeCaches
         this.s_isDirty = isDirty;
     }
 
-    static async Populate(context: JsCtx, bracketChoice: string)
+    static getBracketBodyAndTeamNamesBodyRange(context: JsCtx): { bracketBodyRange: Excel.Range, teamNamesBodyRange: Excel.Range }
+    {
+        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
+        const fieldsTimesTableName: string = "BracketSourceData";
+        const fieldsTimesTable = sheetGet.tables.getItem(fieldsTimesTableName);
+        const fieldsTimesRange: Excel.Range = fieldsTimesTable.getDataBodyRange();
+
+        const teamsTableName: string = "TeamNames";
+        const teamsTable = sheetGet.tables.getItem(teamsTableName);
+        const teamsRange: Excel.Range = teamsTable.getDataBodyRange();
+
+        fieldsTimesRange.load("rowCount, columnCount, rowIndex, columnIndex");
+        teamsRange.load("rowCount, columnCount, rowIndex, columnIndex");
+
+        // don't sync yet...we might have more to get
+        return { bracketBodyRange: fieldsTimesRange, teamNamesBodyRange: teamsRange };
+    }
+
+    static getBracketDefRange(context: JsCtx, bracketChoice: string): Excel.Range
+    {
+        if ((bracketChoice ?? "") === "")
+            return null;
+
+        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
+        const defTableName: string = `${bracketChoice}Bracket`
+        const defTable = sheetGet.tables.getItem(defTableName);
+        const defRange: Excel.Range = defTable.getDataBodyRange();
+
+        defRange.load("rowCount, columnCount, rowIndex, columnIndex");
+
+        return defRange;
+    }
+
+    static async PopulateIfNeeded(context: JsCtx, bracketChoice: string)
     {
         if (!this.s_isDirty && this.s_lastBracket == bracketChoice)
             return;
 
-        const { bracketBodyRange, teamNamesBodyRange } =
+        let bracketBodyRange: RangeInfo = null;
+        let teamNamesBodyRange: RangeInfo = null;
+        let bracketDefRange: RangeInfo = null;
+
+        // first, try to get all the ranges together (in one batch). if this throws an exception, then we'll
+        // try to get them separately
+        let allRanges =
             await this.GetRange(context, async (context) =>
             {
-                const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketSources.SheetName);
-                const fieldsTimesTableName: string = "BracketSourceData";
-                const fieldsTimesTable = sheetGet.tables.getItem(fieldsTimesTableName);
-                const fieldsTimesRange: Excel.Range = fieldsTimesTable.getDataBodyRange();
+                const { bracketBodyRange, teamNamesBodyRange } = this.getBracketBodyAndTeamNamesBodyRange(context);
+                const bracketDefRange = this.getBracketDefRange(context, bracketChoice);
+                await context.sync();
 
-                const teamsTableName: string = "TeamNames";
-                const teamsTable = sheetGet.tables.getItem(teamsTableName);
-                const teamsRange: Excel.Range = teamsTable.getDataBodyRange();
-
-                fieldsTimesRange.load("rowCount, columnCount, rowIndex, columnIndex");
-                teamsRange.load("rowCount, columnCount, rowIndex, columnIndex");
-
-                await context.sync("teams/bracketBodyRange");
-                return { bracketBodyRange: RangeInfo.createFromRange(fieldsTimesRange), teamNamesBodyRange: RangeInfo.createFromRange(teamsRange) };
+                return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: bracketDefRange };
             });
 
-        if (bracketBodyRange)
-            this.add(this.s_gameFieldsAndTimesDataBody, BracketSources.SheetName, bracketBodyRange, FastFormulaAreas.s_teamsSheetCacheName);
-
-        if (teamNamesBodyRange)
-            this.add(this.s_gameFieldsAndTimesDataBody, BracketSources.SheetName, bracketBodyRange, FastFormulaAreas.s_teamsSheetCacheName);
-
-        if (bracketChoice)
+        if (!allRanges)
         {
-            const { bracketDefRange } =
+            allRanges = {};
+
+            const rangesPart1 =
                 await this.GetRange(
                     context,
                     async (context) =>
                     {
-                        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketStructureBuilder.SheetName);
-                        const defTableName: string = `${bracketChoice}Bracket`
-                        const defTable = sheetGet.tables.getItem(defTableName);
-                        const defRange: Excel.Range = defTable.getDataBodyRange();
+                        const { bracketBodyRange, teamNamesBodyRange } = this.getBracketBodyAndTeamNamesBodyRange(context);
+                        await context.sync();
 
-                        defRange.load("rowCount, columnCount, rowIndex, columnIndex");
-
-                        await context.sync("teams/bracketBodyRange");
-                        return { bracketBodyRange: RangeInfo.createFromRange(defRange), bracketDefBodyRange: RangeInfo.createFromRange(defRange) };
+                        return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: null };
                     });
 
-            if (bracketDefRange)
-                this.add(this.s_bracketDefDataBody, BracketStructureBuilder.SheetName, bracketDefRange, FastFormulaAreas.s_bracketDefCacheName);
+            allRanges.bracketBodyRange = rangesPart1?.bracketBodyRange ?? null;
+            allRanges.teamNamesBodyRange = rangesPart1?.teamNamesBodyRange ?? null;
 
+            const rangesPart2 =
+                await this.GetRange(
+                    context,
+                    async (context) =>
+                    {
+                        const bracketDefRange = this.getBracketDefRange(context, bracketChoice);
+                        await context.sync();
+
+                        return { bracketDefRange: bracketDefRange };
+                    });
+
+            allRanges.bracketDefRange = rangesPart2?.bracketDefRange ?? null;
+        }
+
+        bracketBodyRange = RangeInfo.createFromRange(allRanges.bracketBodyRange);
+        teamNamesBodyRange = RangeInfo.createFromRange(allRanges.teamNamesBodyRange);
+        bracketDefRange = RangeInfo.createFromRange(allRanges.bracketDefRange);
+
+        if (bracketBodyRange)
+        {
+            this.add(this.s_gameFieldsAndTimesDataBody, BracketSources.SheetName, bracketBodyRange, FastFormulaAreasItems.Teams);
+            this.add(this.s_gameFieldsAndTimesHeader, BracketSources.SheetName, bracketBodyRange.offset(-1, 1), FastFormulaAreasItems.Teams);
+        }
+
+        if (teamNamesBodyRange)
+        {
+            this.add(this.s_gameFieldsAndTimesDataBody, BracketSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.Teams);
+            this.add(this.s_gameFieldsAndTimesHeader, BracketSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.Teams);
+        }
+
+        if (bracketDefRange)
+        {
+            this.add(this.s_bracketDefDataBody, BracketStructureBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketSources);
+            this.add(this.s_bracketDefHeader, BracketStructureBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketSources);
         }
     }
 }

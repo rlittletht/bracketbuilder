@@ -83,6 +83,16 @@ export class JsCtx
         return obj.o;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: JsCtx.isKeyMoreRecent
+
+        Is the left key more recent than the right key?
+    ----------------------------------------------------------------------------*/
+    compareKeyOrder(left: string, right: string): number
+    {
+        return this.m_cache.compareKeyOrder(left, right);
+    }
+
     getTrackedItemsOrNull(key: string): any[]
     {
         const objs: CacheObject[] = this.m_cache.getCacheObjectsOrNull(key);

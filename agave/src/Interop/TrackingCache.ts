@@ -223,4 +223,31 @@ export class TrackingCache
 
         return vals;
     }
+
+    compareKeyOrder(left: string, right: string): number
+    {
+        let iLeft;
+        let iRight;
+
+        for (let i = 0; i < this.m_order.length; i++)
+        {
+            const check = this.m_order[i];
+
+            if (check == left)
+                iLeft = i;
+            if (check == right)
+                iRight = i;
+        }
+
+        if (iLeft == iRight)
+            return 0;
+
+        if (iLeft == undefined)
+            return -iRight;
+
+        if (iRight == undefined)
+            return iLeft;
+            
+        return iLeft - iRight;
+    }
 }

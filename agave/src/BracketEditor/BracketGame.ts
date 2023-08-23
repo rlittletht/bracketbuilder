@@ -404,10 +404,10 @@ export class BracketGame implements IBracketGame
 
                 let data = null;
 
-                const { rangeInfo: gameDataRange, formulaCacheName: cacheName } = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+                const { rangeInfo: gameDataRange, formulaCacheType: type } = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
                 if (gameDataRange != null)
                 {
-                    const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForName(context, cacheName);
+                    const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, type);
                     if (areasCache != null)
                         data = areasCache.getValuesForRangeInfo(gameDataRange);
                 }

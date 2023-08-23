@@ -1001,7 +1001,9 @@ export class Grid
 
         _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
 
+        // the following should just get what we already populated above
         const fastFormulaAreas = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         const fastRangeAreasSmaller: FastRangeAreas =
             await context.getTrackedItemOrPopulate(

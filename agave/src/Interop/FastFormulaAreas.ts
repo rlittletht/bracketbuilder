@@ -72,7 +72,14 @@ class FormulaAreasItem
         const vals = [];
 
         for (let iRow = 0; iRow < range.RowCount; iRow++)
-            vals.push([...this.m_rangeAreas.areas.items[0].values[iRow + dRow]]);
+        {
+            const row = [];
+
+            for (let iCol = 0; iCol < range.ColumnCount; iCol++)
+                row.push(this.m_rangeAreas.areas.items[0].values[iRow + dRow][iCol + dCol]);
+
+            vals.push(row);
+        }
 
         return vals;
     }
@@ -274,7 +281,35 @@ export class FastFormulaAreas
 
     static getFastFormulaAreaCacheForType(context: JsCtx, type: FastFormulaAreasItems): FastFormulaAreas
     {
-        return context.getTrackedItemOrNull(this.s_mapTypeName.get(type));
+        const name = this.s_mapTypeName.get(type);
+
+        // first see if we have this item cached
+        const areas = context.getTrackedItemOrNull(name);
+        const areasCollection: FastFormulaAreaCachesCollection = context.getTrackedItemOrNull(this.s_allSheetsCache);
+        let areasFromCollection = null;
+        let areasToUse = null;
+
+        if (areasCollection != null)
+        {
+            // we have a collection. get the right areas from it
+            areasFromCollection = areasCollection.get(type);
+        }
+
+        if (areasFromCollection != null && areas != null)
+        {
+            // figure out which is more recent
+            if (context.compareKeyOrder(name, this.s_allSheetsCache) >= 0)
+                areasToUse = areasFromCollection;
+            else
+                areasToUse = areas;
+        }
+        else
+        {
+            // use areasFromCollection if its not null, otherwise use areas
+            areasToUse = areasFromCollection ?? areas;
+        }
+
+        return areasToUse;
     }
 
     static async populateFastFormulaAreaCache(context: JsCtx, range: RangeInfo, sheetName: string, name: string): Promise<FastFormulaAreas>
@@ -293,34 +328,46 @@ export class FastFormulaAreas
             });
     }
 
-//    static async populateFastFormulaAreaCachesForAllSheets(context: JsCtx): Promise<FastFormulaAreas>
-//    {
-//        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-//
-//        return await context.getTrackedItemsOrPopulate(
-//            name,
-//            async (context): Promise<CacheObject> =>
-//            {
-//                const areas = await FastFormulaAreas.createFastFormulaItemsForRangeInfo(
-//                    context,
-//                    `${name}-rangeAreas`,
-//                    sheet,
-//                    range);
-//
-//                return { type: ObjectType.TrObject, o: areas };
-//            });
-//    }
-
-    static async populateGridFastFormulaAreaCache(context: JsCtx): Promise<FastFormulaAreas>
+    static async populateFastFormulaAreaCachesForAllSheets(context: JsCtx): Promise<FastFormulaAreaCachesCollection>
     {
-        return await this.populateFastFormulaAreaCache(context, new RangeInfo(8, 250, 0, 50), GridBuilder.SheetName, this.s_gridCacheName);
+        const name = this.s_allSheetsCache;
+
+        return await context.getTrackedItemOrPopulate(
+            name,
+            async (context): Promise<CacheObject> =>
+            {
+                const collection = new FastFormulaAreaCachesCollection();
+
+                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.Teams, FastFormulaAreasItems.BracketSources])
+                {
+                    const sheetName = FastFormulaAreas.s_mapTypeSheet.get(type);
+                    const range = FastFormulaAreas.s_mapTypeRange.get(type);
+                    const name = FastFormulaAreas.s_mapTypeName.get(type);
+
+                    const areas = new FastFormulaAreas();
+                    areas.m_sheetName = sheetName;
+
+                    const rangeAreas = this.loadRangeAreasFromRangeInfo(context, range, sheetName);
+                    areas.m_areasItems.push(new FormulaAreasItem(rangeAreas, range));
+
+                    collection.add(type, areas);
+                }
+                // one sync to rule them all
+                await context.sync();
+
+                return { type: ObjectType.TrObject, o: collection};
+            });
     }
 
     static async populateFastFormulaAreaCacheForType(context: JsCtx, type: FastFormulaAreasItems): Promise<FastFormulaAreas>
     {
+        const cached = this.getFastFormulaAreaCacheForType(context, type);
+
+        if (cached != null)
+            return cached;
+
         return await this.populateFastFormulaAreaCache(context, this.s_mapTypeRange.get(type), this.s_mapTypeSheet.get(type), this.s_mapTypeName.get(type));
     }
-
 }
 
 export class FastFormulaAreaCachesCollection

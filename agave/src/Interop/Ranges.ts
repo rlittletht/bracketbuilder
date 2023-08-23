@@ -111,8 +111,13 @@ export class RangeInfo
         return a new RangeInfo offset by dRows and dColumns, with the new
         row and column counts
     ----------------------------------------------------------------------------*/
-    offset(dRows: number, newRowCount: number, dColumns: number, newColumnCount: number)
+    offset(dRows: number, newRowCount: number, dColumns?: number, newColumnCount?: number)
     {
+        if (dColumns == undefined)
+            dColumns = 0;
+        if (newColumnCount == undefined)
+            newColumnCount = this.ColumnCount;
+
         return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
     }
 

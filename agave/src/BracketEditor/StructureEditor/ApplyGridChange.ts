@@ -189,7 +189,7 @@ export class ApplyGridChange
         _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
         const removeTns: Intentions = new Intentions();
-        await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
 
         // do all the removes first
         for (let item of changes)
