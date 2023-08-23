@@ -1,6 +1,7 @@
 
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { BracketDefinition, GameDefinition, s_brackets, BracketManager, _bracketManager, TeamPlacement } from "./BracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets, TeamPlacement } from "./BracketDefinitions";
+import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { Tables } from "../Interop/Tables";
 import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";

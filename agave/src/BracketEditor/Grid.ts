@@ -1,5 +1,6 @@
 import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
-import { BracketDefinition, BracketManager } from "../Brackets/BracketDefinitions";
+import { BracketDefinition } from "../Brackets/BracketDefinitions";
+import { BracketManager } from "../Brackets/BracketManager";
 import { BracketGame, IBracketGame } from "./BracketGame";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { StructureEditor } from "./StructureEditor/StructureEditor";

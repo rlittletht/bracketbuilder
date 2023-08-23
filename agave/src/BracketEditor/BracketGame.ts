@@ -1,5 +1,6 @@
 
-import { BracketDefinition, GameDefinition, s_brackets, BracketManager } from "../Brackets/BracketDefinitions";
+import { BracketDefinition, GameDefinition, s_brackets } from "../Brackets/BracketDefinitions";
+import { BracketManager } from "../Brackets/BracketManager";
 import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { Grid } from "./Grid";
