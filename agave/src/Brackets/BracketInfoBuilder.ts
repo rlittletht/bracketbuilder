@@ -18,13 +18,14 @@ export class BracketInfoBuilder
     static async buildBracketInfoSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
     {
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketInfoBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
-        let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
+        let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 2);
         await context.sync();
 
-        rng.values = [[bracketChoice]];
+        rng.values = [["Bracket", bracketChoice]];
+
         await context.sync();
 
-        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", rng);
+        await Ranges.createOrReplaceNamedRange(context, "BracketChoice", sheet.getRangeByIndexes(0, 1, 1, 1));
 
         const rowResultsFirst: number = 2;
         const rowResultsLast: number = rowResultsFirst + bracketDefinition.games.length; // include the heading
