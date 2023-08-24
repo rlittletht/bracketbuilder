@@ -21,10 +21,12 @@ export interface IAppContext
     /*async*/ rebuildHeroListIfNeeded(context: JsCtx);
     get SelectedBracket(): string;
     set SelectedBracket(bracket: string);
+    get WorkbookSetupState(): SetupState;
+    set WorkbookSetupState(state: SetupState);
+
     getGames(): IBracketGame[];
     setProgressVisible(visible: boolean);
     setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
-    get SetupStateFromState(): SetupState;
 }
 
 export interface RebuildHeroListDelegate
@@ -53,6 +55,7 @@ export class AppContext implements IAppContext
     Teaching: AppContextTeaching;
 
     m_selectedBracket: string = null;
+    m_setupState: SetupState = "U";
     m_durableState: DurableState = new DurableState();
     m_heroListNeedsRebuilt: boolean = false;
 
@@ -69,9 +72,14 @@ export class AppContext implements IAppContext
         this.Teaching = new AppContextTeaching(this.m_durableState);
     }
 
-    get SetupStateFromState(): SetupState
+    get WorkbookSetupState(): SetupState
     {
-        return this.m_getSetupStateDelegate?.() ?? "U";
+        return this.m_setupState;
+    }
+
+    set WorkbookSetupState(state: SetupState)
+    {
+        this.m_setupState = state;
     }
 
     async setHeroListDirty(isDirty?: boolean)
@@ -120,14 +128,14 @@ export class AppContext implements IAppContext
         addMessageDelegate: SetMessageDelegate,
         clearMessageDelegate: ClearMessageDelegate,
         invalidateHeroList: RebuildHeroListDelegate,
-        getGames: GetGamesDelegate,
-        getSetupState: GetSetupStateDelegate
+        getGames: GetGamesDelegate
+//        getSetupState: GetSetupStateDelegate
         )
     {
         this.Messages.setMessageDelegates(addMessageDelegate, clearMessageDelegate);
         this.m_rebuildHeroListDelegate = invalidateHeroList;
         this.m_getGames = getGames;
-        this.m_getSetupStateDelegate = getSetupState;
+//        this.m_getSetupStateDelegate = getSetupState;
     }
 
     setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)

@@ -29,7 +29,7 @@ export class Dispatcher
 {
     static RequireBracketReady(appContext: IAppContext): boolean
     {
-        if (appContext.SetupStateFromState == SetupState.Ready)
+        if (appContext.WorkbookSetupState == SetupState.Ready)
             return true;
 
         appContext.Messages.error(

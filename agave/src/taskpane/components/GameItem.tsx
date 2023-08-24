@@ -14,7 +14,6 @@ export interface GameItemProps
 {
     idx: number;
     game: IBracketGame;
-    bracketName: string;
     linkedToGrid: boolean;
     teachableAdd: TeachableActiveDelegate;
     teachableRemove: TeachableActiveDelegate;

@@ -50,7 +50,6 @@ export interface AppState
     heroListFormat: HeroListFormat;
     heroTitle: string;
 
-    setupState: SetupState;
     errorMessage: string;
     bracketOptions: BracketOption[];
     games: IBracketGame[];
@@ -58,7 +57,6 @@ export interface AppState
     debugToolbar: ToolbarItem[];
     mainToolbar: ToolbarItem[];
     aboutShowing: boolean;
-    CM:boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState>
@@ -76,14 +74,12 @@ export default class App extends React.Component<AppProps, AppState>
             heroList: [],
             heroListFormat: HeroListFormat.Vertical,
             heroTitle: "Setup a new bracket workbook!",
-            setupState: SetupState.Unknown,
             errorMessage: "",
             bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
             debugToolbar: this.buildDebugToolbar(),
-            CM: false,
             aboutShowing: false
         };
 
@@ -92,15 +88,9 @@ export default class App extends React.Component<AppProps, AppState>
             null,
             null,
             this.rebuildHeroList.bind(this),
-            this.getGames.bind(this),
-            this.getSetupStateFromState.bind(this));
+            this.getGames.bind(this));
 
         this.targetDivRef = React.createRef();
-    }
-
-    getSetupStateFromState(): SetupState
-    {
-        return this.state.setupState;
     }
 
     static async resetCoachingTips(appContext: IAppContext)
@@ -393,14 +383,9 @@ export default class App extends React.Component<AppProps, AppState>
                 await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
             });
         
-        AppContext.checkpoint("ihl.1");
-        let setupState: SetupState;
-        let bracketChoice: string;
+        _TimerStack.pushTimer("rebuildHeroList.populateRangeCaches");
 
-        _TimerStack.pushTimer("rebuildHeroList.getSetupState");
-        [setupState, bracketChoice] = await (this.getSetupState(context));
-
-        await RangeCaches.PopulateIfNeeded(context, bracketChoice);
+        await RangeCaches.PopulateIfNeeded(context, this.m_appContext.SelectedBracket);
 
         _TimerStack.popTimer();
 
@@ -409,15 +394,12 @@ export default class App extends React.Component<AppProps, AppState>
         let list: HeroListItem[];
         let title: string;
         AppContext.checkpoint("ihl.3");
-//        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
         AppContext.checkpoint("ihl.4");
-        if (bracketChoice == null)
-            bracketChoice = this.m_appContext.SelectedBracket;
 
         _TimerStack.pushTimer("getGamesList");
 
         AppContext.checkpoint("ihl.5");
-        let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
+        let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, this.m_appContext.SelectedBracket);
         AppContext.checkpoint("ihl.6");
         _TimerStack.popTimer();
 
@@ -425,12 +407,12 @@ export default class App extends React.Component<AppProps, AppState>
         _TimerStack.pushTimer("buildToolbars");
 
         AppContext.checkpoint("ihl.7");
-        [format, title, list] = HeroList.buildHeroList(setupState);
+        [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState);
         AppContext.checkpoint("ihl.8");
         let items: ToolbarItem[] = [];
 
 
-        if (setupState == SetupState.Ready)
+        if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
         {
             items = this.buildMainToolbar();
 
@@ -479,7 +461,6 @@ export default class App extends React.Component<AppProps, AppState>
                 heroList: list,
                 heroListFormat: format,
                 heroTitle: title,
-                setupState: setupState,
                 games: games,
                 mainToolbar: items
             });
@@ -577,33 +558,6 @@ export default class App extends React.Component<AppProps, AppState>
         return games;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: App.getSetupState
-
-        Get the setup state of the workbook and opportunistically return the
-        bracket choice as well
-    ----------------------------------------------------------------------------*/
-    async getSetupState(context: JsCtx): Promise<[SetupState, string]>
-    {
-        AppContext.checkpoint("gss.1");
-        let setupState: SetupState;
-        let bracketChoice: string;
-
-        if (context != null)
-            [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context);
-        else
-            await Excel.run(async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
-
-                [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context)
-                context.releaseAllCacheObjects();
-            });
-        AppContext.checkpoint("gss.2");
-
-        return [setupState, bracketChoice];
-    }
-
     // setup the initial state as well as the initial coaching state
     // (this is our opportunity to figure out what state the workbook
     // is in when the addin is initialized)
@@ -612,9 +566,12 @@ export default class App extends React.Component<AppProps, AppState>
         let setupState: SetupState;
         let bracketChoice: string;
 
-        [setupState, bracketChoice] = await (this.getSetupState(null));
+        [setupState, bracketChoice] = await SetupBook.getSetupState(null);
         if (setupState != SetupState.Ready)
             this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
+
+        this.m_appContext.SelectedBracket = bracketChoice;
+        this.m_appContext.WorkbookSetupState = setupState;
 
         if (this.m_appContext.SelectedBracket == null)
             this.m_appContext.SelectedBracket = "T8";
@@ -630,7 +587,6 @@ export default class App extends React.Component<AppProps, AppState>
                 heroListFormat: format,
                 heroList: list,
                 heroTitle: title,
-                setupState: setupState,
                 games: []
             });
 
@@ -654,44 +610,6 @@ export default class App extends React.Component<AppProps, AppState>
             });
     }
 
-    async click()
-    {
-        try
-        {
-            AppContext.checkpoint("testing");
-            await Excel.run(async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
-
-                AppContext.checkpoint("state: " + await SetupBook.getWorkbookSetupState(context));
-                /**
-                 * Insert your Excel code here
-                 */
-                const range = context.Ctx.workbook.getSelectedRange();
-
-                // Read the range address
-                range.load("address");
-                range.format.fill.load("color");
-                await context.sync();
-                AppContext.checkpoint(`The color is ${range.format.fill.color}.`);
-
-
-                // Update the fill color
-//                range.format.fill.color = "#FFFFFF";
-                range.format.fill.clear();
-//                StructureEditor.formatConnectingLineRange(context, range);
-
-                await context.sync();
-                AppContext.checkpoint(`The range address was ${range.address}.`);
-                context.releaseAllCacheObjects();
-            });
-        }
-        catch (error)
-        {
-            console.error(error);
-        }
-    };
-
     /*----------------------------------------------------------------------------
         %%Function: App.updateSelectedBracketChoice
 
@@ -701,22 +619,6 @@ export default class App extends React.Component<AppProps, AppState>
     updateSelectedBracketChoice(selectedBracket: string)
     {
         this.m_appContext.SelectedBracket = selectedBracket;
-    }
-
-    showCM()
-    {
-        this.setState(
-            {
-                CM: true
-            });
-    }
-
-    hideCM()
-    {
-        this.setState(
-            {
-                CM: false
-            });
     }
 
     hideAboutDialog()
@@ -746,8 +648,8 @@ export default class App extends React.Component<AppProps, AppState>
 
         let insertBracketChooserMaybe = () =>
         {
-            if (this.state.setupState == SetupState.NoBracketChoice ||
-                this.state.setupState == SetupState.NoBracketStructure)
+            if (this.m_appContext.WorkbookSetupState == SetupState.NoBracketChoice ||
+                this.m_appContext.WorkbookSetupState == SetupState.NoBracketStructure)
             {
                 return (
                     <div>
@@ -770,12 +672,12 @@ export default class App extends React.Component<AppProps, AppState>
                 return (<span/>);
         }
 
-        const games = this.state.setupState == SetupState.Ready
-                          ? (<Games bracketName="T9"/>)
+        const games = this.m_appContext.WorkbookSetupState == SetupState.Ready
+                          ? (<Games />)
                           : "";
 
         const maybeToolbar =
-            this.state.setupState == SetupState.Ready
+            this.m_appContext.WorkbookSetupState == SetupState.Ready
                 ? (<Toolbar message={""} items={this.state.mainToolbar} alignment="center"/>)
                 : "";
         const versionLabelProps: CSS.Properties =
@@ -799,7 +701,7 @@ export default class App extends React.Component<AppProps, AppState>
             root: { overflow: 'auto', padding: "1rem" }
         };
 
-        const welcome = this.state.setupState == SetupState.Ready
+        const welcome = this.m_appContext.WorkbookSetupState == SetupState.Ready
             ? ""
             : (
                 <Stack.Item styles={welcomeItemStyle}>
