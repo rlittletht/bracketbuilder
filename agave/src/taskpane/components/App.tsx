@@ -647,8 +647,9 @@ export default class App extends React.Component<AppProps, AppState>
 
         let insertBracketChooserMaybe = () =>
         {
-            if (this.m_appContext.WorkbookSetupState == SetupState.NoBracketChoice ||
-                this.m_appContext.WorkbookSetupState == SetupState.NoBracketStructure)
+            if (this.m_appContext.WorkbookSetupState == SetupState.NoBracketChoice
+                || this.m_appContext.WorkbookSetupState == SetupState.NoBracketStructure
+                || this.m_appContext.WorkbookSetupState == SetupState.NoBracketData)
             {
                 return (
                     <div>

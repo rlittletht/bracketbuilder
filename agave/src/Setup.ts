@@ -164,7 +164,7 @@ export class SetupBook
         {
             const bracketTable: Excel.Table = await this.getBracketTableOrNull(context, bracketStructureSheet, bracketChoice);
 
-            if (bracketTable.isNullObject)
+            if (bracketTable == null || bracketTable.isNullObject)
                 return [SetupState.NoBracketData, bracketChoice];
 
             if (await this.getBracketsDataSheetOrNull(context) == null)
