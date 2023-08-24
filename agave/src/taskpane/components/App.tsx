@@ -565,34 +565,52 @@ export default class App extends React.Component<AppProps, AppState>
         let setupState: SetupState;
         let bracketChoice: string;
 
-        [setupState, bracketChoice] = await SetupBook.getSetupState(null);
-        if (setupState != SetupState.Ready)
-            this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
-
-        this.m_appContext.SelectedBracket = bracketChoice;
-        this.m_appContext.WorkbookSetupState = setupState;
-
-        if (this.m_appContext.SelectedBracket == null)
-            this.m_appContext.SelectedBracket = "T8";
-
-        let format: HeroListFormat;
-        let list: HeroListItem[];
-        let title: string;
-
-        [format, title, list] = HeroList.buildHeroList(setupState);
-        // figure out our top level menu.... Setup, or bracket editing
-        this.setState(
-            {
-                heroListFormat: format,
-                heroList: list,
-                heroTitle: title,
-                games: []
-            });
+////
+//        let format: HeroListFormat;
+//        let list: HeroListItem[];
+//        let title: string;
+//
+//        [format, title, list] = HeroList.buildHeroList(setupState);
+//        // figure out our top level menu.... Setup, or bracket editing
+//        this.setState(
+//            {
+//                heroListFormat: format,
+//                heroList: list,
+//                heroTitle: title,
+//                games: []
+//            });
 
         // now grab the games async and have it update
-        Excel.run(
+        await Excel.run(
             async (ctx) =>
             {
+                const context = new JsCtx(ctx);
+                [setupState, bracketChoice] = await SetupBook.getSetupState(context);
+                if (setupState != SetupState.Ready)
+                    this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
+
+                this.m_appContext.SelectedBracket = bracketChoice;
+                this.m_appContext.WorkbookSetupState = setupState;
+
+                await RangeCaches.PopulateIfNeeded(context, bracketChoice);
+
+                if (this.m_appContext.SelectedBracket == null)
+                    this.m_appContext.SelectedBracket = "T8";
+
+                let format: HeroListFormat;
+                let list: HeroListItem[];
+                let title: string;
+        
+                [format, title, list] = HeroList.buildHeroList(setupState);
+                // figure out our top level menu.... Setup, or bracket editing
+                this.setState(
+                    {
+                        heroListFormat: format,
+                        heroList: list,
+                        heroTitle: title,
+                        games: []
+                    });
+
                 this.m_appContext.setProgressVisible(true);
                 try
                 {

@@ -108,6 +108,9 @@ export class RangeCaches
         if (!this.s_isDirty && this.s_lastBracket == bracketChoice)
             return;
 
+        this.s_isDirty = false;
+        this.s_lastBracket = bracketChoice;
+
         let bracketBodyRange: RangeInfo = null;
         let teamNamesBodyRange: RangeInfo = null;
         let bracketDefRange: RangeInfo = null;

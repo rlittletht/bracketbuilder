@@ -45,7 +45,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
     static async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
-        _TimerStack.pushTimer("DoRemoveGame");
+        _TimerStack.pushTimer("DoRemoveGame", true);
         appContext.Teaching.clearCoachmark();
         await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
         _TimerStack.popTimer();
