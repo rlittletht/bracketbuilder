@@ -383,77 +383,75 @@ export default class App extends React.Component<AppProps, AppState>
                 await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
             });
         
-        _TimerStack.pushTimer("rebuildHeroList.populateRangeCaches");
+        await _TimerStack.timeThisAsync(
+            "populateRangeCaches",
+            async () =>
+            {
+                await RangeCaches.PopulateIfNeeded(context, this.m_appContext.SelectedBracket);
+            });
 
-        await RangeCaches.PopulateIfNeeded(context, this.m_appContext.SelectedBracket);
-
-        _TimerStack.popTimer();
-
-        AppContext.checkpoint("ihl.2");
         let format: HeroListFormat;
         let list: HeroListItem[];
         let title: string;
-        AppContext.checkpoint("ihl.3");
-        AppContext.checkpoint("ihl.4");
 
-        _TimerStack.pushTimer("getGamesList");
+        let games: IBracketGame[];
+        await _TimerStack.timeThisAsync(
+            "getGamesList",
+            async () =>
+            {
+                games = await this.getGamesList(context, this.m_appContext, this.m_appContext.SelectedBracket);
+            });
 
-        AppContext.checkpoint("ihl.5");
-        let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, this.m_appContext.SelectedBracket);
-        AppContext.checkpoint("ihl.6");
-        _TimerStack.popTimer();
-
-
-        _TimerStack.pushTimer("buildToolbars");
-
-        AppContext.checkpoint("ihl.7");
-        [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState);
-        AppContext.checkpoint("ihl.8");
         let items: ToolbarItem[] = [];
 
-
-        if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
-        {
-            items = this.buildMainToolbar();
-
-            let countGamesLinked = 0;
-            let countGamesNeedRepair = 0;
-            let countGamesBroken = 0;
-
-            for (let game of games)
+        await _TimerStack.timeThisAsync(
+            "buildToolbars",
+            async () =>
             {
-                if (game.IsLinkedToBracket)
-                {
-                    countGamesLinked++;
-                }
-                if (game.NeedsDataPull)
-                {
-                    countGamesNeedRepair++;
-                }
-                if (game.IsBroken)
-                {
-                    countGamesBroken++;
-                }
-            }
-            if (countGamesBroken > 0)
-                this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
-            else if (countGamesNeedRepair > 0)
-                this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
-            else if (countGamesLinked == games.length)
-            {
-                if (await (Grid.isFinishingTouchesApplied(context)))
-                    this.m_appContext.Teaching.transitionState(CoachTransition.FinishTouches);
-                else
-                    this.m_appContext.Teaching.transitionState(CoachTransition.AllGamesLinked);
-            }
-            else if (countGamesLinked == 0)
-                this.m_appContext.Teaching.transitionState(CoachTransition.NoGamesLinked);
-            else if (countGamesLinked == 1)
-                this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
-        }
-        _TimerStack.popTimer();        
+                [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState);
 
-        // update the games list
+                if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
+                {
+                    items = this.buildMainToolbar();
+
+                    let countGamesLinked = 0;
+                    let countGamesNeedRepair = 0;
+                    let countGamesBroken = 0;
+
+                    for (let game of games)
+                    {
+                        if (game.IsLinkedToBracket)
+                        {
+                            countGamesLinked++;
+                        }
+                        if (game.NeedsDataPull)
+                        {
+                            countGamesNeedRepair++;
+                        }
+                        if (game.IsBroken)
+                        {
+                            countGamesBroken++;
+                        }
+                    }
+                    if (countGamesBroken > 0)
+                        this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
+                    else if (countGamesNeedRepair > 0)
+                        this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
+                    else if (countGamesLinked == games.length)
+                    {
+                        if (await(Grid.isFinishingTouchesApplied(context)))
+                            this.m_appContext.Teaching.transitionState(CoachTransition.FinishTouches);
+                        else
+                            this.m_appContext.Teaching.transitionState(CoachTransition.AllGamesLinked);
+                    }
+                    else if (countGamesLinked == 0)
+                        this.m_appContext.Teaching.transitionState(CoachTransition.NoGamesLinked);
+                    else if (countGamesLinked == 1)
+                        this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
+                }
+            });
+
+        // update the games list in the state
 
         AppContext.checkpoint("ihl.9");
         this.setState(
@@ -464,6 +462,7 @@ export default class App extends React.Component<AppProps, AppState>
                 games: games,
                 mainToolbar: items
             });
+
         context.releaseCacheObjectsUntil(bookmark);
         _TimerStack.popTimer();
     }
