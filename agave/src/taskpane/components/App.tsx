@@ -73,7 +73,7 @@ export default class App extends React.Component<AppProps, AppState>
         {
             heroList: [],
             heroListFormat: HeroListFormat.Vertical,
-            heroTitle: "Setup a new bracket workbook!",
+            heroTitle: "",
             errorMessage: "",
             bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
             games: [],
@@ -700,7 +700,7 @@ export default class App extends React.Component<AppProps, AppState>
             root: { overflow: 'auto', padding: "1rem" }
         };
 
-        const welcome = this.m_appContext.WorkbookSetupState == SetupState.Ready
+        const welcome = this.m_appContext.WorkbookSetupState == SetupState.Ready || this.m_appContext.WorkbookSetupState == "U"
             ? ""
             : (
                 <Stack.Item styles={welcomeItemStyle}>
