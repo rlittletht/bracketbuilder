@@ -52,7 +52,6 @@ export interface AppState
 
     setupState: SetupState;
     errorMessage: string;
-    selectedBracket: string;
     bracketOptions: BracketOption[];
     games: IBracketGame[];
     topToolbar: ToolbarItem[];
@@ -79,7 +78,6 @@ export default class App extends React.Component<AppProps, AppState>
             heroTitle: "Setup a new bracket workbook!",
             setupState: SetupState.Unknown,
             errorMessage: "",
-            selectedBracket: "T8",
             bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
             games: [],
             mainToolbar: [],
@@ -94,7 +92,6 @@ export default class App extends React.Component<AppProps, AppState>
             null,
             null,
             this.rebuildHeroList.bind(this),
-            this.getSelectedBracket.bind(this),
             this.getGames.bind(this),
             this.getSetupStateFromState.bind(this));
 
@@ -415,7 +412,7 @@ export default class App extends React.Component<AppProps, AppState>
 //        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
         AppContext.checkpoint("ihl.4");
         if (bracketChoice == null)
-            bracketChoice = this.state.selectedBracket;
+            bracketChoice = this.m_appContext.SelectedBracket;
 
         _TimerStack.pushTimer("getGamesList");
 
@@ -484,7 +481,6 @@ export default class App extends React.Component<AppProps, AppState>
                 heroTitle: title,
                 setupState: setupState,
                 games: games,
-                selectedBracket: bracketChoice,
                 mainToolbar: items
             });
         context.releaseCacheObjectsUntil(bookmark);
@@ -608,16 +604,6 @@ export default class App extends React.Component<AppProps, AppState>
         return [setupState, bracketChoice];
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: App.getSelectedBracket
-
-        Get the bracket the user has selected
-    ----------------------------------------------------------------------------*/
-    getSelectedBracket(): string
-    {
-        return this.state.selectedBracket;
-    }
-
     // setup the initial state as well as the initial coaching state
     // (this is our opportunity to figure out what state the workbook
     // is in when the addin is initialized)
@@ -629,6 +615,9 @@ export default class App extends React.Component<AppProps, AppState>
         [setupState, bracketChoice] = await (this.getSetupState(null));
         if (setupState != SetupState.Ready)
             this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
+
+        if (this.m_appContext.SelectedBracket == null)
+            this.m_appContext.SelectedBracket = "T8";
 
         let format: HeroListFormat;
         let list: HeroListItem[];
@@ -711,9 +700,7 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     updateSelectedBracketChoice(selectedBracket: string)
     {
-        this.setState({
-            selectedBracket: selectedBracket
-        });
+        this.m_appContext.SelectedBracket = selectedBracket;
     }
 
     showCM()
@@ -773,7 +760,7 @@ export default class App extends React.Component<AppProps, AppState>
                             directionalHint={DirectionalHint.bottomLeftEdge}>
                             <BracketChooser alignment="center"
                                             updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
-                                            bracketOptions={this.state.bracketOptions} initialBracket={this.state.selectedBracket}/>
+                                            bracketOptions={this.state.bracketOptions} initialBracket={this.m_appContext.SelectedBracket}/>
                         </Teachable>
 
                     </div>

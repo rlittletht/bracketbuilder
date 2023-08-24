@@ -288,7 +288,7 @@ export class BracketDefBuilder
     ----------------------------------------------------------------------------*/
     static async buildSpecificBracketCore(context: JsCtx, appContext: IAppContext, fastTables: IFastTables)
     {
-        const bracketChoice: string = appContext.getSelectedBracket();
+        const bracketChoice: string = appContext.SelectedBracket;
         const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
 
         let bracketTable: Excel.Table =

@@ -19,7 +19,8 @@ export interface IAppContext
 
     setHeroListDirty(isDirty?: boolean);
     /*async*/ rebuildHeroListIfNeeded(context: JsCtx);
-    getSelectedBracket();
+    get SelectedBracket(): string;
+    set SelectedBracket(bracket: string);
     getGames(): IBracketGame[];
     setProgressVisible(visible: boolean);
     setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
@@ -29,11 +30,6 @@ export interface IAppContext
 export interface RebuildHeroListDelegate
 {
     (context: JsCtx): void
-}
-
-export interface GetSelectedBracketDelegate
-{
-    (): string;
 }
 
 export interface GetGamesDelegate
@@ -56,12 +52,12 @@ export class AppContext implements IAppContext
     Messages: AppContextMessages = new AppContextMessages();
     Teaching: AppContextTeaching;
 
+    m_selectedBracket: string = null;
     m_durableState: DurableState = new DurableState();
     m_heroListNeedsRebuilt: boolean = false;
 
     m_progressVisibilityDelegate: ProgressVisibilityDelegate;
     m_rebuildHeroListDelegate: RebuildHeroListDelegate;
-    m_getSelectedBracket: GetSelectedBracketDelegate;
     m_getGames: GetGamesDelegate;
     m_getSetupStateDelegate: GetSetupStateDelegate;
 
@@ -102,12 +98,14 @@ export class AppContext implements IAppContext
         this.m_heroListNeedsRebuilt = false;
     }
 
-    getSelectedBracket(): string
+    get SelectedBracket(): string
     {
-        if (this.m_getSelectedBracket)
-            return this.m_getSelectedBracket();
+        return this.m_selectedBracket;
+    }
 
-        return "";
+    set SelectedBracket(bracket: string)
+    {
+        this.m_selectedBracket = bracket;
     }
 
     getGames(): IBracketGame[]
@@ -122,14 +120,12 @@ export class AppContext implements IAppContext
         addMessageDelegate: SetMessageDelegate,
         clearMessageDelegate: ClearMessageDelegate,
         invalidateHeroList: RebuildHeroListDelegate,
-        getSelectedBracket: GetSelectedBracketDelegate,
         getGames: GetGamesDelegate,
         getSetupState: GetSetupStateDelegate
         )
     {
         this.Messages.setMessageDelegates(addMessageDelegate, clearMessageDelegate);
         this.m_rebuildHeroListDelegate = invalidateHeroList;
-        this.m_getSelectedBracket = getSelectedBracket;
         this.m_getGames = getGames;
         this.m_getSetupStateDelegate = getSetupState;
     }

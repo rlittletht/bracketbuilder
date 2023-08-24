@@ -31,7 +31,7 @@ export class UnitTests
                 async (ctx) =>
                 {
                     const context: JsCtx = new JsCtx(ctx);
-                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
+                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.SelectedBracket);
 
                     grid.logGridCondensed();
                     context.releaseAllCacheObjects();

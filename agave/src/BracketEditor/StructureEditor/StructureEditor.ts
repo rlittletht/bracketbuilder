@@ -327,7 +327,7 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async copySelectionToClipboard(appContext: IAppContext, context: JsCtx)
     {
-        const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
+        const grid: Grid = await Grid.createGridFromBracket(context, appContext.SelectedBracket);
         const selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
         const gridSelection = grid.createFromRange(selection);
