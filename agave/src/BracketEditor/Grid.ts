@@ -884,7 +884,7 @@ export class Grid
     ----------------------------------------------------------------------------*/
     getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
     {
-        let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
+        let range: RangeInfo = new RangeInfo(0, 1, 0, 1);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
@@ -1018,7 +1018,7 @@ export class Grid
                         context,
                         "bigGridCache",
                         sheet,
-                        new RangeInfo(8, 28, 0, 25));
+                        new RangeInfo(0, 28, 0, 25));
 
                     return { type: ObjectType.TrObject, o: areas };
                 });
@@ -2238,49 +2238,56 @@ export class Grid
         if ((source1 != null && source1.fuzzyMatchRow(requested.FirstRow, 3))
             || (source2 != null && (source2.fuzzyMatchRow(requested.FirstRow, 3))))
         {
-            if (source1 != null && source1.fuzzyMatchRow(requested.FirstRow, 3))
+            // if we end up falling through, we don't want to clobber the original
+            // source1 and source2
+            let source1New = source1;
+            let source2New = source2;
+
+            if (source1New != null && source1New.fuzzyMatchRow(requested.FirstRow, 3))
             {
-                matched = source1;
-                other = source2;
+                matched = source1New;
+                other = source2New;
             }
             else
             {
-                matched = source2;
-                other = source1;
-                const temp = source1;
-                source1 = source2;
-                source2 = temp;
+                matched = source2New;
+                other = source1New;
+                const temp = source1New;
+                source1New = source2New;
+                source2New = temp;
                 fSwapTopBottom = !fSwapTopBottom;
             }
             requested.setRow(matched.FirstRow - 1);
 
-            if (source1 && source2 && source1.FirstRow > source2.FirstRow)
-                return GridGameInsert.createFailedGame("Can't insert the game as requested -- the top game would be below the bottom game");
-
-            // now grow to including outgoing
-            if (outgoing != null)
+            // if we thing the bottom game is above the top game, then just disregard this request. we are probably
+            // over-thinking the requested location
+            if (!(source1New && source2New && source1New.FirstRow > source2New.FirstRow))
             {
-                if (game.IsChampionship)
-                    return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
+                // now grow to including outgoing
+                if (outgoing != null)
+                {
+                    if (game.IsChampionship)
+                        return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
 
-                return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
-                    source1,
-                    source2,
-                    outgoing,
+                    return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
+                        source1New,
+                        source2New,
+                        outgoing,
+                        matched,
+                        other,
+                        requested,
+                        fSwapTopBottom);
+                }
+
+                return this.buildGridGameForAnchoredSourceNoOutgoingPresent(
+                    source1New,
+                    source2New,
                     matched,
                     other,
                     requested,
+                    game.IsChampionship,
                     fSwapTopBottom);
             }
-
-            return this.buildGridGameForAnchoredSourceNoOutgoingPresent(
-                source1,
-                source2,
-                matched,
-                other,
-                requested,
-                game.IsChampionship,
-                fSwapTopBottom);
         }
 
         // ok, our requested range has no relationship to either sources. now figure out

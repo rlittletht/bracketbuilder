@@ -112,7 +112,7 @@ export class FastFormulaAreas
 
     static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
         [
-            [FastFormulaAreasItems.GameGrid, new RangeInfo(8, 250, 0, 50)],
+            [FastFormulaAreasItems.GameGrid, new RangeInfo(0, 250, 0, 50)],
             [FastFormulaAreasItems.GameData, new RangeInfo(0, 60, 0, 7)],
             [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 100, 0, 15)],
             [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],

@@ -29,7 +29,7 @@ export interface StaticConfig
     throwOnCacheMisses: boolean;
 }
 
-const isLocalHost = true; //  window.location.host.indexOf('localhost') > -1;
+const isLocalHost = false; //  window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
@@ -58,5 +58,5 @@ export const s_staticConfig: StaticConfig =
     logTrackingCache: isLocalHost && false,
     logMoveTree: true && isLocalHost,
     appLogging: true && isLocalHost,
-    throwOnCacheMisses: true
+    throwOnCacheMisses: true && isLocalHost
 }
