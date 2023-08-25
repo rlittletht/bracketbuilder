@@ -84,6 +84,20 @@ zoomable img {
         top: 2vh;
     }
 
+zoomableTall img {
+    transition: transform 0.25s ease;
+}
+
+    zoomableTall img:active {
+        width: auto;
+        height: 100%;
+        max-width: 90vw;
+        max-height: 90vh;
+        position: absolute;
+        left: 10vw;
+        top: 2vh;
+    }
+
 steps {
     display: flex;
     vertical-align: middle;
@@ -206,6 +220,19 @@ red {
     font-variant: 'small-caps';
     color: red;
     padding-left: .5rem;
+}
+
+cmd {
+    font-style: italic;
+}
+
+prodRef{
+
+}
+
+superEm{
+    font-weight: 800;
+    text-decoration: underline;
 }
 
 img.logo {

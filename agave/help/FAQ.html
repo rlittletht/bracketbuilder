@@ -29,10 +29,10 @@
     <main>
         <nav>
             <ul>
-                <li><a href="./BracketBuilder-Help.html">Getting Started</a></li>
+                <li><a href="./BracketBuilder.html">Getting Started</a></li>
                 <ul>
-                    <li><a href="./BracketBuilder-Help.html#intro">Introduction</a></li>
-                    <li><a href="./BracketBuilder-Help.html#quickstart">Quick Walk-through</a></li>
+                    <li><a href="./BracketBuilder.html#intro">Introduction</a></li>
+                    <li><a href="./BracketBuilder.html#quickstart">Quick Walk-through</a></li>
                 </ul>
                 <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
                 <ul>
@@ -86,7 +86,9 @@
                     <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
                     <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
                     <li><a href="./FAQ.html#broken">Why is my bracket broken?</a></li>
-                    <li><a href="./FAQ.html#manualEditing">How do I ?</a></li>
+                    <li><a href="./FAQ.html#insertLocation">Insert locations</a></li>
+                    <li><a href="./FAQ.html#insertFailed">Insert failures</a></li>
+                    <li><a href="./FAQ.html#exceptions">Fatal Errors/Exceptions</a></li>
 
                 </ul>
                 <li><a href="./Licenses.html">Licenses</a></li>
@@ -225,8 +227,8 @@
                     <img src="Images/DH-MergeAndCenterRibbon.png" class="whiteBackSmaller" />
                 </iconic>
                 <p>
-                    On the home tab, find <em>Merge and center</em> button on the alignment chunk -- it should be in the
-                    depressed state, showing that the current selection is already merged. Click on <em>Merge and center</em> to unmerge
+                    On the home tab, find <cmd>Merge and center</cmd> button on the alignment chunk -- it should be in the
+                    depressed state, showing that the current selection is already merged. Click on <cmd>Merge and center</cmd> to unmerge
                     the cells.
                 </p>
             </steps>
@@ -246,7 +248,7 @@
                 </iconic>
                 <p>
                     Now we want to merge both days together. With the cells selected from the previous step, click the
-                    <em>Merge and center</em> button again.  When you do this, you will get an Excel warning about
+                    <cmdMerge and center</cmd> button again.  When you do this, you will get an Excel warning about
                     merging contents, click OK. We will fix up the formulas in the next step.
                 </p>
             </steps>
@@ -301,7 +303,7 @@
             <br clear="all" />
             <h3><a name="broken">Why is my bracket broken?</a></h3>
             <p>
-                When you get an area about the bracket being broken, there's not a lot you can do to fix it. This error
+                When you get an error about the bracket being broken, there's not a lot you can do to fix it. This error
                 means that something internal on the workbook has become broken or inconsistent. It might be that a part
                 of a game didn't get inserted, or a game was partially removed. It also could be that a game ended up getting
                 inserted on top of another game.
@@ -309,14 +311,99 @@
             <p>
                 If you are really daring, you can try to erase the parts of the bracket that are confusing things. If you want to
                 do this, make sure to clear not just the contents of the cells, but also the names of the cells (remember that
-                BracketBuilder uses named cells in order to keep track of where games are on the bracket).
+                BracketBuilder uses named cells in order to keep track of where games are on the bracket). Selecting cells
+                and using the <a href="./Commands.html#RemoveGame">button</a> might help you do this.
             </p>
             <p>
-                See the next section <a href="./SheetEditing.html#moving">Manual Editing</a> for tips on ways to manually edit the
-                bracket
+                When all else fails, sometimes its just easier to start over with a new bracket. When you do this, make sure you
+                insert games in the places you want them to be in (since you now know where you want them).
             </p>
-        <h3><a name="manualEditing">Why is my bracket broken?</a></h3>
-
+            <h3><a name="insertLocation">Why is BracketBuilder complaining about the insert location?</a></h3>
+            <p>
+                When you click the <cmd>Insert Game</cmd> button, <prodRef>BracketBuilder</prodRef> will try to figure
+                out where to place the game. One thing it can't figure out on its own is what day to place the game on. (Actually,
+                for the very first game of the tournament, it will automatically put the game on the first day).
+            </p>
+            <p>
+                This means that you need to tell <prodRef>BracketBuilder</prodRef> which day to use. To do this, you have to click on a cell
+                in the column for the day you want the game to be on. If you click at the top of the column, then <prodRef>BracketBuilder</prodRef>
+                will automatically pick what it thinks is the best spot for the game. If you click somewhere else in the column, then
+                it will try to place the game as close to that position as possible
+            </p>
+            <zoomable>
+                <floatRight style="width: 20vw">
+                    <img src="Images/LineRows.png" class="whiteBackSmaller" />
+                </floatRight>
+            </zoomable>
+            <p>
+                If you have selected more than once cell, then <prodRef>BracketBuilder</prodRef> will treat this as exactly the location
+                you want to insert in (plus or minus one row). If this selection isn't within the grid, then you will get an error message.
+            </p>
+            <p>
+                The bracket is laid out on a <a href="SheetEditing.html#structure">repeating grid of rows/columns</a> which makes it
+                possible to format the connecting lines and create the bracket you see. The repeating columns are pretty easy to see
+                since each set of 3 columns make up a day in the tournament. To find the repeating row pattern, look for the really short
+                rows on the sheet -- by default, these start with Row 11.
+            </p>
+            <p>
+                To specify an exact game location on the bracket, you have to select a cell that is on or after the first cell in the
+                repeating grid pattern. If you don't, you will get an error. The error should tell you which cell is the first in the grid.
+            </p>
+            <h3><a name="insertFailed">Why did I get an insertion failure when I tried to add a game?</a></h3>
+            <p>
+                When you add a game to the bracket, lots of things can go wrong. The <em>insert failed</em> error is sort of a
+                catch all for all of these failures. Hopefully the error message gives you some more details about what you can do
+                to fix the problem.
+            </p>
+            <h4>Overlapping games</h4>
+            <p>
+                For example, a game might fail because <prodRef>BracketBuilder</prodRef> can't insert the game without the new game
+                overlapping an existing game already on the bracket. In many cases, it can adjust the bracket to make things fit, but
+                it only knows so many tricks.
+            </p>
+            <p>
+                The error message should tell you where on the grid the overlapping game or line is. To fix it, you will probably have
+                to remove games (or use <cmd>Undo</cmd>) to get back to a poing when you can start adding games back in a different
+                order, or at different places (by <a href="./FAQ.html#manuallySelect">manually selecting</a> the game location).
+            </p>
+            <p>
+                Remember, if the bracket was automatically reorganized earlier, it will probably be best to use <cmd>Undo</cmd> since
+                that will also undo the bracket adjustments
+            </p>
+            <h4>Overlapping game results</h4>
+        <zoomableTall>
+            <floatRight style="width: 10vw">
+                <img src="Images/OverlappingOutput.png" class="whiteBackSmaller"/>
+            </floatRight>
+        </zoomableTall>
+        <p>
+            One of the things that <prodRef>BracketBuilder</prodRef> checks when inserting a game is whether or not an existing
+            game on the bracket is going to have a line coming out of it to another game. </p>
+        <p>For example, if you have a game between the two games that need to play each other, when you try to place that next game,
+            the insert will fail because the result of that game in the middle would run into the game you are about to place. To fix this,
+            you have to either remove the game in the middle, or rearrange the grid so the two games that feed into the next game are next to
+            each other.  NOTE: in reality, <prodRef>BracketBuilder</prodRef> knows how to fix this particular example and would automatically
+            rearrange the grid for you. But in a bigger bracket, with more games already played, it probably won't be able to fix it
+            automatically.
+            </p>
+            <h3><a name="exceptions">What do I do with fatal errors/exceptions?</a></h3>
+            <zoomableTall>
+                <floatRight style="width: 10vw">
+                    <img src="Images/Exception.png" class="whiteBackSmaller" />
+                </floatRight>
+            </zoomableTall>
+            <p>
+                I've tried to make <prodRef>BracketBuilder</prodRef> as robust as possible, but sometimes unexpected things happen. Currently, I do
+                <em>not</em> send error reports. This means that you might see a fatal error/exception show up with an ask for you
+                to send the details information to us to try to fix. This is <superEm>absolutely voluntary</superEm>, but much appreciated.
+            </p>
+            <p>If you want to help out, copy all of the details from the error message and email them to <a href="mailto:red@traynrex.com">red@traynrex.com</a></p>
+            <p>
+                <superEm>NOTE:</superEm> If you send email to us, then we will see your email address. If you want to remain anonymous, please
+                don't send a report to us. We promise not to sell or share any of your details. In fact, we won't even contact you with information
+                unless you explicitly ask us to in your email message.
+            </p>
+            <p>THANK YOU from the Traynrex Red engineering team.</p>
         </article>
 
     </main>
