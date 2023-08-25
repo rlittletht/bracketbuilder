@@ -128,28 +128,9 @@ export class StructureRemove
         //            context.Ctx.trackedObjects.remove(mergedRange);
         //            context.Ctx.trackedObjects.remove(sheet);
 
-
         // lastly, deal with any named ranges in the range (the caller may have already dealt
         // with the games expected ranges
-        const names = await context.getTrackedItemOrPopulate(
-            "workbookNamesItems",
-            async (context): Promise<any> =>
-            {
-                context.Ctx.workbook.load("names");
-                await context.sync("GTI names");
-                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
-            });
-
-        for (let _item of names)
-        {
-            if (_item.type == Excel.NamedItemType.error)
-                tns.push(TnDeleteGlobalName.Create(_item.name));
-            else if (_item.type == Excel.NamedItemType.range)
-            {
-                if (RangeInfo.isOverlapping(rangeInfo, Ranges.createRangeInfoFromFormula(_item.formula)) != RangeOverlapKind.None)
-                    tns.push(TnDeleteGlobalName.Create(_item.name));
-            }
-        }
+        tns.push(...await Ranges.tnsDeleteOverlappingGlobalNames(context, rangeInfo));
         return tns;
     }
 

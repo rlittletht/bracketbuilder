@@ -3,16 +3,15 @@ import { RangeInfo, Ranges } from "../Ranges";
 import { IIntention } from "./IIntention";
 import { IntentionType } from "./IntentionType";
 
-export class TnSetFormulas implements IIntention
+export class TnMergeRange implements IIntention
 {
     m_rangeInfo: RangeInfo;
     m_sheetName: string;
-
-    m_formulas: any[][];
+    m_across: boolean;
 
     get Type(): IntentionType
     {
-        return IntentionType.SetFormulas;
+        return IntentionType.MergeRange;
     }
 
     Execute(context: JsCtx)
@@ -24,22 +23,17 @@ export class TnSetFormulas implements IIntention
 
         const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, this.m_rangeInfo);
 
-        range.formulas = this.m_formulas;
+        range.merge(this.m_across);
     }
 
-    static Create(range: RangeInfo, formulas: any[][], sheet?: string): IIntention
+    static Create(range: RangeInfo, across: boolean, sheet?: string): IIntention
     {
-        const tn = new TnSetFormulas();
+        const tn = new TnMergeRange();
 
         tn.m_rangeInfo = range;
-        tn.m_formulas = formulas;
         tn.m_sheetName = sheet;
+        tn.m_across = across;
 
-        if (range.RowCount != formulas.length)
-            throw new Error(`RowCount (${range.RowCount}) != formulas.length(${formulas.length})`);
-
-        if (range.ColumnCount != formulas[0].length)
-            throw new Error(`RowCount (${range.ColumnCount}) != formulas[0].length(${formulas[0].length})`);
         return tn;
     }
 
@@ -52,4 +46,5 @@ export class TnSetFormulas implements IIntention
     {
         laterTn;
     }
+
 }

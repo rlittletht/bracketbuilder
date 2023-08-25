@@ -2,6 +2,8 @@ import { AppContext } from "../AppContext/AppContext";
 import { JsCtx } from "./JsCtx";
 import { Parser, TrimType } from "./Parser";
 import { ObjectType } from "./TrackingCache";
+import { IIntention } from "./Intentions/IIntention";
+import { TnDeleteGlobalName } from "./Intentions/TnDeleteGlobalName";
 
 export enum RangeOverlapKind
 {
@@ -513,6 +515,72 @@ export class Ranges
         await context.sync();
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.tnsDeleteGlobalName
+
+        Return intentions to delete the named range (and any range with an error).
+
+        If the workbookNamesItems cache is populated, then this will not roundtrip
+        to Excel.
+    ----------------------------------------------------------------------------*/
+    static async tnsDeleteGlobalName(context: JsCtx, name: string): Promise<IIntention[]>
+    {
+        const tns: IIntention[] = [];
+
+        // lastly, deal with any named ranges in the range (the caller may have already dealt
+        // with the games expected ranges
+        const names = await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync("GTI names");
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
+
+        for (let _item of names)
+        {
+            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+                tns.push(TnDeleteGlobalName.Create(_item.name));
+        }
+
+        return tns;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.tnsDeleteOverlappingGlobalNames
+
+        Return intentions to delete the named ranges that either are in an error
+        state, or overlap with this range
+    ----------------------------------------------------------------------------*/
+    static async tnsDeleteOverlappingGlobalNames(context: JsCtx, rangeInfo: RangeInfo): Promise<IIntention[]>
+    {
+        const tns: IIntention[] = [];
+
+        // lastly, deal with any named ranges in the range (the caller may have already dealt
+        // with the games expected ranges
+        const names = await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync("GTI names");
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
+
+        for (let _item of names)
+        {
+            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+                tns.push(TnDeleteGlobalName.Create(_item.name));
+            else if (_item.type == Excel.NamedItemType.range)
+            {
+                if (RangeInfo.isOverlapping(rangeInfo, Ranges.createRangeInfoFromFormula(_item.formula)) != RangeOverlapKind.None)
+                    tns.push(TnDeleteGlobalName.Create(_item.name));
+            }
+        }
+
+        return tns;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Ranges.createOrReplaceNamedRange

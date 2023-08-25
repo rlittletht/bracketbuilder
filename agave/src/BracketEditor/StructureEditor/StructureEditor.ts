@@ -164,7 +164,7 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", true);
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", false);
 
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
@@ -177,7 +177,7 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
             _TimerStack.popTimer();
 
-            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", true);
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", false);
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
@@ -259,7 +259,12 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            const bookmark: string = "insertGameAtSelection";
+            context.pushTrackingBookmark(bookmark);
+
             await this.doGameMoveToSelection(appContext, context, _moveSelection, await this.getBracketName(context));
+            context.releaseCacheObjectsUntil(bookmark);
+
             appContext.setHeroListDirty();
             await appContext.rebuildHeroListIfNeeded(context);
         };

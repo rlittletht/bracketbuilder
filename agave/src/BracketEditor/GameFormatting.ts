@@ -1,10 +1,19 @@
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnClearRange } from "../Interop/Intentions/TnClearRange";
+import { TnSetFillAndFontColor } from "../Interop/Intentions/TnSetFillAndFontColor";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo } from "../Interop/Ranges";
 import { s_staticConfig } from "../StaticConfig";
 import { GridColumnType, GridRowType } from "./Grid";
+import { TnSetFontInfo } from "../Interop/Intentions/TnSetFontInfo";
+import { TnSetVerticalAlignment } from "../Interop/Intentions/TnSetVerticalAlignment";
+import { TnSetHorizontalAlignment } from "../Interop/Intentions/TnSetHorizontalAlignment";
+import { TnSetFontColor } from "../Interop/Intentions/TnSetFontColor";
+import { TnSetFontItalic } from "../Interop/Intentions/TnSetFontItalic";
+import { TnSetFontBold } from "../Interop/Intentions/TnSetFontBold";
+import { TnSetNumberFormat } from "../Interop/Intentions/TnSetNumberFormat";
+import { TnMergeRange } from "../Interop/Intentions/TnMergeRange";
 
 export class GameFormatting
 {
@@ -75,6 +84,18 @@ export class GameFormatting
         teamNameRange.format.verticalAlignment = Excel.VerticalAlignment.center;
     }
 
+    static tnsFormatTeamNameRangeRequest(teamNameRange: RangeInfo): IIntention[]
+    {
+        if (teamNameRange == null)
+            return [];
+
+        return [
+            TnSetFontInfo.Create(teamNameRange, s_staticConfig.blackFont, s_staticConfig.blackSize),
+            TnSetHorizontalAlignment.Create(teamNameRange, Excel.HorizontalAlignment.center),
+            TnSetVerticalAlignment.Create(teamNameRange, Excel.VerticalAlignment.center),
+        ];
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatConnectingLineRange
     ----------------------------------------------------------------------------*/
@@ -82,6 +103,19 @@ export class GameFormatting
     {
         lineRange.format.fill.color = "black";
         lineRange.format.font.color = "white";
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameFormatting.tnsFormatConnectingLineRangeRequest
+
+        Return tns for formatConnectLineRange
+    ----------------------------------------------------------------------------*/
+    static tnsFormatConnectingLineRangeRequest(range: RangeInfo)
+    {
+        if (range == null)
+            return [];
+
+        return [TnSetFillAndFontColor.Create(range, "black", "white")];
     }
 
     /*----------------------------------------------------------------------------
@@ -95,6 +129,15 @@ export class GameFormatting
         range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
     }
 
+    static tnsFormatGameInfoBodyTextRequest(rangeInfo: RangeInfo): IIntention[]
+    {
+        return [
+            TnSetFontInfo.Create(rangeInfo, s_staticConfig.bodyFont, s_staticConfig.bodySize),
+            TnSetHorizontalAlignment.Create(rangeInfo, Excel.HorizontalAlignment.center),
+            TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom)
+        ];
+    }
+
     static formatChampionshipText(range: Excel.Range)
     {
         range.format.font.name = s_staticConfig.bodyFont;
@@ -104,6 +147,18 @@ export class GameFormatting
         range.format.font.color = "#ff0000";
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
+    }
+
+    static tnsFormatChampionshipText(rangeInfo: RangeInfo): IIntention[]
+    {
+        return [
+            TnSetFontInfo.Create(rangeInfo, s_staticConfig.bodyFont, s_staticConfig.championSize),
+            TnSetFontBold.Create(rangeInfo, true),
+            TnSetFontItalic.Create(rangeInfo, true),
+            TnSetFontColor.Create(rangeInfo, "#ff0000"),
+            TnSetHorizontalAlignment.Create(rangeInfo, Excel.HorizontalAlignment.center),
+            TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom)
+        ];
     }
 
     /*----------------------------------------------------------------------------
@@ -116,6 +171,16 @@ export class GameFormatting
         range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         range.format.verticalAlignment = Excel.VerticalAlignment.top;
         range.numberFormat = [["h:mm AM/PM"]];
+    }
+
+    static tnsFormatGameInfoTimeTextRequest(rangeInfo: RangeInfo): IIntention[]
+    {
+        return [
+            TnSetFontInfo.Create(rangeInfo, s_staticConfig.bodyFont, s_staticConfig.bodySize),
+            TnSetHorizontalAlignment.Create(rangeInfo, Excel.HorizontalAlignment.center),
+            TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.top),
+            TnSetNumberFormat.Create(rangeInfo, [["h:mm AM/PM"]])
+        ];
     }
 
     /*----------------------------------------------------------------------------
@@ -132,6 +197,18 @@ export class GameFormatting
         range.format.font.color = "#ff0000";
     }
 
+    static tnsFormatGameInfoAdvanceToTextRequest(range: RangeInfo, align: Excel.VerticalAlignment): IIntention[]
+    {
+        return [
+            TnSetFontInfo.Create(range, s_staticConfig.bodyFont, s_staticConfig.advanceSize),
+            TnSetFontBold.Create(range, true),
+            TnSetFontItalic.Create(range, true),
+            TnSetHorizontalAlignment.Create(range, Excel.HorizontalAlignment.center),
+            TnSetVerticalAlignment.Create(range, align),
+            TnSetFontColor.Create(range, "#ff0000")
+        ];
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatGameInfoGameNumber
     ----------------------------------------------------------------------------*/
@@ -144,6 +221,18 @@ export class GameFormatting
         range.format.verticalAlignment = Excel.VerticalAlignment.center;
         range.merge(false);
     }
+
+    static tnsFormatGameInfoGameNumberRequest(range: RangeInfo): IIntention[]
+    {
+        return [
+            TnSetFontInfo.Create(range, s_staticConfig.bodyFont, s_staticConfig.gameNumSize),
+            TnSetFontBold.Create(range, true),
+            TnSetHorizontalAlignment.Create(range, Excel.HorizontalAlignment.right),
+            TnSetVerticalAlignment.Create(range, Excel.VerticalAlignment.center),
+            TnMergeRange.Create(range, false)
+        ];
+    }
+
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatRangeForPriority

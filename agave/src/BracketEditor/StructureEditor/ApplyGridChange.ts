@@ -14,6 +14,9 @@ import { GridChange, GridChangeOperation } from "../GridChange";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { StructureInsert } from "./StructureInsert";
 import { StructureRemove } from "./StructureRemove";
+import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
+import { ObjectType } from "../../Interop/TrackingCache";
+import { RangeCaches } from "../../Interop/RangeCaches";
 
 export class ApplyGridChange
 {
@@ -97,8 +100,9 @@ export class ApplyGridChange
         the formulas and text. The names and structure are assumed to already
         be there.
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
+    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string): Promise<{ undoItem: UndoGameDataItem, tns: IIntention[] }>
     {
+        const tns: IIntention[] = [];
         const bookmark: string = "executeAddChange";
 
         context.pushTrackingBookmark(bookmark);
@@ -108,25 +112,19 @@ export class ApplyGridChange
         {
             if (change.ChangeOp == GridChangeOperation.InsertLite)
                 // nothing to undo since there's no action...
-                return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
-
-            AppContext.checkpoint("appc.14.1");
-
-            const range: Excel.Range = Ranges.rangeFromRangeInfo(
-                context.Ctx.workbook.worksheets.getActiveWorksheet(),
-                change.Range);
+                return { undoItem: new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined), tns: tns };
 
             // just format the range as an underline
-            GameFormatting.formatConnectingLineRangeRequest(range);
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(change.Range));
 
             const linesText = [];
             for (let i = 0; i < change.Range.ColumnCount; i++)
                 linesText.push(GameFormatting.s_mapGridColumnType.get(gridRef.getColumnType(change.Range.FirstColumn + i)));
 
-            range.formulas = [linesText];
+            tns.push(TnSetFormulas.Create(change.Range, [linesText]));
 
             AppContext.checkpoint("appc.14.2");
-            return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
+            return { undoItem: new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined), tns: tns };
         }
 
         let game: BracketGame = new BracketGame();
@@ -157,21 +155,23 @@ export class ApplyGridChange
 
             AppContext.checkpoint("appc.17");
 
-            undoGameDataItem =
-                await GameDataSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+            const { undoItem, tns: tnsUpdate }  =
+                GameDataSources.tnsUpdateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+
+            undoGameDataItem = undoItem;
+            tns.push(...tnsUpdate);
         }
 
         if (game.IsChampionship)
-            await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range);
+            tns.push(...await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range));
         else
-            await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite);
+            tns.push(...await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite));
 
         AppContext.checkpoint("appc.18");
 
         context.releaseCacheObjectsUntil(bookmark);
-        await context.sync("EAC release");
 
-        return undoGameDataItem;
+        return { undoItem: undoGameDataItem, tns: tns };
     }
 
     /*----------------------------------------------------------------------------
@@ -208,6 +208,22 @@ export class ApplyGridChange
         // and now do all the adds
 
         _TimerStack.pushTimer("applyChanges:executeAddChange");
+
+        await RangeCaches.PopulateIfNeeded(context, appContext.SelectedBracket);
+        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+
+        // populate the global names cache
+        await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync("GTI names");
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
+
+        const addGameTns: Intentions = new Intentions();
+
         AppContext.checkpoint("appc.12");
         for (let item of changes)
         {
@@ -215,12 +231,16 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Remove || item.ChangeOp == GridChangeOperation.RemoveLite)
                 continue;
 
-            let undoGameDataItem: UndoGameDataItem =
+            const { undoItem: undoGameDataItem, tns } =
                 await this.executeAddChange(appContext, context, gridRef, item, bracketName);
 
+            addGameTns.AddTns(tns);
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);
         }
+
+        await addGameTns.Execute(context);
+
         _TimerStack.popTimer();
 
         return undoGameDataItems;

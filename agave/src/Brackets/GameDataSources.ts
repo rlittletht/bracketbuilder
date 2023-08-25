@@ -12,6 +12,8 @@ import { UndoGameDataItem } from "../BracketEditor/Undo";
 import { JsCtx } from "../Interop/JsCtx";
 import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnSetValues } from "../Interop/Intentions/TnSetValue";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
+import { RangeCaches } from "../Interop/RangeCaches";
 
 export interface TeamNameMap
 {
@@ -147,6 +149,77 @@ export class GameDataSources
         range.values = newValues;
         await context.sync("UGINS newVals");
         return undoGameDataItem;
+    }
+
+    static tnsUpdateGameInfoIfNotSet(
+        context: JsCtx,
+        gameNum: GameNum,
+        field: any,
+        time: any,
+        alwaysOverwriteIfGiven: boolean): { undoItem: UndoGameDataItem, tns: IIntention[] }
+    {
+        let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(gameNum, undefined, undefined, undefined, undefined);
+        const rangeCache = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+
+        if (rangeCache == null)
+            throw new Error("caches not setup for tnsUpdateGameInfoIfNotSet");
+
+        const gameInfoAreas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeCache.formulaCacheType);
+
+        if (gameInfoAreas == null)
+            throw new Error("caches not setup for tnsUpdateGameInfoIfNotSet");
+
+        const values = gameInfoAreas.getValuesForRangeInfo(rangeCache.rangeInfo);
+
+        let newValues: any[][] = [];
+        for (let i = 0; i < values.length; i++)
+        {
+            if (values[i][0] == gameNum.GameId.Value)
+            {
+                let newField: string;
+                let newTime: number;
+
+                if ((alwaysOverwriteIfGiven || values[i][1] == GlobalDataBuilder.DefaultField)
+                    && field[0] != "=")
+                {
+                    newField = field;
+                    undoGameDataItem.fieldNew = field;
+                    undoGameDataItem.fieldOriginal = values[i][1];
+                }
+                else
+                {
+                    newField = values[i][1];
+                }
+
+                if ((alwaysOverwriteIfGiven || values[i][2] == GlobalDataBuilder.DefaultStartTime)
+                    && typeof time === "number")
+                {
+                    newTime = time;
+                    undoGameDataItem.startTimeNew = time;
+                    undoGameDataItem.startTimeOriginal = values[i][2];
+                }
+                else
+                {
+                    newTime = values[i][2];
+                }
+
+                newValues.push(
+                    [
+                        gameNum.GameId.Value,
+                        newField,
+                        newTime,
+                        values[i][3]
+                    ]);
+                // don't try to be clever and break here -- we still have to push all the
+                // other non-matching values
+            }
+            else
+            {
+                newValues.push([values[i][0], values[i][1], values[i][2], values[i][3]])
+            }
+        }
+
+        return { undoItem: undoGameDataItem, tns: [TnSetValues.Create(rangeCache.rangeInfo, newValues, rangeCache.sheetName)] };
     }
 
     /*----------------------------------------------------------------------------

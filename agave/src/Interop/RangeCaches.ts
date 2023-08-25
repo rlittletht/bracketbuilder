@@ -171,8 +171,8 @@ export class RangeCaches
 
         if (teamNamesBodyRange)
         {
-            this.add(this.s_gameFieldsAndTimesDataBody, GameDataSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.GameData);
-            this.add(this.s_gameFieldsAndTimesHeader, GameDataSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
+            this.add(this.s_teamNamesDataBody, GameDataSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.GameData);
+            this.add(this.s_teamNamesHeader, GameDataSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
         }
 
         if (bracketDefRange)

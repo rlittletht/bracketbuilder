@@ -44,7 +44,7 @@ export class TnDeleteGlobalName implements IIntention
 
         if (laterTnDelete.m_globalName == this.m_globalName)
         {
-            // don't let this new delete happen, it already happened...
+            // don't let this earlier delete happen, the later delete will take care of it
             this.m_globalName = null;
         }
     }

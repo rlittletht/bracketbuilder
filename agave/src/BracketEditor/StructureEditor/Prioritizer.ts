@@ -88,6 +88,9 @@ export class Prioritizer
 
         for (let item of items)
         {
+            if (item.IsChampionshipGame)
+                continue;
+
             const bodyRangeInfo: RangeInfo = new RangeInfo(item.Range.FirstRow + 2, item.Range.RowCount - 4, item.Range.FirstColumn, 2);
             const rangeBody: Excel.Range = Ranges.rangeFromRangeInfo(sheet, bodyRangeInfo);
             const rangeTop: Excel.Range = Ranges.rangeFromRangeInfo(sheet, item.TopTeamRange.offset(0, 1, 0, 2));

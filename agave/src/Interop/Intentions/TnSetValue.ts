@@ -34,7 +34,11 @@ export class TnSetValues implements IIntention
         tn.m_rangeInfo = range;
         tn.m_values = values;
         tn.m_sheetName = sheet;
+        if (range.RowCount != values.length)
+            throw new Error(`RowCount (${range.RowCount}) != values.length(${values.length})`);
 
+        if (range.ColumnCount != values[0].length)
+            throw new Error(`RowCount (${range.ColumnCount}) != formulas[0].length(${values[0].length})`);
         return tn;
     }
 

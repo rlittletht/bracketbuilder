@@ -48,6 +48,9 @@ export class IntentionsTest
 
                 await tns.Execute(context);
 
+                // test combination of create and delete global names
+                // (delete "foo", create "foo")
+                // delete "bar", create foo, create bar
                 context.releaseAllCacheObjects();
             });
     }

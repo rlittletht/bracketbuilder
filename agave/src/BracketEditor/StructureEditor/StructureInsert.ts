@@ -13,6 +13,9 @@ import { UndoGameDataItem, _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureEditor } from "./StructureEditor";
 import { StructureRemove } from "./StructureRemove";
+import { IIntention } from "../../Interop/Intentions/IIntention";
+import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
+import { TnCreateGlobalName } from "../../Interop/Intentions/TnCreateGlobalName";
 
 export class StructureInsert
 {
@@ -30,8 +33,10 @@ export class StructureInsert
         }
     }
 
-    static async insertChampionshipGameAtRange(appContext: IAppContext, context: JsCtx, game: IBracketGame, insertRangeInfo: RangeInfo)
+    static async insertChampionshipGameAtRange(appContext: IAppContext, context: JsCtx, game: IBracketGame, insertRangeInfo: RangeInfo): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         const bookmark: string = "insertChampionshipGameAtRange";
 
         context.pushTrackingBookmark(bookmark);
@@ -42,14 +47,14 @@ export class StructureInsert
                 ["There was no selection for the championship game insertion. You must select a cell to insert the championship game at"],
                 { topic: HelpTopic.FAQ_ManuallySelect });
 
-            return;
+            return tns;
         }
 
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
-
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-        context.Ctx.trackedObjects.add(rng);
+//        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+//        context.Ctx.trackedObjects.add(sheet);
+//
+//        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
+//        context.Ctx.trackedObjects.add(rng);
 
         // figure out how big the game will be (width,height)
         let formulas: any[][] = [];
@@ -59,37 +64,46 @@ export class StructureInsert
         formulas.push([GameFormatting.s_hLineTeam, ""]);
         formulas.push(["Champion", ""]);
 
-        let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
-            insertRangeInfo.FirstRow,
-            insertRangeInfo.FirstColumn,
-            insertRangeInfo.RowCount,
-            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+        let rangeTarget =
+            new RangeInfo(insertRangeInfo.FirstRow, insertRangeInfo.RowCount, insertRangeInfo.FirstColumn, insertRangeInfo.ColumnCount - 1);
 
-        rngTarget.formulas = formulas;
-        context.Ctx.trackedObjects.add(rngTarget);
+//        let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
+//            insertRangeInfo.FirstRow,
+//            insertRangeInfo.FirstColumn,
+//            insertRangeInfo.RowCount,
+//            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+
+        tns.push(TnSetFormulas.Create(rangeTarget, formulas));
+//        rngTarget.formulas = formulas;
+//        context.Ctx.trackedObjects.add(rngTarget);
 
         // if there are any existing global names for this game, they will get deleted -- 
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
-        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+        tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2)));
 
-        GameFormatting.formatChampionshipText(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+        // delete any existing named ranges
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
 
-        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
+        tns.push(TnCreateGlobalName.Create(game.TopTeamCellName, insertRangeInfo.offset(0, 1, 0, 1)));
 
-        context.Ctx.trackedObjects.remove(rngTarget);
+        tns.push(...GameFormatting.tnsFormatChampionshipText(new RangeInfo(insertRangeInfo.LastRow, 1, insertRangeInfo.FirstColumn, 2)));
+
+        tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(insertRangeInfo.offset(1, 1, 0, 1)));
+
+//        context.Ctx.trackedObjects.remove(rngTarget);
 
         // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(context, appContext);
-        context.Ctx.trackedObjects.remove(rngTarget);
-        context.Ctx.trackedObjects.remove(rng);
-        context.Ctx.trackedObjects.remove(sheet);
-
+//        await game.Bind(context, appContext);
+//        context.Ctx.trackedObjects.remove(rngTarget);
+//        context.Ctx.trackedObjects.remove(rng);
+//        context.Ctx.trackedObjects.remove(sheet);
+//
         context.releaseCacheObjectsUntil(bookmark);
-        await context.sync();
+//        await context.sync();
 
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -98,13 +112,14 @@ export class StructureInsert
         set the text for the game info, and format the ranges
     ----------------------------------------------------------------------------*/
     static setAndFormatGameInfo(
-        sheet: Excel.Worksheet,
         gameInfoRange: RangeInfo,
         gameInfoRangeInfo: RangeInfo,
         game: IBracketGame,
         connectedTop: boolean,
-        connectedBottom: boolean)
+        connectedBottom: boolean): IIntention[]
     {
+        const tns: IIntention[] = [];
+
         let formulas: any[][] = [];
         let topString: string = game.FormatLoser();
         let bottomString: string = "";
@@ -154,24 +169,22 @@ export class StructureInsert
         formulas.push([""]);
         formulas.push([bottomString]);
 
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, gameInfoRange);
-        rng.formulas = formulas;
+        tns.push(TnSetFormulas.Create(gameInfoRange, formulas));
+        tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(gameInfoRangeInfo.offset(0, 1, 0, 1)));
+        tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(gameInfoRangeInfo.offset(2, 1, 0, 1)));
 
-        GameFormatting.formatGameInfoBodyTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(0, 1, 0, 1)));
-        GameFormatting.formatGameInfoTimeTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(2, 1, 0, 1)));
         if (!fCompressGame)
-            GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.offset(0, 1, 0, 1)), Excel.VerticalAlignment.top);
+            tns.push(...GameFormatting.tnsFormatGameInfoAdvanceToTextRequest(gameInfoRange.offset(0, 1, 0, 1), Excel.VerticalAlignment.top));
 
-        GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.bottomLeft().offset(0, 1, 0, 1)), Excel.VerticalAlignment.bottom);
+        tns.push(...GameFormatting.tnsFormatGameInfoAdvanceToTextRequest(gameInfoRange.bottomLeft().offset(0, 1, 0, 1), Excel.VerticalAlignment.bottom));
 
-        return;
+        return tns;
     }
 
     static setTargetFormulasForGame(
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
-        insertRange: Excel.Range,
-        gameInfoRangeInfo: RangeInfo): Excel.Range
+        gameInfoRangeInfo: RangeInfo): IIntention[]
     {
         // figure out how big the game will be (width,height)
         const formulas: any[][] = [];
@@ -180,6 +193,7 @@ export class StructureInsert
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
 
         formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
+
         // push padding for the underline row AND the number of blank lines 
         this.pushPadding(
             formulas,
@@ -195,15 +209,10 @@ export class StructureInsert
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
 
-        const rngTarget: Excel.Range = insertRange.worksheet.getRangeByIndexes(
-            insertRangeInfo.FirstRow,
-            insertRangeInfo.FirstColumn,
-            insertRangeInfo.RowCount,
-            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+        const range =
+            new RangeInfo(insertRangeInfo.FirstRow, insertRangeInfo.RowCount, insertRangeInfo.FirstColumn, insertRangeInfo.ColumnCount - 1);
 
-        rngTarget.formulas = formulas;
-
-        return rngTarget;
+        return [TnSetFormulas.Create(range, formulas)];
     }
 
     /*----------------------------------------------------------------------------
@@ -220,8 +229,10 @@ export class StructureInsert
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
         connectedBottom: boolean,
-        liteInsert: boolean)
+        liteInsert: boolean): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         const bookmark: string = "insertGameAtRange";
 
         context.pushTrackingBookmark(bookmark);
@@ -241,71 +252,72 @@ export class StructureInsert
             appContext.Messages.error(
                 ["There was no selection for the game insertion. You must select a cell to insert a game at."],
                 { topic: HelpTopic.FAQ_ManuallySelect });
-            return;
+            return tns;
         }
 
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
-
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-        context.Ctx.trackedObjects.add(rng);
+//        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+//        context.Ctx.trackedObjects.add(sheet);
+//
+//        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
+//        context.Ctx.trackedObjects.add(rng);
 
         const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
-        let rngTarget: Excel.Range = this.setTargetFormulasForGame(game, insertRangeInfo, rng, gameInfoRangeInfo);
+        tns.push(...this.setTargetFormulasForGame(game, insertRangeInfo, gameInfoRangeInfo));
 
-        context.Ctx.trackedObjects.add(rngTarget);
+//        context.Ctx.trackedObjects.add(rngTarget);
 
-        this.setAndFormatGameInfo(
-            rng.worksheet,
+        tns.push(...this.setAndFormatGameInfo(
             new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4, insertRangeInfo.FirstColumn, 1),
             gameInfoRangeInfo,
             game,
             connectedTop,
-            connectedBottom);
+            connectedBottom));
 
         if (!liteInsert)
         {
-            // if there are any existing global names for this game, they will get deleted -- 
+            // if there are any existing global names for this game, they will get deleted --
             // by now, we are committed to this game going in this spot
 
             // now we have to format the game and assign global names
-            GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-            await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2)));
+            tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
+            tns.push(TnCreateGlobalName.Create(game.TopTeamCellName, insertRangeInfo.offset(0, 1, 0, 1)));
 
-            GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
-            await Ranges.createOrReplaceNamedRange(context, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
+            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.bottomLeft().offset(0, 1, 0, 2)));
+            tns.push(...await Ranges.tnsDeleteGlobalName(context, game.BottomTeamCellName));
+            tns.push(TnCreateGlobalName.Create(game.BottomTeamCellName, insertRangeInfo.bottomLeft().offset(0, 1, 0, 1)));
 
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(insertRangeInfo.offset(1, 1, 0, 3)));
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(
+                new RangeInfo(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, 1, insertRangeInfo.FirstColumn, 3)));
 
             const vertLineRowCount = insertRangeInfo.RowCount - 2;
             const vertLineFirstRow = insertRangeInfo.FirstRow + 1;
-            const vertLineRange = rng.worksheet.getRangeByIndexes(vertLineFirstRow, insertRangeInfo.FirstColumn + 2, vertLineRowCount, 1);
-            GameFormatting.formatConnectingLineRangeRequest(vertLineRange);
+            const vertLineRangeInfo = new RangeInfo(vertLineFirstRow, vertLineRowCount, insertRangeInfo.FirstColumn + 2, 1);
+
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(vertLineRangeInfo));
 
             const linesText = [];
             for (let i = 0; i < vertLineRowCount; i++)
                 linesText.push([GameFormatting.s_mapGridRowType.get(gridRef.getRowType(vertLineFirstRow + i))]);
 
-            vertLineRange.formulas = linesText;
+            tns.push(TnSetFormulas.Create(vertLineRangeInfo, linesText));
 
-            context.Ctx.trackedObjects.remove(rngTarget);
-            rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
-            context.Ctx.trackedObjects.add(rngTarget);
+            const gameNumRange = new RangeInfo(gameInfoRangeInfo.FirstRow, 3, gameInfoRangeInfo.FirstColumn + 1, 1);
+            
+            tns.push(...GameFormatting.tnsFormatGameInfoGameNumberRequest(gameNumRange));
 
-            GameFormatting.formatGameInfoGameNumberRequest(rngTarget);
-            await Ranges.createOrReplaceNamedRange(context, game.GameNumberCellName, rngTarget);
+            tns.push(...await Ranges.tnsDeleteGlobalName(context, game.GameNumberCellName));
+            tns.push(TnCreateGlobalName.Create(game.GameNumberCellName, gameNumRange));
+
+            context.releaseCacheObjectsUntil(bookmark);
+
             // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-            await game.Bind(context, appContext);
+//            await game.Bind(context, appContext);
         }
 
-        context.Ctx.trackedObjects.remove(rngTarget);
-        context.Ctx.trackedObjects.remove(rng);
-        context.Ctx.trackedObjects.remove(sheet);
-        context.releaseCacheObjectsUntil(bookmark);
-        await context.sync();
-
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
