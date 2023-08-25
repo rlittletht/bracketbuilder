@@ -248,12 +248,6 @@ export class StructureRemove
                     [],
                     [f2[0][0]]
                 ];
-//            formulas.push([]);
-//            formulas[0] = [];
-//            formulas[0].push(f1[0][0]);
-//            formulas.push([]);
-//            formulas.push([]);
-//            formulas[2].push(f2[0][0]);
         }
         else
         {
@@ -339,17 +333,11 @@ export class StructureRemove
     {
         const tns = [];
 
-        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.TopTeamCellName) != null)
-            tns.push(TnDeleteGlobalName.Create(game.TopTeamCellName));
-        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.BottomTeamCellName) != null)
-            tns.push(TnDeleteGlobalName.Create(game.BottomTeamCellName));
-        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.GameNumberCellName) != null)
-            tns.push(TnDeleteGlobalName.Create(game.GameNumberCellName));
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.BottomTeamCellName));
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.GameNumberCellName));
 
         return tns;
-//        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
-//        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
-//        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
     }
 
     /*----------------------------------------------------------------------------
@@ -389,16 +377,6 @@ export class StructureRemove
 
             if (!liteRemove)
                 tns.push(...await this.removeNamedRanges(context, game));
-            /*
-                        // obliterate can't deal with the named ranges (there's no way to map
-                        // range back to named item), but we know the names, so we can delete them
-                        AppContext.checkpoint("remgm.6");
-                        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
-                        AppContext.checkpoint("remgm.7");
-                        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
-                        AppContext.checkpoint("remgm.8");
-                        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
-                        AppContext.checkpoint("remgm.9");*/
         }
 
         AppContext.checkpoint("remgm.4");

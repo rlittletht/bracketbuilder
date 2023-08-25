@@ -50,12 +50,6 @@ export class StructureInsert
             return tns;
         }
 
-//        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-//        context.Ctx.trackedObjects.add(sheet);
-//
-//        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-//        context.Ctx.trackedObjects.add(rng);
-
         // figure out how big the game will be (width,height)
         let formulas: any[][] = [];
 
@@ -67,17 +61,9 @@ export class StructureInsert
         let rangeTarget =
             new RangeInfo(insertRangeInfo.FirstRow, insertRangeInfo.RowCount, insertRangeInfo.FirstColumn, insertRangeInfo.ColumnCount - 1);
 
-//        let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
-//            insertRangeInfo.FirstRow,
-//            insertRangeInfo.FirstColumn,
-//            insertRangeInfo.RowCount,
-//            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
-
         tns.push(TnSetFormulas.Create(rangeTarget, formulas));
-//        rngTarget.formulas = formulas;
-//        context.Ctx.trackedObjects.add(rngTarget);
 
-        // if there are any existing global names for this game, they will get deleted -- 
+        // if there are any existing global names for this game, they will get deleted --
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
@@ -92,16 +78,7 @@ export class StructureInsert
 
         tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(insertRangeInfo.offset(1, 1, 0, 1)));
 
-//        context.Ctx.trackedObjects.remove(rngTarget);
-
-        // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-//        await game.Bind(context, appContext);
-//        context.Ctx.trackedObjects.remove(rngTarget);
-//        context.Ctx.trackedObjects.remove(rng);
-//        context.Ctx.trackedObjects.remove(sheet);
-//
         context.releaseCacheObjectsUntil(bookmark);
-//        await context.sync();
 
         return tns;
     }
@@ -236,16 +213,6 @@ export class StructureInsert
         const bookmark: string = "insertGameAtRange";
 
         context.pushTrackingBookmark(bookmark);
-        // don't automatically remove games anymore in this function -- callers need to
-        // take care of that now
-
-        /*
-        // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(context);
-
-        if (game.IsLinkedToBracket)
-            await this.findAndRemoveGame(appContext, context, game);
-        */
 
         if (insertRangeInfo == null)
         {
@@ -255,17 +222,9 @@ export class StructureInsert
             return tns;
         }
 
-//        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-//        context.Ctx.trackedObjects.add(sheet);
-//
-//        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-//        context.Ctx.trackedObjects.add(rng);
-
         const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
         tns.push(...this.setTargetFormulasForGame(game, insertRangeInfo, gameInfoRangeInfo));
-
-//        context.Ctx.trackedObjects.add(rngTarget);
 
         tns.push(...this.setAndFormatGameInfo(
             new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4, insertRangeInfo.FirstColumn, 1),
@@ -312,9 +271,6 @@ export class StructureInsert
             tns.push(TnCreateGlobalName.Create(game.GameNumberCellName, gameNumRange));
 
             context.releaseCacheObjectsUntil(bookmark);
-
-            // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-//            await game.Bind(context, appContext);
         }
 
         return tns;

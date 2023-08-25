@@ -164,7 +164,7 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", false);
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", true);
 
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
@@ -177,7 +177,7 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
             _TimerStack.popTimer();
 
-            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", false);
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", true);
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
