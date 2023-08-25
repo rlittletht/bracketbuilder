@@ -403,12 +403,15 @@ export class StructureInsert
             let count: number = 0;
             let fields: string[] = [];
 
-            [maxTime, count, fields] = grid.getLatestTimeForDate(date);
-            let nextTime: number;
-            let field: string;
-            [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
-            game.SetStartTime(nextTime);
-            game.SetField(field);
+            if (date != null)
+            {
+                [maxTime, count, fields] = grid.getLatestTimeForDate(date);
+                let nextTime: number;
+                let field: string;
+                [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
+                game.SetStartTime(nextTime);
+                game.SetField(field);
+            }
         }
 
         const [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
@@ -450,7 +453,7 @@ export class StructureInsert
 
         _TimerStack.pushTimer("insertGameAtSelection:gridBuildFromBracket");
         // first make sure we have a complete grid for the bracket
-        let grid: Grid = await StructureEditor.gridBuildFromBracket(context);
+        let grid: Grid = await StructureEditor.gridBuildFromBracket(context, appContext.SelectedBracket);
         _TimerStack.popTimer();
 
         _TimerStack.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");

@@ -371,7 +371,7 @@ export default class App extends React.Component<AppProps, AppState>
     {
         this.m_appContext.setHeroListDirty(false);
 
-        _TimerStack.pushTimer("rebuildHeroList", false);
+        _TimerStack.pushTimer("rebuildHeroList", true);
 
         const bookmark: string = "rebuildHeroList";
         context.pushTrackingBookmark(bookmark);
@@ -380,7 +380,7 @@ export default class App extends React.Component<AppProps, AppState>
             "buildFastFormulaAreas",
             async () =>
             {
-                await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+                await FastFormulaAreas.populateAllCaches(context);
             });
         
         await _TimerStack.timeThisAsync(

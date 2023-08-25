@@ -118,6 +118,9 @@ export class Grid
     {
         column = column - this.m_firstGridPattern.FirstColumn;
 
+        if (column < 0 || column >= this.m_datesForGrid.length)
+            return new Date();
+
         return this.m_datesForGrid[column];
     }
 
@@ -1002,8 +1005,8 @@ export class Grid
 
         _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
-
+        await FastFormulaAreas.populateAllCaches(context);
+        
         // the following should just get what we already populated above
         const fastFormulaAreas = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         const fastRangeAreasSmaller: FastRangeAreas =

@@ -188,7 +188,7 @@ export class ApplyGridChange
         _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
         const removeTns: Intentions = new Intentions();
-        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+        await FastFormulaAreas.populateAllCaches(context);
 
         // do all the removes first
         for (let item of changes)
@@ -210,7 +210,7 @@ export class ApplyGridChange
         _TimerStack.pushTimer("applyChanges:executeAddChange");
 
         await RangeCaches.PopulateIfNeeded(context, appContext.SelectedBracket);
-        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+        await FastFormulaAreas.populateAllCaches(context);
 
         // populate the global names cache
         await context.getTrackedItemOrPopulate(

@@ -26,6 +26,7 @@ export interface StaticConfig
     perfTimers: boolean;
     logTrackingCache: boolean;
     appLogging: boolean;
+    throwOnCacheMisses: boolean;
 }
 
 const isLocalHost = true; //  window.location.host.indexOf('localhost') > -1;
@@ -56,5 +57,6 @@ export const s_staticConfig: StaticConfig =
     perfTimers: true,
     logTrackingCache: isLocalHost && false,
     logMoveTree: true && isLocalHost,
-    appLogging: true && isLocalHost
+    appLogging: true && isLocalHost,
+    throwOnCacheMisses: true
 }

@@ -4,7 +4,7 @@ import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
 import { GridBuilder } from "../../Brackets/GridBuilder";
 import { CoachTransition } from "../../Coaching/CoachTransition";
 import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
@@ -33,6 +33,8 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            await FastFormulaAreas.populateAllCaches(context);
+
             await this.copySelectionToClipboard(appContext, context);
             appContext.setHeroListDirty();
             await appContext.rebuildHeroListIfNeeded(context);
@@ -54,6 +56,8 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            await FastFormulaAreas.populateAllCaches(context);
+
             await this.syncBracketChangesFromGameSheet(appContext, context);
             appContext.setHeroListDirty();
             await appContext.rebuildHeroListIfNeeded(context);
@@ -95,6 +99,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             context.pushTrackingBookmark('undo');
+            await FastFormulaAreas.populateAllCaches(context);
+
             await _undoManager.undo(appContext, context);
             context.releaseCacheObjectsUntil('undo');
 
@@ -118,7 +124,9 @@ export class StructureEditor
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            await this.applyFinalFormatting(appContext, context, await this.getBracketName(context));
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.applyFinalFormatting(appContext, context, appContext.SelectedBracket);
             appContext.setHeroListDirty();
             await appContext.rebuildHeroListIfNeeded(context);
         };
@@ -139,6 +147,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             context.pushTrackingBookmark('redo');
+
+            await FastFormulaAreas.populateAllCaches(context);
             await _undoManager.redo(appContext, context);
             context.releaseCacheObjectsUntil('redo');
 
@@ -170,7 +180,7 @@ export class StructureEditor
             context.pushTrackingBookmark(bookmark);
 
             _TimerStack.pushTimer("populate FastFormulas");
-            await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+            await FastFormulaAreas.populateAllCaches(context);
             _TimerStack.popTimer();
 
             await StructureInsert.insertGameAtSelection(appContext, context, game);
@@ -203,7 +213,8 @@ export class StructureEditor
         {
             const bookmark: string = "repairGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
-            await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
+            await FastFormulaAreas.populateAllCaches(context);
+            await this.repairGameAtSelection(appContext, context, appContext.SelectedBracket);
             context.releaseCacheObjectsUntil(bookmark);
 
             appContext.Teaching.transitionState(CoachTransition.PullChanges);
@@ -224,8 +235,9 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             _moveSelection = await Ranges.createRangeInfoForSelection(context);
+            await FastFormulaAreas.populateAllCaches(context);
             // try to extend the selection
-            let grid: Grid = await this.gridBuildFromBracket(context);
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
             const [item, kind] = grid.getFirstOverlappingItem(_moveSelection);
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
@@ -260,9 +272,11 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "insertGameAtSelection";
+            await FastFormulaAreas.populateAllCaches(context);
+
             context.pushTrackingBookmark(bookmark);
 
-            await this.doGameMoveToSelection(appContext, context, _moveSelection, await this.getBracketName(context));
+            await this.doGameMoveToSelection(appContext, context, _moveSelection, appContext.SelectedBracket);
             context.releaseCacheObjectsUntil(bookmark);
 
             appContext.setHeroListDirty();
@@ -286,7 +300,9 @@ export class StructureEditor
         {
             const bookmark: string = "removeGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
-            await StructureRemove.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await StructureRemove.findAndRemoveGame(appContext, context, null, appContext.SelectedBracket);
             context.releaseCacheObjectsUntil(bookmark);
 
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
@@ -313,6 +329,7 @@ export class StructureEditor
         {
             const bookmark: string = "removeGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
             context.releaseCacheObjectsUntil(bookmark);
@@ -348,7 +365,7 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async syncBracketChangesFromGameSheet(appContext: IAppContext, context: JsCtx)
     {
-        const bracketName: string = await this.getBracketName(context);
+        const bracketName: string = appContext.SelectedBracket;
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 
@@ -440,7 +457,7 @@ export class StructureEditor
 
         get the bracketName from the workbook
     ----------------------------------------------------------------------------*/
-    static async getBracketName(context: JsCtx): Promise<string>
+    static async getBracketName_Deprecated(context: JsCtx): Promise<string>
     {
         const values: any[][] = await Ranges.getValuesFromNamedCellRange(context, "BracketChoice");
         return values[0][0];
@@ -451,6 +468,22 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async getFieldCount(context: JsCtx): Promise<number>
     {
+        const range = await RangeInfo.getRangeInfoForNamedCellFaster(context, "FieldCount");
+
+        if (range != null)
+        {
+            const fastFormulas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+
+            if (fastFormulas != null)
+                return fastFormulas.getValuesForRangeInfo(range)[0][0];
+        }
+
+        if (s_staticConfig.throwOnCacheMisses)
+        {
+            debugger;
+            throw new Error("missed cache in getFieldCount");
+        }
+
         const values: any[][] = await Ranges.getValuesFromNamedCellRange(context, "FieldCount");
         return values[0][0];
     }
@@ -482,9 +515,9 @@ export class StructureEditor
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.gridBuildFromBracket
     ----------------------------------------------------------------------------*/
-    static async gridBuildFromBracket(context: any): Promise<Grid>
+    static async gridBuildFromBracket(context: any, bracketChoice: string): Promise<Grid>
     {
-        const grid: Grid = await Grid.createGridFromBracket(context, await this.getBracketName(context));
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketChoice);
 
         return grid;
     }
@@ -496,7 +529,7 @@ export class StructureEditor
     {
         let selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
-        let grid: Grid = await this.gridBuildFromBracket(context);
+        let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
         const [item, kind] = grid.getFirstOverlappingItem(selection);
 
         if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
@@ -565,11 +598,12 @@ export class StructureEditor
         appContext;
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            let grid: Grid = await this.gridBuildFromBracket(context);
+            await FastFormulaAreas.populateAllCaches(context);
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
 
             grid.logGrid();
             
-            console.log(`rank: ${GridRanker.getGridRank(grid, await this.getBracketName(context))}`)
+            console.log(`rank: ${GridRanker.getGridRank(grid, appContext.SelectedBracket)}`)
             await appContext.rebuildHeroListIfNeeded(context);
         };
 

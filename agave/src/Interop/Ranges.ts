@@ -346,7 +346,7 @@ export class RangeInfo
         try
         {
             const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
-            await context.sync();
+            await context.sync("getRangeInfoForNamedCell");
 
             if (nameObject.isNullObject)
                 return null;
@@ -367,6 +367,9 @@ export class RangeInfo
         }
     }
 
+    // problem is i'm expecting items in the caceh, but now I've pushed naems into the cache (because items
+    // isn't valid yet until after sync.)  need instead maybe to do al the track adds after the sync? should be fine...
+    //'
     static async getRangeInfoForNamedCellFaster(context: JsCtx, name: string): Promise<RangeInfo>
     {
         const items =
@@ -376,7 +379,7 @@ export class RangeInfo
                 {
                     context.Ctx.workbook.load("names");
                     await context.sync("GTI names");
-                    return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+                    return { type: ObjectType.JsObject, o: context.Ctx.workbook.names };
                 });
 
         if (!items)
@@ -636,7 +639,7 @@ export class Ranges
         try
         {
             const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
-            await context.sync();
+            await context.sync("getRangeForNamedCell1");
 
             if (nameObject.isNullObject)
                 return null;
@@ -647,7 +650,7 @@ export class Ranges
             range.load("columnIndex");
             range.load("columnCount");
 
-            await context.sync();
+            await context.sync("getRangeForNamedCell2");
             return nameObject.getRange();
         }
         catch (e)
@@ -665,7 +668,7 @@ export class Ranges
     {
         const range: Excel.Range = await Ranges.getRangeForNamedCell(context, name);
         range.load("values");
-        await context.sync();
+        await context.sync("getValuesFromNamedCellRange");
 
         return range.values;
     }

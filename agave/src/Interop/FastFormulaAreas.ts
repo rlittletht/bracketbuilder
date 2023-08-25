@@ -13,6 +13,7 @@ export class FastFormulaAreasItems
     static GameData = "gameData";
     static BracketDefs = "bracket-defs";
     static BracketInfo = "bracket-info";
+    static GlobalNames = "workbookNamesItems";
 }
 
 class FormulaAreasItem
@@ -256,7 +257,7 @@ export class FastFormulaAreas
                     _TimerStack.pushTimer(`addMoreRows ${this.m_sheetName}`);
 
                     const rangeAreas = FastFormulaAreas.loadRangeAreasFromRangeInfo(context, range, this.m_sheetName);
-                    await context.sync();
+                    await context.sync("addMoreRows");
                     _TimerStack.popTimer();
                     return { type: ObjectType.JsObject, o: rangeAreas};
                 });
@@ -336,7 +337,13 @@ export class FastFormulaAreas
                 });
     }
 
-    static async populateFastFormulaAreaCachesForAllSheets(context: JsCtx): Promise<FastFormulaAreaCachesCollection>
+    /*----------------------------------------------------------------------------
+        %%Function: FastFormulaAreas.populateAllCaches
+
+        Populate all the caches we know about, including all of the formula areas
+        as well as the workbook names items.
+    ----------------------------------------------------------------------------*/
+    static async populateAllCaches(context: JsCtx): Promise<FastFormulaAreaCachesCollection>
     {
         const name = this.s_allSheetsCache;
 
@@ -359,14 +366,20 @@ export class FastFormulaAreas
                     areas.m_sheetName = sheetName;
 
                     const rangeAreas = this.loadRangeAreasFromRangeInfo(context, range, sheetName);
+                    context.addCacheObject(`${name}-rangeAreas`, { type: ObjectType.JsObject, o: rangeAreas });
+
                     areas.m_areasItems.push(new FormulaAreasItem(rangeAreas, range));
 
                     collection.add(type, areas);
                 }
+
+                context.Ctx.workbook.load("names");
+
                 try
                 {
                     // one sync to rule them all
-                    await context.sync();
+                    await context.sync("populateAllCaches");
+                    context.addCacheObject("workbookNamesItems", { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items });
                 }
                 catch (e)
                 {

@@ -17,6 +17,7 @@ import { Grid, GridColumnType } from "../Grid";
 import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
+import { s_staticConfig } from "../../StaticConfig";
 
 export class StructureRemove
 {
@@ -158,6 +159,11 @@ export class StructureRemove
         }
         else
         {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("missed cache in getTeamSourceNameOverrideValueForNamedRange");
+            }
             let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
             if (range == null)
@@ -205,6 +211,11 @@ export class StructureRemove
         }
         else
         {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("missed cache in getTeamSourceNameValueForNamedRange");
+            }
             let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
             if (range == null)
@@ -251,6 +262,11 @@ export class StructureRemove
         }
         else
         {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("missed cache in getFieldAndTimeOverrideValuesForNamedRange");
+            }
             let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
             if (range == null)

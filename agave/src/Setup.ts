@@ -274,6 +274,8 @@ export class SetupBook
                 appContext.WorkbookSetupState = setupState;
 
                 appContext.setHeroListDirty();
+                RangeCaches.SetDirty(true);
+
                 await appContext.rebuildHeroListIfNeeded(context);
                 context.releaseAllCacheObjects();
             });
