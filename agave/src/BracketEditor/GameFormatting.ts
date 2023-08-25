@@ -103,6 +103,7 @@ export class GameFormatting
     {
         lineRange.format.fill.color = "black";
         lineRange.format.font.color = "white";
+        lineRange.numberFormat = [[";;;"]];
     }
 
     /*----------------------------------------------------------------------------
@@ -115,7 +116,9 @@ export class GameFormatting
         if (range == null)
             return [];
 
-        return [TnSetFillAndFontColor.Create(range, "black", "white")];
+        return [
+            TnSetFillAndFontColor.Create(range, "black", "black"),
+            TnSetNumberFormat.Create(range, [[";;;"]])];
     }
 
     /*----------------------------------------------------------------------------

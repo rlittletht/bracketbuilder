@@ -89,6 +89,7 @@
                     <li><a href="./FAQ.html#insertLocation">Insert locations</a></li>
                     <li><a href="./FAQ.html#insertFailed">Insert failures</a></li>
                     <li><a href="./FAQ.html#exceptions">Fatal Errors/Exceptions</a></li>
+                    <li><a href="./FAQ.html#bracketDef">Custom Bracket Definitions</a></li>
 
                 </ul>
                 <li><a href="./Licenses.html">Licenses</a></li>
@@ -371,20 +372,35 @@
                 that will also undo the bracket adjustments
             </p>
             <h4>Overlapping game results</h4>
-        <zoomableTall>
-            <floatRight style="width: 10vw">
-                <img src="Images/OverlappingOutput.png" class="whiteBackSmaller"/>
-            </floatRight>
-        </zoomableTall>
-        <p>
-            One of the things that <prodRef>BracketBuilder</prodRef> checks when inserting a game is whether or not an existing
-            game on the bracket is going to have a line coming out of it to another game. </p>
-        <p>For example, if you have a game between the two games that need to play each other, when you try to place that next game,
-            the insert will fail because the result of that game in the middle would run into the game you are about to place. To fix this,
-            you have to either remove the game in the middle, or rearrange the grid so the two games that feed into the next game are next to
-            each other.  NOTE: in reality, <prodRef>BracketBuilder</prodRef> knows how to fix this particular example and would automatically
-            rearrange the grid for you. But in a bigger bracket, with more games already played, it probably won't be able to fix it
-            automatically.
+            <zoomableTall>
+                <floatRight style="width: 10vw">
+                    <img src="Images/OverlappingOutput.png" class="whiteBackSmaller" />
+                </floatRight>
+            </zoomableTall>
+            <p>
+                One of the things that <prodRef>BracketBuilder</prodRef> checks when inserting a game is whether or not an existing
+                game on the bracket is going to have a line coming out of it to another game.
+            </p>
+            <p>
+                For example, if you have a game between the two games that need to play each other, when you try to place that next game,
+                the insert will fail because the result of that game in the middle would run into the game you are about to place. To fix this,
+                you have to either remove the game in the middle, or rearrange the grid so the two games that feed into the next game are next to
+                each other.  NOTE: in reality, <prodRef>BracketBuilder</prodRef> knows how to fix this particular example and would automatically
+                rearrange the grid for you. But in a bigger bracket, with more games already played, it probably won't be able to fix it
+                automatically.
+            </p>
+            <h4>Feeder conflicts</h4>
+            <p>
+                Every game can have up to two lines, or feeders, coming in to it. These are the winning teams from previous games. Every game
+                also has an outgoing feeder, which is the winner of the game. When <prodRef>BracketBuilder</prodRef> tries to place games,
+                it uses what it knows about the bracket structure to connect games with incoming and outgoing feeders. If the games on the
+                bracket are placed in a way that makes it impossible to connect games with their sources or results, then you will
+                get an error about not being able to connect feeder lines.
+            </p>
+            <p>
+                Unfortunately, the only way to fix this at this point is to either <cmd>Undo</cmd> or remove games to the point where
+                you can manually place games to make things work. Alternatively, you can just start over with a clean bracket and use
+                what you know about how the bracket is going to lay out in order to manually choose places for the games to go.
             </p>
             <h3><a name="exceptions">What do I do with fatal errors/exceptions?</a></h3>
             <zoomableTall>
@@ -404,6 +420,21 @@
                 unless you explicitly ask us to in your email message.
             </p>
             <p>THANK YOU from the Traynrex Red engineering team.</p>
+        <h3><a name="bracketDefs">What if I want a different kind of bracket?</a></h3>
+        <p><prodRef>BracketBuilder</prodRef> doesn't know how to make anything other than a double-elimination bracket that progresses
+            from left to right. It also defaults to making a standard double elimination bracket which has a what-if game at the end of the
+            tournament. There are things you can do to customize things.</p>
+        <h4>Modified Double Elimination</h4>
+        <p>Little League also supports a <em>Modified Double Eliminiation</em> bracket where the tournament progress like a standard
+            double elimination, but the championship game is a winner-take-all game. There is no what-if game. This means that if the
+            undefeated team loses the championship game, then the tournament is still over even though that team only lost one game
+            in the tournament.</p>
+            But what if you want a double elimination bracket that has a different structure (winners and losers
+            going to different games)? Well, it <em>is possible</em> to do this, but its not easy, and the resulting bracket won't be
+            compatibile with the official Little League double eliminination tournament brackets.
+        </p>
+        <h4></h4>
+        <p>If this is what you really want, though, you can do it.</p>
         </article>
 
     </main>
