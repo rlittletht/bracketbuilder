@@ -17,7 +17,7 @@ import { CoachTransition } from "../../Coaching/CoachTransition";
 import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
 import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 import { JsCtx } from "../../Interop/JsCtx";
-import { RangeCaches } from "../../Interop/RangeCaches";
+import { RangeCaches, RangeCacheItemType } from "../../Interop/RangeCaches";
 import { TableIO } from "../../Interop/TableIO";
 import { _TimerStack } from "../../PerfTimer";
 import { SetupBook, SetupState } from "../../Setup";
@@ -482,8 +482,8 @@ export default class App extends React.Component<AppProps, AppState>
 
             let gameDefs: any[] = null;
 
-            const { rangeInfo: rangeBracketDataBody, formulaCacheType: rangeBracketCacheType } = RangeCaches.get(RangeCaches.s_bracketDefDataBody);
-            const { rangeInfo: rangeBracketHeader } = RangeCaches.get(RangeCaches.s_bracketDefHeader);
+            const { rangeInfo: rangeBracketDataBody, formulaCacheType: rangeBracketCacheType } = RangeCaches.getCacheByType(RangeCacheItemType.BracketDefBody);
+            const { rangeInfo: rangeBracketHeader } = RangeCaches.getCacheByType(RangeCacheItemType.BracketDefHeader);
             if (rangeBracketDataBody && rangeBracketHeader)
             {
                 const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeBracketCacheType);

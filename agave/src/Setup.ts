@@ -10,7 +10,7 @@ import { FastTables } from "./Interop/FastTables";
 import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";
 import { RangeInfo } from "./Interop/Ranges";
-import { RangeCaches } from "./Interop/RangeCaches";
+import { RangeCaches, RangeCacheItemType } from "./Interop/RangeCaches";
 
 export class SetupState
 {
@@ -145,7 +145,7 @@ export class SetupBook
             if (bracketChoice == null)
                 return [SetupState.NoBracketChoice, null];
 
-            if (RangeCaches.get(RangeCaches.s_bracketDefDataBody) != null)
+            if (RangeCaches.getCacheByType(RangeCacheItemType.BracketDefBody) != null)
                 return [SetupState.Ready, bracketChoice];
         }
 

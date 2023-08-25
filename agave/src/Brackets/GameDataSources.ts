@@ -13,7 +13,7 @@ import { JsCtx } from "../Interop/JsCtx";
 import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnSetValues } from "../Interop/Intentions/TnSetValue";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
-import { RangeCaches } from "../Interop/RangeCaches";
+import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 
 export interface TeamNameMap
 {
@@ -159,7 +159,7 @@ export class GameDataSources
         alwaysOverwriteIfGiven: boolean): { undoItem: UndoGameDataItem, tns: IIntention[] }
     {
         let undoGameDataItem: UndoGameDataItem = new UndoGameDataItem(gameNum, undefined, undefined, undefined, undefined);
-        const rangeCache = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+        const rangeCache = RangeCaches.getCacheByType(RangeCacheItemType.FieldsAndTimesBody);
 
         if (rangeCache == null)
             throw new Error("caches not setup for tnsUpdateGameInfoIfNotSet");

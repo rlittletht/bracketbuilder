@@ -8,7 +8,7 @@ import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { OADate } from "../Interop/Dates";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 import { JsCtx } from "../Interop/JsCtx";
-import { RangeCaches } from "../Interop/RangeCaches";
+import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { ObjectType } from "../Interop/TrackingCache";
 import { _TimerStack } from "../PerfTimer";
@@ -403,7 +403,7 @@ export class BracketGame implements IBracketGame
 
                 let data = null;
 
-                const { rangeInfo: gameDataRange, formulaCacheType: type } = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+                const { rangeInfo: gameDataRange, formulaCacheType: type } = RangeCaches.getCacheByType(RangeCacheItemType.FieldsAndTimesBody);
                 if (gameDataRange != null)
                 {
                     const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, type);

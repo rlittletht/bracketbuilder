@@ -7,7 +7,7 @@ import { GameFormatting } from "../GameFormatting";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { StructureEditor } from "./StructureEditor";
-import { RangeCaches } from "../../Interop/RangeCaches";
+import { RangeCaches, RangeCacheItemType } from "../../Interop/RangeCaches";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { s_staticConfig } from "../../StaticConfig";
 
@@ -20,7 +20,7 @@ export class Prioritizer
     {
         appContext;
         const priorityMap: Map<string, number> = new Map<string, number>();
-        const dataBodyRange = RangeCaches.get(RangeCaches.s_teamNamesDataBody);
+        const dataBodyRange = RangeCaches.getCacheByType(RangeCacheItemType.TeamNamesBody);
         let values: any[][];
 
         if (dataBodyRange)
