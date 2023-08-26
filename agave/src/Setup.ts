@@ -221,12 +221,22 @@ export class SetupBook
                 await _bracketManager.populateBracketsIfNecessary(context);
                 brackets.push(..._bracketManager.getBrackets());
             }
-            catch (e)
+            catch (error)
             {
-                appContext.Messages.message([
-                    "There are no custom brackets defined in this workbook.",
-                    "Make sure the bracket definitions are on a sheet named 'BracketDefs' and the tables are correctly named."],
-                    { topic: HelpTopic.FAQ_CustomBrackets });
+                if (error instanceof TrError)
+                {
+                    appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
+                }
+                else
+                {
+                    appContext.Messages.error(
+                        ["There are either no custom brackets defined in this workbook, or there is a problem with the definitions.",
+                            "Make sure the bracket definitions are on a sheet named 'BracketDefs' and the tables are correctly named.",
+                            "DETAILS:",
+                            ...StatusBox.linesFromError(error)
+                        ],
+                        { topic: HelpTopic.FAQ_CustomBrackets });
+                }
             }
         };
 
