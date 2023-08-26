@@ -59,7 +59,7 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
 
         Build the hero list of commands
     ----------------------------------------------------------------------------*/
-    static buildHeroList(setupState: SetupState, setBracketOptionsDelegate: SetBracketOptionsDelegate): [HeroListFormat, string, HeroListItem[]]
+    static buildHeroList(setupState: SetupState, setBracketOptionsDelegate: SetBracketOptionsDelegate, includeCustomBracketLoadOption: boolean): [HeroListFormat, string, HeroListItem[]]
     {
         let listItems: HeroListItem[] = [];
 
@@ -82,29 +82,32 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
                     stateChecker: null,
                     delegate: SetupBook.buildSpecificBracket,
                 });
-            listItems.push(
-                {
-                    icon: "BulkUpload",
-                    primaryText: "Load custom brackets",
-                    cursor: "cursorPointer",
-                    stateChecker: null,
-                    delegate: async (appContext: IAppContext) =>
+            if (includeCustomBracketLoadOption)
+            {
+                listItems.push(
                     {
-                        const brackets = await SetupBook.loadCustomBrackets(appContext);
-                        const bracketOptions: BracketOption[] = [];
-
-                        for (let _bracket of brackets)
+                        icon: "BulkUpload",
+                        primaryText: "Load custom brackets",
+                        cursor: "cursorPointer",
+                        stateChecker: null,
+                        delegate: async (appContext: IAppContext) =>
                         {
-                            bracketOptions.push(
-                                {
-                                    key: _bracket.tableName.substr(0, _bracket.tableName.length - 7),
-                                    name: `${_bracket.name}*`
-                                });
-                        }
-                        setBracketOptionsDelegate(bracketOptions);
-                        return false;
-                    },
-                });
+                            const brackets = await SetupBook.loadCustomBrackets(appContext);
+                            const bracketOptions: BracketOption[] = [];
+
+                            for (let _bracket of brackets)
+                            {
+                                bracketOptions.push(
+                                    {
+                                        key: _bracket.tableName.substr(0, _bracket.tableName.length - 7),
+                                        name: `${_bracket.name}*`
+                                    });
+                            }
+                            setBracketOptionsDelegate(bracketOptions);
+                            return false;
+                        },
+                    });
+            }
         }
 
         return [HeroListFormat.Vertical, "Let's get started!", listItems];

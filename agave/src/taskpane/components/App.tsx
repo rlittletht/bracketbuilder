@@ -52,6 +52,7 @@ export interface AppState
 
     errorMessage: string;
     bracketOptions: BracketOption[];
+    customBracketOptions: BracketOption[];
     games: IBracketGame[];
     topToolbar: ToolbarItem[];
     debugToolbar: ToolbarItem[];
@@ -76,6 +77,7 @@ export default class App extends React.Component<AppProps, AppState>
             heroTitle: "",
             errorMessage: "",
             bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
+            customBracketOptions: [],
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
@@ -354,7 +356,7 @@ export default class App extends React.Component<AppProps, AppState>
         return this.state.games;
     }
 
-    mergeBracketOptions(options: BracketOption[])
+    mergeBracketOptions(customOptions: BracketOption[])
     {
         const builtinOptions = BracketDefBuilder.getStaticAvailableBrackets();
         const map = new Map<string, BracketOption>();
@@ -362,7 +364,7 @@ export default class App extends React.Component<AppProps, AppState>
         for (let _o of builtinOptions)
             map.set(_o.key, _o);
 
-        for (let _o of options)
+        for (let _o of customOptions)
             map.set(_o.key, _o);
 
         const newOptions = [];
@@ -372,7 +374,8 @@ export default class App extends React.Component<AppProps, AppState>
 
         this.setState(
             {
-                bracketOptions: newOptions
+                bracketOptions: newOptions,
+                customBracketOptions: customOptions
             }
         );
     }
@@ -437,7 +440,7 @@ export default class App extends React.Component<AppProps, AppState>
             "buildToolbars",
             async () =>
             {
-                [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState, this.mergeBracketOptions.bind(this));
+                [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState, this.mergeBracketOptions.bind(this), this.state.customBracketOptions.length > 0);
 
                 if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
                 {
@@ -536,26 +539,15 @@ export default class App extends React.Component<AppProps, AppState>
         let setupState: SetupState;
         let bracketChoice: string;
 
-////
-//        let format: HeroListFormat;
-//        let list: HeroListItem[];
-//        let title: string;
-//
-//        [format, title, list] = HeroList.buildHeroList(setupState);
-//        // figure out our top level menu.... Setup, or bracket editing
-//        this.setState(
-//            {
-//                heroListFormat: format,
-//                heroList: list,
-//                heroTitle: title,
-//                games: []
-//            });
-
         // now grab the games async and have it update
         await Excel.run(
             async (ctx) =>
             {
                 const context = new JsCtx(ctx);
+
+                const customBracketOptions = await SetupBook.getCustomBracketOptions(context, this.m_appContext);
+                this.mergeBracketOptions(customBracketOptions);
+
                 [setupState, bracketChoice] = await SetupBook.getSetupState(context);
                 if (setupState != SetupState.Ready)
                     this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
@@ -572,7 +564,7 @@ export default class App extends React.Component<AppProps, AppState>
                 let list: HeroListItem[];
                 let title: string;
         
-                [format, title, list] = HeroList.buildHeroList(setupState, this.mergeBracketOptions.bind(this));
+                [format, title, list] = HeroList.buildHeroList(setupState, this.mergeBracketOptions.bind(this), customBracketOptions.length > 0);
                 // figure out our top level menu.... Setup, or bracket editing
                 this.setState(
                     {
@@ -690,6 +682,13 @@ export default class App extends React.Component<AppProps, AppState>
             root: { overflow: 'auto', padding: "1rem" }
         };
 
+
+
+        const customOptionText =
+            this.state.customBracketOptions.length > 0
+                ? (<p>If you want to use a custom-built bracket, you can load the bracket by clicking on <em>Load Custom Brackets</em></p>)
+                : (<span />);
+
         const welcome = this.m_appContext.WorkbookSetupState == SetupState.Ready || this.m_appContext.WorkbookSetupState == "U"
             ? ""
             : (
@@ -698,7 +697,8 @@ export default class App extends React.Component<AppProps, AppState>
                     <p>
                     </p>
                     <p>To get started, choose the size of your bracket above and then click
-                        the <em>BuildThisBracket</em> button!</p>
+                        the <em>Build This Bracket!</em> button!</p>
+                    {customOptionText}
                     <p>For help, click on the ? button on the toolbar, or just hover over a button to get
                         a tip about what it does.
                     </p>

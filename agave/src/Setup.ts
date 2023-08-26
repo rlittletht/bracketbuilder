@@ -1,7 +1,7 @@
 
 import { IAppContext } from "./AppContext/AppContext";
 import { BracketInfoBuilder as BracketDataBuilder, BracketInfoBuilder } from "./Brackets/BracketInfoBuilder";
-import { BracketDefBuilder } from "./Brackets/BracketDefBuilder";
+import { BracketDefBuilder, BracketOption } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
@@ -195,6 +195,23 @@ export class SetupBook
         return true;
     }
 
+    static async getCustomBracketOptions(context: JsCtx, appContext: IAppContext): Promise<BracketOption[]>
+    {
+        const brackets = await SetupBook.loadCustomBracketsAsync(context, appContext);
+        const bracketOptions: BracketOption[] = [];
+
+        for (let _bracket of brackets)
+        {
+            bracketOptions.push(
+                {
+                    key: _bracket.tableName.substr(0, _bracket.tableName.length - 7),
+                    name: `${_bracket.name}*`
+                });
+        }
+
+        return bracketOptions;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: SetupBook.getSetupState
 
@@ -207,37 +224,47 @@ export class SetupBook
         return [setupState, bracketChoice];
     }
 
+    static async loadCustomBracketsAsync(context: JsCtx, appContext: IAppContext, reportMissingBrackets?: boolean): Promise<BracketDefinition[]>
+    {
+        const brackets: BracketDefinition[] = [];
+
+        _bracketManager.setDirty(true);
+
+        await FastFormulaAreas.populateAllCaches(context);
+        try
+        {
+            await _bracketManager.populateBracketsIfNecessary(context);
+            brackets.push(..._bracketManager.getBrackets());
+        }
+        catch (error)
+        {
+            if (error instanceof TrError)
+            {
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
+            }
+            else if (reportMissingBrackets)
+            {
+                appContext.Messages.error(
+                    [
+                        "There are either no custom brackets defined in this workbook, or there is a problem with the definitions.",
+                        "Make sure the bracket definitions are on a sheet named 'BracketDefs' and the tables are correctly named.",
+                        "DETAILS:",
+                        ...StatusBox.linesFromError(error)
+                    ],
+                    { topic: HelpTopic.FAQ_CustomBrackets });
+            }
+        }
+
+        return brackets;
+    }
+
     static async loadCustomBrackets(appContext: IAppContext): Promise<BracketDefinition[]>
     {
         const brackets: BracketDefinition[] = [];
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            _bracketManager.setDirty(true);
-
-            await FastFormulaAreas.populateAllCaches(context);
-            try
-            {
-                await _bracketManager.populateBracketsIfNecessary(context);
-                brackets.push(..._bracketManager.getBrackets());
-            }
-            catch (error)
-            {
-                if (error instanceof TrError)
-                {
-                    appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
-                }
-                else
-                {
-                    appContext.Messages.error(
-                        ["There are either no custom brackets defined in this workbook, or there is a problem with the definitions.",
-                            "Make sure the bracket definitions are on a sheet named 'BracketDefs' and the tables are correctly named.",
-                            "DETAILS:",
-                            ...StatusBox.linesFromError(error)
-                        ],
-                        { topic: HelpTopic.FAQ_CustomBrackets });
-                }
-            }
+            brackets.push(...await this.loadCustomBracketsAsync(context, appContext, true));
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
