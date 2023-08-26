@@ -14,7 +14,7 @@ export class IntentionsTest
 {
     static async runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        await TestRunner.runAllTests(this, TestResult, appContext, outStream);
+        await TestRunner.runAllTestsAsync(this, TestResult, appContext, outStream);
     }
 
     static async test_FormulaIntention_CurrentWorksheet(result: TestResult)

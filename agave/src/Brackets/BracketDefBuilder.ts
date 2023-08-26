@@ -152,11 +152,8 @@ export class BracketDefBuilder
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getBracketDefinition
     ----------------------------------------------------------------------------*/
-    static getBracketDefinition(bracketTableName: string): BracketDefinition
+    static getStaticBracketDefinition(bracketTableName: string): BracketDefinition
     {
-        if (_bracketManager.IsCached(bracketTableName))
-            return _bracketManager.Bracket;
-
         let match: BracketDefinition = null;
 
         s_brackets.forEach(
@@ -171,6 +168,10 @@ export class BracketDefBuilder
         return match;
     }
 
+    static getStaticBrackets(): BracketDefinition[]
+    {
+        return s_brackets;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.insertBracketDefinitionAtRow
@@ -289,15 +290,22 @@ export class BracketDefBuilder
     static async buildSpecificBracketCore(context: JsCtx, appContext: IAppContext, fastTables: IFastTables)
     {
         const bracketChoice: string = appContext.SelectedBracket;
-        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
 
-        let bracketTable: Excel.Table =
-            await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketChoice);
+        let bracketDefinition: BracketDefinition = _bracketManager.getBracket(bracketChoice);
 
-        const bracketDefinition: BracketDefinition = this.getBracketDefinition(`${bracketChoice}Bracket`);
-
-        if (bracketTable == null)
+        if (bracketDefinition == null)
         {
+            // we don't have this bracket cached yet, add the static definition to the workbook
+            const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
+
+            let bracketTable: Excel.Table =
+                await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketChoice);
+
+            bracketDefinition = this.getStaticBracketDefinition(`${bracketChoice}Bracket`);
+
+            if (bracketTable != null)
+                throw new Error("should not have already had a table for this bracket -- the bracket manager should have already loaded it!");
+
             if (bracketDefinition == null)
             {
                 appContext.Messages.error([`Don't know how to build bracket for choice: '${bracketChoice}'`]);
@@ -307,6 +315,10 @@ export class BracketDefBuilder
             const rowFirst: number = await Sheets.findFirstEmptyRowAfterAllData(context, bracketsSheet, 35);
 
             await this.insertBracketDefinitionAtRow(context, bracketsSheet, fastTables, rowFirst + 2, bracketDefinition);
+
+            // now we can load this in the bracket manager
+            _bracketManager.setDirty(true);
+            await _bracketManager.populateBracketsIfNecessary(context, bracketChoice);
         }
 
         await GridBuilder.buildGridSheet(context);

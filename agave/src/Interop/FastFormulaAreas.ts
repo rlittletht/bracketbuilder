@@ -114,7 +114,7 @@ export class FastFormulaAreas
         [
             [FastFormulaAreasItems.GameGrid, new RangeInfo(0, 250, 0, 50)],
             [FastFormulaAreasItems.GameData, new RangeInfo(0, 60, 0, 7)],
-            [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 100, 0, 15)],
+            [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 200, 0, 15)],
             [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],
         ]
     )

@@ -9,11 +9,12 @@ import { GridRankerTests } from "../BracketEditor/GridRankerTests";
 import { GridTests } from "../BracketEditor/GridTests";
 import { StructureInsertTests } from "../BracketEditor/StructureEditor/StrutureInsertTests";
 import { OADateTests } from "../Interop/Dates";
-import { FastFormulaAreasTest } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasTest } from "../Interop/FastFormulaAreas";
 import { FastRangeAreasTest } from "../Interop/FastRangeAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { ParserTests } from "../Interop/Parser";
 import { StreamWriter } from "../Support/StreamWriter";
+import { _bracketManager } from "../Brackets/BracketManager";
 
 export class UnitTests
 {
@@ -25,31 +26,34 @@ export class UnitTests
 
         try
         {
+            _bracketManager.populateStaticBracketsForTests();
+
             // first, dump the grid for the current sheet. this is handy if you are building
             // unit tests since it gives you a way to generate a grid...
             await Excel.run(
                 async (ctx) =>
                 {
                     const context: JsCtx = new JsCtx(ctx);
+                    await FastFormulaAreas.populateAllCaches(context);
                     const grid: Grid = await Grid.createGridFromBracket(context, appContext.SelectedBracket);
 
                     grid.logGridCondensed();
                     context.releaseAllCacheObjects();
                 });
 
-            await StructureInsertTests.runAllTests(appContext, outStream);
-            await FastFormulaAreasTest.runAllTests(appContext, outStream);
-            await FastRangeAreasTest.runAllTests(appContext, outStream);
-            await ParserTests.runAllTests(appContext, outStream);
-            await OADateTests.runAllTests(appContext, outStream);
-            await GameMoverTests.runAllTests(appContext, outStream);
-            await GridRankerTests.runAllTests(appContext, outStream);
-            await GridTests.runAllTests(appContext, outStream);
-            await RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
-            await Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            await Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
-            await Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
-            await Adjuster_SwapAdjacentGameRegionsForOverlapTests.runAllTests(appContext, outStream);
+            StructureInsertTests.runAllTests(appContext, outStream);
+            FastFormulaAreasTest.runAllTests(appContext, outStream);
+            FastRangeAreasTest.runAllTests(appContext, outStream);
+            ParserTests.runAllTests(appContext, outStream);
+            OADateTests.runAllTests(appContext, outStream);
+            GameMoverTests.runAllTests(appContext, outStream);
+            GridRankerTests.runAllTests(appContext, outStream);
+            GridTests.runAllTests(appContext, outStream);
+            RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);
+            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
+            Adjuster_WantToGrowUpAtTopOfGridTests.runAllTests(appContext, outStream);
+            Adjuster_SwapGameRegonsForOverlapTests.runAllTests(appContext, outStream);
+            Adjuster_SwapAdjacentGameRegionsForOverlapTests.runAllTests(appContext, outStream);
         }
         catch (e)
         {
@@ -57,5 +61,14 @@ export class UnitTests
         }
 
         appContext.Messages.message([...results, "Unit Tests Complete"]);
+        _bracketManager.setDirty(true);
+        appContext.setHeroListDirty(true); // need to repopulate caches, etc.
+
+        await Excel.run(
+            async (ctx) =>
+            {
+                const context: JsCtx = new JsCtx(ctx);
+                await appContext.rebuildHeroListIfNeeded(context);
+            });
     }
 }

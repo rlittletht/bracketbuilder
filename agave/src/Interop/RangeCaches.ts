@@ -44,16 +44,18 @@ interface RangeCachedItem
 
 export class RangeCaches
 {
-//    static s_gameFieldsAndTimesHeader = "bracketSourceHeader";
-//    static s_teamNamesHeader = "teamNamesHeader";
-//    static s_bracketDefHeader = "bracketDefHeader";
-//    static s_gameFieldsAndTimesDataBody = "bracketSourceDataRange";
-//    static s_teamNamesDataBody = "teamNamesDataRange";
-//    static s_bracketDefDataBody = "bracketDefDataRange";
     static s_isDirty: boolean = true;
     static s_lastBracket: string = "";
 
     static m_items = new Map<string, RangeCacheItem>();
+
+    static get BracketCached(): string
+    {
+        if (this.s_lastBracket != "" && !this.s_isDirty && this.m_items.has(RangeCacheItemType.BracketDefBody))
+            return this.s_lastBracket;
+
+        return null;
+    }
 
     private static add(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems)
     {

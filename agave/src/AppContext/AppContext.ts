@@ -82,6 +82,7 @@ export class AppContext implements IAppContext
         this.m_setupState = state;
     }
 
+    // maybe move this into app state so it gets automatically rebuilt?
     async setHeroListDirty(isDirty?: boolean)
     {
         this.m_heroListNeedsRebuilt = isDirty ?? true;

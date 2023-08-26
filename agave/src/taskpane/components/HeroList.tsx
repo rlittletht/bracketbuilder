@@ -5,6 +5,7 @@ import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { RangeInfo } from "../../Interop/Ranges";
 import { SetupBook, SetupState } from "../../Setup";
 import { ActionButton } from "./ActionButton";
+import { BracketOption } from "../../Brackets/BracketDefBuilder";
 
 export interface HeroListItem
 {
@@ -21,6 +22,11 @@ export declare const enum HeroListFormat
     HorizontalRibbon
 }
 
+export interface SetBracketOptionsDelegate
+{
+    (options: BracketOption[]): void;
+}
+
 export interface HeroListProps
 {
     message: string;
@@ -32,6 +38,7 @@ export interface HeroListState
 {
     rangeForMove: RangeInfo
 }
+
 export class HeroList extends React.Component<HeroListProps, HeroListState>
 {
     context!: IAppContext;
@@ -52,7 +59,7 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
 
         Build the hero list of commands
     ----------------------------------------------------------------------------*/
-    static buildHeroList(setupState: SetupState): [HeroListFormat, string, HeroListItem[]]
+    static buildHeroList(setupState: SetupState, setBracketOptionsDelegate: SetBracketOptionsDelegate): [HeroListFormat, string, HeroListItem[]]
     {
         let listItems: HeroListItem[] = [];
 
@@ -74,6 +81,29 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
                     cursor: "cursorPointer",
                     stateChecker: null,
                     delegate: SetupBook.buildSpecificBracket,
+                });
+            listItems.push(
+                {
+                    icon: "BulkUpload",
+                    primaryText: "Load custom brackets",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext) =>
+                    {
+                        const brackets = await SetupBook.loadCustomBrackets(appContext);
+                        const bracketOptions: BracketOption[] = [];
+
+                        for (let _bracket of brackets)
+                        {
+                            bracketOptions.push(
+                                {
+                                    key: _bracket.tableName.substr(0, _bracket.tableName.length - 7),
+                                    name: `${_bracket.name}*`
+                                });
+                        }
+                        setBracketOptionsDelegate(bracketOptions);
+                        return false;
+                    },
                 });
         }
 

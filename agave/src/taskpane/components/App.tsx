@@ -354,6 +354,28 @@ export default class App extends React.Component<AppProps, AppState>
         return this.state.games;
     }
 
+    mergeBracketOptions(options: BracketOption[])
+    {
+        const builtinOptions = BracketDefBuilder.getStaticAvailableBrackets();
+        const map = new Map<string, BracketOption>();
+
+        for (let _o of builtinOptions)
+            map.set(_o.key, _o);
+
+        for (let _o of options)
+            map.set(_o.key, _o);
+
+        const newOptions = [];
+
+        for (let key of map.keys())
+            newOptions.push(map.get(key));
+
+        this.setState(
+            {
+                bracketOptions: newOptions
+            }
+        );
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: App.addLogMessage
@@ -382,6 +404,13 @@ export default class App extends React.Component<AppProps, AppState>
             {
                 await FastFormulaAreas.populateAllCaches(context);
             });
+
+        await _TimerStack.timeThisAsync(
+            "populateBracketManager",
+            async () =>
+            {
+                await _bracketManager.populateBracketsIfNecessary(context);
+            });
         
         await _TimerStack.timeThisAsync(
             "populateRangeCaches",
@@ -408,7 +437,7 @@ export default class App extends React.Component<AppProps, AppState>
             "buildToolbars",
             async () =>
             {
-                [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState);
+                [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState, this.mergeBracketOptions.bind(this));
 
                 if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
                 {
@@ -467,70 +496,12 @@ export default class App extends React.Component<AppProps, AppState>
         _TimerStack.popTimer();
     }
 
-    async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
-    {
-        if (!_bracketManager.IsCached(bracketTableName))
-        {
-            let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(bracketTableName);
-            let loading: BracketDefinition =
-            {
-                name: bracketDef.name,
-                teamCount: bracketDef.teamCount,
-                tableName: bracketDef.tableName,
-                games: []
-            };
-
-            let gameDefs: any[] = null;
-
-            const { rangeInfo: rangeBracketDataBody, formulaCacheType: rangeBracketCacheType } = RangeCaches.getCacheByType(RangeCacheItemType.BracketDefBody);
-            const { rangeInfo: rangeBracketHeader } = RangeCaches.getCacheByType(RangeCacheItemType.BracketDefHeader);
-            if (rangeBracketDataBody && rangeBracketHeader)
-            {
-                const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeBracketCacheType);
-
-                if (areas)
-                {
-                    const header = areas.getValuesForRangeInfo(rangeBracketHeader);
-                    const dataBody = areas.getValuesForRangeInfo(rangeBracketDataBody);
-
-                    gameDefs = TableIO.readDataFromCachedExcelTable(
-                        bracketDef.tableName,
-                        header,
-                        dataBody,
-                        ["Game", "Winner", "Loser", "Top", "Bottom"],
-                        true);
-                }
-            }
-
-            if (!gameDefs)
-            {
-                gameDefs = await TableIO.readDataFromExcelTable(
-                    context,
-                    bracketDef.tableName,
-                    ["Game", "Winner", "Loser", "Top", "Bottom"],
-                    true);
-            }
-
-            for (let game of gameDefs)
-            {
-                loading.games.push(
-                    {
-                        winner: game.Winner,
-                        loser: game.Loser,
-                        topSource: game.Top,
-                        bottomSource: game.Bottom
-                    });
-            }
-            _bracketManager.setCache(loading);
-        }
-    }
 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        _TimerStack.pushTimer("getGamesList.ensureBracketLoadedFromSheet");
-        await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
-        let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracket}Bracket`);
+        _TimerStack.pushTimer("getGamesList.getBracket");
+        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracket);
 
         if (bracketDef == null)
             return [];
@@ -601,7 +572,7 @@ export default class App extends React.Component<AppProps, AppState>
                 let list: HeroListItem[];
                 let title: string;
         
-                [format, title, list] = HeroList.buildHeroList(setupState);
+                [format, title, list] = HeroList.buildHeroList(setupState, this.mergeBracketOptions.bind(this));
                 // figure out our top level menu.... Setup, or bracket editing
                 this.setState(
                     {
