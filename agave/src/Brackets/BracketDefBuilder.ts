@@ -77,7 +77,7 @@ export class BracketDefBuilder
         const actualSource = (placement == TeamPlacement.Top) ? targetGame.topSource : targetGame.bottomSource;
 
         if (actualSource != sourceExpected)
-            throw new Error(`sourceExpected(${sourceExpected}) != actual(${actualSource}))`);
+            throw new Error(`advance to game G${advanceNum.GameId.Value} has wrong source: sourceExpected(${sourceExpected}) != actual(${actualSource}))`);
     }
 
     static verifySourceAdvanceCorrect(games: GameDefinition[], advanceExpected: string, source: string)

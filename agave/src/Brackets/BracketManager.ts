@@ -7,6 +7,8 @@ import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
 import { TableIO } from "../Interop/TableIO";
 import { _TimerStack } from "../PerfTimer";
+import { HelpTopic } from "../Coaching/HelpInfo";
+import { TrError } from "../Exceptions";
 
 export class BracketManager
 {
@@ -113,7 +115,19 @@ export class BracketManager
 
         const bracketDefinition = BracketManager.loadBracketFromValues(bracketName, defTableName, header, values, bracketNameValues);
 
-        BracketDefBuilder.verifyBracketConsistency(bracketDefinition);
+        try
+        {
+            BracketDefBuilder.verifyBracketConsistency(bracketDefinition);
+        }
+        catch (e)
+        {
+            throw new TrError(
+                [
+                    `The bracket definition for ${bracketName} is not valid.`,
+                    e.message
+                ],
+                { topic: HelpTopic.FAQ_CustomBrackets });
+        }
 
         return bracketDefinition;
     }
