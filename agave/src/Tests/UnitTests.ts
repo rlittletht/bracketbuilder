@@ -15,6 +15,7 @@ import { JsCtx } from "../Interop/JsCtx";
 import { ParserTests } from "../Interop/Parser";
 import { StreamWriter } from "../Support/StreamWriter";
 import { _bracketManager } from "../Brackets/BracketManager";
+import { GameDataSourcesTests } from "../Brackets/GameDataSources";
 
 export class UnitTests
 {
@@ -41,6 +42,7 @@ export class UnitTests
                     context.releaseAllCacheObjects();
                 });
 
+            GameDataSourcesTests.runAllTests(appContext, outStream);
             StructureInsertTests.runAllTests(appContext, outStream);
             FastFormulaAreasTest.runAllTests(appContext, outStream);
             FastRangeAreasTest.runAllTests(appContext, outStream);

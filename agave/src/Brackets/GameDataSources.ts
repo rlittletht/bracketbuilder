@@ -14,10 +14,16 @@ import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnSetValues } from "../Interop/Intentions/TnSetValue";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
+import { BracketManager } from "./BracketManager";
+import { BracketDefBuilder } from "./BracketDefBuilder";
+import { TestResult } from "../Support/TestResult";
+import { TestRunner } from "../Support/TestRunner";
+import { IAppContext } from "../AppContext/AppContext";
+import { StreamWriter } from "../Support/StreamWriter";
 
 export interface TeamNameMap
 {
-    teamNumber: number;
+    teamId: string;
     name: string;
     priority: number;
 }
@@ -34,6 +40,36 @@ export class GameDataSources
     static async getGameInfoTable(context: JsCtx): Promise<Excel.Table>
     {
         return await Tables.getTableOrNull(context, null, "BracketSourceData");
+    }
+
+    static compareNumberedItems(left: string, right: string): number
+    {
+        if (left == right)
+            return 0;
+
+        // see if there's a trailing number, split into two parts
+        const ichLastSpaceLeft = left.lastIndexOf(" ");
+        const ichLastSpaceRight = right.lastIndexOf(" ");
+
+        if (ichLastSpaceLeft == -1 || ichLastSpaceRight == -1)
+            return left < right ? -1 : 1;
+
+        const leftPart2 = left.substring(ichLastSpaceLeft + 1);
+        const rightPart2 = right.substring(ichLastSpaceRight + 1);
+
+        const leftNum = +leftPart2;
+        const rightNum = +rightPart2;
+
+        if (isNaN(leftNum) || isNaN(rightNum))
+            return left < right ? -1 : 1;
+
+        const leftPart1 = left.substring(0, ichLastSpaceLeft);
+        const rightPart1 = right.substring(0, ichLastSpaceRight);
+
+        if (leftPart1 != rightPart1)
+            return leftPart1 < rightPart1 ? -1 : 1;
+
+        return leftNum - rightNum;
     }
 
     /*----------------------------------------------------------------------------
@@ -243,11 +279,11 @@ export class GameDataSources
             if (nameMap.name == null || nameMap.name == "")
                 continue;
 
-            let comp: number = nameMap.teamNumber;
+            let comp: string = nameMap.teamId.toUpperCase();
 
             for (let i = 0; i < range.rowCount; i++)
             {
-                if (range.values[i][0] == comp)
+                if (range.values[i][0].toUpperCase() == comp)
                 {
                     range.values[i][1] = nameMap.name;
                 }
@@ -334,11 +370,20 @@ export class GameDataSources
             gameInfoHeader);
 
         let formulasTeamNames: any[][] = [];
-        const teamNameHeader: any[] = ["Number", "Name", "Priority"];
+        const teamNameHeader: any[] = ["ID", "Name", "Priority"];
 
-        for (let i: number = 0; i < bracketDefinition.teamCount; i++)
+        const teamNameMap = new Map<string, TeamNameMap>();
+        const teamNames = BracketDefBuilder.getTeamNames(bracketDefinition);
+
+        teamNames.sort(
+            (left: string, right: string) =>
+            {
+                return GameDataSources.compareNumberedItems(left, right);
+            });
+        
+        for (let i: number = 0; i < teamNames.length; i++)
         {
-            formulasTeamNames.push([`${i + 1}`, `Team ${i + 1}`, 0]);
+            formulasTeamNames.push([`${teamNames[i]}`, `Team ${i + 1}`, 0]);
         }
 
         range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 3);
@@ -360,5 +405,184 @@ export class GameDataSources
             "TeamNames",
             Ranges.addressFromCoordinates([formulasGameInfo.length + 3, 0], [formulasGameInfo.length + 3 + formulasTeamNames.length - 1, 2]),
             teamNameHeader);
+    }
+}
+
+export class GameDataSourcesTests
+{
+    static test_noNumberedItem_Equal(result: TestResult)
+    {
+        const expected = 0;
+        const left = "item1";
+        const right = "item1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_noNumberedItem_Greater(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item2";
+        const right = "item1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_noNumberedItem_Less(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item1";
+        const right = "item2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_noNumberedItem_WithNotNumberedPart2_Greater(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item3";
+        const right = "item2 p1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_noNumberedItem_WithNotNumberedPart2_Less(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item1";
+        const right = "item1 p1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_noNumberedItem_withNumberedItem_Less(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item11";
+        const right = "item2 1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_noNumberedItem_withNumberedItem_Greater(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item2";
+        const right = "item1 1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItem_withNoNumberedItem_Less(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item1 1";
+        const right = "item2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItem_withNoNumberedItem_Greater(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item2 1";
+        const right = "item1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_LessAscii(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item 1";
+        const right = "item 2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_LessAscii_BiggerDiff(result: TestResult)
+    {
+        const expected = -9;
+        const left = "item 1";
+        const right = "item 10";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_GreaterAscii(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item 2";
+        const right = "item 1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_LessNonAscii(result: TestResult)
+    {
+        const expected = -8;
+        const left = "item 2";
+        const right = "item 10";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_GreaterNonAscii(result: TestResult)
+    {
+        const expected = 8;
+        const left = "item 10";
+        const right = "item 2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_LessBase_GreaterNumber(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item1 10";
+        const right = "item2 2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_GreaterBase_GreaterNumber(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item2 10";
+        const right = "item1 2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_LessBase_LessNumber(result: TestResult)
+    {
+        const expected = -1;
+        const left = "item1 1";
+        const right = "item2 2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_GreaterBase_LessNumber(result: TestResult)
+    {
+        const expected = 1;
+        const left = "item2 1";
+        const right = "item1 2";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static test_numberedItems_Equal(result: TestResult)
+    {
+        const expected = 0;
+        const left = "item 1";
+        const right = "item 1";
+
+        result.assertIsEqual(expected, GameDataSources.compareNumberedItems(left, right));
+    }
+
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
     }
 }

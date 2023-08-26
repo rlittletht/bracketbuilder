@@ -44,6 +44,24 @@ export class BracketDefBuilder
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: BracketDefBuilder.getTeamNames
+    ----------------------------------------------------------------------------*/
+    static getTeamNames(bracket: BracketDefinition): string[]
+    {
+        const teams: string[] = [];
+
+        for (let game of bracket.games)
+        {
+            if (BracketManager.IsTeamSourceStatic(game.topSource))
+                teams.push(game.topSource);
+            if (BracketManager.IsTeamSourceStatic(game.bottomSource))
+                teams.push(game.bottomSource);
+        }
+
+        return teams;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getStaticAvailableBrackets
 
         return an array of bracket options for the static brackets we can create
@@ -138,6 +156,23 @@ export class BracketDefBuilder
 
                 if (!isChampionship && !BracketManager.IsTeamSourceStatic(gameDef.bottomSource))
                     this.verifySourceAdvanceCorrect(def.games, `B${new GameNum(num).GameId.Value}`, gameDef.bottomSource);
+
+                const teams = this.getTeamNames(def);
+
+                if (teams.length != def.teamCount)
+                    throw new Error(`Number of defined teams ${teams.length} doesn't equal the team bracket size ${def.teamCount}`);
+
+                const mapTeamPresent = new Map<string, number>();
+
+                for (let team of teams)
+                {
+                    const check = team.toUpperCase();
+
+                    if (mapTeamPresent.has(check))
+                        throw new Error(`Found team ${team} playing for the first time more than once in the bracket`);
+
+                    mapTeamPresent.set(check, 1);
+                }
             }
             catch (e)
             {

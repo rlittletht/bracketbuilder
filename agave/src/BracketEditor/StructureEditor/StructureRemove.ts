@@ -18,6 +18,9 @@ import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { s_staticConfig } from "../../StaticConfig";
+import { GridChange, GridChangeOperation } from "../GridChange";
+import { StructureEditor } from "./StructureEditor";
+import { Intentions } from "../../Interop/Intentions/Intentions";
 
 export class StructureRemove
 {
@@ -319,14 +322,14 @@ export class StructureRemove
         if (overrideText1 && overrideText1 != null && overrideText1 != "")
             map.push(
                 {
-                    teamNumber: FormulaBuilder.getTeamNumberFromTeamNum(game.TopTeamName),
+                    teamId: game.TopTeamName,
                     name: overrideText1,
                     priority: 0
                 });
         if (overrideText2 && overrideText2 != null && overrideText2 != "")
             map.push(
                 {
-                    teamNumber: FormulaBuilder.getTeamNumberFromTeamNum(game.BottomTeamName),
+                    teamId: game.BottomTeamName,
                     name: overrideText2,
                     priority: 0
                 });
@@ -403,8 +406,10 @@ export class StructureRemove
         return tns;
     }
 
-    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo)
+    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         if (game.IsBroken)
         {
             let topRow = Number.MAX_VALUE;
@@ -444,8 +449,9 @@ export class StructureRemove
 
             rangeSelected = new RangeInfo(topRow, bottomRow - topRow + 1, firstCol, lastCol - firstCol + 1);
             // can't let the normal (undoable) remove happen. need to obliterate the selection
-            await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/);
-            return;
+            tns.push(...await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/));
+
+            return tns;
         }
 
         // if we can't bind to the game, and if the selection is a single cell, then
@@ -456,7 +462,7 @@ export class StructureRemove
                 [`Cannot find game ${game.GameId.Value} in the bracket`],
                 { topic: HelpTopic.FAQ_BrokenBracket });
 
-            return;
+            return tns;
         }
 
         // find the given game in the grid
@@ -470,9 +476,21 @@ export class StructureRemove
 
             // remove won't change any field/times
             _undoManager.setUndoGrid(grid, []);
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
-            return;
+
+            const changes: GridChange[] = grid.diff(gridNew, game.BracketName);
+
+            for (let item of changes)
+            {
+                if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
+                    throw new Error("can't have an insert operation when only removing games");
+
+                tns.push(...await ApplyGridChange.executeRemoveChange(appContext, context, item, game.BracketName));
+            }
+
+            return tns;
         }
+
+        return tns;
     }
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.findAndRemoveGame
@@ -532,15 +550,19 @@ export class StructureRemove
 
         _TimerStack.popTimer();
 
+        const tns: Intentions = new Intentions();
+
         _TimerStack.pushTimer("removeBoundGames");
         for (let _game of games)
-            await this.removeBoundGame(appContext, context, grid, _game, rangeSelected);
+            tns.AddTns(await this.removeBoundGame(appContext, context, grid, _game, rangeSelected));
         _TimerStack.popTimer();
 
         // last, obliterate the rest of the range
         _TimerStack.pushTimer("obliterate selection");
         if (!rangeSelected.IsSingleCell)
-            await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/);
+            tns.AddTns(await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/));
         _TimerStack.popTimer();
+
+        await tns.Execute(context);
     }
 }
