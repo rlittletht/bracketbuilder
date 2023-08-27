@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TwBracketBuilder Help</title>
+    <link rel="stylesheet" href="./rex.css" />
+    <style>
+    </style>
+</head>
+<body>
+    <header>
+        <logo>
+            <img class="logo" src="Images/ModernTrainWithTRex.png" />
+        </logo>
+        <product>
+            <productHeader>
+                <h1> Bracket Builder </h1>
+            </productHeader>
+            <productName>
+                &gt;traynrex <red>RED</red>&lt;
+            </productName>
+        </product>
+        <logo>
+            <img class="logo" src="Images/VintageTrainRTLWithTRex.png" />
+        </logo>
+
+    </header>
+    <main>
+        <nav>
+            <ul>
+                <li><a href="./BracketBuilder.html">Getting Started</a></li>
+                <ul>
+                    <li><a href="./BracketBuilder.html#intro">Introduction</a></li>
+                    <li><a href="./BracketBuilder.html#quickstart">Quick Walk-through</a></li>
+                </ul>
+                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
+                <ul>
+                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#Games">Games Sheet</a></li>
+                        <li><a href="./SheetEditing.html#TeamsAndFields">TeamsAndFields Sheet</a></li>
+                        <li><a href="./SheetEditing.html#BracketInfo">BracketInformation Sheet</a></li>
+
+                    </ul>
+                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
+                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
+                        <li><a href="./SheetEditing.html#score">Scores</a></li>
+                        <li><a href="./SheetEditing.html#field">Field</a></li>
+                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
+                    </ul>
+                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
+                    <ul>
+                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
+                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
+                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
+                    </ul>
+                </ul>
+                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
+                <ul>
+                    <li><a href="./Commands.html#Controls">Main Interface</a></li>
+                    <li><a href="./Commands.html#Controls">Main Tools</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
+                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
+                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
+                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
+                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
+                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
+                        <li><a href="./Commands.html#Help">Help</a></li>
+                    </ul>
+                    <li><a href="./Commands.html#BracketTools">Bracket Tools</a></li>
+                    <ul>
+                        <li><a href="./Commands.html#PickUpGame">Pick up Game</a></li>
+                        <li><a href="./Commands.html#DropGame">Drop Game</a></li>
+                        <li><a href="./Commands.html#RemoveGame">Remove Game</a></li>
+                        <li><a href="./Commands.html#RepairGame">Repair Game</a></li>
+                    </ul>
+                    <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
+                </ul>
+                <li><a href="./CustomBrackets.html#">Custom Brackets</a></li>
+                <ul>
+                    <li><a href="./CustomBrackets.html#structure">Structure</a></li>
+                    <ul>
+                        <li><a href="./CustomBrackets.html#bracketDef">Bracket Definition</a></li>
+                    </ul>
+                    <li><a href="./CustomBrackets.html#reload">Loading custom brackets</a></li>
+                </ul>
+                <li><a href="./FAQ.html">FAQ/Scenarios</a></li>
+                <ul class="smaller">
+                    <li><a href="./FAQ.html#manuallySelect">Choosing insertion range</a></li>
+                    <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
+                    <li><a href="./FAQ.html#bracketNotReady">Bracket not ready?</a></li>
+                    <li><a href="./FAQ.html#recreate">Recreating your bracket</a></li>
+                    <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
+                    <li><a href="./FAQ.html#broken">Why is my bracket broken?</a></li>
+                    <li><a href="./FAQ.html#insertLocation">Insert locations</a></li>
+                    <li><a href="./FAQ.html#insertFailed">Insert failures</a></li>
+                    <li><a href="./FAQ.html#exceptions">Fatal Errors/Exceptions</a></li>
+                    <li><a href="./FAQ.html#modDouble">Modified Double Elimination</a></li>
+                </ul>
+                <li><a href="./Licenses.html">Licenses</a></li>
+                <li><a href="./Privacy.html">Privacy</a></li>
+            </ul>
+        </nav>
+        <article>
+            <h2>What if I want a different kind of bracket?</h2>
+            <p>
+                By default, <prodRef>BracketBuilder</prodRef> knows how to make standard double-elimination tournament
+                brackets compatible with Little League. All of these brackets are structured such that a team can be eliminated when
+                they have lost two games (hence, <em>double elimination</em>). Internally, however, brackets are really
+                just rules about where winners and losers come from and go to. There are a lot of predefined brackets
+                that it understands, but you can provide you're own bracket definitions as well.
+            </p>
+            <p>
+                In order to provide your own bracket definitions, you have to follow very specific rules about how to
+                structure the bracket definition. When you create a bracket from a built-in definition, <prodRef>BracketBuilder</prodRef>
+                creates the bracket definition for you on the <em>BracketDefs</em> sheet. If you want to customize that bracket, you
+                can either modify the bracket on that sheet or you can create entirely new brackets.
+            </p>
+            <zoomable>
+                <floatRight style="width: 20vw">
+                    <img src="Images/BracketDef.png" class="whiteBackSmaller" />
+                </floatRight>
+            </zoomable>
+            <h3><a name="structure">Bracket Definitions</a></h3>
+            <p>
+                Each bracket has a very specific format. You can see sample brackets at <a href="./BracketDefsSample.xlsx">Bracket Samples</a>.
+                There is extra information in the definition table -- this is there to try to help you avoid common mistakes
+                when creating a bracket, like having multiple games feeding into the same game.
+            </p>
+            <h4>BracketDef Sheet Size</h4>
+            <p>
+                You can define more than 1 bracket on your BracketDefs sheet, but you cannot use more than 200 rows on that sheet. (This is just
+                an arbitrary limitation. If this isn't enough, feel free to email us at <a href="mailto:red@traynrex.com">red@traynrex.com</a>
+                and ask us to make it bigger...
+            </p>
+            <h4>Bracket Short Name/Description</h4>
+            <p>
+                The row above the definition table has the <em>short name</em> for the bracket as well as the description for the bracket.
+                The Bracket Chooser when you are getting started will list all of the built-in brackets along with the custom brackets that
+                are defined on the BracketDefs sheet. The Bracket Short Name is what will be listed in the Bracket Chooser.
+            </p>
+            <p>The description is purely informational and doesn't show up when you are building the bracket.</p>
+            <h3><a name="bracketDef">Bracket Definition Table</a></h3>
+            <p>
+                Every bracket definition table MUST BE NAMED, and the name MUST be of the form "T#Bracket" where # is the number of
+                teams in the bracket. For exmple, for a 5 team bracket definition, that table MUST be named "T5Bracket". It doesn't matter
+                if the definition is for a standard or modified double elimination bracket (or a completely different type of bracket) -- the
+                name must always be "T#Bracket". It follows, then, that you cannot have more than one definition for each count of teams.
+            </p>
+            <h4>Game description</h4>
+            <p>
+                Each line in the bracket definition describes a game. Each game has several parts -- the game number, winner and loser advance
+                details, top and bottom sources, and counts that help you avoid making invalid brackets.
+            </p>
+            <h5>Game Number</h5>
+            <p>
+                Each game has a game number. This number will show up on the bracket when you place games. It is also used whenever
+                you are referring to the winner/loser of a particular game. For example, the winner of game 1 is "W1". The loser of game
+                1 is "L1"
+            </p>
+            <h5>Winner Advances To/Loser Advances To</h5>
+            <p>
+                Each game has a winner and a loser. The bracket definition for a game defines where the winner and the loser of the
+                game will advance to.
+            </p><p>The winner of every game MUST advance to another game in the bracket.</p>
+            <p>
+                The loser of a game might advance to another game (if it is that team's first loss), or it might be blank. If the Loser Advances to
+                is blank for a game, that means that the losing team for that game is eliminated.
+            </p>
+            <p>
+                The championship game in the bracket will have BOTH the Winning and Losing teams advancing nowehere. When both of these values
+                are blank, <prodRef>BracketBuilder</prodRef> will format that game as a final champion.
+            </p>
+            <p>
+                Most tournaments have a single champion, but you can have as many champions as you want in a tournament -- each one will
+                have their Winner and Loser advances to values be blank. The Little League World Series, for example, has two champions -- the
+                overall champion, and the 3rd place champion
+            </p>
+            <h5>Top/Bottom Sources</h5>
+            <p>
+                Each game has a top and bottom team, and these teams have to come from somewhere. Each game definition has to specify where
+                these teams come from.
+            </p>
+            <p>
+                The first round games of the tournament will have <em>static</em> team names, like "Team 1" and "Team 2". Every team in
+                the tournament will be listed in the bracket only once, for their first game of the tournemnt.
+            </p>
+            <p>
+                All other games will specify <em>where</em> the team will come from. For example, Game 3 in the five team bracket
+                has the top team coming from the Winner of Game 1, and the bottom team is Team 5 (since Team 5 has a by in this
+                tournament). Game 6, for example, has the top team coming from the winner of Game 4 and the bottom team coming from
+                the Loser of Game 3.
+            </p>
+            <p>The champion(s) will only have the top team defined, and the bottom team will be left blank.</p>
+            <h5>Counts</h5>
+            <p>There are two columns for each game definition that show the counts for the top and bottom sources.</p>
+            <p>
+                These cells show how many times this game number shows up as a Winner or Loser advances to in this bracket.
+                For example, Game 1 will never show up as a Winner or Loser advances to since No Game advances to Game 1. In a 5 team
+                bracket, Game 4 shows up as the Loser of Game 1 advances to B4 and the Loswer of Game 2 advances to T4. This means that
+                the CountTopCheck will be 1 (because loser Game 2 advances to T4) and the CountBottomCheck will be 1 (because loser Game1 advances
+                to B4). Each of these counts should be 1 except for the games where the teams are <em>static</em>.
+            </p>
+            <h3>Game total checks</h3>
+            <p>
+                Below the definition table there are 4 more rows of checks. These rows aren't strictly necessary, but they do help
+                make sure you define a valid bracket. In order for these rows to work, you might have to modify the formulas in these
+                rows to work with your bracket definition table (specifically, you might have to change the name of the table
+                in the formulas)
+            </p>
+            <p>The total games line shows the total count of games.</p>
+            <p>
+                The team check row shows the count of teams expected and the calculated count of teams defined in the bracket. These
+                two values should be the same
+            </p>
+            <p>
+                The loss check row shows the expected number of "loser advances to" values in the table and the actual count of
+                "loser advances to". These values should be the same <em>except</em> in a modified double elimination bracket. In the
+                modified bracket, there is no what-if game, which means there will be one fewer "loser advances to" values in the
+                bracket.
+            </p>
+            <p>
+                The Win Check shows the expected number of "winner advances to" values in the table and the actual count. These values
+                should be the same.
+            </p>
+            <h3><a name="reload">Loading Custom Brackets</a></h3>
+            <p>
+                If you add the <prodRef>BracketBuilder</prodRef> add-in to a workbook that already has a correctly
+                formatted BracketDefs sheet, then the custom brackets will be automatically recognized and listed
+                in the Bracket Chooser. You will also have an additional Button on the Welcome page to load the custom
+                brackets -- this is helpful to reload your custom brackets as you work through issues. Every time it tries
+                to load a custom bracket it will validate it and report any errors. You can correct these errors and
+                try to reload the bracket
+            </p>
+            <p>
+                Another way to load a custom bracket is to create a built-in bracket for the number of teams you want
+                (like a 5 team bracket), then go to the BracketDefs sheet and modify the bracket. If you reload
+                <prodRef>BracketBuidler</prodRef>, then the modified bracket will get loaded.
+            </p>
+            <p>
+                To reload, right click on the
+                <prodRef>BracketBuilder</prodRef> add in pane and Refresh it. (In Excel on the Desktop, just choose Refresh. In Excel on the Web,
+                choose "Refresh Frame"). This will cause the addin to reload the bracket.
+            </p>
+        </article>
+    </main>
+</body>
+</html>

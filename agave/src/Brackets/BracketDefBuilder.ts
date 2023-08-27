@@ -226,8 +226,12 @@ export class BracketDefBuilder
         const rowLastTableData: number = rowFirstTableData + bracketDefinition.games.length - 1;
         const rowCheckLines: number = rowLastTableData + 2;
 
-        let rng: Excel.Range = sheet.getCell(row, 1);
-        rng.values = [[bracketDefinition.name]];
+        let rng: Excel.Range = sheet.getRangeByIndexes(row, 1, 1, 3);
+        rng.values = [[bracketDefinition.name, "", `${bracketDefinition.teamCount} Team Double Elimination Bracket`]];
+
+        rng = sheet.getRangeByIndexes(row, 3, 1, 2);
+        rng.format.font.bold = true;
+
         await context.sync();
 
         // create an empty table for the bracket
@@ -271,8 +275,8 @@ export class BracketDefBuilder
                 ""
             ],
             [
-                `=(${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2`,
-                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"Team*")`
+                `=INT((${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2)`,
+                `=COUNTA(${bracketDefinition.tableName}[[Top]:[Bottom]])-${Ranges.addressFromCoordinates([rowCheckLines + 2, 2], null)}-${Ranges.addressFromCoordinates([rowCheckLines + 3, 2], null)}`
             ],
             [
                 `=${Ranges.addressFromCoordinates([rowCheckLines + 1, 1], null)}`,

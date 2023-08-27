@@ -80,17 +80,26 @@
                     </ul>
                     <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
                 </ul>
+                <li><a href="./CustomBrackets.html#">Custom Brackets</a></li>
+                <ul>
+                    <li><a href="./CustomBrackets.html#structure">Structure</a></li>
+                    <ul>
+                        <li><a href="./CustomBrackets.html#bracketDef">Bracket Definition</a></li>
+                    </ul>
+                    <li><a href="./CustomBrackets.html#reload">Loading custom brackets</a></li>
+                </ul>
                 <li><a href="./FAQ.html">FAQ/Scenarios</a></li>
                 <ul class="smaller">
                     <li><a href="./FAQ.html#manuallySelect">Choosing insertion range</a></li>
                     <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
+                    <li><a href="./FAQ.html#bracketNotReady">Bracket not ready?</a></li>
+                    <li><a href="./FAQ.html#recreate">Recreating your bracket</a></li>
                     <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
                     <li><a href="./FAQ.html#broken">Why is my bracket broken?</a></li>
                     <li><a href="./FAQ.html#insertLocation">Insert locations</a></li>
                     <li><a href="./FAQ.html#insertFailed">Insert failures</a></li>
                     <li><a href="./FAQ.html#exceptions">Fatal Errors/Exceptions</a></li>
-                    <li><a href="./FAQ.html#bracketDef">Custom Bracket Definitions</a></li>
-
+                    <li><a href="./FAQ.html#modDouble">Modified Double Elimination</a></li>
                 </ul>
                 <li><a href="./Licenses.html">Licenses</a></li>
                 <li><a href="./Privacy.html">Privacy</a></li>
@@ -175,8 +184,27 @@
                 same column as one of its dependencies, then BracketBuilder will tell you it can't insert the game, and it
                 will suggest what column you have to put the game in.
             </p>
-            <p>If you need to play two games on the same day, see the section on Creating Double-Headers.</p>
-            <h3><a name="doubleHeaders">How do I create a double-header?</a></h3>
+        <p>If you need to play two games on the same day, see the section on Creating Double-Headers.</p>
+        <h3><a name="bracketNotReady">What does it mean when the "Bracket Isn't Ready"?</a></h3>
+        <p>Lots of commands can't be run until you have create a bracket first. For example, you can't
+            apply the finishing touches to a bracket if you haven't created the bracket yet.</p>
+        <p>If you get an error telling you that a command isn't available until the bracket is ready, then you just have
+            to create the bracket</p>
+        <p>If you are getting this error and you DO have a bracket already created, then this means that something
+            in the workbook is broken and <prodRef>BracketBuidler</prodRef> doesn't recognize the workbook any more. At this
+            point its probably best to just start over and create a new bracket.</p>
+        <h3><a name="recreate">(Re)Creating a Bracket</a></h3>
+        <p>Many times its easier to just start from scratch when something goes wrong. If you know where you are going
+            to place the games, its pretty straightforward to just create a new bracket. Here are some tips for starting
+            over that should help you save time</p>
+        <h4>Copy your team names</h4>
+        <p>If you already filled out your team names, then just copy the names from your old sheet to your new workbook.
+            Remember, PASTE BY VALUE!</p>
+        <h4>Copy your tournament information</h4>
+        <p>Again, if you have already filled out tournament information (like the title, location, etc), then copy that information
+            from your old sheet. Again, be sure to PASTE VALUES only -- you don't want to accidentally paste any formulas or cell
+            names!</p>
+        <h3><a name="doubleHeaders">How do I create a double-header?</a></h3>
             <p>
                 There is no way to place a game in the same column as one of its dependencies. There is nothing that says
                 you can't have more than one column for any given day, though. In fact, we do this already when we extend
@@ -420,21 +448,54 @@
                 unless you explicitly ask us to in your email message.
             </p>
             <p>THANK YOU from the Traynrex Red engineering team.</p>
-        <h3><a name="bracketDefs">What if I want a different kind of bracket?</a></h3>
-        <p><prodRef>BracketBuilder</prodRef> doesn't know how to make anything other than a double-elimination bracket that progresses
-            from left to right. It also defaults to making a standard double elimination bracket which has a what-if game at the end of the
-            tournament. There are things you can do to customize things.</p>
-        <h4>Modified Double Elimination</h4>
-        <p>Little League also supports a <em>Modified Double Eliminiation</em> bracket where the tournament progress like a standard
-            double elimination, but the championship game is a winner-take-all game. There is no what-if game. This means that if the
-            undefeated team loses the championship game, then the tournament is still over even though that team only lost one game
-            in the tournament.</p>
-            But what if you want a double elimination bracket that has a different structure (winners and losers
-            going to different games)? Well, it <em>is possible</em> to do this, but its not easy, and the resulting bracket won't be
-            compatibile with the official Little League double eliminination tournament brackets.
-        </p>
-        <h4></h4>
-        <p>If this is what you really want, though, you can do it.</p>
+            <h3><a name="modDouble">What if I want a modified double elimination bracket?</a></h3>
+            <zoomable>
+                <floatRight style="width: 20vw">
+                    <img src="Images/BracketDef.png" class="whiteBackSmaller" />
+                </floatRight>
+            </zoomable>
+            <p>
+                By default, <prodRef>BracketBuilder</prodRef> knows how to make standard double-elimination tournament
+                brackets compatible with Little League. You can find lots of details of creating your own custom brackets
+                <a href="./CustomBrackets.html">here</a>.
+            </p>
+            <p>
+                Little League also supports a <em>Modified Double Eliminiation</em> bracket where the tournament progress like a standard
+                double elimination, but the championship game is a winner-take-all game. There is no what-if game. This means that if the
+                undefeated team loses the championship game, then the tournament is still over even though that team only lost one game
+                in the tournament.
+            </p>
+            The easiest way to accomplish this is to start with a standard bracket and make a small change to the bracket definition.
+            </p>
+
+            <p>
+                First, lets start with a 5 team double elimination bracket. Start out by selecting a 5 Team bracket and build it. You will get all the
+                expected sheets (Games, TeamsAndFields, BracketInfo, and BracketDefs). To make this a modified double elimination bracket, we will
+                be changing the BracketDefs sheet.
+            </p>
+            <p>If you go to the BracketDefs sheet, you should see the definition for the 5 team double elimination bracket as shown.</p>
+            <p>In order to make this a modified double elimination bracket, we will be getting rid of the the what-if game in the tournament.</p>
+            <p>
+                Look at game 8 in the bracket. The Winner is defined to go to the Top of Game 9 and the Loser goes to the Bottom of Game 9. In a modified
+                bracket, the loser of Game 8 goes nowhere -- they are eliminated. Let's delete the B9 value in the Loser column of game 8. This makes
+                game 8 our championship game now.
+            </p>
+            <zoomable>
+                <floatRight style="width: 20vw">
+                    <img src="Images/BracketDefMod.png" class="whiteBackSmaller" />
+                </floatRight>
+            </zoomable>
+            <p>
+                The next change is to make Game 9 our champion. Delete The T10 from the Winner column of Game 9, and delete L8 from the Bottom
+                column for Game 9. This means that Game 9 has no winner or loser advance values, and it also means that there is no bottom
+                team defined for Game 9. This makes this our champion.
+            </p>
+            <p>The last thing to do is to delete the Game 10 line entirely since it is no longer needed. Just delete the whole row.</p>
+            <p>
+                Now we have a modified double elimination bracket for 5 teams. Go back to the Games sheet, and right click on the
+                <prodRef>BracketBuilder</prodRef> add in and Refresh it. (In Excel on the Desktop, just choose Refresh. In Excel on the Web,
+                choose "Refresh Frame"). This will cause the addin to reload the bracket.
+            </p>
         </article>
 
     </main>

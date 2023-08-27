@@ -187,6 +187,8 @@ export class BracketManager
         if (!this.m_dirty)
             return bracket ? this.getBracket(bracket) : null;
 
+        this.m_dirty = false;
+
         await _TimerStack.timeThisAsync(
             "populateBracketsIfNecessary",
             async () =>
