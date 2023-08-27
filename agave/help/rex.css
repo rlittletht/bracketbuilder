@@ -235,6 +235,11 @@ prodRef{
 
 }
 
+eltRef{
+    font-style: italic;
+    font-variant: small-caps;
+}
+
 superEm{
     font-weight: 800;
     text-decoration: underline;

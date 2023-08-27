@@ -23,6 +23,7 @@ import { GridGameInsert } from "./GridGameInsert";
 import { GridItem } from "./GridItem";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
+import { HelpTopic } from "../Coaching/HelpInfo";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -2747,7 +2748,12 @@ export class Grid
         if (selected.FirstRow < this.m_firstGridPattern.FirstRow
             || selected.FirstColumn < this.m_firstGridPattern.FirstColumn)
         {
-            throw new TrError([`The current selection is outside the current bracket grid. Please select a cell on the grid starting at ${this.m_firstGridPattern.toFriendlyString()}`]);
+            throw new TrError(
+                [
+                    `The current selection is outside the current bracket grid. Please select a cell on the grid starting at ${this.m_firstGridPattern.toFriendlyString()}`
+                ],
+                { topic: HelpTopic.FAQ_InsertLocation }
+            );
         }
 
         if (selected.RowCount == 1)

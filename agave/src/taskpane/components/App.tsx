@@ -104,7 +104,7 @@ export default class App extends React.Component<AppProps, AppState>
     static async launchHelp(appContext: IAppContext)
     {
         appContext;
-        window.open(HelpLink.buildHelpLink("BracketBuilder-Help.html"));
+        window.open(HelpLink.buildHelpLink("BracketBuilder.html"));
     }
 
     static async doIntegrationTests(appContext: IAppContext)

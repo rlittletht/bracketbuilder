@@ -113,7 +113,9 @@
                 without breaking the underlying formulas/formatting
             </p>
             <br clear="all" />
-            <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="Images/Sheets.png" /></floatRight>
+            <zoomable>
+                <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="Images/Sheets.png" /></floatRight>
+            </zoomable>
             <h3><a name="workbook">Workbook Structure</a></h3>
             <p>
                 After you create click on <em>Build This Bracket</em>, you will have several sheets
@@ -121,7 +123,9 @@
                 will be working with most of the time. The other sheets have data for and about your bracket.
             </p>
             <br clear="all" />
-            <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="Images/GamesSheet.png" /></floatRight>
+            <zoomable>
+                <floatRight style="width: 30vw;padding-top: 2rem"><img class="whiteBack" src="Images/GamesSheet.png" /></floatRight>
+            </zoomable>
             <h4><a name="Games">Games Sheet</a></h4>
             <p> The <em>Games sheet</em> has the actual bracket grid on it and is what you will be building and eventually publishing</p>
             <p>This sheet has several things you need to customize to get your bracket looking the way you want</p>
@@ -160,33 +164,41 @@
                 will get a new start date.
             </p>
             <br clear="all" />
-            <floatRight style="width: 2 0vw;padding-top: 2rem"><img class="whiteBack" src="Images/TeamAndFields.png" /></floatRight>
+            <zoomableTall>
+                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/TeamAndFields.png" /></floatRight>
+            </zoomableTall>
             <h4><a name="TeamsAndFields">TeamsAndFields Sheet</a></h4>
             <p>
-                The <em>TeamsAndFields<</em> sheet has two tables on it.
+                The <eltRef>TeamsAndFields</eltRef> sheet has two tables on it -- <eltRef>BracketSourceData</eltRef> and <eltRef>TeamNames</eltRef>.
             </p>
+            <h5>Field and Times (BracketSourceData)</h5>
             <p>
                 The Fields and Times table has the field and time for each of the games. It starts out with "Ballfield" as the field
-                name for every field, but as you create the bracket, BracketBuilder tries to automatically assign fields to the games,
-                using the count from the Tournament Information on the <em>Games</em> sheet. For example, if there are two fields, the first
-                game will get Field #1, the second game will get Field #2, and the third game will go back to Field #1 but at a later time.
+                name for every field, but as you create the bracket, <prodRef>BracketBuilder</prodRef> tries to automatically assign
+                fields to the games, using the count from the Tournament Information on the <em>Games</em> sheet. For example, if
+                there are two fields, the first game will get Field #1, the second game will get Field #2, and the third game will
+                go back to Field #1 but at a later time.
             </p>
             <p>
-                The time for each game starts out as 12:00am. Game times will get assigned by BracketBuilder as you add games
-                to the bracket. The first games on Saturday/Sunday will get 9:00am, the next games will get 12:00pm and so on. On weekdays,
-                the games get 6:00pm when they are added, and the next games get 9:00pm
+                The time for each game starts out as 12:00am. Game times will get assigned by <prodRef>BracketBuilder</prodRef> as
+                you add games to the bracket. The first games on Saturday/Sunday will get 9:00am, the next games will get 12:00pm
+                and so on. On weekdays, the games get 6:00pm when they are added, and the next games get 9:00pm
             </p>
             <p>
                 These game times are most likely not going to be correct, but after you add all the games, it should be easy to
                 change game times in this table.
             </p>
+            <h5>Team Names</h5>
+
             <p>
-                The next table on the <em>TeamsAndFields</em> sheet is the Team Inforamation table. This is where you put in
-                the names of the teams and the Priority (if you are going to use Priority shading). The Team Number corresponds
+                The next table on the <eltRef>TeamsAndFields</eltRef> sheet is the Team Name table. This is where you put in
+                the names of the teams and the Priority (if you are going to use Priority shading). The Team ID corresponds
                 to the draw, so the first team drawn is Team 1 and so on.
             </p>
             <br clear="all" />
-            <floatRight style="width: 2 0vw;padding-top: 2rem"><img class="whiteBack" src="Images/BracketInfo.png" /></floatRight>
+            <zoomableTall>
+                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/BracketInfo.png" /></floatRight>
+            </zoomableTall>
             <h4><a name="BracketInfo">BracketInfo Sheet</a></h4>
             <p>
                 The <em>BracketInfo</em> sheet has two tables on it that summarize your tournament bracket.
@@ -200,7 +212,9 @@
                 to scheduling software/umpire assigning programs (like ArbiterSports, for example).
             </p>
             <br clear="all" />
-            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/GameOnGrid.png" /></floatRight>
+            <zoomable>
+                <floatRight style="width: 15vw;padding-top: 2rem"><img class="whiteBack" src="Images/GameOnGrid.png" /></floatRight>
+            </zoomable>
             <h3><a name="structure">Sheet Structure</a></h3>
             <p>
                 The bracket is laid out on a grid in the worksheet. Each game relies on the underlying
@@ -222,7 +236,9 @@
                     <li>Bottom game line</li>
                     <li>Bottom team name</li>
                 </ol>
-                <floatRight style="width: 20vw"><img class="whiteBack" src="Images/GameOnGrid-Columns.png" /></floatRight>
+                <zoomable>
+                    <floatRight style="width: 15vw"><img class="whiteBack" src="Images/GameOnGrid-Columns.png" /></floatRight>
+                </zoomable>
                 Even when there is no content or no line, the rows continue to alternate. This allows games to
                 be placed anywhere on the grid.
             </p>
@@ -236,7 +252,10 @@
                 <em>game number</em> column, and a <em>border/line</em> column. Just like with the rows, this pattern repeats
                 even if there is no content.
             </p>
-            <floatRight style="width: 30vw;padding-top: 2rem"><img src="Images/GameAnatomy.png" class="whiteBack" /></floatRight>
+            <br clear="all" />
+            <zoomableTall>
+                <floatRight style="width: 15vw;padding-top: 2rem"><img src="Images/GameAnatomy.png" class="whiteBack" /></floatRight>
+            </zoomableTall>
             <h3><a name="anatomy" />Game Formulas</h3>
             <p>
                 Most of the parts of a game come from formulas and cell names, which make it possible for the games to automatically
