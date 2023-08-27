@@ -21,6 +21,49 @@ import { s_staticConfig } from "../../StaticConfig";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { StructureEditor } from "./StructureEditor";
 import { Intentions } from "../../Interop/Intentions/Intentions";
+import { GameId } from "../GameId";
+
+export class RemovedGameValues
+{
+    m_mapGameIdValues = new Map<number, any[][]>();
+
+    addGameValues(id: GameId, values: any[][])
+    {
+        this.m_mapGameIdValues.set(id.Value, values);
+    }
+
+    getGameValues(id: GameId): any[][]
+    {
+        if (this.m_mapGameIdValues.has(id.Value))
+            return this.m_mapGameIdValues.get(id.Value);
+
+        return null;
+    }
+
+    getTopScoreOrEmpty(id: GameId): string
+    {
+        if (id && this.m_mapGameIdValues.has(id.Value))
+            return this.m_mapGameIdValues.get(id.Value)[0][1];
+
+        return "";
+    }
+
+    getBottomScoreOrEmpty(id: GameId): string
+    {
+        if (id && this.m_mapGameIdValues.has(id.Value))
+        {
+            const values = this.m_mapGameIdValues.get(id.Value);
+
+            // if it was too small to have a bottom team, return empty
+            if (values.length < 9)
+                return "";
+
+            return values[values.length - 1][1];
+        }
+
+        return "";
+    }
+}
 
 export class StructureRemove
 {
@@ -406,7 +449,7 @@ export class StructureRemove
         return tns;
     }
 
-    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo): Promise<IIntention[]>
+    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo, removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
         const tns: IIntention[] = [];
 
@@ -484,7 +527,7 @@ export class StructureRemove
                 if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
                     throw new Error("can't have an insert operation when only removing games");
 
-                tns.push(...await ApplyGridChange.executeRemoveChange(appContext, context, item, game.BracketName));
+                tns.push(...await ApplyGridChange.executeRemoveChange(appContext, context, item, game.BracketName, removedGameValues));
             }
 
             return tns;
@@ -503,7 +546,7 @@ export class StructureRemove
         If there is no selected range, then find the given game and remove it.
 
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
+    static async findAndRemoveGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string, removedGameValues?: RemovedGameValues)
     {
         const bookmark: string = "findAndRemoveGame";
 
@@ -554,7 +597,7 @@ export class StructureRemove
 
         _TimerStack.pushTimer("removeBoundGames");
         for (let _game of games)
-            tns.AddTns(await this.removeBoundGame(appContext, context, grid, _game, rangeSelected));
+            tns.AddTns(await this.removeBoundGame(appContext, context, grid, _game, rangeSelected, removedGameValues));
         _TimerStack.popTimer();
 
         // last, obliterate the rest of the range

@@ -1,7 +1,7 @@
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources } from "../../Brackets/GameDataSources";
 import { OADate } from "../../Interop/Dates";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { JsCtx } from "../../Interop/JsCtx";
@@ -13,7 +13,7 @@ import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { StructureInsert } from "./StructureInsert";
-import { StructureRemove } from "./StructureRemove";
+import { RemovedGameValues, StructureRemove } from "./StructureRemove";
 import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
 import { ObjectType } from "../../Interop/TrackingCache";
 import { RangeCaches } from "../../Interop/RangeCaches";
@@ -41,7 +41,7 @@ export class ApplyGridChange
         if the Op is RemoveLite, there's really nothing to do -- the Insert is
         going to assume all the named ranges are already there
     ----------------------------------------------------------------------------*/
-    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string): Promise<IIntention[]>
+    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string, removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
         const tns: IIntention[] = [];
 
@@ -85,6 +85,11 @@ export class ApplyGridChange
         }
         else
         {
+            const areas: FastFormulaAreas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+
+            if (areas)
+                removedGameValues?.addGameValues(game.GameId, areas.getValuesForRangeInfo(game.FullGameRange));
+
             AppContext.checkpoint("appc.10");
             tns.push(...await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite));
             AppContext.checkpoint("appc.11");
@@ -100,7 +105,7 @@ export class ApplyGridChange
         the formulas and text. The names and structure are assumed to already
         be there.
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string): Promise<{ undoItem: UndoGameDataItem, tns: IIntention[] }>
+    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string, removedGameValues?: RemovedGameValues): Promise<{ undoItem: UndoGameDataItem, tns: IIntention[] }>
     {
         const tns: IIntention[] = [];
         const bookmark: string = "executeAddChange";
@@ -165,7 +170,7 @@ export class ApplyGridChange
         if (game.IsChampionship)
             tns.push(...await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range));
         else
-            tns.push(...await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite));
+            tns.push(...await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite, removedGameValues));
 
         AppContext.checkpoint("appc.18");
 
@@ -189,6 +194,7 @@ export class ApplyGridChange
 
         const removeTns: Intentions = new Intentions();
         await FastFormulaAreas.populateAllCaches(context);
+        const removedGameValues: RemovedGameValues = new RemovedGameValues();
 
         // do all the removes first
         for (let item of changes)
@@ -197,7 +203,7 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
                 continue;
 
-            removeTns.AddTns(await this.executeRemoveChange(appContext, context, item, bracketName));
+            removeTns.AddTns(await this.executeRemoveChange(appContext, context, item, bracketName, removedGameValues));
         }
 
         await removeTns.Execute(context);
@@ -232,7 +238,7 @@ export class ApplyGridChange
                 continue;
 
             const { undoItem: undoGameDataItem, tns } =
-                await this.executeAddChange(appContext, context, gridRef, item, bracketName);
+                await this.executeAddChange(appContext, context, gridRef, item, bracketName, removedGameValues);
 
             addGameTns.AddTns(tns);
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))

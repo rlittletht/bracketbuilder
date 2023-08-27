@@ -12,7 +12,7 @@ import { GridItem } from "../GridItem";
 import { UndoGameDataItem, _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureEditor } from "./StructureEditor";
-import { StructureRemove } from "./StructureRemove";
+import { StructureRemove, RemovedGameValues } from "./StructureRemove";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
 import { TnCreateGlobalName } from "../../Interop/Intentions/TnCreateGlobalName";
@@ -161,13 +161,16 @@ export class StructureInsert
     static setTargetFormulasForGame(
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
-        gameInfoRangeInfo: RangeInfo): IIntention[]
+        gameInfoRangeInfo: RangeInfo,
+        removedGameValues?: RemovedGameValues): IIntention[]
     {
         // figure out how big the game will be (width,height)
         const formulas: any[][] = [];
+        const topScore = removedGameValues?.getTopScoreOrEmpty(game.GameId) ?? "";
+        const bottomScore = removedGameValues?.getBottomScoreOrEmpty(game.GameId) ?? "";
 
         formulas.push(
-            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), topScore]);
 
         formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
 
@@ -184,7 +187,7 @@ export class StructureInsert
         this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 2);
         formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
         formulas.push(
-            [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), bottomScore]);
 
         const range =
             new RangeInfo(insertRangeInfo.FirstRow, insertRangeInfo.RowCount, insertRangeInfo.FirstColumn, insertRangeInfo.ColumnCount - 1);
@@ -206,7 +209,8 @@ export class StructureInsert
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
         connectedBottom: boolean,
-        liteInsert: boolean): Promise<IIntention[]>
+        liteInsert: boolean,
+        removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
         const tns: IIntention[] = [];
 
@@ -224,7 +228,7 @@ export class StructureInsert
 
         const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
-        tns.push(...this.setTargetFormulasForGame(game, insertRangeInfo, gameInfoRangeInfo));
+        tns.push(...this.setTargetFormulasForGame(game, insertRangeInfo, gameInfoRangeInfo, removedGameValues));
 
         tns.push(...this.setAndFormatGameInfo(
             new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4, insertRangeInfo.FirstColumn, 1),
