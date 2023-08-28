@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>TwBracketBuilder Help</title>
     <link rel="stylesheet" href="./rex.css" />
+    <script src="./rex.js"></script>
     <style>
     </style>
 </head>
@@ -30,474 +31,508 @@
         <nav>
             <ul>
                 <li><a href="./BracketBuilder.html">Getting Started</a></li>
-                <ul>
-                    <li><a href="./BracketBuilder.html#intro">Introduction</a></li>
-                    <li><a href="./BracketBuilder.html#quickstart">Quick Walk-through</a></li>
-                </ul>
-                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
-                <ul>
-                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#Games">Games Sheet</a></li>
-                        <li><a href="./SheetEditing.html#TeamsAndFields">TeamsAndFields Sheet</a></li>
-                        <li><a href="./SheetEditing.html#BracketInfo">BracketInformation Sheet</a></li>
-
-                    </ul>
-                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
-                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
-                        <li><a href="./SheetEditing.html#score">Scores</a></li>
-                        <li><a href="./SheetEditing.html#field">Field</a></li>
-                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
-                    </ul>
-                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
-                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
-                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
-                    </ul>
-                </ul>
+                <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
                 <li><a href="./Commands.html#Commands">Builder Functions</a></li>
-                <ul>
-                    <li><a href="./Commands.html#Controls">Main Interface</a></li>
-                    <li><a href="./Commands.html#Controls">Main Tools</a></li>
-                    <ul>
-                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
-                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
-                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
-                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
-                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
-                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
-                        <li><a href="./Commands.html#Help">Help</a></li>
-                    </ul>
-                    <li><a href="./Commands.html#BracketTools">Bracket Tools</a></li>
-                    <ul>
-                        <li><a href="./Commands.html#PickUpGame">Pick up Game</a></li>
-                        <li><a href="./Commands.html#DropGame">Drop Game</a></li>
-                        <li><a href="./Commands.html#RemoveGame">Remove Game</a></li>
-                        <li><a href="./Commands.html#RepairGame">Repair Game</a></li>
-                    </ul>
-                    <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
-                </ul>
                 <li><a href="./CustomBrackets.html#">Custom Brackets</a></li>
-                <ul>
-                    <li><a href="./CustomBrackets.html#structure">Structure</a></li>
-                    <ul>
-                        <li><a href="./CustomBrackets.html#bracketDef">Bracket Definition</a></li>
-                    </ul>
-                    <li><a href="./CustomBrackets.html#reload">Loading custom brackets</a></li>
-                </ul>
-                <li><a href="./FAQ.html">FAQ/Scenarios</a></li>
-                <ul class="smaller">
-                    <li><a href="./FAQ.html#manuallySelect">Choosing insertion range</a></li>
-                    <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
-                    <li><a href="./FAQ.html#bracketNotReady">Bracket not ready?</a></li>
-                    <li><a href="./FAQ.html#recreate">Recreating your bracket</a></li>
-                    <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
-                    <li><a href="./FAQ.html#broken">Why is my bracket broken?</a></li>
-                    <li><a href="./FAQ.html#insertLocation">Insert locations</a></li>
-                    <li><a href="./FAQ.html#insertFailed">Insert failures</a></li>
-                    <li><a href="./FAQ.html#exceptions">Fatal Errors/Exceptions</a></li>
-                    <li><a href="./FAQ.html#modDouble">Modified Double Elimination</a></li>
-                </ul>
+                <li><a href="./FAQ.html#FAQ">FAQ/Scenarios</a></li>
                 <li><a href="./Licenses.html">Licenses</a></li>
                 <li><a href="./Privacy.html">Privacy</a></li>
             </ul>
         </nav>
-        <article>
-            <h2>Frequently Asked Questions / Scenarios</h2>
-            <p>
-                This is a collection of topics that frequently come up while building brackets
-                using BracketBuilder. We're always looking for more topics to add here, so please
-                <a href="mailto:red@traynrex.com">let us know</a> about things you run into often and how you solve them.
-            </p>
-            <h3><a name="manuallySelect"><a name="InsertLocation">Manually selecting where a game gets inserted</a></a></h3>
-            <p>
-                Most of the time, BracketBuilder does a good job figuring out how to place a game
-                on the bracket, including shifting other games around to make things fit. Sometimes, though,
-                you just want a game to go in a specific place. There are a few things you can do.
-            </p>
-            <h4>Choose the day for the game</h4>
-            <p>
-                The most common selection for inserting a game is to just click somewhere in the column for the
-                day you want the game to be placed on.
-            </p>
-            <p>
-                Be careful, if you click in a cell that is close to where
-                BracketBuilder might place the game, then it might get confused and think you are actually asking for
-                a specific place. The best way to avoid this is to click at the top of the column you want to insert in.
-            </p>
-            <h4>Choose the starting cell for the game</h4>
-            <p>
-                If you only want to tell BracketBuilder where you would like a game to <i>start</i> (i.e. where
-                the top of the game should be), then just click in the cell where you want the top team
-                name to be.
-            </p>
-            <p>
-                When you do this, BracketBuilder will try to insert the game at this location. Note that
-                if there are game conflicts (overlapping games, etc), then BracketBuilder might still try
-                to adjust your selection. The most common automatic adjustments:
-                <ul>
-                    <li>
-                        Insert the game <i>above</i> your selection - BracketBuilder will do this if it thinkgs
-                        that flipping the game top/bottom will make it fit better
-                    </li>
-                    <li>Insert the game two cells up or down from your selection</li>
-                </ul>
-            </p>
-            <p>
-                Since BracketBuilder is trying to insert where you are asking it to, this sometimes means
-                it gets confused when you have clicked in a column and you aren't asking for a specific place. If you
-                are being told that you can't insert a game at the requested location and you aren't trying to
-                ask for a specfic place, then just click in a cell at the top of the column you want to place the
-                game in.
-            </p>
-            <h4>Choosing the exact range for the game</h4>
-            <p>
-                This is the most specific way to tell BracketBuilder where to put the game. When you do this, BracketBuilder
-                will place the game at your selection even if it means breaking the bracket
-            </p>
-            <p>
-                BracketBuilder will still make some adjustments even when you specific range:
-                <ul>
-                    <li>Move the game up or down 1 row to make it fit better</li>
-                    <li>Grow or shrink the game by 1 row to make it fit</li>
-                    <li>Rearrange the games on the grid in order to make it fit</li>
-                </ul>
-            </p>
-            <h3><a name="gameDependencies">What are game dependencies?</a></h3>
-            <p>
-                Each game has two teams playing. With the exception of the first game for each team, each of these teams
-                comes from a previous game -- either the winner or the loser of that game. BracketBuilder will
-                connect the winner of a game with the next game that the winning team will play.
-            </p>
-            <p>
-                The bracket is laid out with each column as a day of the week. (Actually, you can have more
-                than one column for a day, but we'll cover that later). Each game will be in one of those columns
-                in the bracket. This means that every game has to be placed in a column <i>after</i> all of the games
-                that feed into it. These are called the <i>game dependencies</i>.
-            </p>
-            <p>
-                For example, if Game 19 is played between the winner of game 15 (W15) and the winner of game 13 (W13),
-                then Game 19 has to be in a column <i>after</i> both games 15 and 13. If you try to place a game in the
-                same column as one of its dependencies, then BracketBuilder will tell you it can't insert the game, and it
-                will suggest what column you have to put the game in.
-            </p>
-        <p>If you need to play two games on the same day, see the section on Creating Double-Headers.</p>
-        <h3><a name="bracketNotReady">What does it mean when the "Bracket Isn't Ready"?</a></h3>
-        <p>Lots of commands can't be run until you have create a bracket first. For example, you can't
-            apply the finishing touches to a bracket if you haven't created the bracket yet.</p>
-        <p>If you get an error telling you that a command isn't available until the bracket is ready, then you just have
-            to create the bracket</p>
-        <p>If you are getting this error and you DO have a bracket already created, then this means that something
-            in the workbook is broken and <prodRef>BracketBuidler</prodRef> doesn't recognize the workbook any more. At this
-            point its probably best to just start over and create a new bracket.</p>
-        <h3><a name="recreate">(Re)Creating a Bracket</a></h3>
-        <p>Many times its easier to just start from scratch when something goes wrong. If you know where you are going
-            to place the games, its pretty straightforward to just create a new bracket. Here are some tips for starting
-            over that should help you save time</p>
-        <h4>Copy your team names</h4>
-        <p>If you already filled out your team names, then just copy the names from your old sheet to your new workbook.
-            Remember, PASTE BY VALUE!</p>
-        <h4>Copy your tournament information</h4>
-        <p>Again, if you have already filled out tournament information (like the title, location, etc), then copy that information
-            from your old sheet. Again, be sure to PASTE VALUES only -- you don't want to accidentally paste any formulas or cell
-            names!</p>
-        <h3><a name="doubleHeaders">How do I create a double-header?</a></h3>
-            <p>
-                There is no way to place a game in the same column as one of its dependencies. There is nothing that says
-                you can't have more than one column for any given day, though. In fact, we do this already when we extend
-                the last day of the tournament to include the <i>champion</i> game (which isn't really a game, its just
-                the fancy place we put the name of the tournament champion).
-            </p>
-            <p>
-                Someday, maybe we'll make a bracket command to make a day take up more columns, but for now its a manual
-                process. This is also a good step-by-step guide on how you can really tweak the schedule!
-            </p>
-            <h4>
-                Scenario: Double header for the what-if game
-            </h4>
-            <zoomable>
-                <floatRight style="width: 20vw">
-                    <img src="Images/DH-Start.png" class="whiteBack" />
-                </floatRight>
-            </zoomable>
-            <p>
-                Let's imagine we have a 4 team bracket, and we want to play the what-if game on the same day
-                as the championship game as a double-header.  We want the championship game at 3pm and the what-if
-                will be at 6pm.
-            </p>
-            <p>
-                To do this, we are going to merge two of the days together in the header so that a single day now has
-                two columns. We also have to fix the day formulas. There are several steps:
-            </p>
-            <br clear="all" />
-            <steps>
-                <iconic>
-                    <img src="Images/DH-TwoDays.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>
-                    First, determine which days you want to merge. You can merge as many days as you want, but this example
-                    will only demonstrate two days.
-                </p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-SelectBothDays.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>
-                    Select the two cells for the day-of-week to merge. You have to merge the day-of-the week cells (Monday/Tuesday/Wednesday)
-                    and the date cells (June 19, June 20, June 21) separately, so for the first step, only select the day-of-the-week cells.
-                </p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-MergeAndCenterRibbon.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>
-                    On the home tab, find <cmd>Merge and center</cmd> button on the alignment chunk -- it should be in the
-                    depressed state, showing that the current selection is already merged. Click on <cmd>Merge and center</cmd> to unmerge
-                    the cells.
-                </p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-AfterDayUnmerge.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>
-                    After the day-of-the-week cells are unmerged, you should still have the cells selected which will make it easier to
-                    merge both days all together. If all the cells aren't selected, that's ok -- you just have to reselect them. Be sure
-                    to select <em>all</em> of the cell between the lines (in this example, select M5:Q5)
-                </p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-ExcelError.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>
-                    Now we want to merge both days together. With the cells selected from the previous step, click the
-                    <cmdMerge and center</cmd> button again.  When you do this, you will get an Excel warning about
+        <article id="FAQ">
+            <section smallerNav id="FAQ">
+                <heading navText="FAQ/Scenarios">Frequently Asked Questions / Scenarios</heading>
+                <content>
+                    <p>
+                        This is a collection of topics that frequently come up while building brackets
+                        using BracketBuilder. We're always looking for more topics to add here, so please
+                        <a href="mailto:red@traynrex.com">let us know</a> about things you run into often and how you solve them.
+                    </p>
+                    <section id="InsertLocation">
+                        <heading navText="Choosing insertion range">Manually selecting where a game gets inserted</heading>
+                        <content>
+                            <p>
+                                Most of the time, BracketBuilder does a good job figuring out how to place a game
+                                on the bracket, including shifting other games around to make things fit. Sometimes, though,
+                                you just want a game to go in a specific place. There are a few things you can do.
+                            </p>
+                            <section>
+                                <heading>Choose the day for the game</heading>
+                                <content>
+                                    <p>
+                                        The most common selection for inserting a game is to just click somewhere in the column for the
+                                        day you want the game to be placed on.
+                                    </p>
+                                    <p>
+                                        Be careful, if you click in a cell that is close to where
+                                        BracketBuilder might place the game, then it might get confused and think you are actually asking for
+                                        a specific place. The best way to avoid this is to click at the top of the column you want to insert in.
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Choose the starting cell for the game</heading>
+                                <content>
+                                    <p>
+                                        If you only want to tell BracketBuilder where you would like a game to <i>start</i> (i.e. where
+                                        the top of the game should be), then just click in the cell where you want the top team
+                                        name to be.
+                                    </p>
+                                    <p>
+                                        When you do this, BracketBuilder will try to insert the game at this location. Note that
+                                        if there are game conflicts (overlapping games, etc), then BracketBuilder might still try
+                                        to adjust your selection. The most common automatic adjustments:
+                                        <ul>
+                                            <li>
+                                                Insert the game <i>above</i> your selection - BracketBuilder will do this if it thinkgs
+                                                that flipping the game top/bottom will make it fit better
+                                            </li>
+                                            <li>Insert the game two cells up or down from your selection</li>
+                                        </ul>
+                                    </p>
+                                    <p>
+                                        Since BracketBuilder is trying to insert where you are asking it to, this sometimes means
+                                        it gets confused when you have clicked in a column and you aren't asking for a specific place. If you
+                                        are being told that you can't insert a game at the requested location and you aren't trying to
+                                        ask for a specfic place, then just click in a cell at the top of the column you want to place the
+                                        game in.
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Choosing the exact range for the game</heading>
+                                <content>
+                                    <p>
+                                        This is the most specific way to tell BracketBuilder where to put the game. When you do this, BracketBuilder
+                                        will place the game at your selection even if it means breaking the bracket
+                                    </p>
+                                    <p>
+                                        BracketBuilder will still make some adjustments even when you specific range:
+                                        <ul>
+                                            <li>Move the game up or down 1 row to make it fit better</li>
+                                            <li>Grow or shrink the game by 1 row to make it fit</li>
+                                            <li>Rearrange the games on the grid in order to make it fit</li>
+                                        </ul>
+                                    </p>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+
+                    <section id="gameDependencies">
+                        <heading navText="What's a game dependency?">What are game dependencies?</heading>
+                        <content>
+                            <p>
+                                Each game has two teams playing. With the exception of the first game for each team, each of these teams
+                                comes from a previous game -- either the winner or the loser of that game. BracketBuilder will
+                                connect the winner of a game with the next game that the winning team will play.
+                            </p>
+                            <p>
+                                The bracket is laid out with each column as a day of the week. (Actually, you can have more
+                                than one column for a day, but we'll cover that later). Each game will be in one of those columns
+                                in the bracket. This means that every game has to be placed in a column <i>after</i> all of the games
+                                that feed into it. These are called the <i>game dependencies</i>.
+                            </p>
+                            <p>
+                                For example, if Game 19 is played between the winner of game 15 (W15) and the winner of game 13 (W13),
+                                then Game 19 has to be in a column <i>after</i> both games 15 and 13. If you try to place a game in the
+                                same column as one of its dependencies, then BracketBuilder will tell you it can't insert the game, and it
+                                will suggest what column you have to put the game in.
+                            </p>
+                            <p>If you need to play two games on the same day, see the section on Creating Double-Headers.</p>
+                        </content>
+                    </section>
+
+                    <section id="bracketNotReady">
+                        <heading navText="Bracket not ready?">What does it mean when the "Bracket Isn't Ready"?</heading>
+                        <content>
+                            <p>
+                                Lots of commands can't be run until you have create a bracket first. For example, you can't
+                                apply the finishing touches to a bracket if you haven't created the bracket yet.
+                            </p>
+                            <p>
+                                If you get an error telling you that a command isn't available until the bracket is ready, then you just have
+                                to create the bracket
+                            </p>
+                            <p>
+                                If you are getting this error and you DO have a bracket already created, then this means that something
+                                in the workbook is broken and <prodRef>BracketBuidler</prodRef> doesn't recognize the workbook any more. At this
+                                point its probably best to just start over and create a new bracket.
+                            </p>
+                        </content>
+                    </section>
+
+                    <section id="recreate">
+                        <heading navText="Recreating your bracket">(Re)Creating a Bracket</heading>
+                        <content>
+                            <p>
+                                Many times its easier to just start from scratch when something goes wrong. If you know where you are going
+                                to place the games, its pretty straightforward to just create a new bracket. Here are some tips for starting
+                                over that should help you save time
+                            </p>
+                            <section>
+                                <heading>Copy your team names</heading>
+                                <content>
+                                    <p>
+                                        If you already filled out your team names, then just copy the names from your old sheet to your new workbook.
+                                        Remember, PASTE BY VALUE!
+                                    </p>
+                                </content>
+                            </section>
+
+                            <section>
+                                <heading>Copy your tournament information</heading>
+                                <content>
+                                    <p>
+                                        Again, if you have already filled out tournament information (like the title, location, etc), then copy that information
+                                        from your old sheet. Again, be sure to PASTE VALUES only -- you don't want to accidentally paste any formulas or cell
+                                        names!
+                                    </p>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+
+                    <section id="doubleHeaders">
+                        <heading navText="Making a double-header">How do I create a double-header?</heading>
+                        <content>
+                            <p>
+                                There is no way to place a game in the same column as one of its dependencies. There is nothing that says
+                                you can't have more than one column for any given day, though. In fact, we do this already when we extend
+                                the last day of the tournament to include the <i>champion</i> game (which isn't really a game, its just
+                                the fancy place we put the name of the tournament champion).
+                            </p>
+                            <p>
+                                Someday, maybe we'll make a bracket command to make a day take up more columns, but for now its a manual
+                                process. This is also a good step-by-step guide on how you can really tweak the schedule!
+                            </p>
+                            <section>
+                                <heading>Scenario: Double header for the what-if game</heading>
+                                <content>
+                                    <zoomable>
+                                        <floatRight style="width: 20vw">
+                                            <img src="Images/DH-Start.png" class="whiteBack" />
+                                        </floatRight>
+                                    </zoomable>
+                                    <p>
+                                        Let's imagine we have a 4 team bracket, and we want to play the what-if game on the same day
+                                        as the championship game as a double-header.  We want the championship game at 3pm and the what-if
+                                        will be at 6pm.
+                                    </p>
+                                    <p>
+                                        To do this, we are going to merge two of the days together in the header so that a single day now has
+                                        two columns. We also have to fix the day formulas. There are several steps:
+                                    </p>
+                                    <br clear="all" />
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-TwoDays.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>
+                                            First, determine which days you want to merge. You can merge as many days as you want, but this example
+                                            will only demonstrate two days.
+                                        </p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-SelectBothDays.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>
+                                            Select the two cells for the day-of-week to merge. You have to merge the day-of-the week cells (Monday/Tuesday/Wednesday)
+                                            and the date cells (June 19, June 20, June 21) separately, so for the first step, only select the day-of-the-week cells.
+                                        </p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-MergeAndCenterRibbon.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>
+                                            On the home tab, find <cmd>Merge and center</cmd> button on the alignment chunk -- it should be in the
+                                            depressed state, showing that the current selection is already merged. Click on <cmd>Merge and center</cmd> to unmerge
+                                            the cells.
+                                        </p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-AfterDayUnmerge.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>
+                                            After the day-of-the-week cells are unmerged, you should still have the cells selected which will make it easier to
+                                            merge both days all together. If all the cells aren't selected, that's ok -- you just have to reselect them. Be sure
+                                            to select <em>all</em> of the cell between the lines (in this example, select M5:Q5)
+                                        </p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-ExcelError.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>
+                                            Now we want to merge both days together. With the cells selected from the previous step, click the
+                                            <cmdMerge and center</cmd> button again.  When you do this, you will get an Excel warning about
                     merging contents, click OK. We will fix up the formulas in the next step.
-                </p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-AfterDayMerge.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>The day-of-week cells are now merged together. We still have to deal with the date cells.</p>
-            </steps>
+                                        </p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-AfterDayMerge.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>The day-of-week cells are now merged together. We still have to deal with the date cells.</p>
+                                    </steps>
 
-            <steps>
-                <iconic>
-                    <img src="Images/DH-AfterAllMerge.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>Repeat this same procedure for the date cells in Row 6 that you want to merge together.</p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-BrokenDay.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>
-                    With the day-of-week and the date cells merged together, we have now created multiple columns for
-                    a single day. Unfortunately, that warning that Excel gave about merging cells actually mattered.
-                    When we merged the cells, we broke the date formulas for the later days.
-                    To fix this, we have to fixup the formula for the broken day.<br /><br />Click on the cell with the broken date (S6 in this example)
-                </p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-BeforeFormula.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>The formula bar will show the current (broken) forumula ("=P6 + 1" in this example)</p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-AfterFormula.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>Type the correct formula, using the correct column for the previous day ("=M6 + 1" in this example)</p>
-            </steps>
-            <steps>
-                <iconic>
-                    <img src="Images/DH-Done.png" class="whiteBackSmaller" />
-                </iconic>
-                <p>All done!</p>
-            </steps>
-            <zoomable>
-                <floatRight style="width: 20vw">
-                    <img src="Images/DH-Done.png" class="whiteBack" />
-                </floatRight>
-            </zoomable>
-            <p>When all is said and done, this is what you will end up with.</p>
-            <br clear="all" />
-            <h3><a name="broken">Why is my bracket broken?</a></h3>
-            <p>
-                When you get an error about the bracket being broken, there's not a lot you can do to fix it. This error
-                means that something internal on the workbook has become broken or inconsistent. It might be that a part
-                of a game didn't get inserted, or a game was partially removed. It also could be that a game ended up getting
-                inserted on top of another game.
-            </p>
-            <p>
-                If you are really daring, you can try to erase the parts of the bracket that are confusing things. If you want to
-                do this, make sure to clear not just the contents of the cells, but also the names of the cells (remember that
-                BracketBuilder uses named cells in order to keep track of where games are on the bracket). Selecting cells
-                and using the <a href="./Commands.html#RemoveGame">button</a> might help you do this.
-            </p>
-            <p>
-                When all else fails, sometimes its just easier to start over with a new bracket. When you do this, make sure you
-                insert games in the places you want them to be in (since you now know where you want them).
-            </p>
-            <h3><a name="insertLocation">Why is BracketBuilder complaining about the insert location?</a></h3>
-            <p>
-                When you click the <cmd>Insert Game</cmd> button, <prodRef>BracketBuilder</prodRef> will try to figure
-                out where to place the game. One thing it can't figure out on its own is what day to place the game on. (Actually,
-                for the very first game of the tournament, it will automatically put the game on the first day).
-            </p>
-            <p>
-                This means that you need to tell <prodRef>BracketBuilder</prodRef> which day to use. To do this, you have to click on a cell
-                in the column for the day you want the game to be on. If you click at the top of the column, then <prodRef>BracketBuilder</prodRef>
-                will automatically pick what it thinks is the best spot for the game. If you click somewhere else in the column, then
-                it will try to place the game as close to that position as possible
-            </p>
-            <zoomable>
-                <floatRight style="width: 20vw">
-                    <img src="Images/LineRows.png" class="whiteBackSmaller" />
-                </floatRight>
-            </zoomable>
-            <p>
-                If you have selected more than once cell, then <prodRef>BracketBuilder</prodRef> will treat this as exactly the location
-                you want to insert in (plus or minus one row). If this selection isn't within the grid, then you will get an error message.
-            </p>
-            <p>
-                The bracket is laid out on a <a href="SheetEditing.html#structure">repeating grid of rows/columns</a> which makes it
-                possible to format the connecting lines and create the bracket you see. The repeating columns are pretty easy to see
-                since each set of 3 columns make up a day in the tournament. To find the repeating row pattern, look for the really short
-                rows on the sheet -- by default, these start with Row 11.
-            </p>
-            <p>
-                To specify an exact game location on the bracket, you have to select a cell that is on or after the first cell in the
-                repeating grid pattern. If you don't, you will get an error. The error should tell you which cell is the first in the grid.
-            </p>
-            <h3><a name="insertFailed">Why did I get an insertion failure when I tried to add a game?</a></h3>
-            <p>
-                When you add a game to the bracket, lots of things can go wrong. The <em>insert failed</em> error is sort of a
-                catch all for all of these failures. Hopefully the error message gives you some more details about what you can do
-                to fix the problem.
-            </p>
-            <h4>Overlapping games</h4>
-            <p>
-                For example, a game might fail because <prodRef>BracketBuilder</prodRef> can't insert the game without the new game
-                overlapping an existing game already on the bracket. In many cases, it can adjust the bracket to make things fit, but
-                it only knows so many tricks.
-            </p>
-            <p>
-                The error message should tell you where on the grid the overlapping game or line is. To fix it, you will probably have
-                to remove games (or use <cmd>Undo</cmd>) to get back to a poing when you can start adding games back in a different
-                order, or at different places (by <a href="./FAQ.html#manuallySelect">manually selecting</a> the game location).
-            </p>
-            <p>
-                Remember, if the bracket was automatically reorganized earlier, it will probably be best to use <cmd>Undo</cmd> since
-                that will also undo the bracket adjustments
-            </p>
-            <h4>Overlapping game results</h4>
-            <zoomableTall>
-                <floatRight style="width: 10vw">
-                    <img src="Images/OverlappingOutput.png" class="whiteBackSmaller" />
-                </floatRight>
-            </zoomableTall>
-            <p>
-                One of the things that <prodRef>BracketBuilder</prodRef> checks when inserting a game is whether or not an existing
-                game on the bracket is going to have a line coming out of it to another game.
-            </p>
-            <p>
-                For example, if you have a game between the two games that need to play each other, when you try to place that next game,
-                the insert will fail because the result of that game in the middle would run into the game you are about to place. To fix this,
-                you have to either remove the game in the middle, or rearrange the grid so the two games that feed into the next game are next to
-                each other.  NOTE: in reality, <prodRef>BracketBuilder</prodRef> knows how to fix this particular example and would automatically
-                rearrange the grid for you. But in a bigger bracket, with more games already played, it probably won't be able to fix it
-                automatically.
-            </p>
-            <h4>Feeder conflicts</h4>
-            <p>
-                Every game can have up to two lines, or feeders, coming in to it. These are the winning teams from previous games. Every game
-                also has an outgoing feeder, which is the winner of the game. When <prodRef>BracketBuilder</prodRef> tries to place games,
-                it uses what it knows about the bracket structure to connect games with incoming and outgoing feeders. If the games on the
-                bracket are placed in a way that makes it impossible to connect games with their sources or results, then you will
-                get an error about not being able to connect feeder lines.
-            </p>
-            <p>
-                Unfortunately, the only way to fix this at this point is to either <cmd>Undo</cmd> or remove games to the point where
-                you can manually place games to make things work. Alternatively, you can just start over with a clean bracket and use
-                what you know about how the bracket is going to lay out in order to manually choose places for the games to go.
-            </p>
-            <h3><a name="exceptions">What do I do with fatal errors/exceptions?</a></h3>
-            <zoomableTall>
-                <floatRight style="width: 10vw">
-                    <img src="Images/Exception.png" class="whiteBackSmaller" />
-                </floatRight>
-            </zoomableTall>
-            <p>
-                I've tried to make <prodRef>BracketBuilder</prodRef> as robust as possible, but sometimes unexpected things happen. Currently, I do
-                <em>not</em> send error reports. This means that you might see a fatal error/exception show up with an ask for you
-                to send the details information to us to try to fix. This is <superEm>absolutely voluntary</superEm>, but much appreciated.
-            </p>
-            <p>If you want to help out, copy all of the details from the error message and email them to <a href="mailto:red@traynrex.com">red@traynrex.com</a></p>
-            <p>
-                <superEm>NOTE:</superEm> If you send email to us, then we will see your email address. If you want to remain anonymous, please
-                don't send a report to us. We promise not to sell or share any of your details. In fact, we won't even contact you with information
-                unless you explicitly ask us to in your email message.
-            </p>
-            <p>THANK YOU from the Traynrex Red engineering team.</p>
-            <h3><a name="modDouble">What if I want a modified double elimination bracket?</a></h3>
-            <zoomable>
-                <floatRight style="width: 20vw">
-                    <img src="Images/BracketDef.png" class="whiteBackSmaller" />
-                </floatRight>
-            </zoomable>
-            <p>
-                By default, <prodRef>BracketBuilder</prodRef> knows how to make standard double-elimination tournament
-                brackets compatible with Little League. You can find lots of details of creating your own custom brackets
-                <a href="./CustomBrackets.html">here</a>.
-            </p>
-            <p>
-                Little League also supports a <em>Modified Double Eliminiation</em> bracket where the tournament progress like a standard
-                double elimination, but the championship game is a winner-take-all game. There is no what-if game. This means that if the
-                undefeated team loses the championship game, then the tournament is still over even though that team only lost one game
-                in the tournament.
-            </p>
-            The easiest way to accomplish this is to start with a standard bracket and make a small change to the bracket definition.
-            </p>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-AfterAllMerge.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>Repeat this same procedure for the date cells in Row 6 that you want to merge together.</p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-BrokenDay.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>
+                                            With the day-of-week and the date cells merged together, we have now created multiple columns for
+                                            a single day. Unfortunately, that warning that Excel gave about merging cells actually mattered.
+                                            When we merged the cells, we broke the date formulas for the later days.
+                                            To fix this, we have to fixup the formula for the broken day.<br /><br />Click on the cell with the broken date (S6 in this example)
+                                        </p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-BeforeFormula.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>The formula bar will show the current (broken) forumula ("=P6 + 1" in this example)</p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-AfterFormula.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>Type the correct formula, using the correct column for the previous day ("=M6 + 1" in this example)</p>
+                                    </steps>
+                                    <steps>
+                                        <iconic>
+                                            <img src="Images/DH-Done.png" class="whiteBackSmaller" />
+                                        </iconic>
+                                        <p>All done!</p>
+                                    </steps>
+                                    <zoomable>
+                                        <floatRight style="width: 20vw">
+                                            <img src="Images/DH-Done.png" class="whiteBack" />
+                                        </floatRight>
+                                    </zoomable>
+                                    <p>When all is said and done, this is what you will end up with.</p>
+                                    <br clear="all" />
+                                </content>
+                            </section>
+                        </content>
+                    </section>
 
-            <p>
-                First, lets start with a 5 team double elimination bracket. Start out by selecting a 5 Team bracket and build it. You will get all the
-                expected sheets (Games, TeamsAndFields, BracketInfo, and BracketDefs). To make this a modified double elimination bracket, we will
-                be changing the BracketDefs sheet.
-            </p>
-            <p>If you go to the BracketDefs sheet, you should see the definition for the 5 team double elimination bracket as shown.</p>
-            <p>In order to make this a modified double elimination bracket, we will be getting rid of the the what-if game in the tournament.</p>
-            <p>
-                Look at game 8 in the bracket. The Winner is defined to go to the Top of Game 9 and the Loser goes to the Bottom of Game 9. In a modified
-                bracket, the loser of Game 8 goes nowhere -- they are eliminated. Let's delete the B9 value in the Loser column of game 8. This makes
-                game 8 our championship game now.
-            </p>
-            <zoomable>
-                <floatRight style="width: 20vw">
-                    <img src="Images/BracketDefMod.png" class="whiteBackSmaller" />
-                </floatRight>
-            </zoomable>
-            <p>
-                The next change is to make Game 9 our champion. Delete The T10 from the Winner column of Game 9, and delete L8 from the Bottom
-                column for Game 9. This means that Game 9 has no winner or loser advance values, and it also means that there is no bottom
-                team defined for Game 9. This makes this our champion.
-            </p>
-            <p>The last thing to do is to delete the Game 10 line entirely since it is no longer needed. Just delete the whole row.</p>
-            <p>
-                Now we have a modified double elimination bracket for 5 teams. Go back to the Games sheet, and right click on the
-                <prodRef>BracketBuilder</prodRef> add in and Refresh it. (In Excel on the Desktop, just choose Refresh. In Excel on the Web,
-                choose "Refresh Frame"). This will cause the addin to reload the bracket.
-            </p>
+                    <section id="broken">
+                        <heading navText="Why is my bracket broken?">Why is my bracket broken?</heading>
+                        <content>
+                            <p>
+                                When you get an error about the bracket being broken, there's not a lot you can do to fix it. This error
+                                means that something internal on the workbook has become broken or inconsistent. It might be that a part
+                                of a game didn't get inserted, or a game was partially removed. It also could be that a game ended up getting
+                                inserted on top of another game.
+                            </p>
+                            <p>
+                                If you are really daring, you can try to erase the parts of the bracket that are confusing things. If you want to
+                                do this, make sure to clear not just the contents of the cells, but also the names of the cells (remember that
+                                BracketBuilder uses named cells in order to keep track of where games are on the bracket). Selecting cells
+                                and using the <a href="./Commands.html#RemoveGame">button</a> might help you do this.
+                            </p>
+                            <p>
+                                When all else fails, sometimes its just easier to start over with a new bracket. When you do this, make sure you
+                                insert games in the places you want them to be in (since you now know where you want them).
+                            </p>
+                        </content>
+                    </section>
+
+                    <section id="insertLocation">
+                        <heading navText="Choosing insert locations">Why is BracketBuilder complaining about the insert location?</heading>
+                        <content>
+                            <p>
+                                When you click the <cmd>Insert Game</cmd> button, <prodRef>BracketBuilder</prodRef> will try to figure
+                                out where to place the game. One thing it can't figure out on its own is what day to place the game on. (Actually,
+                                for the very first game of the tournament, it will automatically put the game on the first day).
+                            </p>
+                            <p>
+                                This means that you need to tell <prodRef>BracketBuilder</prodRef> which day to use. To do this, you have to click on a cell
+                                in the column for the day you want the game to be on. If you click at the top of the column, then <prodRef>BracketBuilder</prodRef>
+                                will automatically pick what it thinks is the best spot for the game. If you click somewhere else in the column, then
+                                it will try to place the game as close to that position as possible
+                            </p>
+                            <zoomable>
+                                <floatRight style="width: 20vw">
+                                    <img src="Images/LineRows.png" class="whiteBackSmaller" />
+                                </floatRight>
+                            </zoomable>
+                            <p>
+                                If you have selected more than once cell, then <prodRef>BracketBuilder</prodRef> will treat this as exactly the location
+                                you want to insert in (plus or minus one row). If this selection isn't within the grid, then you will get an error message.
+                            </p>
+                            <p>
+                                The bracket is laid out on a <a href="SheetEditing.html#structure">repeating grid of rows/columns</a> which makes it
+                                possible to format the connecting lines and create the bracket you see. The repeating columns are pretty easy to see
+                                since each set of 3 columns make up a day in the tournament. To find the repeating row pattern, look for the really short
+                                rows on the sheet -- by default, these start with Row 11.
+                            </p>
+                            <p>
+                                To specify an exact game location on the bracket, you have to select a cell that is on or after the first cell in the
+                                repeating grid pattern. If you don't, you will get an error. The error should tell you which cell is the first in the grid.
+                            </p>
+                        </content>
+                    </section>
+
+                    <section id="insertFailed">
+                        <heading navText="Why did my insert fail?">Why did I get an insertion failure when I tried to add a game?</heading>
+                        <content>
+                            <p>
+                                When you add a game to the bracket, lots of things can go wrong. The <em>insert failed</em> error is sort of a
+                                catch all for all of these failures. Hopefully the error message gives you some more details about what you can do
+                                to fix the problem.
+                            </p>
+                            <section>
+                                <heading>Overlapping games</heading>
+                                <content>
+                                    <p>
+                                        For example, a game might fail because <prodRef>BracketBuilder</prodRef> can't insert the game without the new game
+                                        overlapping an existing game already on the bracket. In many cases, it can adjust the bracket to make things fit, but
+                                        it only knows so many tricks.
+                                    </p>
+                                    <p>
+                                        The error message should tell you where on the grid the overlapping game or line is. To fix it, you will probably have
+                                        to remove games (or use <cmd>Undo</cmd>) to get back to a poing when you can start adding games back in a different
+                                        order, or at different places (by <a href="./FAQ.html#manuallySelect">manually selecting</a> the game location).
+                                    </p>
+                                    <p>
+                                        Remember, if the bracket was automatically reorganized earlier, it will probably be best to use <cmd>Undo</cmd> since
+                                        that will also undo the bracket adjustments
+                                    </p>
+                                </content>
+                            </section>
+
+                            <section>
+                                <heading>Overlapping game results</heading>
+                                <content>
+                                    <zoomableTall>
+                                        <floatRight style="width: 10vw">
+                                            <img src="Images/OverlappingOutput.png" class="whiteBackSmaller" />
+                                        </floatRight>
+                                    </zoomableTall>
+                                    <p>
+                                        One of the things that <prodRef>BracketBuilder</prodRef> checks when inserting a game is whether or not an existing
+                                        game on the bracket is going to have a line coming out of it to another game.
+                                    </p>
+                                    <p>
+                                        For example, if you have a game between the two games that need to play each other, when you try to place that next game,
+                                        the insert will fail because the result of that game in the middle would run into the game you are about to place. To fix this,
+                                        you have to either remove the game in the middle, or rearrange the grid so the two games that feed into the next game are next to
+                                        each other.  NOTE: in reality, <prodRef>BracketBuilder</prodRef> knows how to fix this particular example and would automatically
+                                        rearrange the grid for you. But in a bigger bracket, with more games already played, it probably won't be able to fix it
+                                        automatically.
+                                    </p>
+                                </content>
+                            </section>
+
+                            <section>
+                                <heading>Feeder conflicts</heading>
+                                <content>
+                                    <p>
+                                        Every game can have up to two lines, or feeders, coming in to it. These are the winning teams from previous games. Every game
+                                        also has an outgoing feeder, which is the winner of the game. When <prodRef>BracketBuilder</prodRef> tries to place games,
+                                        it uses what it knows about the bracket structure to connect games with incoming and outgoing feeders. If the games on the
+                                        bracket are placed in a way that makes it impossible to connect games with their sources or results, then you will
+                                        get an error about not being able to connect feeder lines.
+                                    </p>
+                                    <p>
+                                        Unfortunately, the only way to fix this at this point is to either <cmd>Undo</cmd> or remove games to the point where
+                                        you can manually place games to make things work. Alternatively, you can just start over with a clean bracket and use
+                                        what you know about how the bracket is going to lay out in order to manually choose places for the games to go.
+                                    </p>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+
+                    <section id="exceptions">
+                        <heading navText="Fatal Errors/Exceptions">What do I do with fatal errors/exceptions?</heading>
+                        <content>
+                            <zoomableTall>
+                                <floatRight style="width: 10vw">
+                                    <img src="Images/Exception.png" class="whiteBackSmaller" />
+                                </floatRight>
+                            </zoomableTall>
+                            <p>
+                                I've tried to make <prodRef>BracketBuilder</prodRef> as robust as possible, but sometimes unexpected things happen. Currently, I do
+                                <em>not</em> send error reports. This means that you might see a fatal error/exception show up with an ask for you
+                                to send the details information to us to try to fix. This is <superEm>absolutely voluntary</superEm>, but much appreciated.
+                            </p>
+                            <p>If you want to help out, copy all of the details from the error message and email them to <a href="mailto:red@traynrex.com">red@traynrex.com</a></p>
+                            <p>
+                                <superEm>NOTE:</superEm> If you send email to us, then we will see your email address. If you want to remain anonymous, please
+                                don't send a report to us. We promise not to sell or share any of your details. In fact, we won't even contact you with information
+                                unless you explicitly ask us to in your email message.
+                            </p>
+                            <p>THANK YOU from the Traynrex Red engineering team.</p>
+                        </content>
+                    </section>
+
+                    <section id="modDouble">
+                        <heading navText="Modified double elimination">What if I want a modified double elimination bracket?</heading>
+                        <content>
+                            <zoomable>
+                                <floatRight style="width: 20vw">
+                                    <img src="Images/BracketDef.png" class="whiteBackSmaller" />
+                                </floatRight>
+                            </zoomable>
+                            <p>
+                                By default, <prodRef>BracketBuilder</prodRef> knows how to make standard double-elimination tournament
+                                brackets compatible with Little League. You can find lots of details of creating your own custom brackets
+                                <a href="./CustomBrackets.html">here</a>.
+                            </p>
+                            <p>
+                                Little League also supports a <em>Modified Double Eliminiation</em> bracket where the tournament progress like a standard
+                                double elimination, but the championship game is a winner-take-all game. There is no what-if game. This means that if the
+                                undefeated team loses the championship game, then the tournament is still over even though that team only lost one game
+                                in the tournament.
+                            </p>
+                            The easiest way to accomplish this is to start with a standard bracket and make a small change to the bracket definition.
+                            </p>
+
+                            <p>
+                                First, lets start with a 5 team double elimination bracket. Start out by selecting a 5 Team bracket and build it. You will get all the
+                                expected sheets (Games, TeamsAndFields, BracketInfo, and BracketDefs). To make this a modified double elimination bracket, we will
+                                be changing the BracketDefs sheet.
+                            </p>
+                            <p>If you go to the BracketDefs sheet, you should see the definition for the 5 team double elimination bracket as shown.</p>
+                            <p>In order to make this a modified double elimination bracket, we will be getting rid of the the what-if game in the tournament.</p>
+                            <p>
+                                Look at game 8 in the bracket. The Winner is defined to go to the Top of Game 9 and the Loser goes to the Bottom of Game 9. In a modified
+                                bracket, the loser of Game 8 goes nowhere -- they are eliminated. Let's delete the B9 value in the Loser column of game 8. This makes
+                                game 8 our championship game now.
+                            </p>
+                            <zoomable>
+                                <floatRight style="width: 20vw">
+                                    <img src="Images/BracketDefMod.png" class="whiteBackSmaller" />
+                                </floatRight>
+                            </zoomable>
+                            <p>
+                                The next change is to make Game 9 our champion. Delete The T10 from the Winner column of Game 9, and delete L8 from the Bottom
+                                column for Game 9. This means that Game 9 has no winner or loser advance values, and it also means that there is no bottom
+                                team defined for Game 9. This makes this our champion.
+                            </p>
+                            <p>The last thing to do is to delete the Game 10 line entirely since it is no longer needed. Just delete the whole row.</p>
+                            <p>
+                                Now we have a modified double elimination bracket for 5 teams. Go back to the Games sheet, and right click on the
+                                <prodRef>BracketBuilder</prodRef> add in and Refresh it. (In Excel on the Desktop, just choose Refresh. In Excel on the Web,
+                                choose "Refresh Frame"). This will cause the addin to reload the bracket.
+                            </p>
+                        </content>
+                    </section>
+                </content>
+            </section>
         </article>
-
     </main>
 </body>
 </html>

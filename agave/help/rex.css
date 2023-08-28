@@ -62,6 +62,53 @@ article {
     overflow-y: auto;
 }
 
+section {
+}
+
+content {
+    display: block;
+}
+
+heading.active, heading:hover {
+    border-radius: 10%;
+    background: radial-gradient(rgba(255, 255, 255, 1),rgba(255, 255, 255, .05));
+}
+
+heading {
+    color: #111;
+    line-height: 125%;
+    margin-top: 0rem;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+article > heading {
+    font-size: 4rem;
+    margin-top: 0;
+    font-weight: bolder;
+    font-variant: small-caps;
+}
+
+article > section > heading {
+    font-size: 3.25rem;
+}
+
+article > section > content > section > heading {
+    font-size: 2.5rem;
+    margin-top: 2rem;
+}
+
+article > section > content > section > content > section > heading {
+    font-size: 2rem;
+    margin-top: 1rem;
+}
+
+article > section > content > section > content > section > content > section > heading {
+    font-size: 1.7rem;
+    margin-top: 1rem;
+}
+
 footer {
     box-sizing: border-box;
     display: flex;
@@ -83,6 +130,24 @@ zoomable img {
         left: 5vw;
         top: 2vh;
     }
+
+zoomableInline {
+}
+
+    zoomableInline img {
+        transition: transform 0.25s ease;
+        position: relative;
+        top: .4rem;
+        background: red;
+    }
+
+        zoomableInline img:active {
+            max-width: 45vw;
+            max-height: 45vh;
+            position: absolute;
+            left: 25vw;
+            top: 50vh;
+        }
 
 zoomableTall img {
     transition: transform 0.25s ease;
@@ -113,23 +178,23 @@ iconic {
     background: white;
     height: 5rem;
     display: flex;
-
 }
 
 steps p {
     margin: 0;
 }
-    iconic img {
-        transition: transform 0.25s ease;
-        height: 4.9rem;
-        object-fit: contain;
-    }
 
-        iconic img:active {
-            width: 60vw;
-            height: 30vh;
-            position: relative;
-        }
+iconic img {
+    transition: transform 0.25s ease;
+    height: 4.9rem;
+    object-fit: contain;
+}
+
+    iconic img:active {
+        width: 60vw;
+        height: 30vh;
+        position: relative;
+    }
 
 nav {
     box-sizing: border-box;
@@ -231,28 +296,34 @@ cmd {
     font-style: italic;
 }
 
-prodRef{
-
+prodRef {
 }
 
-eltRef{
+eltRef {
     font-style: italic;
     font-variant: small-caps;
 }
 
-superEm{
+superEm {
     font-weight: 800;
     text-decoration: underline;
 }
+
 
 img.logo {
     height: 3rem
 }
 
 floatNone {
-    display: flex;
-    padding: 0.25rem;
+    display: inline-block;
+    float: none;
 }
+
+    floatNone img {
+        position: relative;
+        top: .35rem;
+        line-height: 2rem;
+    }
 
 floatRight {
     float: right;

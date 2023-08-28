@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as CSS from "csstype";
 
 import { Stack } from '@fluentui/react';
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
@@ -116,14 +117,22 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
     buildVerticalList()
     {
         const { children, items, message } = this.props;
+        const heroStyle: CSS.Properties =
+        {
+            fontWeight: 600,
+            color: "blue"
+        };
+
         const listItemsVertical = items.map(
             (item, index) => (
                 <Stack.Item grow className="{item.cursor} heroItem" align="center" key={index} onClick={() =>
                 {
                     item.delegate(this.context)
                 }}>
-                    <i className={`ms-Icon ms-Icon--${item.icon} ${item.cursor}`}></i>
-                    <span className={`ms-font-xl ms-fontWeight-semibold ms-fontColor-neutralPrimary ${item.cursor}`}>{item.primaryText}</span>
+                    <i className={`ms-Icon ms-Icon--${item.icon} ${item.cursor}`} style={heroStyle}></i>
+                    <span className={`ms-font-xl ms-fontWeight-semibold ms-fontColor-neutralPrimary ${item.cursor}`} style={heroStyle}>
+                        {item.primaryText}
+                    </span>
                 </Stack.Item>
             ));
 

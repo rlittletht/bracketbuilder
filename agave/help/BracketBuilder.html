@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>TwBracketBuilder Help</title>
     <link rel="stylesheet" href="./rex.css" />
+    <script src="./rex.js"></script>
     <style>
     </style>
 </head>
@@ -29,368 +30,378 @@
     <main>
         <nav>
             <ul>
-                <li><a href="./BracketBuilder.html">Getting Started</a></li>
-                <ul>
-                    <li><a href="./BracketBuilder.html#intro">Introduction</a></li>
-                    <li><a href="./BracketBuilder.html#quickstart">Quick Walk-through</a></li>
-                </ul>
-                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
-                <ul>
-                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#Games">Games Sheet</a></li>
-                        <li><a href="./SheetEditing.html#TeamsAndFields">TeamsAndFields Sheet</a></li>
-                        <li><a href="./SheetEditing.html#BracketInfo">BracketInformation Sheet</a></li>
-
-                    </ul>
-                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
-                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
-                        <li><a href="./SheetEditing.html#score">Scores</a></li>
-                        <li><a href="./SheetEditing.html#field">Field</a></li>
-                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
-                    </ul>
-                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
-                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
-                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
-                    </ul>
-                </ul>
+                <li><a href="./BracketBuilder.html#help">Getting Started</a></li>
+                <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
                 <li><a href="./Commands.html#Commands">Builder Functions</a></li>
-                <ul>
-                    <li><a href="./Commands.html#Controls">Main Interface</a></li>
-                    <li><a href="./Commands.html#Controls">Main Tools</a></li>
-                    <ul>
-                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
-                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
-                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
-                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
-                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
-                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
-                        <li><a href="./Commands.html#Help">Help</a></li>
-                    </ul>
-                    <li><a href="./Commands.html#BracketTools">Bracket Tools</a></li>
-                    <ul>
-                        <li><a href="./Commands.html#PickUpGame">Pick up Game</a></li>
-                        <li><a href="./Commands.html#DropGame">Drop Game</a></li>
-                        <li><a href="./Commands.html#RemoveGame">Remove Game</a></li>
-                        <li><a href="./Commands.html#RepairGame">Repair Game</a></li>
-                    </ul>
-                    <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
-                </ul>
-                <li><a href="./CustomBrackets.html#">Custom Brackets</a></li>
-                <ul>
-                    <li><a href="./CustomBrackets.html#structure">Structure</a></li>
-                    <ul>
-                        <li><a href="./CustomBrackets.html#bracketDef">Bracket Definition</a></li>
-                    </ul>
-                    <li><a href="./CustomBrackets.html#reload">Loading custom brackets</a></li>
-                </ul>
-                <li><a href="./FAQ.html">FAQ/Scenarios</a></li>
-                <ul class="smaller">
-                    <li><a href="./FAQ.html#manuallySelect">Choosing insertion range</a></li>
-                    <li><a href="./FAQ.html#gameDependencies">What's a game dependency?</a></li>
-                    <li><a href="./FAQ.html#bracketNotReady">Bracket not ready?</a></li>
-                    <li><a href="./FAQ.html#recreate">Recreating your bracket</a></li>
-                    <li><a href="./FAQ.html#doubleHeaders">Making a double-header?</a></li>
-                    <li><a href="./FAQ.html#broken">Why is my bracket broken?</a></li>
-                    <li><a href="./FAQ.html#insertLocation">Insert locations</a></li>
-                    <li><a href="./FAQ.html#insertFailed">Insert failures</a></li>
-                    <li><a href="./FAQ.html#exceptions">Fatal Errors/Exceptions</a></li>
-                    <li><a href="./FAQ.html#modDouble">Modified Double Elimination</a></li>
-                </ul>
-                <li><a href="./Licenses.html">Licenses</a></li>
-                <li><a href="./Privacy.html">Privacy</a></li>
+                <li><a href="./CustomBrackets.html#CustomBrackets">Custom Brackets</a></li>
+                <li><a href="./FAQ.html#FAQ">FAQ/Scenarios</a></li>
+                <li><a href="./Licenses.html#Licenses">Licenses</a></li>
+                <li><a href="./Privacy.html#Privacy">Privacy</a></li>
             </ul>
         </nav>
-        <article>
-            <h2>Getting Started</h2>
+        <article id="help">
+            <section id="help">
+                <heading>Getting Started</heading>
+                <content>
 
-            <h3>Introduction</h3>
-            <floatRight style="width: 30vw">
-                <a href="FullBracket.png"><img src="Images/FullBracket.png" class="whiteBack" /></a>
-            </floatRight>
-            <p>
-                Making tournament brackets like this one can be tedious -- you have to figure out which games
-                have to play on which days, and you get bogged
-                down in making sure the formatting works and that you don't <i>cross the lines</i>. It doesn't
-                help that the recommended double-elimination brackets for Little League can be a little
-                hard to follow.
-            </p>
+                    <section id="Intro">
+                        <heading>Introduction</heading>
+                        <content>
+                            <zoomable>
+                                <floatRight style="width: 30vw;padding-top: 2rem"><img class="whiteBack" src="Images/FullBracket.png" /></floatRight>
+                            </zoomable>
+                            <p>
+                                Making tournament brackets like this one can be tedious -- you have to figure out which games
+                                have to play on which days, and you get bogged
+                                down in making sure the formatting works and that you don't <i>cross the lines</i>. It doesn't
+                                help that the recommended double-elimination brackets for Little League can be a little
+                                hard to follow.
+                            </p>
 
-            <p>
-                Bracket Builder addresses all of these problems. Every game in the bracket
-                conforms to the double-elimination bracket, and every time you add a game,
-                it will format the cells to connect the games. It will even adjust your
-                entire bracket to avoid the most common bracket building headaches, namely
-                things like reordering games to make games fit without crossing lines.
-            </p>
-            <p>
-                When your bracket is built and you have <i>applied the finishing touches</i>,
-                you can add scores to the bracket and the team names will automatically fill
-                in as you progress through the bracket. This is very helpful if you want to export
-                the bracket to a PDF and post it to the web to keep everyone up to date.
-            </p>
-            <p>
-                Go through these help topics to first get started with your first bracket, and then
-                dive into the advanced topics to learn how to tweak your bracket without breaking
-                things.
-            </p>
-            <h3><a name="compat">Compatibility </a></h3>
-            <p>
-                First, a note able these brackets and their compatibility. This add-in creates double-elimination
-                tournament brackets that conform
-                to Little League's Approved Double Elimination Tournament Brackets. If you intend to use these for a
-                Little League tournament, remember they must still be approved in order to be used in the
-                Little League tournament. This add-in just helps you create and format the bracket.
-            </p>
-            <h3><a name="quickstart">Quick Walk-Through</a></h3>
-            <img src="Images/ChooseSize.png" alt="SetupExample" class="ScreenClip" style="width: 256px; height: 271px"
-                 align="right">
-            <p>
-                Ok, there's a lot of details we could go into, but let's just do a quick
-                walk-through to get you used to it.
-            </p>
-            <ul>
-                <li>
-                    Create a new workbook and insert the adding (Insert Tab, Get Add-ins,
-                    My Organization, TwBracketBuilder)
-                </li>
-                <li>Choose "9 Team" and click Build a bracket to setup your workbook.</li>
-                <li>
-                    Select G6 and type "6/25/22" - this is the start of our tournament
-                    (notice that all the dates changed for the rest of the tournament)
-                </li>
-                <li>Select cell G7 (because we want to insert on Saturday 8/21)</li>
-                <li>
-                    Insert game 1 (Click "+" for game 1
-                    <img src="Images/Game1.png" alt="game 1 picture"
-                         style="width: 136px; height: 25px;">)
-                </li>
-                <li>Insert game 2</li>
-                <li>Insert game 3</li>
-                <li>Insert game 4</li>
-                <li>Select cell J7 (so we insert games on 8/22 now)</li>
-                <li>
-                    Insert game 5 (notice that the grid adjusted to make space for the
-                    game)
-                </li>
-                <li>Insert game 9 (since G2 and G3 played on Saturday)</li>
-            </ul>
-            <p>
-                At this point, we can't fit any more games on Sunday because G8 requires
-                G6, and G10 required G5 &amp; G4
-            </p>
-            <ul>
-                <li>Select M7 (for Monday)</li>
-                <li>Insert game 8</li>
-                <li>Insert game 10</li>
-            </ul>
-            Ok, that looks a little funky. Maybe we could do better. <br>
-            <ul>
-                <li>
-                    Click Undo <img src="Images/UndoIcon.png" alt="Undo Icon" style="width: 22px; height: 25px;">twice.
-                    Game 10 and game 8 should be gone now
-                </li>
-                <li>(Make sure M7 is still selected)</li>
-                <li>Insert game 10</li>
-                <li>Insert game 8</li>
-            </ul>
-            Ok, that looks better...
-            <ul>
-                <li>Select P7 (for Tuesday)</li>
-                <li>Insert game 11</li>
-                <li>Insert game 12</li>
-                <li>Select S7</li>
-                <li>Insert game 13</li>
-                <li>Insert game 14</li>
-                <li>Select V7</li>
-                <li>Insert game 15</li>
-                <li>Select Y7</li>
-                <li>Insert game 16</li>
-                <li>Select AB7</li>
-                <li>Insert game 17</li>
-                <li>Select AE 7</li>
-                <li>Insert champion (game 18)</li>
-            </ul>
-            <p>
-                At this point, the bracket is done. Now let's go back and fix the team
-                names. Go to the TeamsAndFields sheet. Fill out the team names for the
-                bracket (fill in cells B23 to B31with team names).
-            </p>
-            <p>
-                Now back on the Games sheet, you can click on each "Field #1" or "6:00
-                PM" and put the correct field and time. (You could also do this on the
-                TeamsAndFields sheet).
-            </p>
-            <p>
-                Lastly, let's fill in some tournament information. Go to the
-                "TournamentInfo" sheet:
-            </p>
-            <ul>
-                <li>Select B1, enter "9 Team Tournament"</li>
-                <li>Select B2, enter "Sample Walkthrough"</li>
-                <li>Select B3, enter "Al Houghton Stadium"</li>
-                <li>Select B4, enter "Little League Dr, San Bernardino, CA"</li>
-                <li>Select B5, enter "Hosted by Little League"</li>
-            </ul>
-            And there you go... A completed bracket!<br>
-            <h2>Detailed Instructions</h2>
-            <p></p>
-            <h2><a name="compat">Compatibility </a></h2>
-            <p>
-                This add-in creates double-elimination tournament brackets that conform
-                to Little League's tournament brackets. If you intend to use these for a
-                Little League tournament, remember they must be approved before they are
-                used.
-            </p>
-            <h2>Getting Started</h2>
-            <p>
-                First you will have to select the size of your bracket and build the
-                bracket.
-            </p>
-            <p>
-                Once you click "Build a bracket",your workbook will be setup to start
-                building out your bracket.
-            </p>
-            <img src="Images/GridAndTaskpane.png" alt="Grid and taskpane screen clipping" class="ScreenClip"
-                 style="width: 701px; height: 295px;" align="right"> <br clear="right">
-            <p>Let's get familiar with the bracket and how it's built.</p>
-            <h3>BUILDING</h3>
-            <p>
-                The cell at the top (A1) is the "BUILDING" cell. When "BUILDING" is in
-                the cell, then every game will show the source for the game (W1 or L3, for
-                example). Otherwise, it will be blank until the bracket starts filling in
-                to that game. Play with it.
-            </p>
-            <h3>Header Text</h3>
-            <p>
-                The name of the tournament, description, address, etc, are all at the top
-                of the bracket grid. Eventually you will want to merge and center this
-                text across your entire bracket. Since we don't know how many days the
-                tournament will run (yet),we just let this be a single cell for now.
-            </p>
-            <p>
-                All of this text can be filled out on the TournamentInfo sheet. Just go
-                there and fill in the details for your tournament.&nbsp; NOTE: if you want
-                a field to be blank,then enter a single ' in the field.
-            </p>
-            <h3>Grid Pattern</h3>
-            <p>
-                This grid is carefully constructed to allow lines to connect games and
-                create visual affects. You can change things like row height and column
-                widths, but don't change the pattern.
-            </p>
-            <ul>
-                <li>
-                    Rows are in pairs: a full height row for text, and a 1 pixel row for
-                    lines. You can see this when you look at the row numbers on the left
-                    side -- they seem to count by twos in the grid (10, 12, 14, 16). The odd
-                    number rows aren't missing, they are just really short. Those short rows
-                    give us the lines.
-                </li>
-                <li>
-                    Columns are in threes:&nbsp; A wide column for team names, a narrow
-                    column for game score, and a 1 pixel column for lines. Notice that the
-                    column with "Team 1" in it is wider than the score column next to it.
-                    The line column is even smaller.
-                </li>
-            </ul>
-            <img src="Images/GameStructure.png" alt="Game structure screen clipping" style="width: 245px; height: 208px;"
-                 class="ScreenClip" align="right">
-            <h3>Games on the Grid</h3>
-            <p>Each game has several components.</p>
-            <h4>Team Names</h4>
-            <p>
-                All games have a top and bottom team name. If these are first round
-                games, then the seeded team name will be entered. By default these will
-                say "Team 1", etc. You can either type in the correct team name, or you
-                can go to the "TeamsAndFields" sheet and fill in the team names there.
-                Either way, the team names will automatically update throughout the
-                bracket as you enter scores into the bracket.
-            </p>
-            <h4>Game Info Block</h4>
-            <p>
-                The Game Info Block has the field number, game time, and any special text
-                (like "Loser to T6"). To change the field or time of the game, you can
-                either type the correct information directly into the block, or you can go
-                to the "TeamsAndFields" sheet and fill in the game information there (just
-                look up the game number). Either way, the actual game information on the
-                "TeamsAndFields" sheet will automatically update to match what the grid says.
-                (This makes it easy to bulk-upload the games to something like
-                ArbiterSports when the bracket has been constructed).
-            </p>
-            <h4>Game Number Block</h4>
-            <p>
-                The game number block is just a merged set of cells with the game number
-                in it ("G2", "G3", etc.)
-            </p>
-            <h3>
-                Selecting
-                <img src="Images/GameSelected.png" alt="Selected Game structure screen clipping"
-                     style="width: 152px; height: 129px;" class="ScreenClip" align="right">
-            </h3>
-            <p>
-                When we talk about choosing a place to insert a game, or choosing a day
-                to insert a game into, you should always be putting your selection in the
-                widest column -- the one that the team names go into.
-            </p>
-            <p>
-                When we talk about selecting a game,you should select the top and bottom
-                team names, AND include the line on the right (it is tricky to select
-                without using Shift+Right Arrow
-            </p>
-            <p></p>
-            <h2> Placing Games </h2>
-            <h3>
-                <img src="Images/Taskpane.png" alt="Selected Game structure screen clipping" style="width: 140px; height: 312px;"
-                     class="ScreenClip" align="right">
-            </h3>
-            <p>
-                Once you have chosen the size of your bracket, you will see a list of
-                games that need to be placed in your bracket. The games that are shaded
-                gray are already in your bracket, but you can still remove them by
-                clicking the "-" button. The games that are not shaded still need to be
-                placed in your grid.
-            </p>
-            <p>
-                In many cases, the add-in can automagically place the game for you. For
-                first-round games, it will choose the next available spot on the day you
-                choose. As you get further in the bracket it will place games where they
-                have to go in order for the lines to work. In some cases, where the grid
-                has to be reorganized, it will even fixup the grid to make things work.
-            </p>
-            <p>
-                To insert a game <i>automagically</i>, just select a cell in the day
-                where you want the game. Its usually best to select a cell close to the
-                top of the column so its clear you aren't trying to manually place the
-                game. Then just click the "+" next to the game you want to insert.
-            </p>
-            <h3> Ok, it screwed up </h3>
-            <p>
-                Well, its not perfect. If you catch the mistake early (before you insert
-                other games), you can just <i>undo</i> what you just did.
-                <b>
-                    Don't use
-                    Excel's undo
-                </b>. Use the undo button in the task pane:
-                <img src="Images/UndoIcon.png"
-                     alt="Undo Icon" style="width: 22px; height: 25px;"> (You can also use
-                redo to undo what you undid). You should be able to undo multiple things
-                by clicking undo again. If clicking undo doesn't do anything, then you
-                will have to remove the games manually
-            </p>
-            <p>
-                To remove a game manually, first try just clicking the "-" next to the
-                game you are trying to remove. If that doesn't work, then select the game
-                in the grid and click the "Remove Game" button:
-                <img src="Images/RemoveGameIcon.png"
-                     alt="Remove Game Icon" style="width: 22px; height: 25px;">
-            </p>
+                            <p>
+                                Bracket Builder addresses all of these problems. Every game in the bracket
+                                conforms to the double-elimination bracket, and every time you add a game,
+                                it will format the cells to connect the games. It will even adjust your
+                                entire bracket to avoid the most common bracket building headaches, namely
+                                things like reordering games to make games fit without crossing lines.
+                            </p>
+                            <p>
+                                When your bracket is built and you have <i>applied the finishing touches</i>,
+                                you can add scores to the bracket and the team names will automatically fill
+                                in as you progress through the bracket. This is very helpful if you want to export
+                                the bracket to a PDF and post it to the web to keep everyone up to date.
+                            </p>
+                            <p>
+                                Go through these help topics to first get started with your first bracket, and then
+                                dive into the advanced topics to learn how to tweak your bracket without breaking
+                                things.
+                            </p>
+                        </content>
+                    </section>
+                    <section id="Compat">
+                        <heading>Compatibility </heading>
+                        <content>
+                            <p>
+                                First, a note able these brackets and their compatibility. This add-in creates double-elimination
+                                tournament brackets that conform
+                                to Little League's Approved Double Elimination Tournament Brackets. If you intend to use these for a
+                                Little League tournament, remember they must still be approved in order to be used in the
+                                Little League tournament. This add-in just helps you create and format the bracket.
+                            </p>
+                        </content>
+                    </section>
+                    <section id="QuickWalk">
+                        <heading>Quick Walk-Through</heading>
+                        <content>
+                            <zoomableTall>
+                                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/ChooseSize.png" /></floatRight>
+                            </zoomableTall>
+                            <p>
+                                Ok, there's a lot of details we could go into, but let's just do a quick
+                                walk-through to get you used to it.
+                            </p>
+                            <ul>
+                                <li>
+                                    Create a new workbook and insert the Add-In (Insert Tab, Get Add-ins,
+                                    My Organization, BracketBuilder)
+                                </li>
+                                <li>Choose "9 Team" and click Build a bracket to setup your workbook.</li>
+                                <li>
+                                    Select D6 and type "6/25/22" - this is the start of our tournament
+                                    (notice that all the dates changed for the rest of the tournament)
+                                </li>
+                                <li>Select cell D7 (because we want to insert on Saturday 6/25)</li>
+                                <li>
+                                    Insert game 1 (Click "+" for game 1
+                                    <zoomableInline>
+                                        <floatNone style="width: 136px">
+                                            <img src="Images/Game1.png" class="whiteBack">
+                                        </floatNone>
+                                    </zoomableInline>)
+                                </li>
+                                <li>Insert game 2</li>
+                                <li>Insert game 3</li>
+                                <li>Insert game 4</li>
+                                <li>Select cell G7 (so we insert games on 6/26 now)</li>
+                                <li>
+                                    Insert game 5 (notice that the grid adjusted to make space for the
+                                    game)
+                                </li>
+                                <li>Insert game 6 (since G1 and G2 played on Saturday)</li>
+                                <li>Insert game 9</li>
+                            </ul>
+                            <p>
+                                At this point, we can't fit any more games on Sunday because G7 requires G5, G8 requires
+                                G6, and G10 requires G5. Since G5 and G6 play on Sunday, we can't play G7, G8, or G10 until
+                                Monday.
+                            </p>
+                            <ul>
+                                <li>Select J7 (for Monday)</li>
+                                <li>Insert game 7</li>
+                                <li>Insert game 8</li>
+                                <li>Insert game 10</li>
+                            </ul>
+                            Ok, that looks a little funky. Maybe we could do better.
+                            <br>
+                            <ul>
+                                <li>
+                                    Click Undo
+                                    <floatNone style="width: 22px;">
+                                        <img src="Images/UndoIcon.png" class="whiteBack" style="max-width: 122px">
+                                    </floatNone>
+                                    three times. Games 10, 8, and 7 should be gone now.
+                                </li>
+                                <li>(Make sure J7 is still selected)</li>
+                                <li>Insert game 8</li>
+                                <li>Insert game 7</li>
+                                <li>Insert game 10</li>
+                            </ul>
+                            Ok, that looks better... All we did was change the order we inserted the games and
+                            <prodRef>BracketBuilder</prodRef> was able
+                            to make a better guess about the position.
+                            <ul>
+                                <li>Select M7 (for Tuesday)</li>
+                                <li>Insert game 11</li>
+                                <li>Insert game 12</li>
+                                <li>Select P7</li>
+                                <li>Insert game 13</li>
+                                <li>Insert game 14</li>
+                                <li>Select S7</li>
+                                <li>Insert game 15</li>
+                                <li>Select V7</li>
+                                <li>Insert game 16</li>
+                                <li>Select Y7</li>
+                                <li>Insert game 17</li>
+                                <li>Select AB7</li>
+                                <li>Insert champion (game 18)</li>
+                            </ul>
+                            <p>
+                                At this point, the bracket is done. Now let's go back and fix the team
+                                names. Go to the TeamsAndFields sheet. Fill out the team names for the
+                                bracket (fill in cells B23 to B31with team names).
+                            </p>
+                            <p>
+                                Now back on the Games sheet, you can click on each "Field #1" or "6:00
+                                PM" and put the correct field and time. (You could also do this on the
+                                TeamsAndFields sheet).
+                            </p>
+                            <p>
+                                Lastly, let's fill in some tournament information. Go to the
+                                "TournamentInfo" sheet:
+                            </p>
+                            <zoomable>
+                                <floatRight style="width: 15vw;padding-top: 2rem"><img class="whiteBack" src="Images/FinishingTouches.png" /></floatRight>
+                            </zoomable>
+                            <ul>
+                                <li>Select B1, enter "9 Team Tournament"</li>
+                                <li>Select B2, enter "Sample Walkthrough"</li>
+                                <li>Select B3, enter "Al Houghton Stadium"</li>
+                                <li>Select B4, enter "Little League Dr, San Bernardino, CA</li>
+                                <li>Select B5, enter "Little League"</li>
+                            </ul>
+                            <p>
+                                And the final step is to apply the finishing touches to the bracket:
+                                <ul>
+                                    <li>
+                                        Click on the <cmdRef>Finishing Touches</cmdRef>
+                                    </li>
+                                    (
+                                    <floatNone style="width: 22px;">
+                                        <img src="Images/FinishingTouchesIcon.png" class="whiteBack" style="max-width: 122px">
+                                    </floatNone>) button.
+                                </ul>
+                            </p>
+                            And there you go... A completed bracket, formatted and ready for printing.
+                            <br>
+                        </content>
+                    </section>
+                    <section id="detailed">
+                        <heading>Detailed Instructions</heading>
+                        <content>
+                            <zoomableTall>
+                                <floatRight style="width: 15vw;padding-top: 2rem"><img class="whiteBack" src="Images/ChooseSize.png" /></floatRight>
+                            </zoomableTall>
+                            <p>
+                                This detailed start will build the same bracket that we built in the QuickStart, but we will
+                                go a little further in depth as we build it
+                            </p>
+
+                            <p>
+                                The first thing you have to do is build the bracket workbook. <prodRef>BracketBuilder</prodRef> comes with lots of
+                                built-in double elimination brackets for various team sizes. You can choose the size of the bracket using the
+                                bracket chooser. You can also create custom brackets, which is covered <a href="./CustomBrackets.html">in CustomBrackets</a>.
+                            </p>
+                            <p>
+                                Once you click "Build a bracket", your workbook will be setup to start building out your bracket.
+                            </p>
+                            <br clear="all" />
+                            <zoomable>
+                                <floatRight style="width: 20rem">
+                                    <img src="Images/GridAndTaskpane.png" alt="Grid and taskpane screen clipping" class="whiteBack">
+                                </floatRight>
+                            </zoomable>
+                            <section id="gamesSheet">
+                                <heading>Games Sheet</heading>
+                                <content>
+                                    <p>
+                                        Most of our time will be spent on the <eltRef>Games Sheet</eltRef>. This sheet has the tournament information as well
+                                        as the bracket itself. This is also where you will be building the actual bracket.
+                                    </p>
+                                    <p>If you want more information on all of the items on the <eltRef>Games Sheet</eltRef>, go <a href="./SheetEditing.html#Games">here</a></p>
+                                    <p>For now, let's get familiar with the bracket and how it's built.</p>
+                                    <section id="gridPattern">
+                                        <heading>Grid Pattern</heading>
+                                        <content>
+                                            <p>
+                                                This grid is carefully constructed to allow lines to connect games and
+                                                create visual affects. You can change things like row height and column
+                                                widths, but don't change the pattern.
+                                            </p>
+                                            <ul>
+                                                <li>
+                                                    Rows are in pairs: a full height row for text, and a 1 pixel row for
+                                                    lines. You can see this when you look at the row numbers on the left
+                                                    side -- they seem to count by twos in the grid (10, 12, 14, 16). The odd
+                                                    number rows aren't missing, they are just really short. Those short rows
+                                                    give us the lines.
+                                                </li>
+                                                <li>
+                                                    Columns are in threes:&nbsp; A wide column for team names, a narrow
+                                                    column for game score, and a 1 pixel column for lines. Notice that the
+                                                    column with "Team 1" in it is wider than the score column next to it.
+                                                    The line column is even smaller.
+                                                </li>
+                                            </ul>
+                                            <img src="Images/GameStructure.png" alt="Game structure screen clipping" style="width: 245px; height: 208px;"
+                                                 class="ScreenClip" align="right">
+                                        </content>
+                                    </section>
+
+                                    <section id="gamesOnGrid">
+                                        <heading>Games on the Grid</heading>
+                                        <content>
+                                            <p>Each game has several components.</p>
+                                            <section>
+                                                <heading>Team Names</heading>
+                                                <content>
+                                                    <p>
+                                                        All games have a top and bottom team name. If these are first round
+                                                        games, then the seeded team name will be entered. By default these will
+                                                        say "Team 1", etc. You can either type in the correct team name, or you
+                                                        can go to the "TeamsAndFields" sheet and fill in the team names there.
+                                                        Either way, the team names will automatically update throughout the
+                                                        bracket as you enter scores into the bracket.
+                                                    </p>
+                                                </content>
+                                            </section>
+
+                                            <section>
+                                                <heading>Game Info Block</heading>
+                                                <content>
+                                                    <p>
+                                                        The Game Info Block has the field number, game time, and any special text
+                                                        (like "Loser to T6"). To change the field or time of the game, you can
+                                                        either type the correct information directly into the block, or you can go
+                                                        to the "TeamsAndFields" sheet and fill in the game information there (just
+                                                        look up the game number). Either way, the actual game information on the
+                                                        "TeamsAndFields" sheet will automatically update to match what the grid says.
+                                                        (This makes it easy to bulk-upload the games to something like
+                                                        ArbiterSports when the bracket has been constructed).
+                                                    </p>
+                                                </content>
+                                            </section>
+
+                                            <section>
+                                                <heading>Game Number Block</heading>
+                                                <content>
+                                                    <p>
+                                                        The game number block is just a merged set of cells with the game number
+                                                        in it ("G2", "G3", etc.)
+                                                    </p>
+                                                    <h3>
+                                                        Selecting
+                                                        <img src="Images/GameSelected.png" alt="Selected Game structure screen clipping"
+                                                             style="width: 152px; height: 129px;" class="ScreenClip" align="right">
+                                                    </h3>
+                                                    <p>
+                                                        When we talk about choosing a place to insert a game, or choosing a day
+                                                        to insert a game into, you should always be putting your selection in the
+                                                        widest column -- the one that the team names go into.
+                                                    </p>
+                                                    <p>
+                                                        When we talk about selecting a game,you should select the top and bottom
+                                                        team names, AND include the line on the right (it is tricky to select
+                                                        without using Shift+Right Arrow
+                                                    </p>
+                                                    <p></p>
+                                                </content>
+                                            </section>
+                                        </content>
+                                    </section>
+                                </content>
+                            </section>
+
+                            <section>
+                                <heading> Placing Games </heading>
+                                <content>
+                                    <h3>
+                                        <img src="Images/Taskpane.png" alt="Selected Game structure screen clipping" style="width: 140px; height: 312px;"
+                                             class="ScreenClip" align="right">
+                                    </h3>
+                                    <p>
+                                        Once you have chosen the size of your bracket, you will see a list of
+                                        games that need to be placed in your bracket. The games that are shaded
+                                        gray are already in your bracket, but you can still remove them by
+                                        clicking the "-" button. The games that are not shaded still need to be
+                                        placed in your grid.
+                                    </p>
+                                    <p>
+                                        In many cases, the add-in can automagically place the game for you. For
+                                        first-round games, it will choose the next available spot on the day you
+                                        choose. As you get further in the bracket it will place games where they
+                                        have to go in order for the lines to work. In some cases, where the grid
+                                        has to be reorganized, it will even fixup the grid to make things work.
+                                    </p>
+                                    <p>
+                                        To insert a game <i>automagically</i>, just select a cell in the day
+                                        where you want the game. Its usually best to select a cell close to the
+                                        top of the column so its clear you aren't trying to manually place the
+                                        game. Then just click the "+" next to the game you want to insert.
+                                    </p>
+                                </content>
+                            </section>
+
+                            <section>
+                                <heading> Ok, it screwed up </heading>
+                                <content>
+                                    <p>
+                                        Well, its not perfect. If you catch the mistake early (before you insert
+                                        other games), you can just <i>undo</i> what you just did.
+                                        <b>
+                                            Don't use
+                                            Excel's undo
+                                        </b>. Use the undo button in the task pane:
+                                        <img src="Images/UndoIcon.png"
+                                             alt="Undo Icon" style="width: 22px; height: 25px;"> (You can also use
+                                        redo to undo what you undid). You should be able to undo multiple things
+                                        by clicking undo again. If clicking undo doesn't do anything, then you
+                                        will have to remove the games manually
+                                    </p>
+                                    <p>
+                                        To remove a game manually, first try just clicking the "-" next to the
+                                        game you are trying to remove. If that doesn't work, then select the game
+                                        in the grid and click the "Remove Game" button:
+                                        <img src="Images/RemoveGameIcon.png"
+                                             alt="Remove Game Icon" style="width: 22px; height: 25px;">
+                                    </p>
+                                </content>
+                            </section>
+
+                        </content>
+                    </section>
+                </content>
+            </section>
         </article>
-
     </main>
 </body>
 </html>

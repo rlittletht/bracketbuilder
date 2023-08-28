@@ -29,11 +29,11 @@ export interface StaticConfig
     throwOnCacheMisses: boolean;
 }
 
-const isLocalHost = window.location.host.indexOf('localhost') > -1;
+const isLocalHost = false; //  window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
-    version: "1.0.15.2",
+    version: "1.0.15.3",
     maxGameMoves: 6000,
     globalLogging: true && isLocalHost,
     logGridChanges: false && isLocalHost,
