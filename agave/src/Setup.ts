@@ -14,6 +14,7 @@ import { RangeCaches, RangeCacheItemType } from "./Interop/RangeCaches";
 import { BracketDefinition } from "./Brackets/BracketDefinitions";
 import { _bracketManager } from "./Brackets/BracketManager";
 import { Dispatcher, DispatchWithCatchDelegate } from "./BracketEditor/Dispatcher";
+import { GridBuilder } from "./Brackets/GridBuilder";
 
 export class SetupState
 {
@@ -180,7 +181,6 @@ export class SetupBook
 
                 await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
                 appContext.setHeroListDirty();
-                await appContext.rebuildHeroListIfNeeded(context);
                 context.releaseAllCacheObjects();
             });
         }
@@ -307,7 +307,8 @@ export class SetupBook
                 appContext.setHeroListDirty();
                 RangeCaches.SetDirty(true);
 
-                await appContext.rebuildHeroListIfNeeded(context);
+                appContext.setHeroListDirty();
+                SetupBook.registerBindingsForEdits(context, appContext);
                 context.releaseAllCacheObjects();
             });
         }
@@ -321,6 +322,16 @@ export class SetupBook
 
         appContext.setProgressVisible(false);
         return false;
+    }
+
+    static async registerBindingsForEdits(context: JsCtx, appContext: IAppContext)
+    {
+        if (appContext.WorkbookSetupState != SetupState.Ready)
+            return;
+
+        const sheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+        context.Ctx.workbook.bindings.add(sheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(() => { appContext.setBracketDirtyForBracketEdit() });
+        await context.sync();
     }
 }
 

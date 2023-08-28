@@ -35,6 +35,7 @@ import { Progress } from "./Progress";
 import { StatusBox } from "./StatusBox";
 import { Teachable, TeachableId } from "./Teachable";
 import { Toolbar, ToolbarItem } from "./Toolbar";
+import { Dispatcher } from "../../BracketEditor/Dispatcher";
 
 /* global console, Excel, require  */
 
@@ -58,6 +59,8 @@ export interface AppState
     debugToolbar: ToolbarItem[];
     mainToolbar: ToolbarItem[];
     aboutShowing: boolean;
+    heroListDirty: boolean;
+    bracketMayHaveDirectEdits: boolean;
 }
 
 export default class App extends React.Component<AppProps, AppState>
@@ -82,15 +85,18 @@ export default class App extends React.Component<AppProps, AppState>
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
             debugToolbar: this.buildDebugToolbar(),
-            aboutShowing: false
+            aboutShowing: false,
+            heroListDirty: false,
+            bracketMayHaveDirectEdits: false
         };
 
         this.m_appContext = new AppContext();
         this.m_appContext.setDelegates(
             null,
             null,
-            this.rebuildHeroList.bind(this),
-            this.getGames.bind(this));
+            this.dirtyHeroList.bind(this),
+            this.getGames.bind(this),
+            this.dirtyBracketForDirectEdit.bind(this));
 
         this.targetDivRef = React.createRef();
     }
@@ -380,11 +386,48 @@ export default class App extends React.Component<AppProps, AppState>
         );
     }
 
+    componentDidUpdate(prevProps: AppProps, prevState: AppState)
+    {
+        prevProps;
+
+        if ((this.state.bracketMayHaveDirectEdits || this.state.heroListDirty)
+            && !(prevState.bracketMayHaveDirectEdits || prevState.heroListDirty))
+        {
+            this.postHeroListRebuild();
+        }
+    }
+
+    dirtyHeroList()
+    {
+        this.setState({ heroListDirty: true });
+    }
+
+    dirtyBracketForDirectEdit()
+    {
+        this.setState({ bracketMayHaveDirectEdits: true });
+    }
+
+    async postHeroListRebuild()
+    {
+        await Excel.run(async (ctx) =>
+        {
+            const context: JsCtx = new JsCtx(ctx);
+
+            await this.rebuildHeroList(context);
+        });
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: App.addLogMessage
 
         Add a log message to the UI
     ----------------------------------------------------------------------------*/
+
+    async rebuildHeroList(context: JsCtx)
+    {
+        await Dispatcher.ExclusiveDispatchSilent(
+            async (ctx) => { await this.rebuildHeroListWork(ctx) }, context);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: App.rebuildHeroList
@@ -392,111 +435,127 @@ export default class App extends React.Component<AppProps, AppState>
         Invalidate the top level hero list (and maybe supporting parameters
         below in the UI)
     ----------------------------------------------------------------------------*/
-    async rebuildHeroList(context: JsCtx)
+    async rebuildHeroListWork(context: JsCtx)
     {
-        this.m_appContext.setHeroListDirty(false);
+        const topLevelTimerName = "rebuildHeroList";
 
-        _TimerStack.pushTimer("rebuildHeroList", true);
-
-        const bookmark: string = "rebuildHeroList";
-        context.pushTrackingBookmark(bookmark);
-
-        await _TimerStack.timeThisAsync(
-            "buildFastFormulaAreas",
-            async () =>
-            {
-                await FastFormulaAreas.populateAllCaches(context);
-            });
-
-        await _TimerStack.timeThisAsync(
-            "populateBracketManager",
-            async () =>
-            {
-                await _bracketManager.populateBracketsIfNecessary(context);
-            });
-        
-        await _TimerStack.timeThisAsync(
-            "populateRangeCaches",
-            async () =>
-            {
-                await RangeCaches.PopulateIfNeeded(context, this.m_appContext.SelectedBracket);
-            });
-
-        let format: HeroListFormat;
-        let list: HeroListItem[];
-        let title: string;
-
-        let games: IBracketGame[];
-        await _TimerStack.timeThisAsync(
-            "getGamesList",
-            async () =>
-            {
-                games = await this.getGamesList(context, this.m_appContext, this.m_appContext.SelectedBracket);
-            });
-
-        let items: ToolbarItem[] = [];
-
-        await _TimerStack.timeThisAsync(
-            "buildToolbars",
-            async () =>
-            {
-                [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState, this.mergeBracketOptions.bind(this), this.state.customBracketOptions.length > 0);
-
-                if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
+        console.log("RHL: resetting dirty state");
+        _TimerStack.pushTimer(topLevelTimerName, true);
+        try
+        {
+            this.setState(
                 {
-                    items = this.buildMainToolbar();
+                    bracketMayHaveDirectEdits: false,
+                    heroListDirty: false
+                });
 
-                    let countGamesLinked = 0;
-                    let countGamesNeedRepair = 0;
-                    let countGamesBroken = 0;
 
-                    for (let game of games)
+            const bookmark: string = "rebuildHeroList";
+            context.pushTrackingBookmark(bookmark);
+
+            await _TimerStack.timeThisAsync(
+                "buildFastFormulaAreas",
+                async () =>
+                {
+                    await FastFormulaAreas.populateAllCaches(context);
+                });
+
+            await _TimerStack.timeThisAsync(
+                "populateBracketManager",
+                async () =>
+                {
+                    await _bracketManager.populateBracketsIfNecessary(context);
+                });
+
+            await _TimerStack.timeThisAsync(
+                "populateRangeCaches",
+                async () =>
+                {
+                    await RangeCaches.PopulateIfNeeded(context, this.m_appContext.SelectedBracket);
+                });
+
+            let format: HeroListFormat;
+            let list: HeroListItem[];
+            let title: string;
+
+            let games: IBracketGame[];
+            await _TimerStack.timeThisAsync(
+                "getGamesList",
+                async () =>
+                {
+                    games = await this.getGamesList(context, this.m_appContext, this.m_appContext.SelectedBracket);
+                });
+
+            let items: ToolbarItem[] = [];
+
+            await _TimerStack.timeThisAsync(
+                "buildToolbars",
+                async () =>
+                {
+                    [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState, this.mergeBracketOptions.bind(this), this.state.customBracketOptions.length > 0);
+
+                    if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
                     {
-                        if (game.IsLinkedToBracket)
+                        items = this.buildMainToolbar();
+
+                        let countGamesLinked = 0;
+                        let countGamesNeedRepair = 0;
+                        let countGamesBroken = 0;
+
+                        for (let game of games)
                         {
-                            countGamesLinked++;
+                            if (game.IsLinkedToBracket)
+                            {
+                                countGamesLinked++;
+                            }
+                            if (game.NeedsDataPull)
+                            {
+                                countGamesNeedRepair++;
+                            }
+                            if (game.IsBroken)
+                            {
+                                countGamesBroken++;
+                            }
                         }
-                        if (game.NeedsDataPull)
+                        if (countGamesBroken > 0)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
+                        else if (countGamesNeedRepair > 0)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
+                        else if (countGamesLinked == games.length)
                         {
-                            countGamesNeedRepair++;
+                            if (await (Grid.isFinishingTouchesApplied(context)))
+                                this.m_appContext.Teaching.transitionState(CoachTransition.FinishTouches);
+                            else
+                                this.m_appContext.Teaching.transitionState(CoachTransition.AllGamesLinked);
                         }
-                        if (game.IsBroken)
-                        {
-                            countGamesBroken++;
-                        }
+                        else if (countGamesLinked == 0)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.NoGamesLinked);
+                        else if (countGamesLinked == 1)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
                     }
-                    if (countGamesBroken > 0)
-                        this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
-                    else if (countGamesNeedRepair > 0)
-                        this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
-                    else if (countGamesLinked == games.length)
-                    {
-                        if (await(Grid.isFinishingTouchesApplied(context)))
-                            this.m_appContext.Teaching.transitionState(CoachTransition.FinishTouches);
-                        else
-                            this.m_appContext.Teaching.transitionState(CoachTransition.AllGamesLinked);
-                    }
-                    else if (countGamesLinked == 0)
-                        this.m_appContext.Teaching.transitionState(CoachTransition.NoGamesLinked);
-                    else if (countGamesLinked == 1)
-                        this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
-                }
-            });
+                });
 
-        // update the games list in the state
+            // update the games list in the state
 
-        AppContext.checkpoint("ihl.9");
-        this.setState(
-            {
-                heroList: list,
-                heroListFormat: format,
-                heroTitle: title,
-                games: games,
-                mainToolbar: items
-            });
+            AppContext.checkpoint("ihl.9");
+            this.setState(
+                {
+                    heroList: list,
+                    heroListFormat: format,
+                    heroTitle: title,
+                    games: games,
+                    mainToolbar: items
+                });
 
-        context.releaseCacheObjectsUntil(bookmark);
-        _TimerStack.popTimer();
+            context.releaseCacheObjectsUntil(bookmark);
+        }
+        catch(e)
+        {
+            console.log(`rebuildHeroListWork caught: ${e.message}`);
+        }
+
+        _TimerStack.popTimersUntil(topLevelTimerName);
+        console.log("RHL: finishing RHL");
     }
 
 
@@ -579,6 +638,8 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     const context: JsCtx = new JsCtx(ctx);
 
+                    // this is the only blocking wait for rebuildHeroList. BE CAREFUL not to add
+                    // more -- they would likely deadlock!
                     await this.rebuildHeroList(context);
                     context.releaseAllCacheObjects();
                 }
@@ -586,6 +647,7 @@ export default class App extends React.Component<AppProps, AppState>
                 {
 
                 }
+                SetupBook.registerBindingsForEdits(context, this.m_appContext);
                 this.m_appContext.setProgressVisible(false);
             });
     }

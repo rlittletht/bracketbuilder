@@ -64,13 +64,6 @@ export class UnitTests
 
         appContext.Messages.message([...results, "Unit Tests Complete"]);
         _bracketManager.setDirty(true);
-        appContext.setHeroListDirty(true); // need to repopulate caches, etc.
-
-        await Excel.run(
-            async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
-                await appContext.rebuildHeroListIfNeeded(context);
-            });
+        appContext.setHeroListDirty(); // need to repopulate caches, etc.
     }
 }

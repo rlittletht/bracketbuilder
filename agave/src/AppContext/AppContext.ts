@@ -17,8 +17,9 @@ export interface IAppContext
     Messages: IAppContextMessages;
     Teaching: IAppContextTeaching;
 
-    setHeroListDirty(isDirty?: boolean);
-    /*async*/ rebuildHeroListIfNeeded(context: JsCtx);
+    setHeroListDirty();
+    setBracketDirtyForBracketEdit();
+
     get SelectedBracket(): string;
     set SelectedBracket(bracket: string);
     get WorkbookSetupState(): SetupState;
@@ -29,9 +30,9 @@ export interface IAppContext
     setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
 }
 
-export interface RebuildHeroListDelegate
+export interface SetDirtyDelegate
 {
-    (context: JsCtx): void
+    (): void;
 }
 
 export interface GetGamesDelegate
@@ -58,9 +59,10 @@ export class AppContext implements IAppContext
     m_setupState: SetupState = "U";
     m_durableState: DurableState = new DurableState();
     m_heroListNeedsRebuilt: boolean = false;
+    m_setBracketDirtyForDirectEditDelegate: SetDirtyDelegate;
+    m_setHeroListDirtyDelegate: SetDirtyDelegate;
 
     m_progressVisibilityDelegate: ProgressVisibilityDelegate;
-    m_rebuildHeroListDelegate: RebuildHeroListDelegate;
     m_getGames: GetGamesDelegate;
     m_getSetupStateDelegate: GetSetupStateDelegate;
 
@@ -70,6 +72,11 @@ export class AppContext implements IAppContext
     {
         this.m_durableState.load(s_staticConfig.topLevelStateName);
         this.Teaching = new AppContextTeaching(this.m_durableState);
+    }
+
+    setBracketDirtyForBracketEdit()
+    {
+        this.m_setBracketDirtyForDirectEditDelegate?.();
     }
 
     get WorkbookSetupState(): SetupState
@@ -83,9 +90,9 @@ export class AppContext implements IAppContext
     }
 
     // maybe move this into app state so it gets automatically rebuilt?
-    async setHeroListDirty(isDirty?: boolean)
+    async setHeroListDirty()
     {
-        this.m_heroListNeedsRebuilt = isDirty ?? true;
+        this.m_setHeroListDirtyDelegate?.();
     }
 
     setProgressVisible(visible: boolean)
@@ -97,14 +104,6 @@ export class AppContext implements IAppContext
     {
         if (s_staticConfig.globalLogging)
             console.log(message);
-    }
-
-    async rebuildHeroListIfNeeded(context: JsCtx)
-    {
-        if (this.m_heroListNeedsRebuilt)
-            await this.m_rebuildHeroListDelegate?.(context);
-
-        this.m_heroListNeedsRebuilt = false;
     }
 
     get SelectedBracket(): string
@@ -128,15 +127,15 @@ export class AppContext implements IAppContext
     setDelegates(
         addMessageDelegate: SetMessageDelegate,
         clearMessageDelegate: ClearMessageDelegate,
-        invalidateHeroList: RebuildHeroListDelegate,
-        getGames: GetGamesDelegate
-//        getSetupState: GetSetupStateDelegate
+        setHeroListDirty: SetDirtyDelegate,
+        getGames: GetGamesDelegate,
+        setBracketDirtyForDirectEdit: SetDirtyDelegate
         )
     {
         this.Messages.setMessageDelegates(addMessageDelegate, clearMessageDelegate);
-        this.m_rebuildHeroListDelegate = invalidateHeroList;
+        this.m_setHeroListDirtyDelegate = setHeroListDirty;
         this.m_getGames = getGames;
-//        this.m_getSetupStateDelegate = getSetupState;
+        this.m_setBracketDirtyForDirectEditDelegate = setBracketDirtyForDirectEdit;
     }
 
     setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)

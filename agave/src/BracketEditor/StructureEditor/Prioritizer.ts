@@ -79,7 +79,6 @@ export class Prioritizer
 
             await this.shadeGamesByPriority(appContext, context);
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

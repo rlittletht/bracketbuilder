@@ -37,7 +37,6 @@ export class StructureEditor
 
             await this.copySelectionToClipboard(appContext, context);
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -60,7 +59,6 @@ export class StructureEditor
 
             await this.syncBracketChangesFromGameSheet(appContext, context);
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -80,7 +78,6 @@ export class StructureEditor
         {
             await this.toggleShowDataSheets(appContext, context);
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -105,7 +102,6 @@ export class StructureEditor
             context.releaseCacheObjectsUntil('undo');
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -128,7 +124,6 @@ export class StructureEditor
 
             await this.applyFinalFormatting(appContext, context, appContext.SelectedBracket);
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -153,7 +148,6 @@ export class StructureEditor
             context.releaseCacheObjectsUntil('redo');
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -192,7 +186,6 @@ export class StructureEditor
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
             _TimerStack.popTimer();
         };
 
@@ -220,7 +213,6 @@ export class StructureEditor
             appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -249,7 +241,6 @@ export class StructureEditor
                 await context.sync();
             }
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -280,7 +271,6 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -308,7 +298,6 @@ export class StructureEditor
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -336,7 +325,6 @@ export class StructureEditor
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
             appContext.setHeroListDirty();
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -604,7 +592,6 @@ export class StructureEditor
             grid.logGrid();
             
             console.log(`rank: ${GridRanker.getGridRank(grid, appContext.SelectedBracket)}`)
-            await appContext.rebuildHeroListIfNeeded(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
