@@ -649,7 +649,7 @@ export class StructureEditor
             1,
             1);
 
-        rangeHosted1.formulas = [["=\"HOSTED BY \" & TournamentHost"]];
+        rangeHosted1.formulas = [["=IF(LEN(TournamentHost)>0, \"HOSTED BY \" & TournamentHost, \"\")"]];
         rangeHosted.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         rangeHosted.format.font.size = 14;
         rangeHosted.format.font.bold = true;
