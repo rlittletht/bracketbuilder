@@ -10,6 +10,7 @@
     --header-padding-top: 0rem;
     --body-padding: 1rem;
     --body-width: calc(var(--main-width) + 2 * var(--body-padding));
+    --scrollable-bottom-margin: 1.25em;
 }
 
 html {
@@ -54,11 +55,12 @@ article {
     flex-direction: row;
     max-width: var(--article-width);
     width: var(--article-width);
-    height: calc(100% - 2 * var(--article-padding));
+    --height: calc(100% - 2 * var(--article-padding));
     padding: var(--article-padding);
     padding-top: 0;
     padding-right: calc(2 * var(--article-padding));
     margin: 0;
+    margin-bottom: var(--scrollable-bottom-margin);
     overflow-y: auto;
 }
 
@@ -200,8 +202,9 @@ nav {
     box-sizing: border-box;
     flex: 0 1 auto;
     width: var(--nav-width);
-    height: calc(100% - 2 * var(--nav-padding));
+    --height: calc(100% - 2 * var(--nav-padding));
     margin: 0;
+    margin-bottom: var(--scrollable-bottom-margin);
     overflow-y: auto;
 }
 
