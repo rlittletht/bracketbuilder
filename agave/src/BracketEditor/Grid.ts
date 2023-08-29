@@ -1729,7 +1729,7 @@ export class Grid
                     && this.doesRangeOverlap(outgoingCheck) == RangeOverlapKind.None)
                 {
                     // there is nothing next to the outgoing feeder point. add an item
-                    const newItem = this.addLineRange(outgoingCheck.offset(0, 1, 0, 9));
+                    const newItem = this.addLineRange(outgoingCheck.offset(0, 1, 0, 36));
                     newItem.IsEphemeral = true;
                 }
 
@@ -2357,18 +2357,21 @@ export class Grid
                 fSwapTopBottom);
         }
 
+        const extendedGrid = this.clone();
+        extendedGrid.extendUnconnectedOutgoingFeeders([]);
+
         // and lastly, what to do if there are no sources at all...just find the first non-conflicting
         // place to put it
         if (requested.FirstColumn == this.m_firstGridPattern.FirstColumn)
         {
-            requested.setRow(this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4));
+            requested.setRow(extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4));
         }
         else
         {
             requested.setRow(
                 Math.max(
-                    this.getFirstEmptyRowToUse(requested.FirstColumn - 1, requested.FirstColumn - 1, 2),
-                    this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
+                    extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn - 1, requested.FirstColumn - 1, 2),
+                    extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
         }
 
         let gameInsert: GridGameInsert = new GridGameInsert();
@@ -2614,7 +2617,7 @@ export class Grid
         let gameInsert: GridGameInsert;
 
         // before we do any clever readjustments of the grid for common conflicts,
-        // first see if they are requesting a speciric range for insertion. if they
+        // first see if they are requesting a specific range for insertion. if they
         // are, then we don't want to try to second guess them...
 
         if (requested.RowCount <= 8)
