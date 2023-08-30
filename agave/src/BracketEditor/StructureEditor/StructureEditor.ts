@@ -21,28 +21,13 @@ import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureInsert } from "./StructureInsert";
 import { StructureRemove } from "./StructureRemove";
+import { FastRangeAreas } from "../../Interop/FastRangeAreas";
+import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 
 let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
-    static async toggleDayFreezeClick(appContext: IAppContext)
-    {
-        if (!Dispatcher.RequireBracketReady(appContext))
-            return;
-
-        let delegate: DispatchWithCatchDelegate = async (context) =>
-        {
-            await FastFormulaAreas.populateAllCaches(context);
-
-            await this.copySelectionToClipboard(appContext, context);
-            appContext.AppStateAccess.HeroListDirty = true;
-        };
-
-        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
-    }
-
-
     static async copySelectionToClipboardClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -94,7 +79,6 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.toggleShowDataSheets(appContext, context);
-            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -418,8 +402,6 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async toggleShowDataSheets(appContext: IAppContext, context: JsCtx)
     {
-        appContext;
-
         // first, determine if we are hiding or showing -- based on whether
         // the global data sheet is hidden
         const dataSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GlobalDataBuilder.SheetName);
@@ -444,6 +426,8 @@ export class StructureEditor
             });
 
         await context.sync();
+
+        appContext.AppStateAccess.SheetsHidden = (visibility == Excel.SheetVisibility.hidden);
     }
 
 

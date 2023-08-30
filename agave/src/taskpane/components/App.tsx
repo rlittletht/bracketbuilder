@@ -37,6 +37,7 @@ import { StatusBox } from "./StatusBox";
 import { Teachable, TeachableId } from "./Teachable";
 import { Toolbar, ToolbarItem } from "./Toolbar";
 import { Dispatcher } from "../../BracketEditor/Dispatcher";
+import { FreezeDays } from "../../commands/FreezeDays";
 
 /* global console, Excel, require  */
 
@@ -275,7 +276,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    await StructureEditor.toggleDayFreezeClick(appContext);
+                    await FreezeDays.toggleDayFreezeClick(appContext);
                     return true;
                 }
             });
@@ -468,6 +469,20 @@ export default class App extends React.Component<AppProps, AppState> implements 
         {
             this.postHeroListRebuild();
         }
+
+        if ((this.state.panesFrozen != prevState.panesFrozen)
+            || (this.state.sheetsHidden != prevState.sheetsHidden))
+        {
+            this.postUpdateTopToolbar();
+        }
+    }
+
+    postUpdateTopToolbar()
+    {
+        this.setState(
+            {
+                topToolbar: this.buildTopToolbar()
+            });
     }
 
     async postHeroListRebuild()
@@ -679,6 +694,16 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
                 await RangeCaches.PopulateIfNeeded(context, bracketChoice);
 
+                // set the initial state for frozen and hidden
+                const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+                const locationFroze = sheet.freezePanes.getLocationOrNullObject();
+                const defSheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketDefBuilder.SheetName);
+                defSheet.load("visibility");
+
+                await context.sync("freeze and hidden check");
+                const frozen = !locationFroze.isNullObject;
+                const hidden = !(defSheet.isNullObject || (defSheet.visibility === Excel.SheetVisibility.visible));
+
                 if (this.m_appContext.SelectedBracket == null)
                     this.m_appContext.SelectedBracket = "T8";
 
@@ -693,7 +718,9 @@ export default class App extends React.Component<AppProps, AppState> implements 
                         heroListFormat: format,
                         heroList: list,
                         heroTitle: title,
-                        games: []
+                        games: [],
+                        panesFrozen: frozen,
+                        sheetsHidden: hidden
                     });
 
                 this.m_appContext.setProgressVisible(true);

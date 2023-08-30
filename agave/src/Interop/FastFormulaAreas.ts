@@ -89,7 +89,7 @@ export class FastFormulaAreas
     static s_gameDataSheetCacheName = "gameData-FastFormulaAreas";
     static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
     static s_bracketInfoCacheName = "bracketInfo-FastFormulaAreas";
-
+    
     static s_allSheetsCache = "allsheets-FastFormulaAreasCollection";
 
     static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
@@ -112,13 +112,21 @@ export class FastFormulaAreas
 
     static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
         [
-            [FastFormulaAreasItems.GameGrid, new RangeInfo(0, 250, 0, 50)],
+            [FastFormulaAreasItems.GameGrid, new RangeInfo(0, 250, 0, 60)],
             [FastFormulaAreasItems.GameData, new RangeInfo(0, 150, 0, 7)],
             [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 200, 0, 15)],
             [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],
         ]
     )
 
+    static s_mapTypeCacheNameRoot = new Map<FastFormulaAreasItems, string>(
+        [
+            [FastFormulaAreasItems.GameGrid, "Games"],
+            [FastFormulaAreasItems.GameData,"Data"],
+            [FastFormulaAreasItems.BracketDefs, "Defs"],
+            [FastFormulaAreasItems.BracketInfo, "Info"],
+        ]
+    );
     static itemMax: number = 1000; // only 2000 items per rangearea...
 
     m_areasItems: FormulaAreasItem[] = [];
@@ -337,6 +345,23 @@ export class FastFormulaAreas
                 });
     }
 
+    static getCacheNameFromType(type: FastFormulaAreasItems, cacheName: string)
+    {
+        return `${cacheName}-${this.s_mapTypeCacheNameRoot.get(type)}`;
+    }
+
+    static requestMergedAreasType(context: JsCtx, type: FastFormulaAreasItems): Excel.RangeAreas
+    {
+        const rangeInfoForMerges = FastFormulaAreas.s_mapTypeRange.get(type);
+        const sheetForMerges = context.Ctx.workbook.worksheets.getItem(FastFormulaAreas.s_mapTypeSheet.get(type));;
+        const rangeForMerges = Ranges.rangeFromRangeInfo(sheetForMerges, rangeInfoForMerges);
+        const areasMerges = rangeForMerges.getMergedAreasOrNullObject();
+
+        areasMerges.load("areaCount, areas")
+
+        return areasMerges;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: FastFormulaAreas.populateAllCaches
 
@@ -374,12 +399,15 @@ export class FastFormulaAreas
                 }
 
                 context.Ctx.workbook.load("names");
-
+                const areasMerges = this.requestMergedAreasType(context, FastFormulaAreasItems.GameGrid);
                 try
                 {
                     // one sync to rule them all
                     await context.sync("populateAllCaches");
                     context.addCacheObject("workbookNamesItems", { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items });
+                    context.addCacheObject(
+                        this.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+                        { type: ObjectType.JsObject, o: areasMerges });
                 }
                 catch (e)
                 {

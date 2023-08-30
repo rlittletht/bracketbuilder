@@ -760,28 +760,17 @@ export class Grid
         return grid;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: Grid.getGridColumnDateValues
-
-        This requires thet m_firstGridPattern is already loaded (we will use the
-        first repeating column as the first column we need a date for)
-    ----------------------------------------------------------------------------*/
-    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    static getRowForGameDates(context: JsCtx, firstGridPattern: RangeInfo): number
     {
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const columns: RangeInfo = firstGridPattern.offset(-firstGridPattern.FirstRow, firstGridPattern.FirstRow, 0, 1);
 
-        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
-        const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
-
-        rngColumns.load("values");
-        await context.sync();
+        const colData = areas.getValuesForRangeInfo(columns);
 
         // walk backwards up the column to find the first non-empty cell. This is the date row
-        const colData: any[][] = rngColumns.values;
         let rowDates: number = -1;
 
-        for (let i = this.m_firstGridPattern.FirstRow - 1; i >= 0; i--)
+        for (let i = firstGridPattern.FirstRow - 1; i >= 0; i--)
         {
             if (colData[i][0] != null && colData[i][0] != "")
             {
@@ -790,34 +779,95 @@ export class Grid
             }
         }
 
+        return rowDates;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridColumnDateValues
+
+        This requires thet m_firstGridPattern is already loaded (we will use the
+        first repeating column as the first column we need a date for)
+    ----------------------------------------------------------------------------*/
+    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    {
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const areasMerges: Excel.RangeAreas = await context.getTrackedItemOrPopulate(
+            FastFormulaAreas.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+            async (context: JsCtx): Promise<CacheObject> =>
+            {
+                if (s_staticConfig.throwOnCacheMisses)
+                {
+                    debugger;
+                    throw new Error("cache miss on getGridColumnDateValues mergeAreas");
+                }
+
+                const areasMerges = FastFormulaAreas.requestMergedAreasType(context, FastFormulaAreasItems.GameGrid);
+                await context.sync("request merged areas cache miss");
+                return { type: ObjectType.JsObject, o: areasMerges };
+            });
+        let sheet: Excel.Worksheet = null;
+
+        let colData: any[][];
+        let dateValues: any[][];
+
+        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
+
+        if (areas)
+        {
+            colData = areas.getValuesForRangeInfo(columns);
+        }
+        else
+        {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("cache miss on getGridColumnDateValues");
+            }
+
+            sheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+            context.Ctx.trackedObjects.add(sheet);
+
+            const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
+
+            rngColumns.load("values");
+            await context.sync();
+            colData = rngColumns.values;
+        }
+
+        // walk backwards up the column to find the first non-empty cell. This is the date row
+        let rowDates = Grid.getRowForGameDates(context, this.m_firstGridPattern);
+
         if (rowDates == -1)
         {
-            context.Ctx.trackedObjects.remove(sheet);
-            throw new Error("couldn't find date for column");
+            if (sheet)
+                context.Ctx.trackedObjects.remove(sheet);
+
+            throw new Error("couldn't find row for dates");
         }
 
         let range: RangeInfo = new RangeInfo(rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
-        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+        if (areas)
+        {
+            dateValues = areas.getValuesForRangeInfo(range);
+        }
+        else
+        {
+            const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
 
-        areas.load("areaCount");
-        areas.load("rowIndex");
-        areas.load("columnIndex");
-        areas.load("columnCount");
-        areas.load("areas");
-        rng.load("values");
-        await context.sync();
+            rng.load("values");
+            await context.sync();
+
+            dateValues = rng.values;
+        }
 
         // build an array of merged area mappings
-        const data: any[][] = rng.values;
+        let merges: number[] = Array.from({ length: dateValues[0].length }, () => 0);
 
-        let merges: number[] = Array.from({ length: data[0].length }, () => 0);
-
-        if (!areas.isNullObject)
+        if (!areasMerges.isNullObject)
         {
-            for (let i = 0; i < areas.areaCount; i++)
+            for (let i = 0; i < areasMerges.areaCount; i++)
             {
-                const rangeAreas: Excel.RangeCollection = areas.areas;
+                const rangeAreas: Excel.RangeCollection = areasMerges.areas;
                 const rangeArea: Excel.Range = rangeAreas.items[i];
 
                 let iMerge = rangeArea.columnIndex - range.FirstColumn;
@@ -834,9 +884,9 @@ export class Grid
         let dates: Date[] = [];
 
         let i = 0;
-        while (i < data[0].length)
+        while (i < dateValues[0].length)
         {
-            let item = data[0][i];
+            let item = dateValues[0][i];
             if (item == null || item == "")
             {
                 i++;
@@ -855,8 +905,10 @@ export class Grid
             }
         }
 
-        // now 
-        context.Ctx.trackedObjects.remove(sheet);
+        // now
+        if (sheet)
+            context.Ctx.trackedObjects.remove(sheet);
+
         return dates;
     }
 
@@ -883,7 +935,7 @@ export class Grid
             Title | Score | Line | Title | Score | Line
 
     ----------------------------------------------------------------------------*/
-    getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
+    static getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
     {
         let range: RangeInfo = new RangeInfo(0, 1, 0, 1);
 
@@ -1027,7 +1079,7 @@ export class Grid
 
         AppContext.checkpoint("lgfb.1");
         _TimerStack.pushTimer("getFirstGridPatternCell");
-        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreasSmaller);
+        this.m_firstGridPattern = Grid.getFirstGridPatternCell(fastRangeAreasSmaller);
 
         if (this.m_firstGridPattern == null)
             throw new Error("could not load grid pattern");
