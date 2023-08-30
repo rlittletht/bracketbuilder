@@ -5,6 +5,7 @@ import { DirectionalHint } from "@fluentui/react";
 
 import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
 import { AppContext, IAppContext, TheAppContext } from "../../AppContext/AppContext";
+import { IAppStateAccess } from "../../AppContext/IAppStateAccess";
 import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
 import { GameNum } from "../../BracketEditor/GameNum";
 import { Grid } from "../../BracketEditor/Grid";
@@ -61,9 +62,11 @@ export interface AppState
     aboutShowing: boolean;
     heroListDirty: boolean;
     bracketMayHaveDirectEdits: boolean;
+    sheetsHidden: boolean;
+    panesFrozen: boolean;
 }
 
-export default class App extends React.Component<AppProps, AppState>
+export default class App extends React.Component<AppProps, AppState> implements IAppStateAccess
 {
     static version: string = s_staticConfig.version;
     private targetDivRef: React.RefObject<HTMLDivElement> = null;
@@ -73,6 +76,14 @@ export default class App extends React.Component<AppProps, AppState>
     constructor(props, context)
     {
         super(props, context);
+
+        this.m_appContext = new AppContext();
+        this.m_appContext.setDelegates(
+            null,
+            null,
+            this.getGames.bind(this),
+            this /*IAppStateAccess*/);
+
         this.state =
         {
             heroList: [],
@@ -87,18 +98,54 @@ export default class App extends React.Component<AppProps, AppState>
             debugToolbar: this.buildDebugToolbar(),
             aboutShowing: false,
             heroListDirty: false,
-            bracketMayHaveDirectEdits: false
+            bracketMayHaveDirectEdits: false,
+            sheetsHidden: false,
+            panesFrozen: false
         };
 
-        this.m_appContext = new AppContext();
-        this.m_appContext.setDelegates(
-            null,
-            null,
-            this.dirtyHeroList.bind(this),
-            this.getGames.bind(this),
-            this.dirtyBracketForDirectEdit.bind(this));
 
         this.targetDivRef = React.createRef();
+    }
+
+    // IAppStateAccess Implementation
+    set HeroListDirty(dirty: boolean)
+    {
+        this.setState({ heroListDirty: dirty });
+    }
+
+    get HeroListDirty(): boolean
+    {
+        return this.state?.heroListDirty ?? false;;
+    }
+
+    set BracketDirtyForBracketEdit(dirty: boolean)
+    {
+        this.setState({ bracketMayHaveDirectEdits: dirty });
+    }
+
+    get BracketDirtyForBracketEdit(): boolean
+    {
+        return this.state?.bracketMayHaveDirectEdits ?? false;
+    }
+
+    set SheetsHidden(hidden: boolean)
+    {
+        this.setState({ sheetsHidden: hidden });
+    }
+
+    get SheetsHidden(): boolean
+    {
+        return this.state?.sheetsHidden ?? false;
+    }
+
+    set DaysFrozen(frozen: boolean)
+    {
+        this.setState({ panesFrozen: frozen });
+    }
+
+    get DaysFrozen(): boolean
+    {
+        return this.state?.panesFrozen ?? false;
     }
 
     static async resetCoachingTips(appContext: IAppContext)
@@ -129,6 +176,20 @@ export default class App extends React.Component<AppProps, AppState>
         }
 
         appContext.Messages.message([...results, "Integration Tests Complete"]);
+    }
+
+    setSheetsHidden(hidden: boolean)
+    {
+        this.setState({
+            sheetsHidden: hidden
+        });
+    }
+
+    setPanesFrozen(frozen: boolean)
+    {
+        this.setState({
+            panesFrozen: frozen
+        });
     }
 
     buildTopToolbar(): ToolbarItem[]
@@ -196,13 +257,25 @@ export default class App extends React.Component<AppProps, AppState>
             });
         listItems.push(
             {
-                icon: "Hide3",
-                primaryText: "Toggle showing data sheets",
+                icon: this.m_appContext.AppStateAccess.SheetsHidden ? "View" : "Hide3",
+                primaryText: this.m_appContext.AppStateAccess.SheetsHidden ? "Unhide data sheets" : "Hide bracket data sheets",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
                     await StructureEditor.toggleShowDataSheetsClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: this.m_appContext.AppStateAccess.DaysFrozen ? "Unlock" : "Lock",
+                primaryText: this.m_appContext.AppStateAccess.DaysFrozen ? "Unfreeze days of the week" : "Freeze days of the week rows",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.toggleDayFreezeClick(appContext);
                     return true;
                 }
             });
@@ -395,16 +468,6 @@ export default class App extends React.Component<AppProps, AppState>
         {
             this.postHeroListRebuild();
         }
-    }
-
-    dirtyHeroList()
-    {
-        this.setState({ heroListDirty: true });
-    }
-
-    dirtyBracketForDirectEdit()
-    {
-        this.setState({ bracketMayHaveDirectEdits: true });
     }
 
     async postHeroListRebuild()

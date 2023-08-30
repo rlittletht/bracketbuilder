@@ -64,6 +64,6 @@ export class UnitTests
 
         appContext.Messages.message([...results, "Unit Tests Complete"]);
         _bracketManager.setDirty(true);
-        appContext.setHeroListDirty(); // need to repopulate caches, etc.
+        appContext.AppStateAccess.HeroListDirty = true; // need to repopulate caches, etc.
     }
 }

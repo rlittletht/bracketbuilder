@@ -7,6 +7,7 @@ import { s_staticConfig } from "../StaticConfig";
 import { IAppContextMessages, AppContextMessages, SetMessageDelegate, ClearMessageDelegate } from "./AppContextMessages";
 import { IAppContextTeaching, AppContextTeaching } from "./AppContextTeaching";
 import { SetupState } from "../Setup";
+import { IAppStateAccess } from "./IAppStateAccess";
 
 
 export interface IAppContext
@@ -16,9 +17,7 @@ export interface IAppContext
 
     Messages: IAppContextMessages;
     Teaching: IAppContextTeaching;
-
-    setHeroListDirty();
-    setBracketDirtyForBracketEdit();
+    AppStateAccess: IAppStateAccess;
 
     get SelectedBracket(): string;
     set SelectedBracket(bracket: string);
@@ -30,9 +29,9 @@ export interface IAppContext
     setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
 }
 
-export interface SetDirtyDelegate
+export interface SetAppStateDelegate
 {
-    (): void;
+    (state: boolean): void;
 }
 
 export interface GetGamesDelegate
@@ -54,13 +53,11 @@ export class AppContext implements IAppContext
 {
     Messages: AppContextMessages = new AppContextMessages();
     Teaching: AppContextTeaching;
+    AppStateAccess: IAppStateAccess = null;
 
     m_selectedBracket: string = null;
     m_setupState: SetupState = "U";
     m_durableState: DurableState = new DurableState();
-    m_heroListNeedsRebuilt: boolean = false;
-    m_setBracketDirtyForDirectEditDelegate: SetDirtyDelegate;
-    m_setHeroListDirtyDelegate: SetDirtyDelegate;
 
     m_progressVisibilityDelegate: ProgressVisibilityDelegate;
     m_getGames: GetGamesDelegate;
@@ -74,11 +71,6 @@ export class AppContext implements IAppContext
         this.Teaching = new AppContextTeaching(this.m_durableState);
     }
 
-    setBracketDirtyForBracketEdit()
-    {
-        this.m_setBracketDirtyForDirectEditDelegate?.();
-    }
-
     get WorkbookSetupState(): SetupState
     {
         return this.m_setupState;
@@ -87,12 +79,6 @@ export class AppContext implements IAppContext
     set WorkbookSetupState(state: SetupState)
     {
         this.m_setupState = state;
-    }
-
-    // maybe move this into app state so it gets automatically rebuilt?
-    async setHeroListDirty()
-    {
-        this.m_setHeroListDirtyDelegate?.();
     }
 
     setProgressVisible(visible: boolean)
@@ -127,15 +113,13 @@ export class AppContext implements IAppContext
     setDelegates(
         addMessageDelegate: SetMessageDelegate,
         clearMessageDelegate: ClearMessageDelegate,
-        setHeroListDirty: SetDirtyDelegate,
         getGames: GetGamesDelegate,
-        setBracketDirtyForDirectEdit: SetDirtyDelegate
-        )
+        appStateAccess: IAppStateAccess)
     {
         this.Messages.setMessageDelegates(addMessageDelegate, clearMessageDelegate);
-        this.m_setHeroListDirtyDelegate = setHeroListDirty;
         this.m_getGames = getGames;
-        this.m_setBracketDirtyForDirectEditDelegate = setBracketDirtyForDirectEdit;
+        this.AppStateAccess = appStateAccess;
+
     }
 
     setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)

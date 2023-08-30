@@ -180,7 +180,7 @@ export class SetupBook
                 const context: JsCtx = new JsCtx(ctx);
 
                 await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
-                appContext.setHeroListDirty();
+                appContext.AppStateAccess.HeroListDirty = true;
                 context.releaseAllCacheObjects();
             });
         }
@@ -304,10 +304,9 @@ export class SetupBook
 
                 appContext.WorkbookSetupState = setupState;
 
-                appContext.setHeroListDirty();
+                appContext.AppStateAccess.HeroListDirty = true;
                 RangeCaches.SetDirty(true);
 
-                appContext.setHeroListDirty();
                 SetupBook.registerBindingsForEdits(context, appContext);
                 context.releaseAllCacheObjects();
             });
@@ -330,7 +329,10 @@ export class SetupBook
             return;
 
         const sheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
-        context.Ctx.workbook.bindings.add(sheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(() => { appContext.setBracketDirtyForBracketEdit() });
+        context.Ctx.workbook.bindings.add(
+            sheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
+                () => { appContext.AppStateAccess.BracketDirtyForBracketEdit = true; });
+
         await context.sync();
     }
 }

@@ -26,6 +26,23 @@ let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
+    static async toggleDayFreezeClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.copySelectionToClipboard(appContext, context);
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+
     static async copySelectionToClipboardClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -36,7 +53,7 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await this.copySelectionToClipboard(appContext, context);
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -58,7 +75,7 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await this.syncBracketChangesFromGameSheet(appContext, context);
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -77,7 +94,7 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.toggleShowDataSheets(appContext, context);
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -101,7 +118,7 @@ export class StructureEditor
             await _undoManager.undo(appContext, context);
             context.releaseCacheObjectsUntil('undo');
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -123,7 +140,7 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await this.applyFinalFormatting(appContext, context, appContext.SelectedBracket);
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -147,7 +164,7 @@ export class StructureEditor
             await _undoManager.redo(appContext, context);
             context.releaseCacheObjectsUntil('redo');
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -185,7 +202,7 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.AddGame);
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
             _TimerStack.popTimer();
         };
 
@@ -212,7 +229,7 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -240,7 +257,7 @@ export class StructureEditor
 
                 await context.sync();
             }
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -270,7 +287,7 @@ export class StructureEditor
             await this.doGameMoveToSelection(appContext, context, _moveSelection, appContext.SelectedBracket);
             context.releaseCacheObjectsUntil(bookmark);
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -297,7 +314,7 @@ export class StructureEditor
 
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -324,7 +341,7 @@ export class StructureEditor
             context.releaseCacheObjectsUntil(bookmark);
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);

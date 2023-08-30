@@ -78,7 +78,7 @@ export class Prioritizer
             await FastFormulaAreas.populateAllCaches(context);
 
             await this.shadeGamesByPriority(appContext, context);
-            appContext.setHeroListDirty();
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
