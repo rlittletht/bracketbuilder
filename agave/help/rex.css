@@ -65,6 +65,7 @@ article {
 }
 
 section {
+    clear: both;
 }
 
 content {
@@ -109,6 +110,12 @@ article > section > content > section > content > section > heading {
 article > section > content > section > content > section > content > section > heading {
     font-size: 1.7rem;
     margin-top: 1rem;
+}
+
+article > section > content > section > content > section > content > section > content > section > heading {
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    font-style: italic;
 }
 
 footer {
@@ -295,6 +302,10 @@ red {
     padding-left: .5rem;
 }
 
+skimmable{
+    font-weight: 700;
+}
+
 cmd {
     font-style: italic;
 }
@@ -312,6 +323,29 @@ superEm {
     text-decoration: underline;
 }
 
+dl {
+    display: flex;
+    flex-flow: row wrap;
+    --border: solid #333;
+    --border-width: 1px 1px 0 0;
+    margin-left: 1.5rem;
+}
+
+dt {
+    flex-basis: 10%;
+    padding: 2px 4px;
+    --background: #333;
+    text-align: left;
+    --color: #fff;
+}
+
+dd {
+    flex-basis: 80%;
+    flex-grow: 1;
+    margin: 0;
+    padding: 2px 4px;
+    --border-bottom: 1px solid #333;
+}
 
 img.logo {
     height: 3rem
@@ -331,6 +365,18 @@ floatNone {
 floatRight {
     float: right;
     padding-left: 1rem;
+}
+
+
+placeholder {
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    height: 5em;
+    width: 100%;
+    border: solid 2pt black;
+    display: flex;
+    background: white;
 }
 
 gallery {

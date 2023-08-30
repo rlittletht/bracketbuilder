@@ -48,8 +48,8 @@
                         using BracketBuilder. We're always looking for more topics to add here, so please
                         <a href="mailto:red@traynrex.com">let us know</a> about things you run into often and how you solve them.
                     </p>
-                    <section id="InsertLocation">
-                        <heading navText="Choosing insertion range">Manually selecting where a game gets inserted</heading>
+                    <section id="ChoosingInsertLocation">
+                        <heading navText="Choosing insertion range">Selecting where a game gets inserted</heading>
                         <content>
                             <p>
                                 Most of the time, BracketBuilder does a good job figuring out how to place a game
@@ -119,6 +119,179 @@
                         </content>
                     </section>
 
+                    <section id="rangeGuessing">
+                        <heading navText="Smart game insertion">What is Smart Game Insertion?</heading>
+                        <content>
+                            <p>
+                                <prodRef>BracketBuilder</prodRef> tries to make adding games as easy as possible, but that can be pretty hard sometimes.
+                                It tries to
+                                <em>do what you want</em> when you insert a game, but sometimes you might want it to
+                                <skimmable>
+                                    do something
+                                    automatically,
+                                </skimmable> and sometimes you want it do just
+                                <skimmable>do exactly what you told it</skimmable> to do.
+                            </p>
+                            <p>
+                                If you only have a single cell selected when you insert a game, <prodRef>BracketBuilder</prodRef> will try to
+                                insert the game in the best possible location based on a bunch of rules.
+                            </p>
+                            <p>
+                                A lot of the rules around where games go are based on <a href="#gameDependencies">game dependencies</a>. These
+                                help <prodRef>BracketBuilder</prodRef> figure out where a game has to go in the bracket.
+                            </p>
+                            <section>
+                                <heading>
+                                    Automatic day detection
+                                </heading>
+                                <content>
+                                    <p>
+                                        For the most part, you have to choose what day you want the game to be added to before you add the game.
+                                    </p>
+                                    <p>
+                                        If the current cell isn't in a <eltRef>Team</eltRef> column, then <prodRef>BracketBuilder</prodRef> will guess which day you are
+                                        trying to insert into.
+                                    </p>
+                                    <p>
+                                        If you are in a <eltRef>Score</eltRef> column, then it will guess you mean the day
+                                        that starts in the column immediately to the left. For example, if you have selected column E (which is a <eltRef>score</eltRef>
+                                        column), then it will assume you mean to insert into column D.
+                                    </p>
+                                    <p>
+                                        If you are in a <eltRef>Line</eltRef> column (one of the very narrow columns that is used to draw the game lines), then
+                                        it will guess you mean the day that starts in the column immediately to the right. For example, if you have selected column F,
+                                        then it will assume you mean to insert into column G. (It makes this assumption because visually, that Line column looks like it
+                                        is under the <em>next</em> day, not the previous day)
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Inserting a game with no dependencies</heading>
+                                <content>
+                                    <p>
+                                        If a game is the first game in the bracket for two teams, or if both the top and bottom teams for the game
+                                        come from the losers of the preceding game, then the team has no incoming dependencies.
+                                        If the winner of this game advances to a game that is not already on the bracket, then the game has no
+                                        outgoing dependency either.
+                                    </p>
+                                    <p>
+                                        When a game has no incoming or outgoing dependencies, then the game has very few restrictions about where it will
+                                        be placed. The game will be placed in the <skimmable>next available</skimmable> location on that day. To figure this
+                                        out, it looks at all the games on the bracket and tries to avoid being too close to anything already on the bracket.
+                                    </p>
+                                    <p>
+                                        One thing that it considers is where future games <em>might</em> show up on the bracket. It will avoid these
+                                        <a href="#overlappingResults">overlapping game results</a>.
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Inserting a game with incoming dependencies</heading>
+                                <content>
+                                    <p>
+                                        Every game has two teams (top and bottom). Most of these top/bottom teams come from the results of a previous game. One or both of these
+                                        teams are the winners from a previous game, then <prodRef>BracketBuilder</prodRef> will draw a connecting line between the result of
+                                        the game and the game being inserted. These are incoming dependencies.
+                                    </p>
+                                    <p>
+                                        When you place a game that has incoming dependencies, then it will try its hardest to make sure the connecting lines really do connect
+                                        between the games.
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Insert a game with outgoing dependencies</heading>
+                                <content>
+                                    <p>
+                                        Every game (except the champion) has a winner and feeds into another game on the bracket. If you add a game to the bracket that already
+                                        has its outgoing dependency on the bracket, then the game will be placed so it feeds into that game.
+                                    </p>
+                                    <p>
+                                        This doesn't usually happen when you are building a bracket, but if you remove a game for some reason from the middle of the bracket, when you
+                                        add it back (maybe on a different day?), then it will try to reconnect all the dependencies.
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>First game of the tournament</heading>
+                                <content>
+                                    <p>
+                                        For the very first game placed in the bracket, you don't have to select the day. For example, if you just leave cell A1 selected, when you
+                                        insert the first game, then you selection will get automatically moved to the first day of the tournament. This is the only time
+                                        <prodRef>BracketBuilder</prodRef> will jump to a particular day to play a game. Maybe a future release will automatically move the selection
+                                        to the next day automatically when a game can't be placed, but for now you have to manually move the selection to the next day.
+                                    </p>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+                    <section id="FieldTimes">
+                        <heading>Guessing Field Times</heading>
+                        <content>
+                            <p>
+                                When you create the bracket workbook, all of the games are played at 12:00am (midnight) on a field called <em>Ballfield</em>.
+                                Clearly this isn't real, but we have to start somewhere.
+                            </p>
+                            <p>
+                                The games on the bracket all get their <eltRef>Field</eltRef> and <eltRef>Time</eltRef> information from the <eltRef>TeamsAndFields</eltRef>
+                                sheet. This means you can update all the Fields and Times for each game by just changing the <eltRef>TeamsAndFields</eltRef> sheet.
+                            </p>
+                            <p>
+                                The problem with having everything on the <eltRef>TeamsAndFields</eltRef> sheet is that it can be hard to tell the games apart when
+                                just looking at them, especially before the games have been added to the bracket. To make this process a little easier, 
+                                <prodRef>BracketBuilder</prodRef> will assign different fields and times to each game based on some basic rules.
+                            </p>
+                            <section>
+                                <heading>Field Rules</heading>
+                                <content>
+                                    <p>
+                                        On the <eltRef>Games</eltRef> sheet, one of the Tournament Information items is the number of fields in the tournament. By default,
+                                        the tournament has 2 fields. If you want a different number of fields automatically used, change this number <em>before</em>
+                                        you start adding games.
+                                    </p>
+                                    <p>
+                                        When you insert a game, <prodRef>BracketBuilder</prodRef> will try to figure out what the <em>next</em> field should be. It does
+                                        this by looking at the latest game played on that day, and then it looks at the largest field number used (Field #1, Field #2, etc). 
+                                    </p>
+                                    <p>
+                                        After it knows the last field used in the last time slot of the day, it will figure out if it can use another field at that time slot, or if
+                                        it has to advance to a new time slot. For example, if the tournament has 3 fields and the last game was at 1:00pm on Field #2, then we can
+                                        play another 1:00pm game on Field #3.  If the last game was already on Field #3, then we would have to move to a later time slot (slots are
+                                        3 hours long), which would be 4:00pm on Field #1.
+                                    </p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Time Rules</heading>
+                                <content>
+                                    <p>
+                                        The first time slot of the day is determined by the day of the week:
+                                    </p>
+                                    <dl>
+                                        <dt>Saturday</dt>
+                                        <dd>First game slot is 9:00am</dd>
+                                        <dt>Sunday</dt>
+                                        <dd>First game slot is 10:00am</dd>
+                                        <dt>Weekday</dt>
+                                        <dd>First game slot is 6:00pm</dd>
+                                    </dl>
+                                    <p>Game slots are always 3 hours, so the 2nd slot on weekdays is 9:00pm</p>
+                                </content>
+                            </section>
+                            <section>
+                                <heading>Fixing up Field Times</heading>
+                                <p>
+                                    <prodRef>BracketBuilder</prodRef> isn't trying to get the fields and times corrent as you insert the games. All its trying to do
+                                    is make it obvious which games are which when you look at the <eltRef>TeamsAndFields</eltRef> sheet.
+                                </p>
+                                <p>
+                                    After you create the bracket, you should be able to quickly replace "Field #1" with the correct field name. Likewise, if your
+                                    Saturday games start at 10:00am and are 3.5 hours long, then you can replace all the 9:00am games with 10:00am, all of the 12:00pm
+                                    games with 1:30pm, and so on.
+                                </p>
+                            </section>
+                        </content>
+                    </section>
                     <section id="gameDependencies">
                         <heading navText="What's a game dependency?">What are game dependencies?</heading>
                         <content>
@@ -347,7 +520,6 @@
                             </p>
                         </content>
                     </section>
-
                     <section id="insertLocation">
                         <heading navText="Choosing insert locations">Why is BracketBuilder complaining about the insert location?</heading>
                         <content>
@@ -412,8 +584,8 @@
                                 </content>
                             </section>
 
-                            <section>
-                                <heading>Overlapping game results</heading>
+                            <section id="overlappingResults">
+                                <heading navText="">Overlapping game results</heading>
                                 <content>
                                     <zoomableTall>
                                         <floatRight style="width: 10vw">
@@ -422,7 +594,10 @@
                                     </zoomableTall>
                                     <p>
                                         One of the things that <prodRef>BracketBuilder</prodRef> checks when inserting a game is whether or not an existing
-                                        game on the bracket is going to have a line coming out of it to another game.
+                                        game on the bracket is going to have a line coming out of it to another game. It knows that every game (except the
+                                        champion) has to connect to another game later in the bracket. These connection lines can't cross over another game,
+                                        so <prodRef>BracketBuilder</prodRef> uses this information to make sure it doesn't put any future games in the bracket
+                                        in a place that would overlap.
                                     </p>
                                     <p>
                                         For example, if you have a game between the two games that need to play each other, when you try to place that next game,
