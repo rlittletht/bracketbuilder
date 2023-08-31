@@ -527,7 +527,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
                     heroListDirty: false
                 });
 
-
             const bookmark: string = "rebuildHeroList";
             context.pushTrackingBookmark(bookmark);
 
@@ -535,7 +534,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 "buildFastFormulaAreas",
                 async () =>
                 {
-                    await FastFormulaAreas.populateAllCaches(context);
+                    await FastFormulaAreas.populateAllCaches(context, true);
                 });
 
             await _TimerStack.timeThisAsync(
@@ -627,13 +626,15 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
             context.releaseCacheObjectsUntil(bookmark);
         }
-        catch(e)
+        catch (e)
         {
             console.log(`rebuildHeroListWork caught: ${e.message}`);
         }
-
-        _TimerStack.popTimersUntil(topLevelTimerName);
-        console.log("RHL: finishing RHL");
+        finally
+        {
+            _TimerStack.popTimersUntil(topLevelTimerName);
+            console.log("RHL: finishing RHL");
+        }
     }
 
 

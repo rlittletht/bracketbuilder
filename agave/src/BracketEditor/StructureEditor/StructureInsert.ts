@@ -327,7 +327,8 @@ export class StructureInsert
         This is the non async portion of insert game at selection. Suitable for
         testing
     ----------------------------------------------------------------------------*/
-    static buildNewGridForGameInsertAtSelection(requested: RangeInfo, grid: Grid, game: IBracketGame): { gridNew: Grid, failReason?: string[], coachState?: Coachstate, topic?: HelpTopic }
+    static buildNewGridForGameInsertAtSelection(requested: RangeInfo, grid: Grid, game: IBracketGame):
+        { gridNew: Grid, failReason?: string[], coachState?: Coachstate, topic?: HelpTopic, selectRange: RangeInfo }
     {
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
         {
@@ -336,7 +337,8 @@ export class StructureInsert
                 failReason: ["Can't insert game at the current location.",
                     `Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`],
                 topic: HelpTopic.FAQ_InsertLocation,
-                coachState: Coachstate.AfterInsertGameFailed
+                coachState: Coachstate.AfterInsertGameFailed,
+                selectRange: null
             };
         }
 
@@ -377,7 +379,8 @@ export class StructureInsert
                         `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
                     ],
                     topic: HelpTopic.FAQ_InsertLocation,
-                    coachState: Coachstate.AfterInsertGameFailed
+                    coachState: Coachstate.AfterInsertGameFailed,
+                    selectRange: null
                 };
             }
         }
@@ -389,13 +392,13 @@ export class StructureInsert
             const { depSuccess, depFailReason, depTopic } = this.checkGameDependency(topSourceGame, requested);
 
             if (!depSuccess)
-                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed };
+                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed, selectRange: null };
         }
         {
             const { depSuccess, depFailReason, depTopic } = this.checkGameDependency(bottomSourceGame, requested);
 
             if (!depSuccess)
-                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed };
+                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed, selectRange: null };
         }
 
         // before we insert the game, let's figure out field and start time info. only do this if we have loaded
@@ -418,7 +421,7 @@ export class StructureInsert
             }
         }
 
-        const [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
+        const { newGrid: gridNew, reason: failReason, selectRange } = grid.buildNewGridForGameAdd(game, requested);
 
         if (failReason != null)
         {
@@ -426,11 +429,12 @@ export class StructureInsert
                 gridNew: null,
                 failReason: [`Insert Failed: ${failReason}`],
                 topic: HelpTopic.FAQ_InsertFailed,
-                coachState: Coachstate.AfterInsertGameFailedOverlapping
+                coachState: Coachstate.AfterInsertGameFailedOverlapping,
+                selectRange: null
             };
         }
 
-        return { gridNew: gridNew };
+        return { gridNew: gridNew, selectRange: selectRange };
     }
 
     /*----------------------------------------------------------------------------
@@ -475,7 +479,7 @@ export class StructureInsert
             requested = await Ranges.createRangeInfoForSelection(context);
         }
 
-        const { gridNew, failReason, coachState, topic } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
+        const { gridNew, failReason, coachState, topic, selectRange } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
         _TimerStack.popTimer();
        
         // caller 
@@ -494,7 +498,7 @@ export class StructureInsert
         _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
 
         let undoGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName, selectRange);
 
         _TimerStack.popTimer();
 

@@ -2663,7 +2663,7 @@ export class Grid
 
         must provide a column for the game to be inserted into
     ----------------------------------------------------------------------------*/
-    buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): [Grid, string]
+    buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): {newGrid: Grid, selectRange: RangeInfo, reason: string }
     {
         let gridNew: Grid = this.clone();
         let gameInsert: GridGameInsert;
@@ -2693,7 +2693,7 @@ export class Grid
 
         if (gameInsert.m_failReason != null)
         {
-            return [null, gameInsert.m_failReason];
+            return { newGrid: null, reason: gameInsert.m_failReason, selectRange: null };
         }
 
         if (gameInsert.m_rangeFeederTop != null)
@@ -2716,7 +2716,7 @@ export class Grid
         newItem.setStartTime(game.StartTime);
         newItem.setField(game.Field);
 
-        return [gridNew, null];
+        return { newGrid: gridNew, reason: null, selectRange: gameInsert.Range };
     }
 
     logGridCondensedString(): string

@@ -17,4 +17,5 @@ export class IntentionType
     static SetHorizontalAlignment = "SHA";
     static SetVerticalAlignment = "SVA";
     static SetNumberFormat = "SNF";
+    static Select = "SEL";
 }

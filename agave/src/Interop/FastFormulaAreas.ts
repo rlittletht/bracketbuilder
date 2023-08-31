@@ -368,7 +368,7 @@ export class FastFormulaAreas
         Populate all the caches we know about, including all of the formula areas
         as well as the workbook names items.
     ----------------------------------------------------------------------------*/
-    static async populateAllCaches(context: JsCtx): Promise<FastFormulaAreaCachesCollection>
+    static async populateAllCaches(context: JsCtx, dontPopulateMergeAreas?: boolean): Promise<FastFormulaAreaCachesCollection>
     {
         const name = this.s_allSheetsCache;
 
@@ -399,15 +399,21 @@ export class FastFormulaAreas
                 }
 
                 context.Ctx.workbook.load("names");
-                const areasMerges = this.requestMergedAreasType(context, FastFormulaAreasItems.GameGrid);
+
+                let areasMerges = null;
+                if (!dontPopulateMergeAreas)
+                    areasMerges = this.requestMergedAreasType(context, FastFormulaAreasItems.GameGrid);
                 try
                 {
                     // one sync to rule them all
                     await context.sync("populateAllCaches");
                     context.addCacheObject("workbookNamesItems", { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items });
-                    context.addCacheObject(
-                        this.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
-                        { type: ObjectType.JsObject, o: areasMerges });
+                    if (areasMerges)
+                    {
+                        context.addCacheObject(
+                            this.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+                            { type: ObjectType.JsObject, o: areasMerges });
+                    }
                 }
                 catch (e)
                 {

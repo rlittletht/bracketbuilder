@@ -5,7 +5,7 @@ import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormu
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { JsCtx } from "../../Interop/JsCtx";
-import { Ranges } from "../../Interop/Ranges";
+import { Ranges, RangeInfo } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
 import { BracketGame, IBracketGame } from "../BracketGame";
 import { GameFormatting } from "../GameFormatting";
@@ -17,6 +17,8 @@ import { RemovedGameValues, StructureRemove } from "./StructureRemove";
 import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
 import { ObjectType } from "../../Interop/TrackingCache";
 import { RangeCaches } from "../../Interop/RangeCaches";
+import { TnSelect } from "../../Interop/Intentions/TnSelect";
+import { GridBuilder } from "../../Brackets/GridBuilder";
 
 export class ApplyGridChange
 {
@@ -25,14 +27,14 @@ export class ApplyGridChange
 
         Take two grids, diff them, and apply the changes
     ----------------------------------------------------------------------------*/
-    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string): Promise<UndoGameDataItem[]>
+    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string, selectRange?: RangeInfo): Promise<UndoGameDataItem[]>
     {
         // now, diff the grids
         const changes: GridChange[] = grid.diff(gridNew, bracketName);
 
         grid.logChanges(changes);
 
-        return await this.applyChanges(appContext, context, gridNew, changes, bracketName);
+        return await this.applyChanges(appContext, context, gridNew, changes, bracketName, selectRange);
     }
 
     /*----------------------------------------------------------------------------
@@ -184,7 +186,7 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
+    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string, selectRange?: RangeInfo): Promise<UndoGameDataItem[]>
     {
         let undoGameDataItems: UndoGameDataItem[] = [];
 
@@ -244,6 +246,9 @@ export class ApplyGridChange
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);
         }
+
+        if (selectRange)
+            addGameTns.Add(TnSelect.Create(selectRange.bottomLeft(), GridBuilder.SheetName));
 
         await addGameTns.Execute(context);
 
