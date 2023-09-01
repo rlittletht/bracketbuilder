@@ -377,7 +377,7 @@ export class StructureRemove
                     priority: 0
                 });
 
-        await GameDataSources.updateGameDataSourcesTeamNames(context, map);
+        tns.push(...await GameDataSources.updateGameDataSourcesTeamNames(context, map));
         if (field && field != null && field != "")
             tns.push(...await GameDataSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom));
 

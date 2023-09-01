@@ -20,6 +20,7 @@ import { TestResult } from "../Support/TestResult";
 import { TestRunner } from "../Support/TestRunner";
 import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
+import { s_staticConfig } from "../StaticConfig";
 
 export interface TeamNameMap
 {
@@ -86,7 +87,44 @@ export class GameDataSources
     {
         const tns = [];
 
-        // find the team names table
+        const rangeTeamsFields = RangeCaches.getCacheByType(RangeCacheItemType.FieldsAndTimesBody);
+        if (rangeTeamsFields)
+        {
+            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeTeamsFields.formulaCacheType);
+            if (areas)
+            {
+                const dataRange = rangeTeamsFields.rangeInfo;
+                const dataValues = areas.getValuesForRangeInfo(dataRange);
+
+                for (let row = 0; row < dataRange.RowCount; row++)
+                {
+                    if (dataValues[row][0] == gameNum.GameId.Value)
+                    {
+                        tns.push(
+                            TnSetValues.Create(
+                                dataRange.offset(row, 1, 0, 4),
+                                [
+                                    [
+                                        gameNum.GameId.Value,
+                                        field[0] == "=" ? dataValues[row][1] : field,
+                                        typeof time !== "number" ? dataValues[row][2] : time,
+                                        typeof swapHomeAway !== "boolean" ? dataValues[row][3] : swapHomeAway
+                                    ]
+                                ],
+                                GameDataSources.SheetName));
+                    }
+                }
+
+                return tns;
+            }
+        }
+
+        if (s_staticConfig.throwOnCacheMisses)
+        {
+            debugger;
+            throw new Error("cache miss on updateGameInfo");
+        }
+
         let table: Excel.Table = await GameDataSources.getGameInfoTable(context);
 
         let range: Excel.Range = table.getDataBodyRange();
@@ -113,8 +151,6 @@ export class GameDataSources
         }
 
         tns.push(TnSetValues.Create(RangeInfo.createFromRange(range), newValues, range.worksheet.name));
-//        range.values = newValues;
-//        await context.sync();
         return tns;
     }
 
@@ -264,8 +300,54 @@ export class GameDataSources
         Update the given team names in the bracket sources team names. Its an
         array of maps (and array of [][])
     ----------------------------------------------------------------------------*/
-    static async updateGameDataSourcesTeamNames(context: JsCtx, teamNames: TeamNameMap[])
+    static async updateGameDataSourcesTeamNames(context: JsCtx, teamNames: TeamNameMap[]): Promise<IIntention[]>
     {
+        const tns = [];
+
+        const rangeTeamNames = RangeCaches.getCacheByType(RangeCacheItemType.TeamNamesBody);
+
+        if (rangeTeamNames)
+        {
+            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeTeamNames.formulaCacheType);
+            if (areas)
+            {
+                const dataRange = rangeTeamNames.rangeInfo;
+                const dataValues = areas.getValuesForRangeInfo(dataRange);
+
+                for (let nameMap of teamNames)
+                {
+                    if (nameMap.name == null || nameMap.name == "")
+                        continue;
+
+                    const comp = nameMap.teamId.toUpperCase();
+
+                    for (let row = 0; row < dataRange.RowCount; row++)
+                    {
+                        if (dataValues[row][0].toUpperCase() == comp)
+                        {
+                            tns.push(TnSetValues.Create(
+                                dataRange.offset(row, 1, 0, 2),
+                                [
+                                    [
+                                        dataValues[row][0],
+                                        nameMap.name
+                                    ]
+                                ],
+                                GameDataSources.SheetName));
+                        }
+                    }
+                }
+
+                return tns;
+            }
+        }
+
+        if (s_staticConfig.throwOnCacheMisses)
+        {
+            debugger;
+            throw new Error("cache miss on updateGameDataSourcesTeamNames");
+        }
+
         // find the team names table
         let table: Excel.Table = await GameDataSources.getTeamNameTable(context);
 
@@ -301,9 +383,8 @@ export class GameDataSources
                 newValues.push([range.values[i][0], range.values[i][1]]);
         }
 
-        range.values = newValues; // this is what will get picked up
-
-        await context.sync("UBS newvals");
+        tns.push(TnSetValues.Create(RangeInfo.createFromRange(range), newValues, range.worksheet.name));
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
