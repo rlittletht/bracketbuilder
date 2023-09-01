@@ -228,7 +228,7 @@ export const s_brackets: BracketDefinition[] =
             { winner: "B16", loser: "", topSource: "W8", bottomSource: "W9" },
             { winner: "T15", loser: "", topSource: "L6", bottomSource: "W10" },
             { winner: "T17", loser: "B15", topSource: "W4", bottomSource: "W5" },
-            { winner: "B17", loser: "T16", topSource: "W6", bottomSource: "W7" },///
+            { winner: "B17", loser: "T16", topSource: "W6", bottomSource: "W7" },
             { winner: "B18", loser: "", topSource: "W12", bottomSource: "L13" },
             { winner: "T18", loser: "", topSource: "L14", bottomSource: "W11" },
             { winner: "T20", loser: "T19", topSource: "W13", bottomSource: "W14" },
