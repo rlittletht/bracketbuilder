@@ -241,7 +241,16 @@ export default class App extends React.Component<AppProps, AppState> implements 
                     await StructureEditor.syncBracketChangesFromGameSheetClick(appContext);
                     appContext;
                     return true;
-                }
+                },
+//                teachableProps:
+//                {
+//                    id: TeachableId.DirtyGame,
+//                    isWide: true,
+//                    title: "Needs updated",
+//                    text: "Some part of this game was directly edited, like team name, field, or time. Update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar.",
+//                    visibleDelay: 1000,
+//                    directionalHint: DirectionalHint.bottomAutoEdge,
+//                }
             });
         listItems.push(
             {
