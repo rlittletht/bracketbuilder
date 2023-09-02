@@ -119,7 +119,7 @@ export class Grid
     {
         column = column - this.m_firstGridPattern.FirstColumn;
 
-        if (column < 0 || column >= this.m_datesForGrid.length)
+        if (column < 0 || column >= this.m_datesForGrid.length || this.m_datesForGrid[column] == null)
             return new Date();
 
         return this.m_datesForGrid[column];
