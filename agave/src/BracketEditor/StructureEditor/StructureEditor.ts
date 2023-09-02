@@ -23,6 +23,7 @@ import { StructureInsert } from "./StructureInsert";
 import { StructureRemove } from "./StructureRemove";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
+import { BracketInfoBuilder } from "../../Brackets/BracketInfoBuilder";
 
 let _moveSelection: RangeInfo = null;
 
@@ -421,7 +422,7 @@ export class StructureEditor
             {
                 sheet.load("name");
                 await context.sync();
-                if (sheet.name != GridBuilder.SheetName)
+                if (sheet.name != GridBuilder.SheetName && sheet.name != BracketInfoBuilder.SheetName)
                     sheet.visibility = visibility;
             });
 
@@ -656,6 +657,9 @@ export class StructureEditor
         rangeHosted.format.font.bold = true;
 
         rangeHosted.merge(true);
+
+        const rangeBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
+        rangeBuilding.values = [[""]];
 
         const rangeLastUpdate: Excel.Range = sheet.getRangeByIndexes(
             printArea.LastRow,
