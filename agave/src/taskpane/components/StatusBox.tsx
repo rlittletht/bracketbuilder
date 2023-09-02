@@ -155,7 +155,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
                 title={title}
                 text={text}
                 visibleDelay={500}
-                directionalHint={DirectionalHint.bottomRightEdge}
+                directionalHint={DirectionalHint.topAutoEdge}
                 isWide={true}>
                 {messageBar}
             </Teachable>
