@@ -33,7 +33,7 @@ const isLocalHost = false; // window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
-    version: "1.0.15.4",
+    version: "1.0.15.5",
     maxGameMoves: 6000,
     globalLogging: true && isLocalHost,
     logGridChanges: false && isLocalHost,
