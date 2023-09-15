@@ -1,6 +1,9 @@
-import { TrackingCache } from "./TrackingCache";
-import { Parser, Quoting, TrimType, ParseStringAccepts } from "./Parser";
+import { AppContext } from "../AppContext/AppContext";
 import { JsCtx } from "./JsCtx";
+import { Parser, TrimType } from "./Parser";
+import { ObjectType } from "./TrackingCache";
+import { IIntention } from "./Intentions/IIntention";
+import { TnDeleteGlobalName } from "./Intentions/TnDeleteGlobalName";
 
 export enum RangeOverlapKind
 {
@@ -30,14 +33,19 @@ export class RangeInfo
     constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
     {
         if (rowCount < 0)
-            throw "negative row count";
+            throw new Error("negative row count");
         this.m_rowStart = rowStart;
         this.m_rowCount = rowCount;
 
         if (columnCount < 0)
-            throw "negative column count";
+            throw new Error("negative column count");
         this.m_columnStart = columnStart;
         this.m_columnCount = columnCount;
+    }
+
+    clone(): RangeInfo
+    {
+        return new RangeInfo(this.m_rowStart, this.RowCount, this.m_columnStart, this.ColumnCount);
     }
 
     static createFromRangeInfo(range: RangeInfo): RangeInfo
@@ -99,11 +107,27 @@ export class RangeInfo
         return new RangeInfo(range.rowIndex, range.rowCount, range.columnIndex, range.columnCount);
     }
 
-    offset(dRows: number, newRowCount: number, dColumns: number, newColumnCount: number): RangeInfo
+    /*----------------------------------------------------------------------------
+        %%Function: RangeInfo.offset
+
+        return a new RangeInfo offset by dRows and dColumns, with the new
+        row and column counts
+    ----------------------------------------------------------------------------*/
+    offset(dRows: number, newRowCount: number, dColumns?: number, newColumnCount?: number)
     {
+        if (dColumns == undefined)
+            dColumns = 0;
+        if (newColumnCount == undefined)
+            newColumnCount = this.ColumnCount;
+
         return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
     }
 
+    shiftByColumns(dColumns: number): RangeInfo
+    {
+        this.m_columnStart += dColumns;
+        return this;
+    }
     shiftByRows(dRows: number): RangeInfo
     {
         this.m_rowStart += dRows;
@@ -200,6 +224,11 @@ export class RangeInfo
     toString(): string
     {
         return `[${this.FirstRow},${this.FirstColumn}]-[${this.LastRow},${this.LastColumn}]`;
+    }
+
+    toFriendlyString(): string
+    {
+        return `${Ranges.addressFromCoordinates([this.FirstRow, this.FirstColumn], [this.LastRow, this.LastColumn])}`;
     }
 
     rebase(oldTopRow: number, newTopRow: number)
@@ -317,7 +346,7 @@ export class RangeInfo
         try
         {
             const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
-            await context.sync();
+            await context.sync("getRangeInfoForNamedCell");
 
             if (nameObject.isNullObject)
                 return null;
@@ -338,17 +367,23 @@ export class RangeInfo
         }
     }
 
+    // problem is i'm expecting items in the caceh, but now I've pushed naems into the cache (because items
+    // isn't valid yet until after sync.)  need instead maybe to do al the track adds after the sync? should be fine...
+    //'
     static async getRangeInfoForNamedCellFaster(context: JsCtx, name: string): Promise<RangeInfo>
     {
-        const items: Excel.NamedItem[] =
-            await context.getTrackedItem(
+        const items =
+            await context.getTrackedItemOrPopulate(
                 "workbookNamesItems",
                 async (context): Promise<any> =>
                 {
                     context.Ctx.workbook.load("names");
-                    await context.sync();
-                    return context.Ctx.workbook.names.items;
+                    await context.sync("GTI names");
+                    return { type: ObjectType.JsObject, o: context.Ctx.workbook.names };
                 });
+
+        if (!items)
+            throw new Error("could not get NamedItems from worksheet");
 
         let i: number = 0;
 
@@ -365,16 +400,16 @@ export class RangeInfo
 
         if (formula == null || formula[0] != "=")
         {
-            console.log("bad formula in named reference");
+            AppContext.log("bad formula in named reference");
             return null;
         }
 
-        let [sheetName, colRef1, fColAbsolute1, rowRef1, fRowAbsolute1, colRef2, fColAbsolute2, rowRef2, fRowAbsolute2, ichCurAfter] =
+        const { colRef1, rowRef1, colRef2, rowRef2 } =
             Parser.parseExcelFullAddress(TrimType.LeadingSpace, formula, 1, formula.length);
 
         if (!colRef1 || !rowRef1)
         {
-            console.log("bad formula in named reference");
+            AppContext.log("bad formula in named reference");
             return null;
         }
 
@@ -412,7 +447,7 @@ export class Ranges
                 return i + 1;
         }
 
-        throw Error("out of bounds colName");
+        throw new Error("out of bounds colName");
     }
 
     /*----------------------------------------------------------------------------
@@ -421,7 +456,7 @@ export class Ranges
     static getColName_1Based(col: number): string
     {
         if (col > this.colsMap.length)
-            throw `cannot handle columns > ${this.colsMap.length}`;
+            throw new Error(`cannot handle columns > ${this.colsMap.length}`);
 
         return this.colsMap[col - 1];
     }
@@ -441,10 +476,10 @@ export class Ranges
     static addressFromCoordinates_1Based(addrFrom: [number, number], addrTo: [number, number]): string
     {
         if (addrFrom[1] - 1 > this.colsMap.length || (addrTo != null && addrTo[1] - 1 > this.colsMap.length))
-            throw `cannot handle columns > ${this.colsMap.length}`;
+            throw new Error(`cannot handle columns > ${this.colsMap.length}`);
 
         if (addrFrom[1] <= 0 || (addrTo != null && addrTo[1] <= 0))
-            throw "row/column addresses are 1-based";
+            throw new Error("row/column addresses are 1-based");
 
         let addrFinal: string = this.colsMap[addrFrom[1] - 1]
             .concat(addrFrom[0].toString());
@@ -483,6 +518,72 @@ export class Ranges
         await context.sync();
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.tnsDeleteGlobalName
+
+        Return intentions to delete the named range (and any range with an error).
+
+        If the workbookNamesItems cache is populated, then this will not roundtrip
+        to Excel.
+    ----------------------------------------------------------------------------*/
+    static async tnsDeleteGlobalName(context: JsCtx, name: string): Promise<IIntention[]>
+    {
+        const tns: IIntention[] = [];
+
+        // lastly, deal with any named ranges in the range (the caller may have already dealt
+        // with the games expected ranges
+        const names = await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync("GTI names");
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
+
+        for (let _item of names)
+        {
+            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+                tns.push(TnDeleteGlobalName.Create(_item.name));
+        }
+
+        return tns;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.tnsDeleteOverlappingGlobalNames
+
+        Return intentions to delete the named ranges that either are in an error
+        state, or overlap with this range
+    ----------------------------------------------------------------------------*/
+    static async tnsDeleteOverlappingGlobalNames(context: JsCtx, rangeInfo: RangeInfo): Promise<IIntention[]>
+    {
+        const tns: IIntention[] = [];
+
+        // lastly, deal with any named ranges in the range (the caller may have already dealt
+        // with the games expected ranges
+        const names = await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync("GTI names");
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
+
+        for (let _item of names)
+        {
+            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+                tns.push(TnDeleteGlobalName.Create(_item.name));
+            else if (_item.type == Excel.NamedItemType.range)
+            {
+                if (RangeInfo.isOverlapping(rangeInfo, Ranges.createRangeInfoFromFormula(_item.formula)) != RangeOverlapKind.None)
+                    tns.push(TnDeleteGlobalName.Create(_item.name));
+            }
+        }
+
+        return tns;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Ranges.createOrReplaceNamedRange
@@ -530,16 +631,32 @@ export class Ranges
 
     /*----------------------------------------------------------------------------
         %%Function: BracketGame.getRangeInfoForNamedCell
+
+        be robust against broken named ranges
     ----------------------------------------------------------------------------*/
     static async getRangeForNamedCell(context: JsCtx, name: string): Promise<Excel.Range>
     {
-        const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
-        await context.sync();
+        try
+        {
+            const nameObject: Excel.NamedItem = context.Ctx.workbook.names.getItemOrNullObject(name);
+            await context.sync("getRangeForNamedCell1");
 
-        if (nameObject.isNullObject)
+            if (nameObject.isNullObject)
+                return null;
+
+            const range: Excel.Range = nameObject.getRange();
+            range.load("rowIndex");
+            range.load("rowCount");
+            range.load("columnIndex");
+            range.load("columnCount");
+
+            await context.sync("getRangeForNamedCell2");
+            return nameObject.getRange();
+        }
+        catch (e)
+        {
             return null;
-
-        return nameObject.getRange();
+        }
     }
 
     /*----------------------------------------------------------------------------
@@ -551,7 +668,7 @@ export class Ranges
     {
         const range: Excel.Range = await Ranges.getRangeForNamedCell(context, name);
         range.load("values");
-        await context.sync();
+        await context.sync("getValuesFromNamedCellRange");
 
         return range.values;
     }
@@ -595,8 +712,17 @@ export class Ranges
         if (s !== "=")
             return null;
 
-        [s, ichCur] = Parser.parseString(TrimType.LeadingSpace, Quoting.Literal, ParseStringAccepts.AlphaNumeric, formula, ichCur, ichMax);
-        return null;
+        const { colRef1, rowRef1, colRef2, rowRef2 } =
+            Parser.parseExcelFullAddress(TrimType.LeadingSpace, formula, ichCur, ichMax);
 
+        if (!colRef1 || !rowRef1)
+            return null;
+
+        const colStart = this.getCoordFromColName_1Based(colRef1) - 1;
+        const colEnd = colRef2 ? this.getCoordFromColName_1Based(colRef2) - 1 : colStart;
+        const rowStart = rowRef1 - 1;
+        const rowEnd = rowRef2 ? rowRef2 - 1 : rowStart;
+
+        return new RangeInfo(rowStart, rowEnd - rowStart + 1, colStart, colEnd - colStart + 1);
     }
 }

@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import { IAppContext } from "../../AppContext";
-import { Stack, IStackStyles, IStackItemStyles, Alignment, ComboBox, IComboBoxOption, IComboBox, IComboBoxStyles } from '@fluentui/react';
-import { BracketOption } from "../../Brackets/BracketStructureBuilder";
+import { ComboBox, IComboBox, IComboBoxOption, IComboBoxStyles, IStackItemStyles, Stack } from '@fluentui/react';
+import { BracketOption } from "../../Brackets/BracketDefBuilder";
 
 export interface BracketChooserProps
 {
     alignment: any,
+    initialBracket: string,
     bracketOptions: BracketOption[],
     updateBracketChoiceDelegate: UpdateBracketChoiceDelegate
 }
@@ -27,8 +27,18 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
     {
         super(props, context);
         this.state = {
-            selectedBracket: null
+            selectedBracket: props.initialBracket
         };
+    }
+
+    setSelectedBracket(selectedBracket: string)
+    {
+        this.setState(
+            {
+                selectedBracket: selectedBracket,
+            });
+
+        this.props.updateBracketChoiceDelegate(selectedBracket);
     }
 
     /*----------------------------------------------------------------------------
@@ -65,11 +75,7 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
             selectedBracket = `T${parseInt(value.substring(start))}`;
         }
 
-        this.setState({
-            selectedBracket: selectedBracket,
-        });
-
-        this.props.updateBracketChoiceDelegate(selectedBracket);
+        this.setSelectedBracket(selectedBracket);
     }
 
     render()
@@ -79,7 +85,7 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
         {
             root: {
                 display: "flex",
-                maxWidth: 100,
+                maxWidth: 150,
                 paddingRight: 0,
 //                alignItems: "right",
 //                textAlign: "right",
@@ -104,11 +110,11 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
         return (
             <div style={{ textAlign: this.props.alignment, display: "flex", justifyContent: "center" }}>
                 <Stack horizontal tokens={{ childrenGap: 10 }} styles={stackStyles}>
-                    <Stack.Item>Bracket Size:</Stack.Item>
+                    <Stack.Item>Bracket:</Stack.Item>
                     <Stack.Item>
                         <ComboBox
                             label=""
-                            allowFreeform={true}
+                            defaultSelectedKey={this.state.selectedBracket}
                             onChange={this.updateSelectedBracket.bind(this)}
                             styles={comboBoxStyles}
                             options={options}

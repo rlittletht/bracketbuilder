@@ -1,10 +1,12 @@
 import * as React from "react";
+import * as CSS from "csstype";
 
-import { IAppContext } from "../../AppContext";
-import { ActionButton } from "./ActionButton";
-import { SetupState, SetupBook } from "../../Setup";
+import { Stack } from '@fluentui/react';
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { RangeInfo } from "../../Interop/Ranges";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import { SetupBook, SetupState } from "../../Setup";
+import { ActionButton } from "./ActionButton";
+import { BracketOption } from "../../Brackets/BracketDefBuilder";
 
 export interface HeroListItem
 {
@@ -21,20 +23,28 @@ export declare const enum HeroListFormat
     HorizontalRibbon
 }
 
+export interface SetBracketOptionsDelegate
+{
+    (options: BracketOption[]): void;
+}
+
 export interface HeroListProps
 {
     message: string;
     items: HeroListItem[];
     heroListFormat: HeroListFormat;
-    appContext: IAppContext;
 }
 
 export interface HeroListState
 {
     rangeForMove: RangeInfo
 }
+
 export class HeroList extends React.Component<HeroListProps, HeroListState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -50,7 +60,7 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
 
         Build the hero list of commands
     ----------------------------------------------------------------------------*/
-    static buildHeroList(setupState: SetupState): [HeroListFormat, string, HeroListItem[]]
+    static buildHeroList(setupState: SetupState, setBracketOptionsDelegate: SetBracketOptionsDelegate, includeCustomBracketLoadOption: boolean): [HeroListFormat, string, HeroListItem[]]
     {
         let listItems: HeroListItem[] = [];
 
@@ -73,6 +83,32 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
                     stateChecker: null,
                     delegate: SetupBook.buildSpecificBracket,
                 });
+            if (includeCustomBracketLoadOption)
+            {
+                listItems.push(
+                    {
+                        icon: "BulkUpload",
+                        primaryText: "Load custom brackets",
+                        cursor: "cursorPointer",
+                        stateChecker: null,
+                        delegate: async (appContext: IAppContext) =>
+                        {
+                            const brackets = await SetupBook.loadCustomBrackets(appContext);
+                            const bracketOptions: BracketOption[] = [];
+
+                            for (let _bracket of brackets)
+                            {
+                                bracketOptions.push(
+                                    {
+                                        key: _bracket.tableName.substr(0, _bracket.tableName.length - 7),
+                                        name: `${_bracket.name}*`
+                                    });
+                            }
+                            setBracketOptionsDelegate(bracketOptions);
+                            return false;
+                        },
+                    });
+            }
         }
 
         return [HeroListFormat.Vertical, "Let's get started!", listItems];
@@ -81,14 +117,22 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
     buildVerticalList()
     {
         const { children, items, message } = this.props;
+        const heroStyle: CSS.Properties =
+        {
+            fontWeight: 600,
+            color: "blue"
+        };
+
         const listItemsVertical = items.map(
             (item, index) => (
                 <Stack.Item grow className="{item.cursor} heroItem" align="center" key={index} onClick={() =>
                 {
-                    item.delegate(this.props.appContext)
+                    item.delegate(this.context)
                 }}>
-                    <i className={`ms-Icon ms-Icon--${item.icon} ${item.cursor}`}></i>
-                    <span className={`ms-font-xl ms-fontWeight-semibold ms-fontColor-neutralPrimary ${item.cursor}`}>{item.primaryText}</span>
+                    <i className={`ms-Icon ms-Icon--${item.icon} ${item.cursor}`} style={heroStyle}></i>
+                    <span className={`ms-font-xl ms-fontWeight-semibold ms-fontColor-neutralPrimary ${item.cursor}`} style={heroStyle}>
+                        {item.primaryText}
+                    </span>
                 </Stack.Item>
             ));
 
@@ -116,9 +160,8 @@ export class HeroList extends React.Component<HeroListProps, HeroListState>
                         icon={item.icon}
                         tooltip={item.primaryText}
                         tooltipId={`rid-${i++}`}
-                        appContext={this.props.appContext}
                         disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                        bracketGame={null} delegate={() => item.delegate(this.props.appContext)}/>
+                        bracketGame={null} delegate={() => item.delegate(this.context)}/>
                 </Stack.Item>
             ));
 

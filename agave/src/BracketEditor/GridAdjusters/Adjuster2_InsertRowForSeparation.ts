@@ -1,7 +1,7 @@
-import { IGridAdjuster2 } from "./IGridAdjuster2";
+import { RangeInfo } from "../../Interop/Ranges";
 import { Grid } from "../Grid";
 import { GridGameInsert } from "../GridGameInsert";
-import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { IGridAdjuster2 } from "./IGridAdjuster2";
 import { Spacer } from "./Spacer";
 
 /*----------------------------------------------------------------------------
@@ -17,33 +17,32 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         gridTry: Grid,
         gameInsert: GridGameInsert): boolean
     {
-        const [region1, region2] = this.regionsCalculate(gridTry, gameInsert);
+        const [regionIncludingTop, regionIncludingBottom] = this.regionsCalculate(gridTry, gameInsert);
+        let fTopIndependent = gridTry.isRangeIndependent(regionIncludingTop);
+        let fBottomIndependent = gridTry.isRangeIndependent(regionIncludingBottom)
+            && !gridTry.isBlankRow(regionIncludingBottom.LastRow + 1);
 
-        if (gridTry.isRangeIndependent(region1))
-        {
-            if (!gridTry.isBlankRow(region1.LastRow))
-                return true;
-        }
-        if (gridTry.isRangeIndependent(region2))
-        {
-            if (!gridTry.isBlankRow(region2.LastRow + 1))
-                return true;
-        }
+        // if the top conflicts, return true if we can grow above or below
+        if (!gridTry.isRowEmptyAround(regionIncludingTop.LastRow, gameInsert.Range.FirstColumn))
+            return fTopIndependent || fBottomIndependent;
+
+        if (!gridTry.isRowEmptyAround(regionIncludingBottom.LastRow + 1, gameInsert.Range.FirstColumn))
+            return fBottomIndependent; // consider: do we want to allow if we can adjust top?
 
         return false;
     }
 
     regionsCalculate(gridTry: Grid, gameInsert: GridGameInsert): [RangeInfo, RangeInfo]
     {
-        const region1: RangeInfo = RangeInfo.createFromCorners(
+        const regionIncludingTop: RangeInfo = RangeInfo.createFromCorners(
             gridTry.FirstGridPattern,
             gameInsert.Range.topLeft().offset(0, 1, 1000, 1));
 
-        const region2: RangeInfo = RangeInfo.createFromCorners(
+        const regionIncludingBottom: RangeInfo = RangeInfo.createFromCorners(
             gridTry.FirstGridPattern,
             gameInsert.Range.bottomRight().offset(-1, 1, 0, 1).newSetColumn(1000));
 
-        return [region1, region2];
+        return [regionIncludingTop, regionIncludingBottom];
     }
 
     doAdjustment(
@@ -54,44 +53,47 @@ export class Adjuster2_InsertRowForSeparation implements IGridAdjuster2
         if (!this.doesAdjusterApply(grid, gameInsert))
             return false;
 
-        let [region1, region2] = this.regionsCalculate(grid, gameInsert);
+        let [regionIncludingTop, regionIncludingBottom] = this.regionsCalculate(grid, gameInsert);
         let gridTry: Grid = null;
+        const topWantsSpace = !grid.isBlankRow(regionIncludingTop.LastRow);
+        const topIndependent = grid.isRangeIndependent(regionIncludingTop);
+        const bottomIndependent = grid.isRangeIndependent(regionIncludingBottom)
+            && !grid.isBlankRow(regionIncludingBottom.LastRow + 1);
 
-        if (grid.isRangeIndependent(region1))
+        if (topIndependent)
         {
-            if (!grid.isBlankRow(region1.LastRow))
+            // add space at the top if the top is independent AND the top
+            // wants space OR the bottom isn't independent (we know that we need to 
+            // add space and ideally it would be at the bottom, but we'll take the top
+            // if we have to)
+            if (topWantsSpace || !bottomIndependent)
             {
                 gridTry = grid.clone();
 
-                Spacer.insertRowSpaceBefore(gridTry, region1.LastRow + 2, 2);
+                Spacer.insertRowSpaceBefore(gridTry, regionIncludingTop.LastRow + 2, 2);
                 grid.setInternalGridItems(gridTry.m_gridItems);
                 // adjust any additional ranges
                 for (let range of rangesAdjust)
                 {
-                    if (range.LastRow >= region1.LastRow + 2)
+                    if (range.LastRow >= regionIncludingTop.LastRow + 2)
                         range.shiftByRows(2);
                 }
                 return true;
             }
         }
 
-        // if we got here, then region2 is where we want to insert. 
-        if (!grid.isRangeIndependent(region2)
-            || grid.isBlankRow(region2.LastRow + 1))
+        // if we got here, then regionIncludingBottom is where we want to insert. 
+        if (!bottomIndependent)
         {
             // our preflight should guarantee that the other clause either
             // succeeds, or this is gauranteed to be the one we want to do
-            throw Error("illegal internal state. should not have gotten here");
+            throw new Error("illegal internal state. should not have gotten here");
         }
         gridTry = grid.clone();
 
-        Spacer.insertRowSpaceBefore(gridTry, region2.LastRow + 1, 2);
+        Spacer.insertRowSpaceBefore(gridTry, regionIncludingBottom.LastRow + 1, 2);
         grid.setInternalGridItems(gridTry.m_gridItems);
-        for (let range of rangesAdjust)
-        {
-            if (range.LastRow >= region2.LastRow + 1)
-                range.shiftByRows(2);
-        }
+        // if we are inserting *after* the adjusting ranges, then don't change the adjust ranges
         return true;
     }
 

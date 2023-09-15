@@ -1,9 +1,9 @@
+import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
 import { IBracketGame } from "./BracketGame";
-import { Grid } from "./Grid";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
-import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
+import { Grid } from "./Grid";
 
 export class GridItem
 {
@@ -12,6 +12,7 @@ export class GridItem
     m_bottomTeamRange: RangeInfo = null;
     m_gameNumberRange: RangeInfo = null;
     m_swapTopBottom: boolean = false; // we will save this from the bound game - allows us to find connecting lines
+    m_ephemeral: boolean = false; // ephemeral means its not really there...
 
     // these two values will only be set if this was created from a bracket
     // (not inferred)
@@ -19,6 +20,56 @@ export class GridItem
     m_field: string = GlobalDataBuilder.DefaultField;
 
     m_gameId: GameId = null;
+    m_topPriority: number = -1;
+    m_bottomPriority: number = -1;
+
+    toString(): string
+    {
+        if (this.isLineRange)
+        {
+            return `line: ${this.m_range.toString()}${this.m_ephemeral ? "ephemeral" : ""}`;
+        }
+        else
+        {
+            return `game ${this.GameId.Value}: ${this.m_range.toString()} ${this.m_ephemeral ? "ephemeral" : ""} ${this.IsChampionshipGame ? "Championship" : ""}`;
+        }
+    }
+    set IsEphemeral(f: boolean)
+    {
+        this.m_ephemeral = f;
+    }
+
+    get IsEphemeral(): boolean
+    {
+        return this.m_ephemeral;
+    }
+
+
+    get IsChampionshipGame(): boolean
+    {
+        return (this.m_range.RowCount == 3 && this.m_bottomTeamRange == null);
+    }
+    get TopPriority(): number
+    {
+        return this.m_topPriority;
+    }
+
+    get BottomPriority(): number
+    {
+        return this.m_bottomPriority;
+    }
+
+    get GamePriority(): number
+    {
+        if (this.m_topPriority == this.m_bottomPriority)
+            return this.m_topPriority;
+
+        // if either priority is unknown, the whole priority is unknown.
+        if (this.m_topPriority == -1 || this.m_bottomPriority == -1)
+            return -1;
+
+        return -2; // indeterminate
+    }
 
     get StartTime(): number
     {
@@ -70,6 +121,16 @@ export class GridItem
     get Range(): RangeInfo
     {
         return this.m_range;
+    }
+
+    setTopPriority(priority: number)
+    {
+        this.m_topPriority = priority;
+    }
+
+    setBottomPriority(priority: number)
+    {
+        this.m_bottomPriority = priority;
     }
 
     doSwapTopBottom(): GridItem
@@ -150,9 +211,18 @@ export class GridItem
     inferGameInternals()
     {
         this.m_topTeamRange = this.m_range.topLeft();
-        this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
-        if (this.m_range.RowCount > 7)
-            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        if (this.m_range.RowCount == 3)
+        // this is the championship game
+        {
+            this.m_bottomTeamRange = null;
+            this.m_gameNumberRange = null;
+        }
+        else
+        {
+            this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
+            if (this.m_range.RowCount > 7)
+                this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        }
     }
 
     inferGameInternalsIfNecessary()
@@ -199,7 +269,7 @@ export class GridItem
     attachGame(game: IBracketGame)
     {
         if (!game.IsLinkedToBracket)
-            throw "can't attach game that isn't linked";
+            throw new Error("can't attach game that isn't linked");
 
         this.m_topTeamRange = RangeInfo.createFromRangeInfo(game.TopTeamRange);
         this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(game.BottomTeamRange);

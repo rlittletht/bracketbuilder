@@ -1,13 +1,9 @@
-import { IAppContext } from "../AppContext";
-import { Grid } from "./Grid";
+import { IAppContext } from "../AppContext/AppContext";
 import { RangeInfo } from "../Interop/Ranges";
-import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
-import { GridItem } from "./GridItem";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameMover } from "./GridAdjusters/GameMover";
-import { GridChange } from "./GridChange";
-import { GameId } from "./GameId";
-import { UnitTestContext } from "../taskpane/components/App";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestResult } from "../Support/TestResult";
+import { TestRunner } from "../Support/TestRunner";
+import { Grid } from "./Grid";
 import { GridRanker } from "./GridRanker";
 
 interface SetupGridRankerTestDelegate
@@ -17,40 +13,43 @@ interface SetupGridRankerTestDelegate
 
 export class GridRankerTests
 {
-    static doGridRankerTest(
-        appContext: IAppContext,
-        testContext: UnitTestContext,
-        testName: string,
-        bracket: string,
-        delegate: SetupGridRankerTestDelegate)
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        appContext;
-        testContext.StartTest(testName);
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
+    static doGridRankerTest(
+        result: TestResult,
+        bracket: string,
+        delegate: SetupGridRankerTestDelegate,
+        firstGridPattern?: RangeInfo)
+    {
         let grid: Grid = new Grid();
         let gridBetter: Grid = new Grid();
-        grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
-        gridBetter.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+        grid.m_firstGridPattern = firstGridPattern ?? new RangeInfo(9, 1, 6, 1);
+        gridBetter.m_firstGridPattern = firstGridPattern ?? new RangeInfo(9, 1, 6, 1);
 
         const rankExpected = delegate(grid, gridBetter);
 
         const rank: number = GridRanker.getGridRank(grid, bracket);
         const rankBetter: number = GridRanker.getGridRank(gridBetter, bracket);
 
-        const passed = rankBetter > rank;
+        if (rankBetter == -1)
+        {
+            result.addError("rankBetter grid was ranked invalid (-1)");
+        }
+        else
+        {
+            if (rank == -1)
+                result.addError("original grid ranked invalid (-1)");
+            else if (rankBetter >= rank)
+                result.addError(`!(Rank ${rankBetter} > ${rank})`);
+        }
 
         grid.logGridCondensed();
-
-        if (!passed)
-        {
-            throw Error(
-                `${
-                testName
-                } failed. !(Rank ${rankBetter} > ${rank})`);
-        }
     }
 
-    static test_danglingFeeder_vs_swappedGame(appContext: IAppContext, testContext: UnitTestContext)
+    static test_danglingFeeder_vs_swappedGame(result: TestResult)
     {
         const setup: SetupGridRankerTestDelegate =
             (grid, gridBetter)  =>
@@ -87,9 +86,9 @@ export class GridRankerTests
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(117, 21, 129, 23,), 20, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 21, 103, 23,), 21, false).inferGameInternals();
                 grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(95, 24, 123, 26,), 22, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(85, 27, 109, 29,), 23, true).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 30, 117, 32,), 24, false).inferGameInternals();
-                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 33, 121, 35,), 25, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(69, 27, 91, 29,), 23, true).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 30, 81, 32,), 24, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(61, 33, 111, 35,), 25, false).inferGameInternals();
 
                 gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 6, 23, 8,), 1, false).inferGameInternals();
                 gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 6, 37, 8,), 2, false).inferGameInternals();
@@ -129,11 +128,58 @@ export class GridRankerTests
             };
 
         this.doGridRankerTest(
-            appContext,
-            testContext,
-            "GridTests.test_danglingFeeder_vs_swappedGame",
+            result,
             "T13",
             setup);
     }
 
+    static test_spaceBetweenInSameColumn_PreferExtraSpace(result: TestResult)
+    {
+        const setup: SetupGridRankerTestDelegate =
+            (grid, gridBetter) =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 3, 35, 5,), 2, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 3, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 6, 39, 8,), 4, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 9, 51, 11,), 5, false).inferGameInternals();
+
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 3, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 4, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 9, 53, 11,), 5, false).inferGameInternals();
+            };
+
+        this.doGridRankerTest(
+            result,
+            "T6",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_spaceBetweenInDifferentColumn_DontPreferExtraSpace(result: TestResult)
+    {
+        const setup: SetupGridRankerTestDelegate =
+            (grid, gridBetter) =>
+            {
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 3, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 4, false).inferGameInternals();
+                grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(45, 9, 55, 11,), 5, false).inferGameInternals();
+
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 3, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 4, false).inferGameInternals();
+                gridBetter.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 9, 53, 11,), 5, false).inferGameInternals();
+            };
+
+        this.doGridRankerTest(
+            result,
+            "T6",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
 }

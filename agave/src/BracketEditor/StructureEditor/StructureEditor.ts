@@ -1,27 +1,50 @@
 
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { IAppContext, AppContext } from "../../AppContext";
-import { RangeInfo, Ranges, RangeOverlapKind } from "../../Interop/Ranges";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GameFormatting } from "../GameFormatting";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
+import { GridBuilder } from "../../Brackets/GridBuilder";
+import { CoachTransition } from "../../Coaching/CoachTransition";
+import { HelpTopic } from "../../Coaching/HelpInfo";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { JsCtx } from "../../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
+import { _TimerStack } from "../../PerfTimer";
+import { s_staticConfig } from "../../StaticConfig";
+import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
+import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
+import { GameFormatting } from "../GameFormatting";
+import { GameMover } from "../GameMover";
+import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";
-import { _undoManager } from "../Undo";
-import { DispatchWithCatchDelegate, Dispatcher } from "../Dispatcher";
 import { GridRanker } from "../GridRanker";
-import { GameMover } from "../GridAdjusters/GameMover";
-import { GridBuilder } from "../../Brackets/GridBuilder";
+import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { StructureRemove } from "./StructureRemove";
 import { StructureInsert } from "./StructureInsert";
-import { JsCtx } from "../../Interop/JsCtx";
-import { PerfTimer } from "../../PerfTimer";
+import { StructureRemove } from "./StructureRemove";
+import { FastRangeAreas } from "../../Interop/FastRangeAreas";
+import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
+import { BracketInfoBuilder } from "../../Brackets/BracketInfoBuilder";
 
 let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
+    static async copySelectionToClipboardClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.copySelectionToClipboard(appContext, context);
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.syncBracketChangesFromGameSheet
 
@@ -30,10 +53,15 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async syncBracketChangesFromGameSheetClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
+            await FastFormulaAreas.populateAllCaches(context);
+
             await this.syncBracketChangesFromGameSheet(appContext, context);
-            await appContext.invalidateHeroList(context);
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -46,10 +74,12 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async toggleShowDataSheetsClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await this.toggleShowDataSheets(appContext, context);
-            await appContext.invalidateHeroList(context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -62,13 +92,18 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async undoClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             context.pushTrackingBookmark('undo');
-            await _undoManager.undo(appContext, context);
-            context.releaseTrackedItemsUntil('undo');
+            await FastFormulaAreas.populateAllCaches(context);
 
-            await appContext.invalidateHeroList(context);
+            await _undoManager.undo(appContext, context);
+            context.releaseCacheObjectsUntil('undo');
+
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -82,10 +117,15 @@ export class StructureEditor
 
     static async finalizeClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            await this.applyFinalFormatting(appContext, context, await this.getBracketName(context));
-            await appContext.invalidateHeroList(context);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.applyFinalFormatting(appContext, context, appContext.SelectedBracket);
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -98,13 +138,18 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async redoClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             context.pushTrackingBookmark('redo');
-            await _undoManager.redo(appContext, context);
-            context.releaseTrackedItemsUntil('redo');
 
-            await appContext.invalidateHeroList(context);
+            await FastFormulaAreas.populateAllCaches(context);
+            await _undoManager.redo(appContext, context);
+            context.releaseCacheObjectsUntil('redo');
+
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -120,20 +165,30 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async insertGameAtSelectionClick(appContext: IAppContext, game: IBracketGame)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            const timer: PerfTimer = new PerfTimer();
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 1", true);
 
-            timer.pushTimer("insertGameAtSelectionClick PART 1");
             const bookmark: string = "insertGameAtSelection";
             context.pushTrackingBookmark(bookmark);
-            await StructureInsert.insertGameAtSelection(appContext, context, game);
-            context.releaseTrackedItemsUntil(bookmark);
-            timer.popTimer();
 
-            timer.pushTimer("insertGameAtSelectionClick PART 2");
-            await appContext.invalidateHeroList(context);
-            timer.popTimer();
+            _TimerStack.pushTimer("populate FastFormulas");
+            await FastFormulaAreas.populateAllCaches(context);
+            _TimerStack.popTimer();
+
+            await StructureInsert.insertGameAtSelection(appContext, context, game);
+            context.releaseCacheObjectsUntil(bookmark);
+            _TimerStack.popTimer();
+
+            _TimerStack.pushTimer("insertGameAtSelectionClick PART 2", true);
+
+            appContext.Teaching.transitionState(CoachTransition.AddGame);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+            _TimerStack.popTimer();
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -146,14 +201,20 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async repairGameAtSelectionClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "repairGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
-            await this.repairGameAtSelection(appContext, context, await this.getBracketName(context));
-            context.releaseTrackedItemsUntil(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
+            await this.repairGameAtSelection(appContext, context, appContext.SelectedBracket);
+            context.releaseCacheObjectsUntil(bookmark);
 
-            await appContext.invalidateHeroList(context);
+            appContext.Teaching.transitionState(CoachTransition.PullChanges);
+
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -162,11 +223,15 @@ export class StructureEditor
 
     static async captureSelectionForMove(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             _moveSelection = await Ranges.createRangeInfoForSelection(context);
+            await FastFormulaAreas.populateAllCaches(context);
             // try to extend the selection
-            let grid: Grid = await this.gridBuildFromBracket(context);
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
             const [item, kind] = grid.getFirstOverlappingItem(_moveSelection);
 
             if (kind != RangeOverlapKind.None && item != null && !item.isLineRange)
@@ -177,7 +242,7 @@ export class StructureEditor
 
                 await context.sync();
             }
-            await appContext.invalidateHeroList(context);
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -185,16 +250,29 @@ export class StructureEditor
 
     static async moveGameAtSelectionClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         if (_moveSelection == null)
         {
-            appContext.log("no selection was capture for the move");
+            appContext.Messages.error(
+                ["No game was captured for the move. You have to pick up a game first."],
+                { topic: HelpTopic.Commands_PickupGame });
+
             return;
         }
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            await this.doGameMoveToSelection(appContext, context, _moveSelection, await this.getBracketName(context));
-            await appContext.invalidateHeroList(context);
+            const bookmark: string = "insertGameAtSelection";
+            await FastFormulaAreas.populateAllCaches(context);
+
+            context.pushTrackingBookmark(bookmark);
+
+            await this.doGameMoveToSelection(appContext, context, _moveSelection, appContext.SelectedBracket);
+            context.releaseCacheObjectsUntil(bookmark);
+
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -207,14 +285,21 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async removeGameAtSelectionClick(appContext: IAppContext)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "removeGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
-            await StructureRemove.findAndRemoveGame(appContext, context, null, await this.getBracketName(context));
-            context.releaseTrackedItemsUntil(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
 
-            await appContext.invalidateHeroList(context);
+            await StructureRemove.findAndRemoveGame(appContext, context, null, appContext.SelectedBracket);
+            context.releaseCacheObjectsUntil(bookmark);
+
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
+
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -226,20 +311,41 @@ export class StructureEditor
 
         find the given game in the bracket grid and remove it.
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame)
+    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame1)
     {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const bookmark: string = "removeGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
-            context.releaseTrackedItemsUntil(bookmark);
+            context.releaseCacheObjectsUntil(bookmark);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
-            await appContext.invalidateHeroList(context);
+            appContext.AppStateAccess.HeroListDirty = true;
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.copySelectionToClipboard
+
+        Copy the selected area of the bracket to the clipboard
+    ----------------------------------------------------------------------------*/
+    static async copySelectionToClipboard(appContext: IAppContext, context: JsCtx)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(context, appContext.SelectedBracket);
+        const selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+
+        const gridSelection = grid.createFromRange(selection);
+
+        const selString = gridSelection.logGridCondensedString();
+        navigator.clipboard.writeText(selString);
     }
 
     /*----------------------------------------------------------------------------
@@ -249,7 +355,7 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async syncBracketChangesFromGameSheet(appContext: IAppContext, context: JsCtx)
     {
-        const bracketName: string = await this.getBracketName(context);
+        const bracketName: string = appContext.SelectedBracket;
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 
@@ -276,16 +382,17 @@ export class StructureEditor
         {
             const game: IBracketGame = await BracketGame.CreateFromGameId(context, bracketName, item.GameId);
 
-            if (game.NeedsRepair)
+            if (game.NeedsDataPull)
             {
                 changes.push(new GridChange(GridChangeOperation.RemoveLite, GridItem.createFromItem(item)));
                 changes.push(new GridChange(GridChangeOperation.InsertLite, GridItem.createFromItem(item)));
             }
         }
 
-        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
+        appContext.Teaching.transitionState(CoachTransition.PullChanges);
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
     }
 
 
@@ -296,8 +403,6 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async toggleShowDataSheets(appContext: IAppContext, context: JsCtx)
     {
-        appContext;
-
         // first, determine if we are hiding or showing -- based on whether
         // the global data sheet is hidden
         const dataSheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GlobalDataBuilder.SheetName);
@@ -317,11 +422,13 @@ export class StructureEditor
             {
                 sheet.load("name");
                 await context.sync();
-                if (sheet.name != GridBuilder.SheetName)
+                if (sheet.name != GridBuilder.SheetName && sheet.name != BracketInfoBuilder.SheetName)
                     sheet.visibility = visibility;
             });
 
         await context.sync();
+
+        appContext.AppStateAccess.SheetsHidden = (visibility == Excel.SheetVisibility.hidden);
     }
 
 
@@ -336,49 +443,11 @@ export class StructureEditor
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.isRangeValidForTopOrBottomGame
-    ----------------------------------------------------------------------------*/
-    static async isRangeValidForTopOrBottomGame(context: JsCtx, range: Excel.Range): Promise<boolean>
-    {
-        range.load("address");
-        await context.sync();
-
-        if (!await GameFormatting.isCellInLineRow(context, range.getOffsetRange(-1, 0)) || !await GameFormatting.isCellInLineRow(context, range.getOffsetRange(1, 0)))
-        {
-            return false;
-        }
-
-        return await StructureEditor.isRangeValidForAnyGame(context, range);
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.getValidRangeInfoForGameInsert
-    ----------------------------------------------------------------------------*/
-    static async getValidRangeInfoForGameInsert(context: JsCtx, range: Excel.Range): Promise<RangeInfo>
-    {
-        range.load("rowIndex");
-        range.load("rowCount");
-        range.load("columnIndex");
-        await context.sync();
-
-        const rowCount: number = range.rowCount == 1 ? 11 : range.rowCount;
-
-        if (rowCount >= 9
-            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(0, 0))
-            && await StructureEditor.isRangeValidForTopOrBottomGame(context, range.getCell(rowCount - 1, 0)))
-        {
-            return new RangeInfo(range.rowIndex, rowCount, range.columnIndex, 3);
-        }
-
-        return null
-    }
-
-    /*----------------------------------------------------------------------------
         %%Function: StructureEditor.getBracketName
 
         get the bracketName from the workbook
     ----------------------------------------------------------------------------*/
-    static async getBracketName(context: JsCtx): Promise<string>
+    static async getBracketName_Deprecated(context: JsCtx): Promise<string>
     {
         const values: any[][] = await Ranges.getValuesFromNamedCellRange(context, "BracketChoice");
         return values[0][0];
@@ -389,6 +458,22 @@ export class StructureEditor
     ----------------------------------------------------------------------------*/
     static async getFieldCount(context: JsCtx): Promise<number>
     {
+        const range = await RangeInfo.getRangeInfoForNamedCellFaster(context, "FieldCount");
+
+        if (range != null)
+        {
+            const fastFormulas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+
+            if (fastFormulas != null)
+                return fastFormulas.getValuesForRangeInfo(range)[0][0];
+        }
+
+        if (s_staticConfig.throwOnCacheMisses)
+        {
+            debugger;
+            throw new Error("missed cache in getFieldCount");
+        }
+
         const values: any[][] = await Ranges.getValuesFromNamedCellRange(context, "FieldCount");
         return values[0][0];
     }
@@ -420,9 +505,9 @@ export class StructureEditor
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.gridBuildFromBracket
     ----------------------------------------------------------------------------*/
-    static async gridBuildFromBracket(context: any): Promise<Grid>
+    static async gridBuildFromBracket(context: any, bracketChoice: string): Promise<Grid>
     {
-        const grid: Grid = await Grid.createGridFromBracket(context, await this.getBracketName(context));
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketChoice);
 
         return grid;
     }
@@ -434,12 +519,15 @@ export class StructureEditor
     {
         let selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
-        let grid: Grid = await this.gridBuildFromBracket(context);
+        let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
         const [item, kind] = grid.getFirstOverlappingItem(selection);
 
         if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
         {
-            appContext.log(`no game detected at range ${selection.toString()}`);
+            appContext.Messages.error(
+                [`Could not find a game at the selected range: ${selection.toString()}`],
+                { topic: HelpTopic.Commands_RepairGame });
+
             return;
         }
 
@@ -450,7 +538,7 @@ export class StructureEditor
         changes.push(new GridChange(GridChangeOperation.Remove, GridItem.createFromItem(item)));
         changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
 
-        await ApplyGridChange.applyChanges(appContext, context, changes, bracketName);
+        await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
     }
 
     static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
@@ -462,21 +550,26 @@ export class StructureEditor
         grid.adjustSelectionForGameInsertOrMove(newSelection);
         newSelection.setLastColumn(newSelection.FirstColumn + 2);
 
-        // let's log some things useful for unit test building
-        console.log("MOVE: Original grid");
-        grid.logGridCondensed();
+        if (s_staticConfig.logGrid)
+        {
+            // let's log some things useful for unit test building
+            console.log("MOVE: Original grid");
+            grid.logGridCondensed();
+        }
         // now make the selection a happy selection
         const itemNew: GridItem = itemOld.clone().setAndInferGameInternals(newSelection);
 
-        console.log("MOVE: RequestedTarget:");
-        console.log(`${itemNew.GameId == null ? -1 : itemNew.GameId.Value}:${itemNew.SwapTopBottom ? "S" : ""} ${itemNew.Range.toString()}`);
-
+        if (s_staticConfig.logGrid)
+        {
+            console.log("MOVE: RequestedTarget:");
+            console.log(`${itemNew.GameId == null ? -1 : itemNew.GameId.Value}:${itemNew.SwapTopBottom ? "S" : ""} ${itemNew.Range.toString()}`);
+        }
         const mover: GameMover = new GameMover(grid);
         const gridNew = mover.moveGame(itemOld, itemNew, bracketName);
 
         if (gridNew == null)
         {
-            appContext.logError("I don't know how to move the game to this selection. It would probably break the bracket.", 8000);
+            appContext.Messages.error(["I don't know how to move the game to this selection. It would probably break the bracket."], null, 8000);
             return;
         }
 
@@ -486,7 +579,7 @@ export class StructureEditor
             _undoManager.setUndoGrid(grid, []);
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName);
             if (mover.Warning != "")
-                appContext.logError(mover.Warning, 8000);
+                appContext.Messages.error([mover.Warning], null, 8000);
         }
     }
 
@@ -495,11 +588,12 @@ export class StructureEditor
         appContext;
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
-            let grid: Grid = await this.gridBuildFromBracket(context);
+            await FastFormulaAreas.populateAllCaches(context);
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
 
             grid.logGrid();
             
-            console.log(`rank: ${GridRanker.getGridRank(grid, await this.getBracketName(context))}`)
+            console.log(`rank: ${GridRanker.getGridRank(grid, appContext.SelectedBracket)}`)
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -510,13 +604,13 @@ export class StructureEditor
         appContext;
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
-        const gridArea: RangeInfo = grid.getPrintArea(4);
+        const gridArea: RangeInfo = grid.getPrintArea(6);
 
         const printArea: RangeInfo = RangeInfo.createFromCorners(
             gridArea.topLeft().newSetRow(0),
             gridArea.bottomRight().offset(0, 1, 0, 1));
 
-        console.log(`gridArea: ${gridArea.toString()}`);
+        AppContext.log(`gridArea: ${gridArea.toString()}`);
 
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         sheet.pageLayout.centerHorizontally = true;
@@ -557,12 +651,15 @@ export class StructureEditor
             1,
             1);
 
-        rangeHosted1.formulas = [["=\"HOSTED BY \" & TournamentHost"]];
+        rangeHosted1.formulas = [["=IF(LEN(TournamentHost)>0, \"HOSTED BY \" & TournamentHost, \"\")"]];
         rangeHosted.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         rangeHosted.format.font.size = 14;
         rangeHosted.format.font.bold = true;
 
         rangeHosted.merge(true);
+
+        const rangeBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
+        rangeBuilding.values = [[""]];
 
         const rangeLastUpdate: Excel.Range = sheet.getRangeByIndexes(
             printArea.LastRow,
@@ -607,6 +704,8 @@ export class StructureEditor
 
         rangeWholeChampionDayTop.merge(true);
         rangeWholeChampionDayBottom.merge(true);
+        rangeWholeChampionDayTop.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.thick;
+        rangeWholeChampionDayBottom.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.thick;
 
         const rangeUnformat: Excel.Range = sheet.getRangeByIndexes(
             3,

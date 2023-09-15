@@ -24,7 +24,6 @@ module.exports = async (env, options) =>
             polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
             vendor: ["react", "react-dom", "core-js", "@fluentui/react"],
             taskpane: ["react-hot-loader/patch", "./src/taskpane/index.tsx"],
-            commands: "./src/commands/commands.ts",
         },
         output: {
             devtoolModuleFilenameTemplate: "webpack:///[resource-path]?[loaders]",
@@ -62,6 +61,13 @@ module.exports = async (env, options) =>
                         filename: "assets/[name][ext][query]",
                     },
                 },
+                {
+                    test: /\.css$/,
+                    use: [
+                        'style-loader',
+                        'css-loader'
+                    ]
+                }
             ],
         },
         plugins: [
@@ -97,11 +103,6 @@ module.exports = async (env, options) =>
                 template: "./src/taskpane/taskpane.html",
                 chunks: ["taskpane", "vendor", "polyfills"],
             }),
-            new HtmlWebpackPlugin({
-                filename: "commands.html",
-                template: "./src/commands/commands.html",
-                chunks: ["commands"],
-            }),
             new webpack.ProvidePlugin({
                 Promise: ["es6-promise", "Promise"],
             }),
@@ -112,7 +113,7 @@ module.exports = async (env, options) =>
                 "Access-Control-Allow-Origin": "*",
             },
             https: env.WEBPACK_BUILD || options.https !== undefined ? options.https : await getHttpsOptions(),
-            port: process.env.npm_package_config_dev_server_port || 3000,
+            port: process.env.npm_package_config_dev_server_port || 3000
         },
     };
 

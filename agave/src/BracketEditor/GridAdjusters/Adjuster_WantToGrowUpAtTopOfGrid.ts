@@ -1,14 +1,16 @@
-import { IGridAdjuster } from "./IGridAdjuster";
-import { Grid } from "../Grid";
-import { IBracketGame, BracketGame } from "../BracketGame";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { Spacer } from "./Spacer";
-import { GridAdjust } from "./GridAdjust";
-import { IAppContext } from "../../AppContext";
-import { GridItem } from "../GridItem";
-import { GameNum } from "../GameNum";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { BracketGame, IBracketGame } from "../BracketGame";
 import { GameId } from "../GameId";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { GameNum } from "../GameNum";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
+import { GridAdjust } from "./GridAdjust";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { Spacer } from "./Spacer";
 
 /*----------------------------------------------------------------------------
     Adjuster_WantToGrowUpAtTopOfGrid.Adjuster_WantToGrowUpAtTopOfGrid
@@ -99,13 +101,13 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         const countToGrow: number = this.getCountToGrow(gridTry, source1);
 
         if (countToGrow <= 0)
-            throw Error(`trying to insert negative rows: ${countToGrow}`);
+            throw new Error(`trying to insert negative rows: ${countToGrow}`);
 
         Spacer.insertRowSpaceBefore(gridTry, gridTry.FirstGridPattern.FirstRow, countToGrow);
 
         if (this.doesAdjusterApply(gridTry, game, column))
         {
-            console.log("inserting space at top of grid didn't help");
+            AppContext.log("inserting space at top of grid didn't help");
             return false;
         }
 
@@ -114,16 +116,21 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
 
         return true;
     }
+}
+
+export class Adjuster_WantToGrowUpAtTopOfGridTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid
-
-        
+       
     ----------------------------------------------------------------------------*/
-    static testInsertSpaceAtTopOfGrid(appContext: IAppContext, testContext: UnitTestContext)
+    static test_InsertSpaceAtTopOfGrid(result: TestResult)
     {
-        appContext;
-        testContext.StartTest("Adjuster_WantToGrowUpAtTopOfGrid. testInsertSpaceAtTopOfGrid");
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -146,9 +153,9 @@ export class Adjuster_WantToGrowUpAtTopOfGrid implements IGridAdjuster
         let item: GridItem = gridNew.findGameItem(new GameId(1));
 
         if (item == null)
-            throw Error("testInsertSpaceAtTopOfGrid: game 1 disappeared?");
+            result.addError("testInsertSpaceAtTopOfGrid: game 1 disappeared?");
 
         if (item.Range.FirstRow != 13)
-            throw Error("testInsertSpaceAtTopOfGrid: game 1 didn't move!");
+            result.addError("testInsertSpaceAtTopOfGrid: game 1 didn't move!");
     }
 }

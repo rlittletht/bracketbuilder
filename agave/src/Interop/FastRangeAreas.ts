@@ -1,12 +1,22 @@
-import { RangeInfo, Ranges } from "./Ranges";
+import { IAppContext } from "../AppContext/AppContext";
+import { _TimerStack } from "../PerfTimer";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestResult } from "../Support/TestResult";
+import { TestRunner } from "../Support/TestRunner";
 import { JsCtx } from "./JsCtx";
+import { RangeInfo, Ranges } from "./Ranges";
+import { CacheObject, ObjectType } from "./TrackingCache";
 
-export class FastRangeAreas
+class AreasItem
 {
-    static itemMax: number = 1000; // only 2000 items per rangearea...
-
-    m_rangeAreas: Excel.RangeAreas[] = [];
+    m_rangeAreas: Excel.RangeAreas[];
     m_rangeInfo: RangeInfo;
+
+    constructor(rangeAreas: Excel.RangeAreas[], rangeInfo: RangeInfo)
+    {
+        this.m_rangeAreas = rangeAreas;
+        this.m_rangeInfo = rangeInfo;
+    }
 
     getRangeAreaForIndex(index: number): [Excel.RangeAreas, number]
     {
@@ -19,13 +29,13 @@ export class FastRangeAreas
     getRangeForRangeInfo(range: RangeInfo): Excel.Range
     {
         if (range.ColumnCount != 1 || range.RowCount != 1)
-            throw Error('range areas only works with single cells');
+            throw new Error('range areas only works with single cells');
 
         if (range.FirstColumn < this.m_rangeInfo.FirstColumn || range.FirstColumn > this.m_rangeInfo.LastColumn)
-            throw Error('column out of range');
+            throw new Error('column out of range');
 
         if (range.FirstRow < this.m_rangeInfo.FirstRow || range.LastRow > this.m_rangeInfo.LastRow)
-            throw Error('row out of range');
+            throw new Error('row out of range');
 
         // figure out the offset into the items...
         const colOffset: number = range.FirstColumn - this.m_rangeInfo.FirstColumn;
@@ -37,14 +47,88 @@ export class FastRangeAreas
 
         const addrExpected: string = Ranges.getColName(range.FirstColumn) + (range.FirstRow + 1)
         if (!rangeArea.areas.items[idxAdjusted].address.endsWith(addrExpected))
-            throw Error(`addresses don't match`);
+            throw new Error(`addresses don't match`);
 
         return rangeArea.areas.items[idxAdjusted];
     }
+}
+
+export class FastRangeAreas
+{
+    static itemMax: number = 1000; // only 2000 items per rangearea...
+
+    m_areasItems: AreasItem[] = [];
+
+    getAreasItemForRangeInfo(range: RangeInfo): AreasItem | null
+    {
+        for (let item of this.m_areasItems)
+        {
+            if (RangeInfo.isOverlapping(item.m_rangeInfo, range))
+                return item;
+        }
+
+        return null;
+    }
+
+    lastAreaCached(): RangeInfo | null
+    {
+        let lastRow: RangeInfo | null = null;
+
+        for (let item of this.m_areasItems)
+        {
+            if (!lastRow || lastRow.LastRow < item.m_rangeInfo.LastRow)
+                lastRow = item.m_rangeInfo;
+        }
+
+        return lastRow;
+    }
+
+
+    private static nearestMultiple(num: number, multiple: number): number
+    {
+        return (Math.floor(num / multiple) + 1) * multiple;
+    }
+
+    rowCountNeededToExpand(range: RangeInfo): number
+    {
+        const lastRow = this.lastAreaCached();
+
+        if (!lastRow)
+            return 150;
+
+        if (range.ColumnCount != 1 || range.RowCount != 1)
+            throw new Error('range areas only works with single cells');
+
+        if (lastRow.LastRow >= range.LastRow)
+            return 0;
+
+        // cache 150 rows at a time
+        let rowsNeeded = range.LastRow - lastRow.LastRow;
+
+        return FastRangeAreas.nearestMultiple(rowsNeeded, 150);
+    }
+
+    getRangeForRangeInfo(range: RangeInfo): Excel.Range
+    {
+        const item = this.getAreasItemForRangeInfo(range);
+
+        return item.getRangeForRangeInfo(range);
+    }
+
 
     getFormatForRangeInfo(range: RangeInfo): Excel.RangeFormat
     {
         return this.getRangeForRangeInfo(range).format;
+    }
+
+    getFormulasForRangeInfo(range: RangeInfo): any[][]
+    {
+        return this.getRangeForRangeInfo(range).formulas;
+    }
+
+    getValuesForRangeInfo(range: RangeInfo): any[][]
+    {
+        return this.getRangeForRangeInfo(range).values;
     }
 
     /*----------------------------------------------------------------------------
@@ -58,29 +142,61 @@ export class FastRangeAreas
     {
         const areas: FastRangeAreas = new FastRangeAreas();
 
-        areas.m_rangeAreas =
-            await context.getTrackedItem(
+        await areas.addMoreRowsToRangeAreaGrid(context, key, sheet, 150, range);
+
+        return areas;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: FastRangeAreas.addMoreRowsToRangeAreaGrid
+
+        Add more rows (rowCount) to the current RangeAreas grid. If there isn't
+        a current grid (which is true if this is the first call ever for this
+        FastRangeAreas), then caller MUST supply a range to start the grid at.
+    ----------------------------------------------------------------------------*/
+    async addMoreRowsToRangeAreaGrid(context: JsCtx, key: string, sheet: Excel.Worksheet, rowCount: number, rangeGridStart?: RangeInfo)
+    {
+        let lastRow = this.lastAreaCached();
+        let range: RangeInfo;
+
+        if (!lastRow)
+        {
+            if (!rangeGridStart)
+                throw new Error("must provide a reference range for the first addRange");
+
+            range = rangeGridStart.offset(0, rangeGridStart.RowCount, 0, rangeGridStart.ColumnCount);
+        }
+        else
+        {
+            range = new RangeInfo(lastRow.LastRow + 1, rowCount, lastRow.FirstColumn, lastRow.ColumnCount);
+        }
+
+        const areas = await context.getTrackedItemOrPopulate(
                 key,
                 async (context) =>
                 {
-                    const addrs: string[] = this.buildCellListForRangeInfo(range);
+                    const addrs: string[] = FastRangeAreas.buildCellListForRangeInfo(range);
                     const rangeAreasAry: Excel.RangeAreas[] = [];
 
                     for (let addr of addrs)
                     {
                         const rangeAreas: Excel.RangeAreas = sheet.getRanges(addr);
                         let props =
-//                            'format, areaCount, areas, areas.items, areas.items.format, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
-                            'areas.items, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
+                            //                            'format, areaCount, areas, areas.items, areas.items.format, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values';
+                            'areas.items, areas.items.format/fill, areas.items.format/fill/color,areas.items.format/columnWidth,areas.items.format/rowHeight, address, areas.items.address, areas.items.values, areas.items.formulas';
                         rangeAreas.load(props);
                         rangeAreasAry.push(rangeAreas);
                     }
+                    _TimerStack.pushTimer("addMoreRowsToRangeAreaGrid sync");
                     await context.sync();
-                    return rangeAreasAry;
+                    _TimerStack.popTimer();
+                    return { type: ObjectType.JsObject, o: rangeAreasAry };
                 });
 
-        areas.m_rangeInfo = range;
-        return areas;
+        if (!areas)
+            throw new Error("could not get areas from worksheet");
+
+        this.m_areasItems.push(new AreasItem(areas, range));
     }
 
     static buildCellListForRangeInfo(range: RangeInfo): string[]
@@ -119,78 +235,81 @@ export class FastRangeAreas
 
         return cellsCollection;
     }
+
+    static s_fastRangeAreaBigGrid = "grid-fastRangeAreas";
+
+    static async populateGridFastRangeAreaCache(context: JsCtx)
+    {
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+
+        await context.getTrackedItemOrPopulate(
+            "grid-fastRangeAreas",
+            async (context): Promise<CacheObject> =>
+            {
+                const areas = await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                    context,
+                    `${this.s_fastRangeAreaBigGrid}-rangeAreas`,
+                    sheet,
+                    new RangeInfo(8, 150, 0, 50));
+
+                return { type: ObjectType.TrObject, o: areas };
+            });
+    }
 }
 
 export class FastRangeAreasTest
 {
-    static buildCellListForRangeInfoTest(range: RangeInfo, expected: string[])
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw Error(`testFastRangeAreasTest: range(${range.toString}): expected(${e}) != actual(${a})`);
-        }
-
-        let actual = FastRangeAreas.buildCellListForRangeInfo(range);
-
-        AssertEqual(expected, actual[0]);
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
     }
 
-    static TestMaxMinus1CellList()
+    static buildCellListForRangeInfoTest(result: TestResult, range: RangeInfo, expected: string[])
+    {
+        let actual = FastRangeAreas.buildCellListForRangeInfo(range);
+
+        result.assertIsEqual(expected[0], actual[0]);
+    }
+
+    static test_MaxMinus1CellList(result: TestResult)
     {
         const ichMaxMinus1Chars: number = ("" + (FastRangeAreas.itemMax - 1)).length;
 
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw Error(`TestMaxMinus1CellList: expected(${e}) != actual(${a})`);
-        }
-
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax - 1, 0, 1));
-        AssertEqual("A1", actual[0].substring(0, 2));
-        AssertEqual("A" + (FastRangeAreas.itemMax - 1), actual[0].substring(actual[0].length - ichMaxMinus1Chars - 1, actual[0].length));
+        result.assertIsEqual("A1", actual[0].substring(0, 2));
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax - 1), actual[0].substring(actual[0].length - ichMaxMinus1Chars - 1, actual[0].length));
     }
 
-    static TestMaxCellList()
+    static test_MaxCellList(result: TestResult)
     {
         const cchMax: number = ("" + (FastRangeAreas.itemMax)).length;
 
-        const AssertEqual = (e: any, a: any) =>
-        {
-            if (a != e)
-                throw Error(`TestMaxCellList: expected(${e}) != actual(${a})`);
-        }
-
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax, 0, 1));
-        AssertEqual("A1", actual[0].substring(0, 2));
-        AssertEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMax - 1, actual[0].length));
+        result.assertIsEqual("A1", actual[0].substring(0, 2));
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMax - 1, actual[0].length));
     }
 
-    static TestMaxPlus1CellList()
+    static test_MaxPlus1CellList(result: TestResult)
     {
         const cchMaxPlusOne: number = ("" + (FastRangeAreas.itemMax + 1)).length;
 
         const AssertEqual = (e: any, a: any) =>
         {
             if (a != e)
-                throw Error(`TestMaxPlus1CellList: expected(${e}) != actual(${a})`);
+                result.addError(`expected(${e}) != actual(${a})`);
         }
 
         let actual = FastRangeAreas.buildCellListForRangeInfo(new RangeInfo(0, FastRangeAreas.itemMax + 1, 0, 1));
-        AssertEqual("A1", actual[0].substring(0, 2));
-        AssertEqual("A" + (FastRangeAreas.itemMax + 1), actual[1]);
-        AssertEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMaxPlusOne - 1, actual[0].length));
+        result.assertIsEqual("A1", actual[0].substring(0, 2));
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax + 1), actual[1]);
+        result.assertIsEqual("A" + (FastRangeAreas.itemMax), actual[0].substring(actual[0].length - cchMaxPlusOne - 1, actual[0].length));
     }
 
-    static buildCellListForRangeInfoTests()
+    static test_buildCellListForRangeInfo(result: TestResult)
     {
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 1, 0, 1), ["A1"]);
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 2, 0, 1), ["A1,A2"]);
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 1, 0, 2), ["A1,B1"]);
-        this.buildCellListForRangeInfoTest(new RangeInfo(0, 4, 0, 4), ["A1,A2,A3,A4,B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,D3,D4"]);
-
-        this.TestMaxMinus1CellList();
-        this.TestMaxCellList();
-        this.TestMaxPlus1CellList();
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 1, 0, 1), ["A1"]);
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 2, 0, 1), ["A1,A2"]);
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 1, 0, 2), ["A1,B1"]);
+        this.buildCellListForRangeInfoTest(result, new RangeInfo(0, 4, 0, 4), ["A1,A2,A3,A4,B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,D3,D4"]);
     }
 }

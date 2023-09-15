@@ -1,14 +1,12 @@
-import { IAppContext } from "../AppContext";
-import { Grid } from "./Grid";
+import { IAppContext } from "../AppContext/AppContext";
 import { RangeInfo } from "../Interop/Ranges";
-import { IBracketGame, BracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
-import { GridItem } from "./GridItem";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameMover } from "./GridAdjusters/GameMover";
-import { GridChange } from "./GridChange";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestResult } from "../Support/TestResult";
+import { TestRunner } from "../Support/TestRunner";
+import { BracketGame, IBracketGame } from "./BracketGame";
 import { GameId } from "./GameId";
-import { UnitTestContext } from "../taskpane/components/App";
-import * as GridRanker from "./GridRanker";
+import { Grid } from "./Grid";
+import { GridItem } from "./GridItem";
 
 interface SetupGridTestDelegate
 {
@@ -22,17 +20,17 @@ interface GridTestDelegate
 
 export class GridTests
 {
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
+
     static doGridTest(
-        appContext: IAppContext,
-        testContext: UnitTestContext,
-        testName: string,
+        result: TestResult,
         bracket: string,
         delegate: SetupGridTestDelegate,
         testDelegate: GridTestDelegate)
     {
-        appContext;
-        testContext.StartTest(testName);
-
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
@@ -45,12 +43,10 @@ export class GridTests
         grid.logGridCondensed();
 
         if (!passed)
-        {
-            throw Error(`${testName} failed`);
-        }
+            result.addError("failed");
     }
 
-    static test_getConnectedGridItemForGameResult_NotConnected(appContext: IAppContext, testContext: UnitTestContext)
+    static test_getConnectedGridItemForGameResult_NotConnected(result: TestResult)
     {
         const setup: SetupGridTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -79,15 +75,13 @@ export class GridTests
             }
 
         this.doGridTest(
-            appContext,
-            testContext,
-            "GridTests.test_getConnectedGridItemForGameResult_NotConnected",
+            result,
             "T13",
             setup,
             test);
     }
 
-    static test_getConnectedGridItemForGameResult_ConnectedAdjacent(appContext: IAppContext, testContext: UnitTestContext)
+    static test_getConnectedGridItemForGameResult_ConnectedAdjacent(result: TestResult)
     {
         const setup: SetupGridTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -122,15 +116,13 @@ export class GridTests
             }
 
         this.doGridTest(
-            appContext,
-            testContext,
-            "GridTests.test_getConnectedGridItemForGameResult_NotConnected",
+            result,
             "T13",
             setup,
             test);
     }
 
-    static test_getConnectedGridItemForGameResult_ConnectedByLine(appContext: IAppContext, testContext: UnitTestContext)
+    static test_getConnectedGridItemForGameResult_ConnectedByLine(result: TestResult)
     {
         const setup: SetupGridTestDelegate =
             (grid, gridExpected): [GridItem, GridItem] =>
@@ -166,9 +158,7 @@ export class GridTests
             }
 
         this.doGridTest(
-            appContext,
-            testContext,
-            "GridTests.test_getConnectedGridItemForGameResult_NotConnected",
+            result,
             "T13",
             setup,
             test);

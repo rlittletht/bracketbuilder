@@ -1,24 +1,29 @@
-import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
+import { AppContext } from "../AppContext/AppContext";
 import { BracketDefinition } from "../Brackets/BracketDefinitions";
-import { BracketGame, IBracketGame } from "./BracketGame";
-import { BracketStructureBuilder } from "../Brackets/BracketStructureBuilder";
-import { StructureEditor } from "./StructureEditor/StructureEditor";
-import { GameLines } from "./GameLines";
-import { GameFormatting } from "./GameFormatting";
-import { GridGameInsert } from "./GridGameInsert";
-import { FormulaBuilder } from "./FormulaBuilder";
-import { GridItem } from "./GridItem";
-import { GridChange, GridChangeOperation } from "./GridChange";
-import { AppContext } from "../AppContext";
-import { GridAdjust } from "./GridAdjusters/GridAdjust";
-import { GameId } from "./GameId";
-import { GameNum } from "./GameNum";
-import { s_staticConfig } from "../StaticConfig";
+import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
+import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
+import { TrError } from "../Exceptions";
 import { OADate } from "../Interop/Dates";
-import { TrackingCache } from "../Interop/TrackingCache";
-import { JsCtx } from "../Interop/JsCtx";
-import { PerfTimer } from "../PerfTimer";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
+import { JsCtx } from "../Interop/JsCtx";
+import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
+import { CacheObject, ObjectType } from "../Interop/TrackingCache";
+import { _TimerStack } from "../PerfTimer";
+import { s_staticConfig } from "../StaticConfig";
+import { BracketGame, IBracketGame } from "./BracketGame";
+import { FormulaBuilder } from "./FormulaBuilder";
+import { GameFormatting } from "./GameFormatting";
+import { GameId } from "./GameId";
+import { GameLines } from "./GameLines";
+import { GameNum } from "./GameNum";
+import { GridAdjust } from "./GridAdjusters/GridAdjust";
+import { GridChange, GridChangeOperation } from "./GridChange";
+import { GridGameInsert } from "./GridGameInsert";
+import { GridItem } from "./GridItem";
+import { Prioritizer } from "./StructureEditor/Prioritizer";
+import { StructureEditor } from "./StructureEditor/StructureEditor";
+import { HelpTopic } from "../Coaching/HelpInfo";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -42,6 +47,21 @@ export interface RangeOverlapMatch
     delegate: RangeOverlapDelegate
 }
 
+export class GridColumnType
+{
+    static Invalid = null;
+    static Team = "T";
+    static Score = "S";
+    static Line = "L";
+}
+
+export class GridRowType
+{
+    static Invalid = null;
+    static Text = "T";
+    static Line = "L";
+}
+
 export class Grid
 {
     m_gridItems: GridItem[] = [];
@@ -51,9 +71,44 @@ export class Grid
     m_fLogChanges: boolean = s_staticConfig.logGridChanges;
     m_fLogGrid: boolean = s_staticConfig.logGrid;
     m_startingSlots: number[] = [10 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 18 * 60, 9 * 60];
+    m_mapGameItem: Map<number, GridItem> = new Map<number, GridItem>();
+    m_finishingTouchesApplied: boolean;
 
+    static createBasedOn(base: Grid): Grid
+    {
+        const grid = new Grid();
+        grid.m_firstGridPattern = base.m_firstGridPattern.clone();
+
+        return grid;
+    }
+
+    createFromRange(range: RangeInfo): Grid
+    {
+        const grid = Grid.createBasedOn(this);
+
+        this.enumerateOverlapping(
+            [{
+                range: range,
+                delegate: (_range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
+                {
+                    _range;
+                    kind;
+                    if (item.isLineRange)
+                        grid.addLineRange(item.Range);
+                    else
+                        grid.addGameRange(item.Range, item.GameId, item.SwapTopBottom);
+
+                    return true;
+                }
+            }]);
+
+        return grid;
+    }
+
+    get IsEmpty(): boolean { return this.m_gridItems.length == 0; }
     get FirstGridPattern(): RangeInfo { return this.m_firstGridPattern; }
     get FieldsToUse(): number { return this.m_fieldsToUse; }
+    get AreDatesLoaded(): boolean { return this.m_datesForGrid ? true : false; }
 
     getFirstSlotForDate(date: Date): number
     {
@@ -64,12 +119,82 @@ export class Grid
     {
         column = column - this.m_firstGridPattern.FirstColumn;
 
+        if (column < 0 || column >= this.m_datesForGrid.length || this.m_datesForGrid[column] == null)
+            return new Date();
+
         return this.m_datesForGrid[column];
     }
 
     getDateFromGridItem(item: GridItem): Date
     {
         return this.getDateFromGridColumn(item.Range.FirstColumn);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getItemForGameId
+
+        return the grid item for the given game id.
+    ----------------------------------------------------------------------------*/
+    getItemForGameId(gameId: GameId): GridItem
+    {
+        if (this.m_mapGameItem.has(gameId.Value))
+            return this.m_mapGameItem.get(gameId.Value);
+
+        return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getColumnType
+
+        Return the column type for the given column
+    ----------------------------------------------------------------------------*/
+    getColumnType(col: number): GridColumnType
+    {
+        if (col < this.m_firstGridPattern.FirstColumn)
+            return GridColumnType.Invalid;
+
+        const mp = [GridColumnType.Team, GridColumnType.Score, GridColumnType.Line];
+
+        return mp[(col - this.m_firstGridPattern.FirstColumn) % 3];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getRowType
+
+        Return the row type for the given row
+    ----------------------------------------------------------------------------*/
+    getRowType(row: number): GridRowType
+    {
+        if (row < this.m_firstGridPattern.FirstRow)
+            return GridRowType.Invalid;
+
+        const mp = [GridRowType.Text, GridRowType.Line];
+
+        return mp[(row - this.m_firstGridPattern.FirstRow) % 2];
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getFeedingGamesForGame
+
+        return the source game items for this game's feeding games.
+    ----------------------------------------------------------------------------*/
+    getFeedingGamesForGame(game: IBracketGame): [GridItem, GridItem]
+    {
+        let topSourceGame: GridItem = null;
+        let bottomSourceGame: GridItem = null;
+
+        if (!BracketGame.IsTeamSourceStatic(game.TopSource))
+        {
+            const gameId = BracketManager.GameIdFromWinnerLoser(game.TopSource);
+            topSourceGame = this.getItemForGameId(gameId);
+        }
+        if (!BracketGame.IsTeamSourceStatic(game.BottomSource))
+        {
+            const gameId = BracketManager.GameIdFromWinnerLoser(game.BottomSource);
+            bottomSourceGame = this.getItemForGameId(gameId);
+        }
+
+        return [topSourceGame, bottomSourceGame];
     }
 
     /*----------------------------------------------------------------------------
@@ -104,6 +229,9 @@ export class Grid
             },
             (item: GridItem) =>
             {
+                if (item.isLineRange)
+                    return false;
+
                 const itemDate = this.getDateFromGridItem(item);
 
                 return itemDate.valueOf() == date.valueOf();
@@ -150,9 +278,12 @@ export class Grid
         return item;
     }
 
-    addLineRange(range: RangeInfo)
+    addLineRange(range: RangeInfo): GridItem
     {
-        this.m_gridItems.push(new GridItem(range, null, true));
+        const newItem = new GridItem(range, null, true);
+        this.m_gridItems.push(newItem);
+
+        return newItem;
     }
 
     enumerateOverlapping(ranges: RangeOverlapMatch[]): boolean
@@ -335,10 +466,10 @@ export class Grid
         }
 
         if (match == null)
-            throw Error("old item not found on original grid");
+            throw new Error("old item not found on original grid");
 
         if (!GameId.compare(match.GameId, gameId))
-            throw Error("old item not found on original grid with matching id");
+            throw new Error("old item not found on original grid with matching id");
 
         return match;
     }
@@ -363,6 +494,19 @@ export class Grid
         [item, kind] = this.getFirstOverlappingItem(range);
 
         return kind;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.isRowEmptyAround
+
+        determines if the space *around* this column (the game width to the left
+        and right) is empty.
+    ----------------------------------------------------------------------------*/
+    isRowEmptyAround(row: number, column: number): boolean
+    {
+        const blankCheck: RangeInfo = new RangeInfo(row, 1, column - 3, column + 5);
+
+        return this.doesRangeOverlap(blankCheck) == RangeOverlapKind.None;
     }
 
     isBlankRow(row: number): boolean
@@ -588,6 +732,22 @@ export class Grid
         }
     }
 
+    static async isFinishingTouchesApplied(context: JsCtx): Promise<boolean>
+    {
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+
+        let range: RangeInfo = new RangeInfo(0, 1, 0, 100);
+        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
+        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+
+        areas.load("areaCount");
+        areas.load("areas");
+        await context.sync();
+
+        // the presence of any merge areas means some finishing touches have been applied
+        return (!areas.isNullObject);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: Grid.createGridFromBracket
     ----------------------------------------------------------------------------*/
@@ -600,28 +760,17 @@ export class Grid
         return grid;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: Grid.getGridColumnDateValues
-
-        This requires thet m_firstGridPattern is already loaded (we will use the
-        first repeating column as the first column we need a date for)
-    ----------------------------------------------------------------------------*/
-    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    static getRowForGameDates(context: JsCtx, firstGridPattern: RangeInfo): number
     {
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const columns: RangeInfo = firstGridPattern.offset(-firstGridPattern.FirstRow, firstGridPattern.FirstRow, 0, 1);
 
-        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
-        const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
-
-        rngColumns.load("values");
-        await context.sync();
+        const colData = areas.getValuesForRangeInfo(columns);
 
         // walk backwards up the column to find the first non-empty cell. This is the date row
-        const colData: any[][] = rngColumns.values;
         let rowDates: number = -1;
 
-        for (let i = this.m_firstGridPattern.FirstRow - 1; i >= 0; i--)
+        for (let i = firstGridPattern.FirstRow - 1; i >= 0; i--)
         {
             if (colData[i][0] != null && colData[i][0] != "")
             {
@@ -630,34 +779,95 @@ export class Grid
             }
         }
 
+        return rowDates;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridColumnDateValues
+
+        This requires thet m_firstGridPattern is already loaded (we will use the
+        first repeating column as the first column we need a date for)
+    ----------------------------------------------------------------------------*/
+    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    {
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const areasMerges: Excel.RangeAreas = await context.getTrackedItemOrPopulate(
+            FastFormulaAreas.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+            async (context: JsCtx): Promise<CacheObject> =>
+            {
+                if (s_staticConfig.throwOnCacheMisses)
+                {
+                    debugger;
+                    throw new Error("cache miss on getGridColumnDateValues mergeAreas");
+                }
+
+                const areasMerges = FastFormulaAreas.requestMergedAreasType(context, FastFormulaAreasItems.GameGrid);
+                await context.sync("request merged areas cache miss");
+                return { type: ObjectType.JsObject, o: areasMerges };
+            });
+        let sheet: Excel.Worksheet = null;
+
+        let colData: any[][];
+        let dateValues: any[][];
+
+        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
+
+        if (areas)
+        {
+            colData = areas.getValuesForRangeInfo(columns);
+        }
+        else
+        {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("cache miss on getGridColumnDateValues");
+            }
+
+            sheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+            context.Ctx.trackedObjects.add(sheet);
+
+            const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
+
+            rngColumns.load("values");
+            await context.sync();
+            colData = rngColumns.values;
+        }
+
+        // walk backwards up the column to find the first non-empty cell. This is the date row
+        let rowDates = Grid.getRowForGameDates(context, this.m_firstGridPattern);
+
         if (rowDates == -1)
         {
-            context.Ctx.trackedObjects.remove(sheet);
-            throw new Error("couldn't find date for column");
+            if (sheet)
+                context.Ctx.trackedObjects.remove(sheet);
+
+            throw new Error("couldn't find row for dates");
         }
 
         let range: RangeInfo = new RangeInfo(rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
-        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+        if (areas)
+        {
+            dateValues = areas.getValuesForRangeInfo(range);
+        }
+        else
+        {
+            const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
 
-        areas.load("areaCount");
-        areas.load("rowIndex");
-        areas.load("columnIndex");
-        areas.load("columnCount");
-        areas.load("areas");
-        rng.load("values");
-        await context.sync();
+            rng.load("values");
+            await context.sync();
+
+            dateValues = rng.values;
+        }
 
         // build an array of merged area mappings
-        const data: any[][] = rng.values;
+        let merges: number[] = Array.from({ length: dateValues[0].length }, () => 0);
 
-        let merges: number[] = Array.from({ length: data[0].length }, () => 0);
-
-        if (!areas.isNullObject)
+        if (!areasMerges.isNullObject)
         {
-            for (let i = 0; i < areas.areaCount; i++)
+            for (let i = 0; i < areasMerges.areaCount; i++)
             {
-                const rangeAreas: Excel.RangeCollection = areas.areas;
+                const rangeAreas: Excel.RangeCollection = areasMerges.areas;
                 const rangeArea: Excel.Range = rangeAreas.items[i];
 
                 let iMerge = rangeArea.columnIndex - range.FirstColumn;
@@ -674,9 +884,9 @@ export class Grid
         let dates: Date[] = [];
 
         let i = 0;
-        while (i < data[0].length)
+        while (i < dateValues[0].length)
         {
-            let item = data[0][i];
+            let item = dateValues[0][i];
             if (item == null || item == "")
             {
                 i++;
@@ -695,14 +905,21 @@ export class Grid
             }
         }
 
-        // now 
-        context.Ctx.trackedObjects.remove(sheet);
+        // now
+        if (sheet)
+            context.Ctx.trackedObjects.remove(sheet);
+
         return dates;
     }
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.getFirstGridPatternCell
 
+        (IF THIS GETS SLOW, we can use FastRangeAreas for 0,15,0,25 -- its not a
+        huge area, and it is representative enough to find the first pattern.
+
+        IF we need to know the rowheights and colwidths for the whole big grid,
+        we can use two range areas:  0, 250, 0, 1 and 0, 1, 0, 50
         we rely on a regular pattern of cell formatting to make the bracket work.
 
         to be robust with users inserting extra rows at the top and the left,
@@ -718,9 +935,9 @@ export class Grid
             Title | Score | Line | Title | Score | Line
 
     ----------------------------------------------------------------------------*/
-    getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
+    static getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
     {
-        let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
+        let range: RangeInfo = new RangeInfo(0, 1, 0, 1);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
@@ -751,13 +968,14 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            console.log('returning null for gridPattern');
+            if (s_staticConfig.logGrid)
+                console.log('returning null for gridPattern');
             return null;
         }
 
         matchedPatterns = 0;
         let firstMatchedColumn = -1;
-        range = new RangeInfo(firstMatchedRow, 1, 6, 1);
+        range = new RangeInfo(firstMatchedRow, 1, 2, 1);
 
         while (range.FirstColumn + 3 < 25 && matchedPatterns < 3)
         {
@@ -796,54 +1014,91 @@ export class Grid
 
         if (matchedPatterns < 3)
         {
-            console.log('returning null for gridPattern');
+            if (s_staticConfig.logGrid)
+                console.log('returning null for gridPattern');
             return null;
         }
 
         const rangeReturn: RangeInfo = new RangeInfo(firstMatchedRow, 1, firstMatchedColumn, 1);
-        console.log(`returning ${rangeReturn.toString()} for gridPattern`);
+        if (s_staticConfig.logGrid)
+            console.log(`returning ${rangeReturn.toString()} for gridPattern`);
 
         return rangeReturn;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.inferGamePriorityFromSource
+
+        Infer the priority for this team based on its source.
+        If the source game has the same priority for both teams, then the result
+        of the game is irrelevant -- the priority will be the same.
+
+        returns < 0 if we can't infer or if its not set.
+    ----------------------------------------------------------------------------*/
+    inferGamePriorityFromSource(teamSource: string): number
+    {
+        // need to see if we can infer the priority of this game
+        // get the source
+        const source: string = teamSource;
+        const gameId: GameId = BracketManager.GameIdFromWinnerLoser(source);
+        const sourceItem: GridItem = this.getItemForGameId(gameId);
+
+        if (sourceItem == null)
+            return -1;
+
+        return sourceItem.GamePriority;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: Grid.loadGridFromBracket
     ----------------------------------------------------------------------------*/
     async loadGridFromBracket(context: JsCtx, bracketName: string)
     {
-        const timer: PerfTimer = new PerfTimer();
+        const priorityMap: Map<string, number> = await Prioritizer.getTeamPriorityMap(context, null);
 
-        timer.pushTimer("buld fastRangeAreas");
+        _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        const fastRangeAreas: FastRangeAreas =
-            await FastRangeAreas.getRangeAreasGridForRangeInfo(
-                context,
-                "bigGridCache",
-                sheet,
-                new RangeInfo(8, 150, 0, 50));
+        await FastFormulaAreas.populateAllCaches(context);
+        
+        // the following should just get what we already populated above
+        const fastFormulaAreas = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const fastRangeAreasSmaller: FastRangeAreas =
+            await context.getTrackedItemOrPopulate(
+                "grid-fastRangeAreas",
+                async (context): Promise<CacheObject> =>
+                {
+                    const areas = await FastRangeAreas.getRangeAreasGridForRangeInfo(
+                        context,
+                        "bigGridCache",
+                        sheet,
+                        new RangeInfo(0, 28, 0, 25));
 
-        timer.popTimer();
+                    return { type: ObjectType.TrObject, o: areas };
+                });
+        _TimerStack.popTimer();
 
         AppContext.checkpoint("lgfb.1");
-        timer.pushTimer("getFirstGridPatternCell");
-        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreas);
-        if (this.m_firstGridPattern == null)
-            throw Error("could not load grid pattern");
+        _TimerStack.pushTimer("getFirstGridPatternCell");
+        this.m_firstGridPattern = Grid.getFirstGridPatternCell(fastRangeAreasSmaller);
 
-        timer.popTimer();
-        timer.pushTimer("getGridColumnDateValues");
+        if (this.m_firstGridPattern == null)
+            throw new Error("could not load grid pattern");
+
+        _TimerStack.popTimer();
+        _TimerStack.pushTimer("getGridColumnDateValues");
         this.m_datesForGrid = await this.getGridColumnDateValues(context);
-        timer.popTimer();
-        timer.pushTimer("getFieldCount");
+        _TimerStack.popTimer();
+        _TimerStack.pushTimer("getFieldCount");
         this.m_fieldsToUse = await StructureEditor.getFieldCount(context);
-        timer.popTimer();
+        _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracketName);
+        if (!bracketDef)
+            throw new Error("bracket not cached in loadGridFromBracket");
 
         AppContext.checkpoint("lgfb.2");
-        timer.pushTimer("loadGridFromBracket::loop");
+        _TimerStack.pushTimer("loadGridFromBracket::loop");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
             let game: BracketGame = new BracketGame()
@@ -856,17 +1111,24 @@ export class Grid
             AppContext.checkpoint("lgfb.4");
             if (game.IsLinkedToBracket)
             {
-                let overlapKind: RangeOverlapKind = this.doesRangeOverlap(game.FullGameRange);
+                let [item, overlapKind] = this.getFirstOverlappingItem(game.FullGameRange);
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw `overlapping detected on loadGridFromBracket: game ${game.GameId.Value}`;
+                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value} overlaps with ${item.Range.toFriendlyString()}`);
 
-                this.addGameRange(game.FullGameRange, game.GameId, false).attachGame(game);
+                const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
+
+                gameItem.attachGame(game);
 
                 // the feeder lines are allowed to perfectly overlap other feeder lines
                 AppContext.checkpoint("lgfb.5");
-                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastRangeAreas, game);
+                // before we try this, check to see if we need to expand our fastRangeAreas
+                const moreRowsNeeded = fastFormulaAreas.rowCountNeededToExpand(game.FullGameRange.bottomRight());
+                if (moreRowsNeeded)
+                    await fastFormulaAreas.addMoreRows(context, `bigFormulaGridCache${game.FullGameRange.bottomRight().FirstRow}`, moreRowsNeeded);
+
+                [feederTop, feederBottom, feederWinner] = await GameLines.getInAndOutLinesForGame(context, fastFormulaAreas, game);
                 AppContext.checkpoint("lgfb.6");
 
                 // We are going to be tolerant here -- sometimes our feeder calculations
@@ -893,10 +1155,37 @@ export class Grid
                     if (overlapKind == RangeOverlapKind.None)
                         this.addLineRange(feederWinner);
                 }
+
+                // get the priority for the top and bottom games
+                if (game.TopTeamNameValue != "")
+                {
+                    if (priorityMap.has(game.TopTeamNameValue))
+                        gameItem.setTopPriority(priorityMap.get(game.TopTeamNameValue));
+                }
+                else
+                {
+                    const priority: number = this.inferGamePriorityFromSource(game.TopTeamName);
+                    if (priority >= 0)
+                            gameItem.setTopPriority(priority);
+                }
+
+                if (game.BottomTeamNameValue != "")
+                {
+                    if (priorityMap.has(game.BottomTeamNameValue))
+                        gameItem.setBottomPriority(priorityMap.get(game.BottomTeamNameValue));
+                }
+                else
+                {
+                    const priority: number = this.inferGamePriorityFromSource(game.BottomTeamName);
+                    if (priority >= 0)
+                        gameItem.setBottomPriority(priority);
+                }
+
+                this.m_mapGameItem.set(gameItem.GameId.Value, gameItem);
             }
-            timer.stopAllAggregatedTimers();
+            _TimerStack.stopAllAggregatedTimers();
         }
-        timer.popTimer();
+        _TimerStack.popTimer();
         this.logGrid();
     }
 
@@ -1460,6 +1749,48 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Grid.extendUnconnectedOutgoingFeeders
+
+        For any unconnected outgoing feeder in a game, extend it with a line at
+        least 3 games wide to anticipate overlapping collisions
+
+        nrmal operation here is to do all of this in a clone so we don't have
+        to worry about cleaning these up.
+
+        don't do this for any of the ranges in excludes (these are probably
+        the very game lines we're trying to insert!)
+    ----------------------------------------------------------------------------*/
+    extendUnconnectedOutgoingFeeders(excludes: RangeInfo[])
+    {
+        this.enumerateMatching(
+            (item: GridItem) =>
+            {
+                const outgoingCheck = item.OutgoingFeederPoint.offset(0, 1, 1, 1);
+                let excludeThisItem = false;
+
+                for (let exclude of excludes)
+                {
+                    if (RangeInfo.isOverlappingRows(exclude, item.OutgoingFeederPoint))
+                        {
+                        excludeThisItem = true;
+                        break;
+                    }
+                }
+
+                if (!excludeThisItem
+                    && this.doesRangeOverlap(outgoingCheck) == RangeOverlapKind.None)
+                {
+                    // there is nothing next to the outgoing feeder point. add an item
+                    const newItem = this.addLineRange(outgoingCheck.offset(0, 1, 0, 36));
+                    newItem.IsEphemeral = true;
+                }
+
+                return true;
+            },
+            (item: GridItem) => !item.isLineRange && !item.IsChampionshipGame);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Grid.isValidGridGameInsert
 
         if any of the ranges overlap things already in the grid, then
@@ -1467,65 +1798,194 @@ export class Grid
     ----------------------------------------------------------------------------*/
     isValidGridGameInsert(gameInsert: GridGameInsert): boolean
     {
+        const extendedOutgoing = this.clone();
+
+        // use the actual range for the exclusion rows -- it doesn't matter if we aren't going to have
+        // a feeder line, we still want to inhibit the feeder line from being extended
+        extendedOutgoing.extendUnconnectedOutgoingFeeders(
+            [gameInsert.Range.topLeft().offset(1, 1, 0, 1), gameInsert.Range.bottomLeft().offset(-1, 1, 0, 1)]);
+
         if (gameInsert.m_rangeFeederTop != null
-            && this.doesRangeOverlap(gameInsert.m_rangeFeederTop) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeFeederTop) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederTop.toString()}) overlaps`;
+            const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederTop);
+
+            if (s_staticConfig.debuggingInfo)
+            {
+                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederTop.toString()}) overlaps ${item.toString()}`;
+            }
+            else
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederTop);
+
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the top would overlap the result of an existing game at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the top would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
+
             return false;
         }
 
         if (gameInsert.m_rangeFeederBottom != null
-            && this.doesRangeOverlap(gameInsert.m_rangeFeederBottom) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeFeederBottom) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederBottom.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederBottom);
+
+                gameInsert.m_failReason = `rangeFeederTop (${gameInsert.m_rangeFeederBottom.toString()}) overlaps ${item.toString()}`;
+            }
+            else
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeFeederBottom);
+
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the bottom would overlap the result of an existing game on the bracket at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the bottom would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
             return false;
         }
 
         if (gameInsert.m_rangeWinnerFeeder != null
-            && this.doesRangeOverlap(gameInsert.m_rangeWinnerFeeder) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeWinnerFeeder) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `m_rangeWinnerFeeder (${gameInsert.m_rangeWinnerFeeder.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeWinnerFeeder);
+
+                gameInsert.m_failReason = `m_rangeWinnerFeeder (${gameInsert.m_rangeWinnerFeeder.toString()}) overlaps ${item.toString()}`;
+            }
+            else
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeWinnerFeeder);
+
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the winner would overlap the result of an existing game on the bracket at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The line connecting the winner would overlap another already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
+
             return false;
         }
 
         if (gameInsert.m_rangeGame != null
-            && this.doesRangeOverlap(gameInsert.m_rangeGame) != RangeOverlapKind.None)
+            && extendedOutgoing.doesRangeOverlap(gameInsert.m_rangeGame) != RangeOverlapKind.None)
         {
-            gameInsert.m_failReason = `m_rangeGame (${gameInsert.m_rangeGame.toString()}) overlaps`;
+            if (s_staticConfig.debuggingInfo)
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeGame);
+
+                gameInsert.m_failReason = `m_rangeGame (${gameInsert.m_rangeGame.toString()}) overlaps ${item.toString()}`;
+            }
+            else
+            {
+                const [item, kind] = extendedOutgoing.getFirstOverlappingItem(gameInsert.m_rangeGame);
+
+                if (item.IsEphemeral)
+                    gameInsert.m_failReason = `Can't insert game here. The game would overlap the result of an existing game already on the bracket at ${item.Range.toFriendlyString()}`;
+                else
+                    gameInsert.m_failReason = `Can't insert game here. The game would overlap an item already on the bracket at ${item.Range.toFriendlyString()}`;
+            }
+
             return false;
         }
 
-        let source1: RangeInfo = gameInsert.m_rangeFeederTop;
-        let source2: RangeInfo = gameInsert.m_rangeFeederBottom;
+        // don't do this any more -- we have the extended lines above that will catch these overlaps
 
-        if (!source1 || source1 == null)
-        {
-            // for this comparison, we have to have a source, even if there's no feeder line
-            source1 = gameInsert.m_rangeGame.offset(1, 1, 0, 1);
-        }
+        // TEST THIS
 
-        if (!source2 || source2 == null)
-        {
-            source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
-        }
-
-        if (this.doesSourceOverlapAreaRangeOverlap(
-            source1,
-            source2,
-            gameInsert.m_rangeGame.FirstColumn))
-            //false))
-        {
-            gameInsert.m_failReason = `overlap region overlapped`;
-            return false;
-        }
+//        let source1: RangeInfo = gameInsert.m_rangeFeederTop;
+//        let source2: RangeInfo = gameInsert.m_rangeFeederBottom;
+//
+//        if (!source1 || source1 == null)
+//        {
+//            // for this comparison, we have to have a source, even if there's no feeder line
+//            source1 = gameInsert.m_rangeGame.offset(1, 1, 0, 1);
+//        }
+//
+//        if (!source2 || source2 == null)
+//        {
+//            source2 = gameInsert.m_rangeGame.bottomLeft().offset(-1, 1, 0, 1);
+//        }
+//
+//        const { overlaps, firstOverlapItem } =
+//            extendedOutgoing.doesSourceOverlapAreaRangeOverlap(
+//                source1,
+//                source2,
+//                gameInsert.m_rangeGame.FirstColumn);
+//
+//        if (overlaps)
+//        {
+//            if (firstOverlapItem.IsEphemeral)
+//                gameInsert.m_failReason = `Can't insert game here. The game would overlap the result of an existing game already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
+//            else
+//                gameInsert.m_failReason = `Can't insert game here. The game would overlap an existing item already on the bracket at ${firstOverlapItem.Range.toFriendlyString()}`;
+//
+//            return false;
+//        }
 
         return true;
+    }
+
+    excludeConnectedGameItemFromOverlapCheck(topSource: RangeInfo, bottomSource: RangeInfo, overlapRegion: RangeInfo, stopColumn: number, depth: number)
+    {
+        if (depth > 10)
+            return;
+
+        if (topSource != null)
+        {
+            const [gameItem, kind] = this.getFirstOverlappingItem(topSource.offset(0, 1, -1, 1));
+
+            if (gameItem != null)
+            {
+                if (gameItem.Range.LastColumn > stopColumn)
+                {
+                    overlapRegion.excludeRangeByRows(gameItem.Range);
+
+                    const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
+                    if (connectedItem != null)
+                        overlapRegion.excludeRangeByRows(connectedItem.Range);
+
+                    this.excludeConnectedGameItemFromOverlapCheck(
+                        gameItem.TopTeamRange?.offset(0, 1, 0, 1),
+                        gameItem.BottomTeamRange?.offset(0, 1, 0, 1),
+                        overlapRegion,
+                        Math.min(topSource.FirstColumn, bottomSource?.FirstColumn ?? Number.MAX_VALUE),
+                        depth + 1);
+                }
+            }
+        }
+
+        if (bottomSource != null)
+        {
+            const [gameItem, kind] = this.getFirstOverlappingItem(bottomSource.offset(0, 1, -1, 1));
+
+            if (gameItem != null)
+            {
+                if (gameItem.Range.LastColumn > stopColumn)
+                {
+                    overlapRegion.excludeRangeByRows(gameItem.Range);
+                    const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
+                    if (connectedItem != null)
+                        overlapRegion.excludeRangeByRows(connectedItem.Range);
+
+                    this.excludeConnectedGameItemFromOverlapCheck(
+                        gameItem.TopTeamRange?.offset(0, 1, 0, 1),
+                        gameItem.BottomTeamRange?.offset(0, 1, 0, 1),
+                        overlapRegion,
+                        Math.min(topSource?.FirstColumn ?? Number.MAX_VALUE, bottomSource.FirstColumn),
+                        depth + 1);
+                }
+            }
+        }
     }
 
     doesSourceOverlapAreaRangeOverlap(
         source1: RangeInfo,
         source2: RangeInfo,
-        targetColumn: number): boolean
+        targetColumn: number): {  overlaps: boolean, firstOverlapItem?: GridItem}
     {
         let f: boolean = false;
 
@@ -1554,37 +2014,42 @@ export class Grid
                 source2.offset(1, 0, 0, 1).newSetColumn(targetColumn + 2));
         }
 
-        if (source1 != null)
-        {
-            const [gameItem, kind] = this.getFirstOverlappingItem(source1.offset(0, 1, -1, 1));
+        this.excludeConnectedGameItemFromOverlapCheck(source1, source2, overlapRegion, 1, 1);
 
-            if (gameItem != null)
-            {
-                overlapRegion.excludeRangeByRows(gameItem.Range);
-                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
-                if (connectedItem != null)
-                    overlapRegion.excludeRangeByRows(connectedItem.Range);
-            }
+//        if (source1 != null)
+//        {
+//            const [gameItem, kind] = this.getFirstOverlappingItem(source1.offset(0, 1, -1, 1));
+//
+//            if (gameItem != null)
+//            {
+//                overlapRegion.excludeRangeByRows(gameItem.Range);
+//                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.BottomTeamRange.offset(-1, 1, 0, 1));
+//                if (connectedItem != null)
+//                    overlapRegion.excludeRangeByRows(connectedItem.Range);
+//            }
+//        }
+//
+//        if (source2 != null)
+//        {
+//            const [gameItem, kind] = this.getFirstOverlappingItem(source2.offset(0, 1, -1, 1));
+//
+//            if (gameItem != null)
+//            {
+//                overlapRegion.excludeRangeByRows(gameItem.Range);
+//                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
+//                if (connectedItem != null)
+//                    overlapRegion.excludeRangeByRows(connectedItem.Range);
+//            }
+//        }
+
+        const [item, kind] = this.getFirstOverlappingItem(overlapRegion);
+
+        if (kind != RangeOverlapKind.None)
+        {
+            return { overlaps: true, firstOverlapItem: item };
         }
 
-        if (source2 != null)
-        {
-            const [gameItem, kind] = this.getFirstOverlappingItem(source2.offset(0, 1, -1, 1));
-
-            if (gameItem != null)
-            {
-                overlapRegion.excludeRangeByRows(gameItem.Range);
-                const connectedItem: GridItem = this.getGridItemConnectedToFeederRange(gameItem.TopTeamRange.offset(1, 1, 0, 1));
-                if (connectedItem != null)
-                    overlapRegion.excludeRangeByRows(connectedItem.Range);
-            }
-        }
-
-        if (this.doesRangeOverlap(overlapRegion) != RangeOverlapKind.None)
-        {
-            return true;
-        }
-        return false;
+        return { overlaps: false };
     }
 
     /*----------------------------------------------------------------------------
@@ -1721,6 +2186,16 @@ export class Grid
         return maxItem;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getFirstEmptyRowToUse
+
+        return the first non-empty row in the column that we can use for this
+        game, allowing for the given padding.
+
+        make sure we return a content line and not a border line (which can
+        happen if the thing we are avoiding is a connecting line and not a
+        game content item)
+    ----------------------------------------------------------------------------*/
     getFirstEmptyRowToUse(firstColumn: number, lastColumn: number, padding): number
     {
         /*
@@ -1750,6 +2225,7 @@ export class Grid
             }
         }
 
+        maxRow = maxRow + ((maxRow - this.FirstGridPattern.FirstRow) % 2);
         return maxRow;
     }
 
@@ -1817,46 +2293,56 @@ export class Grid
         if ((source1 != null && source1.fuzzyMatchRow(requested.FirstRow, 3))
             || (source2 != null && (source2.fuzzyMatchRow(requested.FirstRow, 3))))
         {
-            if (source1 != null && source1.fuzzyMatchRow(requested.FirstRow, 3))
+            // if we end up falling through, we don't want to clobber the original
+            // source1 and source2
+            let source1New = source1;
+            let source2New = source2;
+
+            if (source1New != null && source1New.fuzzyMatchRow(requested.FirstRow, 3))
             {
-                matched = source1;
-                other = source2;
+                matched = source1New;
+                other = source2New;
             }
             else
             {
-                matched = source2;
-                other = source1;
-                const temp = source1;
-                source1 = source2;
-                source2 = temp;
+                matched = source2New;
+                other = source1New;
+                const temp = source1New;
+                source1New = source2New;
+                source2New = temp;
                 fSwapTopBottom = !fSwapTopBottom;
             }
             requested.setRow(matched.FirstRow - 1);
 
-            // now grow to including outgoing
-            if (outgoing != null)
+            // if we thing the bottom game is above the top game, then just disregard this request. we are probably
+            // over-thinking the requested location
+            if (!(source1New && source2New && source1New.FirstRow > source2New.FirstRow))
             {
-                if (game.IsChampionship)
-                    return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
+                // now grow to including outgoing
+                if (outgoing != null)
+                {
+                    if (game.IsChampionship)
+                        return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
 
-                return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
-                    source1,
-                    source2,
-                    outgoing,
+                    return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
+                        source1New,
+                        source2New,
+                        outgoing,
+                        matched,
+                        other,
+                        requested,
+                        fSwapTopBottom);
+                }
+
+                return this.buildGridGameForAnchoredSourceNoOutgoingPresent(
+                    source1New,
+                    source2New,
                     matched,
                     other,
                     requested,
+                    game.IsChampionship,
                     fSwapTopBottom);
             }
-
-            return this.buildGridGameForAnchoredSourceNoOutgoingPresent(
-                source1,
-                source2,
-                matched,
-                other,
-                requested,
-                game.IsChampionship,
-                fSwapTopBottom);
         }
 
         // ok, our requested range has no relationship to either sources. now figure out
@@ -1894,6 +2380,9 @@ export class Grid
             }
             requested.setRow(matched.FirstRow - 1);
 
+            if (source1 && source2 && source1.FirstRow > source2.FirstRow)
+                return GridGameInsert.createFailedGame("Can't insert the game as requested -- the top game would be below the bottom game");
+
             // now grow to including outgoing
             if (outgoing != null)
             {
@@ -1920,18 +2409,21 @@ export class Grid
                 fSwapTopBottom);
         }
 
+        const extendedGrid = this.clone();
+        extendedGrid.extendUnconnectedOutgoingFeeders([]);
+
         // and lastly, what to do if there are no sources at all...just find the first non-conflicting
         // place to put it
         if (requested.FirstColumn == this.m_firstGridPattern.FirstColumn)
         {
-            requested.setRow(this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4));
+            requested.setRow(extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4));
         }
         else
         {
             requested.setRow(
                 Math.max(
-                    this.getFirstEmptyRowToUse(requested.FirstColumn - 1, requested.FirstColumn - 1, 2),
-                    this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
+                    extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn - 1, requested.FirstColumn - 1, 2),
+                    extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
         }
 
         let gameInsert: GridGameInsert = new GridGameInsert();
@@ -2171,13 +2663,13 @@ export class Grid
 
         must provide a column for the game to be inserted into
     ----------------------------------------------------------------------------*/
-    buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): [Grid, string]
+    buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): {newGrid: Grid, selectRange: RangeInfo, reason: string }
     {
         let gridNew: Grid = this.clone();
         let gameInsert: GridGameInsert;
 
         // before we do any clever readjustments of the grid for common conflicts,
-        // first see if they are requesting a speciric range for insertion. if they
+        // first see if they are requesting a specific range for insertion. if they
         // are, then we don't want to try to second guess them...
 
         if (requested.RowCount <= 8)
@@ -2187,6 +2679,7 @@ export class Grid
         }
 
         let fAdjusted: boolean;
+        let cAdjusted = 0;
 
         do
         {
@@ -2195,12 +2688,12 @@ export class Grid
                 break;
 
             fAdjusted = GridAdjust.rearrangeGridForCommonAdjustments(gridNew, gameInsert, [requested]);
-        } while (fAdjusted);
+        } while (fAdjusted && cAdjusted++ < 10);
 
 
         if (gameInsert.m_failReason != null)
         {
-            return [null, `failed: ${gameInsert.m_failReason}`];
+            return { newGrid: null, reason: gameInsert.m_failReason, selectRange: null };
         }
 
         if (gameInsert.m_rangeFeederTop != null)
@@ -2223,18 +2716,24 @@ export class Grid
         newItem.setStartTime(game.StartTime);
         newItem.setField(game.Field);
 
-        return [gridNew, null];
+        return { newGrid: gridNew, reason: null, selectRange: gameInsert.Range };
     }
 
-    logGridCondensed()
+    logGridCondensedString(): string
     {
         let s: string = "";
 
         for (let item of this.m_gridItems)
         {
-            s += `${item.GameId == null ? -1 : item.GameId.Value}:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}`;
+            s += `${item.GameId == null ? -1 : item.GameId.Value}:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}(${item.m_topPriority},${item.m_bottomPriority},${item.GamePriority})`;
         }
-        console.log(s);
+
+        return s;
+    }
+
+    logGridCondensed()
+    {
+        console.log(this.logGridCondensedString());
     }
 
     logGrid()
@@ -2246,7 +2745,7 @@ export class Grid
 
         for (let item of this.m_gridItems)
         {
-            console.log(`${item.GameId == null ? -1 : item.GameId.Value }:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}`);
+            console.log(`${item.GameId == null ? -1 : item.GameId.Value }:${item.SwapTopBottom ? "S" : ""} ${item.Range.toString()}(${item.m_topPriority},${item.m_bottomPriority},${item.GamePriority})`);
         }
     }
 
@@ -2304,7 +2803,12 @@ export class Grid
         if (selected.FirstRow < this.m_firstGridPattern.FirstRow
             || selected.FirstColumn < this.m_firstGridPattern.FirstColumn)
         {
-            throw Error("selection is outside bracket grid");
+            throw new TrError(
+                [
+                    `The current selection is outside the current bracket grid. Please select a cell on the grid starting at ${this.m_firstGridPattern.toFriendlyString()}`
+                ],
+                { topic: HelpTopic.FAQ_InsertLocation }
+            );
         }
 
         if (selected.RowCount == 1)
@@ -2312,4 +2816,5 @@ export class Grid
 
         this.adjustRangeForGridAlignment(selected, AdjustRangeGrowExtraRow.None);
     }
+
 }

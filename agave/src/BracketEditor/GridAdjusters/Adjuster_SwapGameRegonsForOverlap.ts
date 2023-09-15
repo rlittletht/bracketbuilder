@@ -1,13 +1,14 @@
-import { IGridAdjuster } from "./IGridAdjuster";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GridItem } from "../GridItem";
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GridAdjust } from "./GridAdjust";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext } from "../../AppContext";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { BracketGame, IBracketGame } from "../BracketGame";
 import { GameNum } from "../GameNum";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { AdjustRangeGrowExtraRow, Grid } from "../Grid";
+import { GridAdjust } from "./GridAdjust";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { RegionSwapper } from "./RegionSwapper";
 
 // THIS ADJUSTER IS is for the insert of Game 19 on a 14 team bracket
 // W15 and W13 will overlap game 16.  To fix this (and to fix the next problem
@@ -70,7 +71,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
 
         return doesApply;
     }
-    
+
     /*----------------------------------------------------------------------------
         %%Function: Adjuster_SwapGameRegonsForOverlap.doesAdjusterApply
 
@@ -100,7 +101,16 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         if (source1 == null || source2 == null)
             return [false, null, null, null];
 
-        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column))
+
+        const extendedOutgoing = gridTry.clone();
+
+        // MAYBE WE DON'T WANT TO EXTEND?
+        // use the actual range for the exclusion rows -- it doesn't matter if we aren't going to have
+        // a feeder line, we still want to inhibit the feeder line from being extended
+        extendedOutgoing.extendUnconnectedOutgoingFeeders(
+            [source1.topLeft().offset(1, 1, 0, 1), source2.bottomLeft().offset(-1, 1, 0, 1)]);
+
+        if (!extendedOutgoing.doesSourceOverlapAreaRangeOverlap(source1, source2, column).overlaps)
             return [false, null, null, null];
 
         const [region1, region2, region3] = this.getRegionsForSources(gridTry, source1, source2);
@@ -139,7 +149,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         }
 
         if (!gridTry.isRangeIndependent(region2))
-            throw Error("how is the middle region not independent?!");
+            throw new Error("how is the middle region not independent?!");
 
         return [region1, region2, region3];
     }
@@ -173,7 +183,7 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
         // now, see if we still have an overlap problem. if we do, well, we failed...
         if (this.doesAdjusterApply(gridTry, game, column))
         {
-            console.log(`region swapping didn't help.`);
+            AppContext.log(`region swapping didn't help.`);
             return false;
         }
 
@@ -183,12 +193,17 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
 
         return true;
     }
+}
 
-    static testSwapRegionsForGameOverlap(appContext: IAppContext, testContext: UnitTestContext)
+export class Adjuster_SwapGameRegonsForOverlapTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        appContext;
-        testContext.StartTest("Adjuster_SwapGameRegonsForOverlap. testSwapRegionsForGameOverlap");
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
+    static test_SwapRegionsForGameOverlap(result: TestResult)
+    {
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
@@ -228,9 +243,9 @@ export class Adjuster_SwapGameRegonsForOverlap implements IGridAdjuster
 
         // now verify that we have fixed the problem
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
-        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn))
+        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw Error("testSwapRegionsForGameOverlap: FAILED: rearrange failed to resolve");
+            result.addError("rearrange failed to resolve");
         }
     }
 }

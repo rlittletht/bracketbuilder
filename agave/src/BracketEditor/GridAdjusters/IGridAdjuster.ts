@@ -1,6 +1,5 @@
-import { Grid } from "../Grid";
 import { IBracketGame } from "../BracketGame";
-import { RangeInfo } from "../../Interop/Ranges";
+import { Grid } from "../Grid";
 
 export interface IGridAdjuster
 {

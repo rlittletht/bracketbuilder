@@ -1,8 +1,8 @@
 
-import { BracketDefinition, BracketManager } from "../Brackets/BracketDefinitions";
+import { BracketManager } from "../Brackets/BracketManager";
 import { BracketGame } from "./BracketGame";
-import { GameNum } from "./GameNum";
 import { GameId } from "./GameId";
+import { GameNum } from "./GameNum";
 
 export class FormulaBuilder
 {
@@ -76,7 +76,7 @@ export class FormulaBuilder
         if (source[0] === "L")
             return this.getLoserFormulaFromSource(BracketManager.GameIdFromWinnerLoser(source), bracketName);
 
-        throw "bad source string";
+        throw new Error("bad source string");
     }
 
     /*----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ export class FormulaBuilder
     ----------------------------------------------------------------------------*/
     static getFieldFormulaTextFromGameNumber(gameNum: GameNum): string
     {
-        return `INDEX(BracketSourceData[Field],MATCH(${gameNum.Value}, BracketSourceData[GameNum],0))`;
+        return `INDEX(BracketSourceData[Field],MATCH(${gameNum.GameId.Value}, BracketSourceData[GameID],0))`;
     }
 
     /*----------------------------------------------------------------------------
@@ -112,7 +112,7 @@ export class FormulaBuilder
     ----------------------------------------------------------------------------*/
     static getTimeFormulaTextFromGameId(gameId: GameId): string
     {
-        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameId.GameNum.Value}, BracketSourceData[GameNum],0)), "h:MM AM/PM")`;
+        return `TEXT(INDEX(BracketSourceData[Time],MATCH(${gameId.GameNum.GameId.Value}, BracketSourceData[GameID],0)), "h:MM AM/PM")`;
     }
 
     /*----------------------------------------------------------------------------
@@ -132,8 +132,8 @@ export class FormulaBuilder
     /*----------------------------------------------------------------------------
         %%Function: FormulaBuilder.getTeamNameLookup
     ----------------------------------------------------------------------------*/
-    static getTeamNameLookup(teamNum: string): string
+    static getTeamNameLookup(id: string): string
     {
-        return `=INDEX(TeamNames[TeamName],MATCH("${teamNum}", TeamNames[TeamNum],0))`;
+        return `=INDEX(TeamNames[Name],MATCH("${id}", TeamNames[ID],0))`;
     }
 }

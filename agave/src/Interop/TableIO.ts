@@ -35,38 +35,16 @@ export class TableIO
         throw new Error(ePropagate);
     }
 
-
-    // given a table name in the workbook, return an array of objects constructed of fields from sHeaders.
-    // if fRequired is true, then throw if all the header fields are not present in the excel table.
-    // returns null if there is no table in the workbook matching sTable
-    static async readDataFromExcelTable(
-        context: JsCtx,
+    static readDataFromCachedExcelTable(
         sTable: string,
+        header: any[][],
+        dataBody: any[][],
         sHeaders: string[],
-        fRequired: boolean): Promise<Array<any>>
+        fRequired: boolean): any[]
     {
-        let workbook: Excel.Workbook = context.Ctx.workbook;
-        let table: Excel.Table;
-        let data: Array<any> = new Array<any>();
-
-        try
-        {
-            table = workbook.tables.getItem(sTable);
-            await context.sync();
-        }
-        catch (e)
-        {
-            return null;
-        }
-
-        let rngExcelHeader: Excel.Range = table.getHeaderRowRange();
-        rngExcelHeader.load("values");
-        rngExcelHeader.load("columnCount");
-
-        await context.sync();
-
-        let rgExcelHeader: string[] = rngExcelHeader.values[0]; // get the first row (there's only one row anyway)
+        let rgExcelHeader: string[] = header[0]; // get the first row (there's only one row anyway)
         let mapRequestedToExcelCurrent: Map<string, number> = new Map<string, number>();
+        const data: any[] = [];
 
         let i: number = 0;
 
@@ -76,7 +54,6 @@ export class TableIO
             i++;
         }
 
-        let rangeValues: Excel.Range = table.getDataBodyRange();
         let headerMapping: any = {};
 
         for (let sItem of sHeaders)
@@ -97,33 +74,69 @@ export class TableIO
             }
         }
 
+        for (let rgRow of dataBody)
+        {
+            let item: any = {};
+
+            for (let sItem of sHeaders)
+            {
+                if (headerMapping[sItem] === -1)
+                    item[sItem] = null;
+                else
+                    item[sItem] = rgRow[headerMapping[sItem]];
+            }
+
+            data.push(item);
+        }
+
+        return data;
+    }
+    // given a table name in the workbook, return an array of objects constructed of fields from sHeaders.
+    // if fRequired is true, then throw if all the header fields are not present in the excel table.
+    // returns null if there is no table in the workbook matching sTable
+    static async readDataFromExcelTable(
+        context: JsCtx,
+        sTable: string,
+        sHeaders: string[],
+        fRequired: boolean): Promise<any[]>
+    {
+        let workbook: Excel.Workbook = context.Ctx.workbook;
+        let table: Excel.Table;
+        let data: Array<any> = new Array<any>();
+
+        try
+        {
+            table = workbook.tables.getItem(sTable);
+            await context.sync();
+        }
+        catch (e)
+        {
+            return null;
+        }
+
+        let rngExcelHeader: Excel.Range = table.getHeaderRowRange();
+        rngExcelHeader.load("values");
+        rngExcelHeader.load("columnCount");
+        await context.sync();
+
+        let rangeValues: Excel.Range = table.getDataBodyRange();
         let rowCollection: Excel.TableRowCollection = table.rows;
+
         rowCollection.load("count");
         await context.sync();
 
         let rowCount: number = rowCollection.count;
+        let dataBody: any[][] = [];
+
         // make sure there's something to load...
         if (rowCount != 0)
         {
             rangeValues.load("values");
             await context.sync();
 
-            for (let rgRow of rangeValues.values)
-            {
-                let item: any = {};
-
-                for (let sItem of sHeaders)
-                {
-                    if (headerMapping[sItem] === -1)
-                        item[sItem] = null;
-                    else
-                        item[sItem] = rgRow[headerMapping[sItem]];
-                }
-
-                data.push(item);
-            }
+            dataBody = rangeValues.values;
         }
 
-        return data;
+        return this.readDataFromCachedExcelTable(sTable, rngExcelHeader.values, dataBody, sHeaders, fRequired);
     }
 }

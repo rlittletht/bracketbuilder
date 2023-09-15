@@ -1,7 +1,11 @@
 
-import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
-import { IAppContext } from "../AppContext";
+import { Mutex } from 'async-mutex';
+import { IAppContext } from "../AppContext/AppContext";
+import { HelpTopic } from "../Coaching/HelpInfo";
+import { TrError } from "../Exceptions";
 import { JsCtx } from "../Interop/JsCtx";
+import { SetupState } from "../Setup";
+import { StatusBox } from "../taskpane/components/StatusBox";
 
 
 // NOTE on mutex use. Most of the stuff we do is asynchronous, and while
@@ -23,6 +27,21 @@ export interface DispatchWithCatchDelegate
 
 export class Dispatcher
 {
+    static RequireBracketReady(appContext: IAppContext): boolean
+    {
+        if (appContext.WorkbookSetupState == SetupState.Ready)
+            return true;
+
+        appContext.Messages.error(
+            [
+                "I'm sorry, this command isn't available until the Bracket has been created",
+                "To get started, choose the number of teams in your tournament and then click the 'Build This Bracket' button"
+            ],
+            { topic: HelpTopic.FAQ_BracketNotReady });
+
+        return false;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.DispatchWithCatch
 
@@ -38,7 +57,14 @@ export class Dispatcher
         }
         catch (error)
         {
-            appContext.log(`Caught: ${error}`);
+            if (error instanceof TrError)
+            {
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo});
+            }
+            else
+            {
+                appContext.Messages.error(StatusBox.linesFromError(error), { topic: HelpTopic.FAQ_Exceptions });
+            }
         }
 
         appContext.setProgressVisible(false);
@@ -63,6 +89,10 @@ export class Dispatcher
                 await Excel.run(
                     async (ctx) =>
                     {
+                        appContext.Messages.clearMessage();
+                        appContext.Teaching.popTempCoachstateIfNecessary();
+                        appContext.Teaching.clearCoachmark();
+
                         const context: JsCtx = new JsCtx(ctx);
 
                         await this.DispatchWithCatch(
@@ -70,9 +100,34 @@ export class Dispatcher
                             appContext,
                             context);
 
-                        context.releaseAllTrackedItems();
+                        context.releaseAllCacheObjects();
                     })
             });
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Dispatcher.ExclusiveDispatchSilent
+
+        Same as ExclusiveDispatchWithCatch, but doesn't clear coach
+        states/messages
+    ----------------------------------------------------------------------------*/
+    static async ExclusiveDispatchSilent(delegate: DispatchWithCatchDelegate, context: JsCtx)
+    {
+        console.log("before exclusive");
+        try
+        {
+            await _mutex.runExclusive(
+                async () =>
+                {
+                    console.log("inside exclusive");
+                    await delegate(context);
+                });
+        }
+        catch (e)
+        {
+            console.log(`caught: ${e.message}`);
+        }
+
+        console.log("after exclusive");
+    }
 }

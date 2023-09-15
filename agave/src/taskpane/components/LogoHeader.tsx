@@ -1,6 +1,7 @@
-import * as React from "react";
+import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
 import * as CSS from "csstype";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
+import * as React from "react";
+import { ProductName } from "./ProductName";
 
 export interface LogoHeaderProps
 {
@@ -25,15 +26,20 @@ export class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState
     {
         const headerStyles: CSS.Properties =
         {
-            //background: '#cccccc',
             textAlign: 'center'
+        };
+
+        const red: CSS.Properties =
+        {
+            color: "red"
         };
 
         const stackStyles: IStackStyles =
         {
             root:
             {
-                width: "100%"
+                width: "100%",
+                background: "GhostWhite"
             }
         }
 
@@ -48,13 +54,13 @@ export class LogoHeader extends React.Component<LogoHeaderProps, LogoHeaderState
             <div style={headerStyles}>
                 <Stack horizontal styles={stackStyles}>
                     <Stack.Item>
-                        <img src={require('./../../../assets/ModernTrainLTR.png')} height="24" />
+                        <img src={require('./../../../assets/ModernTrainWithTRex.png')} height="36" />
                     </Stack.Item>
                     <Stack.Item grow styles={stackItemCenter} align="end">
-                        <b>&gt;trainwreck&lt;</b>
+                        <ProductName/>
                     </Stack.Item>
                     <Stack.Item>
-                        <img src={require('./../../../assets/VintageTrainRTL.png')} height="24"/>
+                        <img src={require('./../../../assets/VintageTrainRTLWithTRex.png')} height="36"/>
                     </Stack.Item>
                 </Stack>
             </div>)

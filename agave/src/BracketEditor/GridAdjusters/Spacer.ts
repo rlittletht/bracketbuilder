@@ -1,5 +1,5 @@
-import { Grid } from "../Grid";
 import { RangeInfo } from "../../Interop/Ranges";
+import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 
 export class Spacer
@@ -26,7 +26,7 @@ export class Spacer
             if (gridTry.m_gridItems[i].Range.FirstRow < row
                 && gridTry.m_gridItems[i].Range.LastRow >= row)
             {
-                throw Error("item found spanning insert row. is canInsertRowSpaceBefore broken?");
+                throw new Error("item found spanning insert row. is canInsertRowSpaceBefore broken?");
             }
 
             if (gridTry.m_gridItems[i].Range.FirstRow >= row)

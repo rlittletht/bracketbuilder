@@ -1,15 +1,21 @@
-import { IAppContext, IAppContext as IAppContext1, IAppContext as IAppContext2 } from "../../AppContext";
-import { IBracketGame } from "../BracketGame";
+import { IAppContext } from "../../AppContext/AppContext";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { HelpTopic } from "../../Coaching/HelpInfo";
+import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
+import { _TimerStack } from "../../PerfTimer";
+import { IBracketGame } from "../BracketGame";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { GameFormatting } from "../GameFormatting";
 import { Grid } from "../Grid";
-import { StructureRemove } from "./StructureRemove";
+import { GridItem } from "../GridItem";
+import { UndoGameDataItem, _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
-import { _undoManager, UndoGameDataItem } from "../Undo";
 import { StructureEditor } from "./StructureEditor";
-import { TrackingCache } from "../../Interop/TrackingCache";
-import { JsCtx } from "../../Interop/JsCtx";
+import { StructureRemove, RemovedGameValues } from "./StructureRemove";
+import { IIntention } from "../../Interop/Intentions/IIntention";
+import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
+import { TnCreateGlobalName } from "../../Interop/Intentions/TnCreateGlobalName";
 
 export class StructureInsert
 {
@@ -27,63 +33,54 @@ export class StructureInsert
         }
     }
 
-    static async insertChampionshipGameAtRange(appContext: IAppContext, context: JsCtx, game: IBracketGame, insertRangeInfo: RangeInfo)
+    static async insertChampionshipGameAtRange(appContext: IAppContext, context: JsCtx, game: IBracketGame, insertRangeInfo: RangeInfo): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         const bookmark: string = "insertChampionshipGameAtRange";
 
         context.pushTrackingBookmark(bookmark);
 
         if (insertRangeInfo == null)
         {
-            appContext.log("Selection is invalid for a game insert");
-            return;
+            appContext.Messages.error(
+                ["There was no selection for the championship game insertion. You must select a cell to insert the championship game at"],
+                { topic: HelpTopic.FAQ_ManuallySelect });
+
+            return tns;
         }
-
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
-
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-        context.Ctx.trackedObjects.add(rng);
 
         // figure out how big the game will be (width,height)
         let formulas: any[][] = [];
 
         formulas.push(
             [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
-        formulas.push(["", ""]);
+        formulas.push([GameFormatting.s_hLineTeam, ""]);
         formulas.push(["Champion", ""]);
 
-        let rngTarget: Excel.Range = rng.worksheet.getRangeByIndexes(
-            insertRangeInfo.FirstRow,
-            insertRangeInfo.FirstColumn,
-            insertRangeInfo.RowCount,
-            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+        let rangeTarget =
+            new RangeInfo(insertRangeInfo.FirstRow, insertRangeInfo.RowCount, insertRangeInfo.FirstColumn, insertRangeInfo.ColumnCount - 1);
 
-        rngTarget.formulas = formulas;
-        context.Ctx.trackedObjects.add(rngTarget);
+        tns.push(TnSetFormulas.Create(rangeTarget, formulas));
 
-        // if there are any existing global names for this game, they will get deleted -- 
+        // if there are any existing global names for this game, they will get deleted --
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
-        GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-        await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+        tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2)));
 
-        GameFormatting.formatChampionshipText(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
+        // delete any existing named ranges
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
 
-        GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 1));
+        tns.push(TnCreateGlobalName.Create(game.TopTeamCellName, insertRangeInfo.offset(0, 1, 0, 1)));
 
-        context.Ctx.trackedObjects.remove(rngTarget);
+        tns.push(...GameFormatting.tnsFormatChampionshipText(new RangeInfo(insertRangeInfo.LastRow, 1, insertRangeInfo.FirstColumn, 2)));
 
-        // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-        await game.Bind(context, appContext);
-        context.Ctx.trackedObjects.remove(rngTarget);
-        context.Ctx.trackedObjects.remove(rng);
-        context.Ctx.trackedObjects.remove(sheet);
+        tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(insertRangeInfo.offset(1, 1, 0, 1)));
 
-        context.releaseTrackedItemsUntil(bookmark);
-        await context.sync();
+        context.releaseCacheObjectsUntil(bookmark);
 
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -92,13 +89,14 @@ export class StructureInsert
         set the text for the game info, and format the ranges
     ----------------------------------------------------------------------------*/
     static setAndFormatGameInfo(
-        sheet: Excel.Worksheet,
         gameInfoRange: RangeInfo,
         gameInfoRangeInfo: RangeInfo,
         game: IBracketGame,
         connectedTop: boolean,
-        connectedBottom: boolean)
+        connectedBottom: boolean): IIntention[]
     {
+        const tns: IIntention[] = [];
+
         let formulas: any[][] = [];
         let topString: string = game.FormatLoser();
         let bottomString: string = "";
@@ -148,143 +146,138 @@ export class StructureInsert
         formulas.push([""]);
         formulas.push([bottomString]);
 
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, gameInfoRange);
-        rng.formulas = formulas;
+        tns.push(TnSetFormulas.Create(gameInfoRange, formulas));
+        tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(gameInfoRangeInfo.offset(0, 1, 0, 1)));
+        tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(gameInfoRangeInfo.offset(2, 1, 0, 1)));
 
-        GameFormatting.formatGameInfoBodyTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(0, 1, 0, 1)));
-        GameFormatting.formatGameInfoTimeTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRangeInfo.offset(2, 1, 0, 1)));
         if (!fCompressGame)
-            GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.offset(0, 1, 0, 1)), Excel.VerticalAlignment.top);
+            tns.push(...GameFormatting.tnsFormatGameInfoAdvanceToTextRequest(gameInfoRange.offset(0, 1, 0, 1), Excel.VerticalAlignment.top));
 
-        GameFormatting.formatGameInfoAdvanceToTextRequest(Ranges.rangeFromRangeInfo(sheet, gameInfoRange.bottomLeft().offset(0, 1, 0, 1)), Excel.VerticalAlignment.bottom);
+        tns.push(...GameFormatting.tnsFormatGameInfoAdvanceToTextRequest(gameInfoRange.bottomLeft().offset(0, 1, 0, 1), Excel.VerticalAlignment.bottom));
 
-        return;
+        return tns;
     }
 
     static setTargetFormulasForGame(
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
-        insertRange: Excel.Range,
-        gameInfoRangeInfo: RangeInfo): Excel.Range
+        gameInfoRangeInfo: RangeInfo,
+        removedGameValues?: RemovedGameValues): IIntention[]
     {
         // figure out how big the game will be (width,height)
         const formulas: any[][] = [];
+        const topScore = removedGameValues?.getTopScoreOrEmpty(game.GameId) ?? "";
+        const bottomScore = removedGameValues?.getBottomScoreOrEmpty(game.GameId) ?? "";
 
         formulas.push(
-            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), ""]);
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.TopTeamName, game.BracketName), topScore]);
+
+        formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
 
         // push padding for the underline row AND the number of blank lines 
         this.pushPadding(
             formulas,
             ["", ""],
             gameInfoRangeInfo.FirstRow
-            - (insertRangeInfo.FirstRow + 1));
+            - (insertRangeInfo.FirstRow + 2));
 
         formulas.push([FormulaBuilder.getFieldFormulaFromGameNumber(game.GameNum), `G${game.GameId.Value}`]);
         // we will fill in the game info text later. for now just push space
 
-        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 1);
-
+        this.pushPadding(formulas, ["", ""], 4 + insertRangeInfo.LastRow - gameInfoRangeInfo.LastRow - 2);
+        formulas.push([GameFormatting.s_hLineTeam, GameFormatting.s_hLineScore]);
         formulas.push(
-            [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), ""]);
+            [FormulaBuilder.getTeamNameFormulaFromSource(game.BottomTeamName, game.BracketName), bottomScore]);
 
-        const rngTarget: Excel.Range = insertRange.worksheet.getRangeByIndexes(
-            insertRangeInfo.FirstRow,
-            insertRangeInfo.FirstColumn,
-            insertRangeInfo.RowCount,
-            insertRangeInfo.ColumnCount - 1); // we don't want to include the line column
+        const range =
+            new RangeInfo(insertRangeInfo.FirstRow, insertRangeInfo.RowCount, insertRangeInfo.FirstColumn, insertRangeInfo.ColumnCount - 1);
 
-        rngTarget.formulas = formulas;
-
-        return rngTarget;
+        return [TnSetFormulas.Create(range, formulas)];
     }
+
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.insertGameAtSelection
+        %%Function: StructureEditor.insertGameAtRange
 
         this will insert the text and set the global cell names for all the parts
         of the game. 
     ----------------------------------------------------------------------------*/
     static async insertGameAtRange(
-        appContext: IAppContext1,
+        appContext: IAppContext,
         context: JsCtx,
+        gridRef: Grid,
         game: IBracketGame,
         insertRangeInfo: RangeInfo,
         connectedTop: boolean,
         connectedBottom: boolean,
-        liteInsert: boolean)
+        liteInsert: boolean,
+        removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         const bookmark: string = "insertGameAtRange";
 
         context.pushTrackingBookmark(bookmark);
-        // don't automatically remove games anymore in this function -- callers need to
-        // take care of that now
-
-        /*
-        // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(context);
-
-        if (game.IsLinkedToBracket)
-            await this.findAndRemoveGame(appContext, context, game);
-        */
 
         if (insertRangeInfo == null)
         {
-            appContext.log("Selection is invalid for a game insert");
-            return;
+            appContext.Messages.error(
+                ["There was no selection for the game insertion. You must select a cell to insert a game at."],
+                { topic: HelpTopic.FAQ_ManuallySelect });
+            return tns;
         }
-
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
-
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, insertRangeInfo);
-        context.Ctx.trackedObjects.add(rng);
 
         const gameInfoRangeInfo = Grid.getRangeInfoForGameInfo(insertRangeInfo);
 
-        let rngTarget: Excel.Range = this.setTargetFormulasForGame(game, insertRangeInfo, rng, gameInfoRangeInfo);
+        tns.push(...this.setTargetFormulasForGame(game, insertRangeInfo, gameInfoRangeInfo, removedGameValues));
 
-        context.Ctx.trackedObjects.add(rngTarget);
-
-        this.setAndFormatGameInfo(
-            rng.worksheet,
+        tns.push(...this.setAndFormatGameInfo(
             new RangeInfo(insertRangeInfo.FirstRow + 2, insertRangeInfo.RowCount - 4, insertRangeInfo.FirstColumn, 1),
             gameInfoRangeInfo,
             game,
             connectedTop,
-            connectedBottom);
+            connectedBottom));
 
         if (!liteInsert)
         {
-            // if there are any existing global names for this game, they will get deleted -- 
+            // if there are any existing global names for this game, they will get deleted --
             // by now, we are committed to this game going in this spot
 
             // now we have to format the game and assign global names
-            GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 2));
-            await Ranges.createOrReplaceNamedRange(context, game.TopTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow, insertRangeInfo.FirstColumn, 1, 1));
+            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2)));
+            tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
+            tns.push(TnCreateGlobalName.Create(game.TopTeamCellName, insertRangeInfo.offset(0, 1, 0, 1)));
 
-            GameFormatting.formatTeamNameRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 2));
-            await Ranges.createOrReplaceNamedRange(context, game.BottomTeamCellName, rng.worksheet.getRangeByIndexes(insertRangeInfo.LastRow, insertRangeInfo.FirstColumn, 1, 1));
+            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.bottomLeft().offset(0, 1, 0, 2)));
+            tns.push(...await Ranges.tnsDeleteGlobalName(context, game.BottomTeamCellName));
+            tns.push(TnCreateGlobalName.Create(game.BottomTeamCellName, insertRangeInfo.bottomLeft().offset(0, 1, 0, 1)));
 
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn, 1, 3));
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, insertRangeInfo.FirstColumn, 1, 3));
-            GameFormatting.formatConnectingLineRangeRequest(rng.worksheet.getRangeByIndexes(insertRangeInfo.FirstRow + 1, insertRangeInfo.FirstColumn + 2, insertRangeInfo.RowCount - 2, 1));
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(insertRangeInfo.offset(1, 1, 0, 3)));
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(
+                new RangeInfo(insertRangeInfo.FirstRow + insertRangeInfo.RowCount - 2, 1, insertRangeInfo.FirstColumn, 3)));
 
-            context.Ctx.trackedObjects.remove(rngTarget);
-            rngTarget = rng.worksheet.getRangeByIndexes(gameInfoRangeInfo.FirstRow, gameInfoRangeInfo.FirstColumn + 1, 3, 1)
-            context.Ctx.trackedObjects.add(rngTarget);
+            const vertLineRowCount = insertRangeInfo.RowCount - 2;
+            const vertLineFirstRow = insertRangeInfo.FirstRow + 1;
+            const vertLineRangeInfo = new RangeInfo(vertLineFirstRow, vertLineRowCount, insertRangeInfo.FirstColumn + 2, 1);
 
-            GameFormatting.formatGameInfoGameNumberRequest(rngTarget);
-            await Ranges.createOrReplaceNamedRange(context, game.GameNumberCellName, rngTarget);
-            // at this point, the game is insert and the names are assigned. we can bind the game object to the sheet
-            await game.Bind(context, appContext);
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(vertLineRangeInfo));
+
+            const linesText = [];
+            for (let i = 0; i < vertLineRowCount; i++)
+                linesText.push([GameFormatting.s_mapGridRowType.get(gridRef.getRowType(vertLineFirstRow + i))]);
+
+            tns.push(TnSetFormulas.Create(vertLineRangeInfo, linesText));
+
+            const gameNumRange = new RangeInfo(gameInfoRangeInfo.FirstRow, 3, gameInfoRangeInfo.FirstColumn + 1, 1);
+            
+            tns.push(...GameFormatting.tnsFormatGameInfoGameNumberRequest(gameNumRange));
+
+            tns.push(...await Ranges.tnsDeleteGlobalName(context, game.GameNumberCellName));
+            tns.push(TnCreateGlobalName.Create(game.GameNumberCellName, gameNumRange));
+
+            context.releaseCacheObjectsUntil(bookmark);
         }
 
-        context.Ctx.trackedObjects.remove(rngTarget);
-        context.Ctx.trackedObjects.remove(rng);
-        context.Ctx.trackedObjects.remove(sheet);
-        context.releaseTrackedItemsUntil(bookmark);
-        await context.sync();
-
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -310,44 +303,65 @@ export class StructureInsert
         return [grid.getFirstSlotForDate(date), StructureEditor.getNextFieldName(null, fieldCount)];
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.insertGameAtSelection
-    ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext2, context: JsCtx, game: IBracketGame)
+
+    static checkGameDependency(sourceGame: GridItem, requested: RangeInfo): { depSuccess: boolean, depFailReason?: string[], depTopic?: HelpTopic}
     {
-        const bookmark: string = "insertGameAtSelection";
-
-        game.Unbind();
-
-        // first, see if this game is already on the bracket, and if so, delete it
-        await game.Bind(context, appContext);
-
-        if (game.IsLinkedToBracket)
+        if (sourceGame)
         {
-            await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
-            // need to release any of our cached items since we just edited the book
-            context.releaseTrackedItemsUntil(bookmark);
-            context.pushTrackingBookmark(bookmark);
+            if (sourceGame.Range.FirstColumn >= requested.FirstColumn)
+            {
+                return {
+                    depSuccess: false,
+                    depFailReason: [`Can't insert this game in this column. Game ${sourceGame.GameId.Value} must be played first.`,
+                    `This game has to be inserted in column ${Ranges.getColName(sourceGame.Range.FirstColumn + 3)} or later`],
+                    depTopic: HelpTopic.FAQ_GameDependencies
+                };
+            }
         }
+        return { depSuccess: true };
+    }
 
-        appContext.Timer.pushTimer("insertGameAtSelection:gridBuildFromBracket");
-        // first make sure we have a complete grid for the bracket
-        let grid: Grid = await StructureEditor.gridBuildFromBracket(context);
-        appContext.Timer.popTimer();
+    /*----------------------------------------------------------------------------
+        %%Function: StructureInsert.buildNewGridForGameInsertAtSelection
 
-        // now let's figure out where we want to insert the game
-        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
-
+        This is the non async portion of insert game at selection. Suitable for
+        testing
+    ----------------------------------------------------------------------------*/
+    static buildNewGridForGameInsertAtSelection(requested: RangeInfo, grid: Grid, game: IBracketGame):
+        { gridNew: Grid, failReason?: string[], coachState?: Coachstate, topic?: HelpTopic, selectRange: RangeInfo }
+    {
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
         {
-            appContext.log(`Can't insert game. Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`);
-            return;
+            return {
+                gridNew: null,
+                failReason: ["Can't insert game at the current location.",
+                    `Please select a cell in a Team Name column in the bracket grid -- column "${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}" or greater)`],
+                topic: HelpTopic.FAQ_InsertLocation,
+                coachState: Coachstate.AfterInsertGameFailed,
+                selectRange: null
+            };
         }
 
-        if ((requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3 != 0)
+        const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
+
+        if (columnAdjacent != 0)
         {
-            const validColumns: string =
-                `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
+            if (columnAdjacent == 1)
+            {
+                // they aren't in a team name column. if they are in the score column, then auto
+                // adjust back to the name
+                requested.shiftByColumns(-1);
+            }
+            else if (columnAdjacent == 2)
+            {
+                // if they are in the line column, that is closer to the _next_ team name
+                // column
+                requested.shiftByColumns(1);
+            }
+            else
+            {
+                const validColumns: string =
+                    `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 3)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 6)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 9)}, `
@@ -358,37 +372,138 @@ export class StructureInsert
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
 
-            appContext.log(`Can't insert game. Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`);
-            return;
+                return {
+                    gridNew: null,
+                    failReason: [
+                        "Can't insert game at the current location.",
+                        `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
+                    ],
+                    topic: HelpTopic.FAQ_InsertLocation,
+                    coachState: Coachstate.AfterInsertGameFailed,
+                    selectRange: null
+                };
+            }
         }
 
-        let gridNew: Grid = null;
-        let failReason: string = null;
+        // let's confirm that this games predecessor's are not in the same column
+        const [topSourceGame, bottomSourceGame] = grid.getFeedingGamesForGame(game);
 
-        // before we insert the game, let's figure out field and start time info
-        const date: Date = grid.getDateFromGridColumn(requested.FirstColumn);
-        let maxTime: number = 0;
-        let count: number = 0;
-        let fields: string[] = [];
+        {
+            const { depSuccess, depFailReason, depTopic } = this.checkGameDependency(topSourceGame, requested);
 
-        [maxTime, count, fields] = grid.getLatestTimeForDate(date);
-        let nextTime: number;
-        let field: string;
-        [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
-        game.SetStartTime(nextTime);
-        game.SetField(field);
+            if (!depSuccess)
+                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed, selectRange: null };
+        }
+        {
+            const { depSuccess, depFailReason, depTopic } = this.checkGameDependency(bottomSourceGame, requested);
 
-        [gridNew, failReason] = grid.buildNewGridForGameAdd(game, requested);
+            if (!depSuccess)
+                return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed, selectRange: null };
+        }
+
+        // before we insert the game, let's figure out field and start time info. only do this if we have loaded
+        // the date information for the grid...
+        if (grid.AreDatesLoaded)
+        {
+            const date: Date = grid.getDateFromGridColumn(requested.FirstColumn);
+            let maxTime: number = 0;
+            let count: number = 0;
+            let fields: string[] = [];
+
+            if (date != null)
+            {
+                [maxTime, count, fields] = grid.getLatestTimeForDate(date);
+                let nextTime: number;
+                let field: string;
+                [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
+                game.SetStartTime(nextTime);
+                game.SetField(field);
+            }
+        }
+
+        const { newGrid: gridNew, reason: failReason, selectRange } = grid.buildNewGridForGameAdd(game, requested);
 
         if (failReason != null)
         {
-            appContext.log(`failed: ${failReason}`);
-            return;
+            return {
+                gridNew: null,
+                failReason: [`Insert Failed: ${failReason}`],
+                topic: HelpTopic.FAQ_InsertFailed,
+                coachState: Coachstate.AfterInsertGameFailedOverlapping,
+                selectRange: null
+            };
         }
 
+        return { gridNew: gridNew, selectRange: selectRange };
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.insertGameAtSelection
+    ----------------------------------------------------------------------------*/
+    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame): Promise<boolean>
+    {
+        const bookmark: string = "insertGameAtSelection";
+
+        game.Unbind();
+
+        context.pushTrackingBookmark(bookmark);
+
+        // first, see if this game is already on the bracket, and if so, delete it
+        await game.Bind(context, appContext);
+
+        if (game.IsLinkedToBracket)
+        {
+            await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
+            // need to release any of our cached items since we just edited the book
+            context.releaseCacheObjectsUntil(bookmark);
+            context.pushTrackingBookmark(bookmark);
+        }
+
+        _TimerStack.pushTimer("insertGameAtSelection:gridBuildFromBracket");
+        // first make sure we have a complete grid for the bracket
+        let grid: Grid = await StructureEditor.gridBuildFromBracket(context, appContext.SelectedBracket);
+        _TimerStack.popTimer();
+
+        _TimerStack.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
+
+        // now let's figure out where we want to insert the game
+        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+
+        if ((requested.FirstColumn < grid.FirstGridPattern.FirstColumn
+            || (requested.FirstColumn > grid.FirstGridPattern.FirstColumn && requested.FirstColumn < grid.FirstGridPattern.FirstColumn + 3))
+            && grid.IsEmpty)
+        {
+            // move the selection to the first column
+            const range = Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), grid.FirstGridPattern.offset(0, 1, 0, 1));
+            range.select();
+            requested = await Ranges.createRangeInfoForSelection(context);
+        }
+
+        const { gridNew, failReason, coachState, topic, selectRange } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
+        _TimerStack.popTimer();
+       
+        // caller 
+        if (failReason)
+        {
+            appContext.Messages.error(
+                failReason,
+                { topic: topic });
+
+            if (coachState)
+                appContext.Teaching.pushTempCoachstate(coachState);
+
+            return false;
+        }
+
+        _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
+
         let undoGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName, selectRange);
+
+        _TimerStack.popTimer();
+
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);
+        return true;
     }
 }

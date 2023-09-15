@@ -1,8 +1,7 @@
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
+import { GameMover, GridOption } from "../GameMover";
 import { GridItem } from "../GridItem";
-import { GridOption, GameMover } from "../GridAdjusters/GameMover";
 import { Mover } from "./Mover";
-import { Grid } from "../Grid";
 
 export class PushAway
 {
@@ -15,7 +14,7 @@ export class PushAway
     static calcShiftUpDownFromOverlappingItems(itemNew: GridItem, itemExisting: GridItem, dRowsBuffer: number): number
     {
         if (dRowsBuffer % 2 != 0)
-            throw Error("buffer must be multiple of 2!");
+            throw new Error("buffer must be multiple of 2!");
 
         const dTop: number = itemNew.Range.FirstRow - itemExisting.Range.FirstRow;
         const dBottom: number = itemNew.Range.LastRow - itemExisting.Range.LastRow;
@@ -86,6 +85,7 @@ export class PushAway
     ----------------------------------------------------------------------------*/
     static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        let subMove = 0;
         let changes: boolean = false;
 
         const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
@@ -103,11 +103,14 @@ export class PushAway
             }
             else
             {
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
-                    return true;
+                if (!mover.ItemNew.IsChampionshipGame)
+                {
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                        return true;
 
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
-                    return true;
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                        return true;
+                }
             }
 
             range;
@@ -128,7 +131,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveItemsAway_shift", crumbs);
+                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveItemsAway_shift", `${crumbs}.${subMove++}`);
                 }
             }
 
@@ -178,11 +181,14 @@ export class PushAway
             }
             else
             {
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
-                    return true;
+                if (!mover.ItemNew.IsChampionshipGame)
+                {
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                        return true;
 
-                if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
-                    return true;
+                    if (mover.ItemNew.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                        return true;
+                }
             }
 
             range;
@@ -227,13 +233,14 @@ export class PushAway
     ----------------------------------------------------------------------------*/
     static checkAndMoveAdjacentItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
+        let subMove = 0;
         let changes: boolean = false;
 
         const moveItemAwayFromItem = (range: RangeInfo, item: GridItem, kind: RangeOverlapKind) =>
         {
             if (item.isEqual(mover.ItemNew))
             {
-                throw Error("can't have our moved item in the adjacent column!!");
+                throw new Error("can't have our moved item in the adjacent column!!");
             }
 
             // if we are connected to this item, we don't want to try to move it. the connections
@@ -246,12 +253,15 @@ export class PushAway
             }
             else
             {
-                // check to see if the adjacent item is a game connected to us...
-                if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
-                    return true;
+                if (!mover.ItemOld.IsChampionshipGame)
+                {
+                    // check to see if the adjacent item is a game connected to us...
+                    if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.TopTeamRange.offset(1, 1, 0, 1)))
+                        return true;
 
-                if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
-                    return true;
+                    if (mover.ItemOld.OutgoingFeederPoint.isEqual(item.BottomTeamRange.offset(-1, 1, 0, 1)))
+                        return true;
+                }
             }
 
             range;
@@ -272,7 +282,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(rangeRealToAvoid, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveAdjacentItemsAway_shift", crumbs);
+                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveAdjacentItemsAway_shift", `${crumbs}.${subMove++}`);
                 }
             }
 

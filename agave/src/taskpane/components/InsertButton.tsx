@@ -1,13 +1,12 @@
-import * as React from "react";
 import { IconButton } from "@fluentui/react";
+import * as React from "react";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { IAppContext } from "../../AppContext";
 
 export interface InsertButtonProps
 {
     bracketGame: IBracketGame;
-    appContext: IAppContext;
 }
 
 export interface InsertButtonState
@@ -17,6 +16,9 @@ export interface InsertButtonState
 
 export class InsertButton extends React.Component<InsertButtonProps, InsertButtonState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -32,7 +34,7 @@ export class InsertButton extends React.Component<InsertButtonProps, InsertButto
         return (
             <IconButton
                 iconProps={{ iconName: 'Add' }}
-                onClick={() => StructureEditor.insertGameAtSelectionClick(this.props.appContext, this.state.bracketGame)}
+                onClick={() => StructureEditor.insertGameAtSelectionClick(this.context, this.state.bracketGame)}
             />
         );
     }

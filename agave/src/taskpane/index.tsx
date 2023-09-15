@@ -1,16 +1,16 @@
-import App from "./components/App";
-import { AppContainer } from "react-hot-loader";
 import { initializeIcons } from "@fluentui/font-icons-mdl2";
 import { ThemeProvider } from "@fluentui/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { AppContainer } from "react-hot-loader";
+import App from "./components/App";
 
 /* global document, Office, module, require */
 initializeIcons();
 
 let isOfficeInitialized = false;
 
-const title = "TrainWreck Bracket Builder";
+const title = "traynrex red BracketBuilder";
 // OfficeExtension.config.extendedErrorLogging = true;
 
 const render = (Component) =>

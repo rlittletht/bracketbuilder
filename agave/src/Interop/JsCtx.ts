@@ -1,4 +1,6 @@
-import { TrackingCache, PopulateCacheDelegate, PopulateCacheWithArrayDelegate } from "./TrackingCache";
+import { _TimerStack } from "../PerfTimer";
+import { s_staticConfig } from "../StaticConfig";
+import { CacheObject, PopulateCacheDelegate, PopulateCacheWithArrayDelegate, TrackingCache } from "./TrackingCache";
 
 export class JsCtx
 {
@@ -9,14 +11,21 @@ export class JsCtx
     {
         this.m_ctx = ctx;
         this.m_cache = new TrackingCache();
-        console.log("------ New context");
+        if (s_staticConfig.logTrackingCache)
+            console.log("------ New context");
     }
 
     get Ctx(): any { return this.m_ctx; }
 
-    async sync()
+    async sync(name?: string)
     {
+        // this is an explicit if to allow easier breakpoints
+        if (name == undefined || name == null)
+            name = "";
+
+        _TimerStack.pushTimer(`context.sync(${name})`);
         await this.m_ctx.sync();
+        _TimerStack.popTimer();
     }
 
     pushTrackingBookmark(bookmark: string)
@@ -24,44 +33,74 @@ export class JsCtx
         this.m_cache.pushBookmark(bookmark);
     }
 
-    addTrackedItem(key: string, item: any)
+    addCacheObject(key: string, item: CacheObject)
     {
-        this.m_cache.addTrackedItem(this, key, item);
+        this.m_cache.addCacheObject(this, key, item);
     }
 
-    addTrackedItems(key: string, items: any[])
+    addCacheObjects(key: string, items: CacheObject[])
     {
-        this.m_cache.addTrackedItems(this, key, items);
+        this.m_cache.addCacheObjects(this, key, items);
     }
 
-    releaseTrackedItemsUntil(bookmark: string)
+    releaseCacheObjectsUntil(bookmark: string)
     {
         this.m_cache.releaseUntil(this, bookmark);
     }
 
-    releaseAllTrackedItems()
+    releaseAllCacheObjects()
     {
         this.m_cache.releaseAll(this);
     }
 
-    async getTrackedItem(key: string, del: PopulateCacheDelegate): Promise<any>
+    async getTrackedItemOrPopulate(key: string, del: PopulateCacheDelegate): Promise<any>
     {
-        return await this.m_cache.getTrackedItem(this, key, del);
+        const obj: CacheObject = await this.m_cache.getCacheItemOrPopulate(this, key, del);
+
+        if (obj == null)
+            return null;
+
+        return obj.o;
     }
 
-    async getTrackedItems(key: string, del: PopulateCacheWithArrayDelegate): Promise<any[]>
+    async getTrackedItemsOrPopulate(key: string, del: PopulateCacheWithArrayDelegate): Promise<any[]>
     {
-        return await this.m_cache.getTrackedItems(this, key, del);
+        const objs = await this.m_cache.getCacheObjectsOrPopulate(this, key, del);
+
+        if (objs == null || objs.length == 0)
+            return null;
+
+        return objs.map((_obj) => _obj.o);
     }
 
     getTrackedItemOrNull(key: string): any
     {
-        return this.m_cache.getTrackedItemOrNull(key);
+        const obj: CacheObject = this.m_cache.getCacheObjectOrNull(key);
+
+        if (obj == null)
+            return null;
+
+        return obj.o;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: JsCtx.isKeyMoreRecent
+
+        Is the left key more recent than the right key?
+    ----------------------------------------------------------------------------*/
+    compareKeyOrder(left: string, right: string): number
+    {
+        return this.m_cache.compareKeyOrder(left, right);
     }
 
     getTrackedItemsOrNull(key: string): any[]
     {
-        return this.m_cache.getTrackedItemsOrNull(key);
+        const objs: CacheObject[] = this.m_cache.getCacheObjectsOrNull(key);
+
+        if (objs == null || objs.length == 0)
+            return null;
+
+        return objs.map((_obj) => _obj.o);
     }
 }
 

@@ -1,0 +1,530 @@
+:root {
+    --nav-width: 15rem;
+    --nav-padding: 1rem;
+    --article-width: calc(100vw - (var(--nav-padding) + var(--nav-width)));
+    --article-padding: 1rem;
+    --main-padding: 1rem;
+    --main-width: calc(var(--nav-width) + var(--article-width));
+    --header-width: var(--main-width);
+    --header-padding: 1rem;
+    --header-padding-top: 0rem;
+    --body-padding: 1rem;
+    --body-width: calc(var(--main-width) + 2 * var(--body-padding));
+    --scrollable-bottom-margin: 1.25em;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0 auto;
+    font-family: Calibri, sans-serif;
+    overflow: hidden;
+}
+
+header {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: var(--header-width);
+    margin: 0 auto;
+    padding-top: var(--header-padding-top);
+    border-bottom: 1px solid black;
+    font-family: 'Segoe UI';
+    align-content: baseline;
+}
+
+main {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    margin: 0 auto;
+    padding-top: var(--main-padding);
+    overflow: auto;
+}
+
+article {
+    box-sizing: border-box;
+    flex: 1;
+    flex-direction: row;
+    max-width: var(--article-width);
+    width: var(--article-width);
+    --height: calc(100% - 2 * var(--article-padding));
+    padding: var(--article-padding);
+    padding-top: 0;
+    padding-right: calc(2 * var(--article-padding));
+    margin: 0;
+    margin-bottom: var(--scrollable-bottom-margin);
+    overflow-y: auto;
+}
+
+section {
+    clear: both;
+}
+
+content {
+    display: block;
+}
+
+heading.active, heading:hover {
+    border-radius: 10%;
+    background: radial-gradient(rgba(255, 255, 255, 1),rgba(255, 255, 255, .05));
+}
+
+heading {
+    color: #111;
+    line-height: 125%;
+    margin-top: 0rem;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+article > heading {
+    font-size: 4rem;
+    margin-top: 0;
+    font-weight: bolder;
+    font-variant: small-caps;
+}
+
+article > section > heading {
+    font-size: 3.25rem;
+}
+
+article > section > content > section > heading {
+    font-size: 2.5rem;
+    margin-top: 2rem;
+}
+
+article > section > content > section > content > section > heading {
+    font-size: 2rem;
+    margin-top: 1rem;
+}
+
+article > section > content > section > content > section > content > section > heading {
+    font-size: 1.7rem;
+    margin-top: 1rem;
+}
+
+article > section > content > section > content > section > content > section > content > section > heading {
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    font-style: italic;
+}
+
+footer {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px solid;
+    margin-top: 0rem;
+}
+
+
+zoomable img {
+    transition: transform 0.25s ease;
+}
+
+    zoomable img:active {
+        max-width: 90vw;
+        max-height: 90vh;
+        position: absolute;
+        left: 5vw;
+        top: 2vh;
+    }
+
+zoomableInline {
+}
+
+    zoomableInline img {
+        transition: transform 0.25s ease;
+        position: relative;
+        top: .4rem;
+        background: red;
+    }
+
+        zoomableInline img:active {
+            max-width: 45vw;
+            max-height: 45vh;
+            position: absolute;
+            left: 25vw;
+            top: 50vh;
+        }
+
+zoomableTall img {
+    transition: transform 0.25s ease;
+}
+
+    zoomableTall img:active {
+        width: auto;
+        height: 100%;
+        max-width: 90vw;
+        max-height: 90vh;
+        position: absolute;
+        left: 10vw;
+        top: 2vh;
+    }
+
+steps {
+    display: flex;
+    vertical-align: middle;
+    padding-top: .5rem;
+    align-items: center;
+}
+
+iconic {
+    min-width: 10vw;
+    width: 10vw;
+    float: left;
+    margin-right: .5rem;
+    background: white;
+    height: 5rem;
+    display: flex;
+}
+
+steps p {
+    margin: 0;
+}
+
+iconic img {
+    transition: transform 0.25s ease;
+    height: 4.9rem;
+    object-fit: contain;
+}
+
+    iconic img:active {
+        width: 60vw;
+        height: 30vh;
+        position: relative;
+    }
+
+nav {
+    box-sizing: border-box;
+    flex: 0 1 auto;
+    width: var(--nav-width);
+    --height: calc(100% - 2 * var(--nav-padding));
+    margin: 0;
+    margin-bottom: var(--scrollable-bottom-margin);
+    overflow-y: auto;
+}
+
+    nav ul.smaller li a {
+        font-size: 1rem;
+    }
+
+    nav ul, nav li {
+        list-style-type: none;
+        padding-left: 0.5rem;
+        text-indent: -1rem;
+        padding-right: 0rem;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    nav > ul:first-of-type > li > a {
+        font-variant: small-caps;
+        font-size: 1.5rem;
+    }
+
+    nav > ul > li {
+        margin-top: 1rem;
+    }
+
+        nav > ul > li > a {
+            font-variant: normal;
+            font-size: 1.5rem;
+        }
+
+    nav > ul > ul > ul > li > a {
+        font-variant: normal;
+        font-size: 1rem;
+    }
+
+    nav > ul > ul > ul > ul > li > a {
+        font-variant: normal;
+        font-size: .9rem;
+    }
+
+    nav ul li a {
+        font-weight: bold;
+        text-decoration: none;
+        color: darkslategrey;
+        font-size: 1.2rem;
+    }
+
+    nav ul ul {
+        padding: 0 0 0 1rem;
+        margin: 0 inherit;
+    }
+
+    nav a {
+        font-size: 1.33rem;
+    }
+
+logo {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-end;
+    padding-bottom: 2px;
+}
+
+product {
+    display: flex;
+    flex-direction: column;
+    align-content: baseline;
+}
+
+productHeader {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+}
+
+productName {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-content: baseline;
+    font-weight: 800;
+    margin-top: auto;
+}
+
+red {
+    font-variant: 'small-caps';
+    color: red;
+    padding-left: .5rem;
+}
+
+skimmable{
+    font-weight: 700;
+}
+
+cmd {
+    font-style: italic;
+}
+
+prodRef {
+}
+
+eltRef {
+    font-style: italic;
+    font-variant: small-caps;
+}
+
+superEm {
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+dl {
+    display: flex;
+    flex-flow: row wrap;
+    --border: solid #333;
+    --border-width: 1px 1px 0 0;
+    margin-left: 1.5rem;
+}
+
+dt {
+    flex-basis: 10%;
+    padding: 2px 4px;
+    --background: #333;
+    text-align: left;
+    --color: #fff;
+}
+
+dd {
+    flex-basis: 80%;
+    flex-grow: 1;
+    margin: 0;
+    padding: 2px 4px;
+    --border-bottom: 1px solid #333;
+}
+
+img.logo {
+    height: 3rem
+}
+
+floatNone {
+    display: inline-block;
+    float: none;
+}
+
+    floatNone img {
+        position: relative;
+        top: .35rem;
+        line-height: 2rem;
+    }
+
+floatRight {
+    float: right;
+    padding-left: 1rem;
+}
+
+
+placeholder {
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    height: 5em;
+    width: 100%;
+    border: solid 2pt black;
+    display: flex;
+    background: white;
+}
+
+gallery {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    justify-content: center;
+}
+
+galleryItem {
+    padding: 1rem;
+    margin-top: auto;
+}
+
+galleryCaption {
+    display: block;
+    padding-left: 2rem;
+}
+
+p {
+    margin: 1.5rem 0;
+    text-align: justify;
+}
+
+img.whiteBack {
+    background: white;
+    width: 100%;
+}
+
+img.whiteBackSmaller {
+    background: white;
+    width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #111;
+    line-height: 125%;
+    margin-top: 0rem;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+}
+
+h1 {
+    font-size: 4rem;
+    margin-top: 0;
+    font-weight: bolder;
+    font-variant: small-caps;
+}
+
+h2 {
+    font-size: 3.25rem;
+}
+
+h3 {
+    font-size: 2.5rem;
+    margin-top: 2rem;
+}
+
+h4 {
+    font-size: 2rem;
+    margin-top: 1rem;
+}
+
+h5 {
+    font-size: 1.7rem;
+    margin-top: 1rem;
+}
+
+img.ScreenClip {
+    margin-left: 5pt;
+    border: 1pt solid black;
+}
+
+
+.flex-body {
+    overflow-y: scroll;
+}
+
+
+.SiteHeader {
+    text-align: center;
+    font-size: 24pt;
+    font-family: calibri light;
+}
+
+body {
+    background: antiquewhite;
+}
+
+.App {
+    text-align: center;
+}
+
+.App-logo {
+    height: 65px;
+    pointer-events: none;
+}
+
+.LinkNoUnderline {
+    text-decoration: none;
+}
+
+
+.NavBar {
+    background: wheat;
+}
+
+.NavBarOuter {
+    border-left: lightgrey 1pt solid;
+    border-top: lightgrey 1pt solid;
+    border-bottom: darkgrey 1pt solid;
+    border-right: darkgrey 1pt solid;
+    height: 40px;
+}
+
+.NavBarItem {
+    border-bottom: lightgrey 1pt solid;
+    border-right: lightgrey 1pt solid;
+    border-left: darkgrey 1pt solid;
+    border-top: darkgrey 1pt solid;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .Cool-App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+.App-header {
+    background-color: #282c34;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes Cool-App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

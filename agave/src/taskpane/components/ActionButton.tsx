@@ -1,13 +1,13 @@
-import * as React from "react";
 import { IconButton } from "@fluentui/react";
+import { TooltipHost } from "@fluentui/react/lib/Tooltip";
+import * as React from "react";
+import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { IBracketGame } from "../../BracketEditor/BracketGame";
-import { IAppContext } from "../../AppContext";
-import { TooltipHost, ITooltipHostStyles } from "@fluentui/react/lib/Tooltip";
+import { _TimerStack } from "../../PerfTimer";
 
 export interface ActionButtonProps
 {
     bracketGame: IBracketGame;
-    appContext: IAppContext;
     icon: string;
     tooltip: string;
     tooltipId: string;
@@ -22,6 +22,9 @@ export interface ActionButtonState
 
 export class ActionButton extends React.Component<ActionButtonProps, ActionButtonState>
 {
+    context!: IAppContext;
+    static contextType = TheAppContext;
+
     constructor(props, context)
     {
         super(props, context);
@@ -30,6 +33,12 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
         {
             bracketGame: props.bracketGame,
         }
+    }
+
+    async onButtonClick()
+    {
+        // don't add things around the delegate without considering race conditions!
+        await this.props.delegate(this.context, this.state.bracketGame);
     }
 
     render()
@@ -43,7 +52,7 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
                     iconProps={{ iconName: this.props.icon }}
                     size={100}
                     disabled={this.props.disabled}
-                    onClick={async () => await this.props.delegate(this.props.appContext, this.state.bracketGame)}/>
+                    onClick={this.onButtonClick.bind(this)}/>
             </TooltipHost>
         );
     }

@@ -1,13 +1,15 @@
-import { IGridAdjuster } from "./IGridAdjuster";
-import { Grid, AdjustRangeGrowExtraRow } from "../Grid";
-import { GridItem } from "../GridItem";
+import { IAppContext } from "../../AppContext/AppContext";
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GridAdjust } from "./GridAdjust";
-import { IBracketGame, BracketGame } from "../BracketGame";
-import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext } from "../../AppContext";
+import { s_staticConfig } from "../../StaticConfig";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { BracketGame, IBracketGame } from "../BracketGame";
 import { GameNum } from "../GameNum";
-import { UnitTestContext } from "../../taskpane/components/App";
+import { AdjustRangeGrowExtraRow, Grid } from "../Grid";
+import { GridAdjust } from "./GridAdjust";
+import { IGridAdjuster } from "./IGridAdjuster";
+import { RegionSwapper } from "./RegionSwapper";
 
 // THIS ADJUSTER IS is for the insert of Game 16 on a 14 team bracket
 // W12 and L10. Since L10 is unanchored, it just needs space to insert into
@@ -103,7 +105,18 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
             source2 = null;
         }
 
-        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column))
+        const extendedOutgoing = gridTry.clone();
+
+        if (source1 != null && source2 != null)
+        {
+            // MAYBE WE DON'T WANT TO EXTEND?
+            // use the actual range for the exclusion rows -- it doesn't matter if we aren't going to have
+            // a feeder line, we still want to inhibit the feeder line from being extended
+            extendedOutgoing.extendUnconnectedOutgoingFeeders(
+                [source1.topLeft().offset(1, 1, 0, 1), source2.bottomLeft().offset(-1, 1, 0, 1)]);
+        }
+
+        if (!extendedOutgoing.doesSourceOverlapAreaRangeOverlap(source1, source2, column).overlaps)
             return [false, null, null];
 
         if (source2 == null)
@@ -180,7 +193,8 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
 
         if (doesApply)
         {
-            console.log("failed to correct after max retries");
+            if (s_staticConfig.logGrid)
+                console.log("failed to correct after max retries");
             return false;
         }
 
@@ -190,12 +204,17 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
 
         return true;
     }
+}
 
-    static testSwapAdjacentRegionsForGameOverlap(appContext: IAppContext, testContext: UnitTestContext)
+export class Adjuster_SwapAdjacentGameRegionsForOverlapTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        appContext;
-        testContext.StartTest("Adjuster_SwapGameRegonsForOverlap. testSwapAdjacentRegionsForGameOverlap");
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
+    static test_SwapAdjacentRegionsForGameOverlap(result: TestResult)
+    {
         let grid: Grid = new Grid();
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
 
@@ -228,11 +247,11 @@ export class Adjuster_SwapAdjacentGameRegonsForOverlap implements IGridAdjuster
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
         // source2 should be null
         if (source2 != null)
-            throw Error("bracket definition unexpected");
+            result.addError("bracket definition unexpected");
 
-        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn))
+        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw Error("testSwapAdjacentRegionsForGameOverlap: FAILED: rearrange failed to resolve");
+            result.addError("rearrange failed to resolve");
         }
     }
 }

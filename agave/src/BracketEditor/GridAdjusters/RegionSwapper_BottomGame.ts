@@ -1,13 +1,15 @@
-import { IGridAdjuster } from "./IGridAdjuster";
+import { IAppContext as IAppContext1 } from "../../AppContext/AppContext";
+import { RangeInfo } from "../../Interop/Ranges";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { BracketGame, IBracketGame } from "../BracketGame";
+import { GameNum } from "../GameNum";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
-import { RangeInfo } from "../../Interop/Ranges";
 import { GridAdjust } from "./GridAdjust";
-import { IBracketGame, BracketGame } from "../BracketGame";
+import { IGridAdjuster } from "./IGridAdjuster";
 import { RegionSwapper } from "./RegionSwapper";
-import { IAppContext } from "../../AppContext";
-import { GameNum } from "../GameNum";
-import { UnitTestContext } from "../../taskpane/components/App";
 
 export class RegionSwapper_BottomGame implements IGridAdjuster
 {
@@ -39,7 +41,7 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         if (source1 == null || source2 == null)
             return false;
 
-        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column))
+        if (!gridTry.doesSourceOverlapAreaRangeOverlap(source1, source2, column).overlaps)
             return false;
 
         return true;
@@ -93,6 +95,14 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
 
         return true;
     }
+}
+
+export class RegionSwapper_BottomGameTests
+{
+    static runAllTests(appContext: IAppContext1, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: RegionSwapper_BottomGame.testRegionSwap1
@@ -102,11 +112,8 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
         and the top game in the grid to combine, which naturally causes a conflict
         and requires a region swap.  Test this.
     ----------------------------------------------------------------------------*/
-    static testRegionSwap1(appContext: IAppContext, testContext: UnitTestContext)
+    static test_RegionSwap1(result: TestResult)
     {
-        testContext.StartTest("RegionSwapper_BottomGame. testRegionSwap1");
-
-        appContext;
         let grid: Grid = new Grid();
 
         grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
@@ -134,9 +141,9 @@ export class RegionSwapper_BottomGame implements IGridAdjuster
 
         // now verify that we have fixed the problem
         let [source1, source2, outgoing] = gridNew.getRangeInfoForGameFeederItemConnectionPoints(game);
-        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn))
+        if (gridNew.doesSourceOverlapAreaRangeOverlap(source1, source2, reqColumn).overlaps)
         {
-            throw Error("testRegionSwap1: FAILED: rearrange failed to resolve");
+            result.addError("testRegionSwap1: FAILED: rearrange failed to resolve");
         }
     }
 }

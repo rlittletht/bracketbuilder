@@ -1,41 +1,45 @@
-import * as React from "react";
 import * as CSS from "csstype";
+import * as React from "react";
 
-import { DefaultButton } from "@fluentui/react";
-import { ComboBox } from "@fluentui/react";
+import '../taskpane.css'
 
-import { HeroList, HeroListItem, HeroListFormat } from "./HeroList";
-import { Progress } from "./Progress";
-import { SetupState } from "../../Setup";
-import { SetupBook } from "../../Setup";
-import { IAppContext, AppContext } from "../../AppContext";
-import { BracketChooser, UpdateBracketChoiceDelegate } from "./BracketChooser";
-import { BracketStructureBuilder, BracketOption } from "./../../Brackets/BracketStructureBuilder";
-import { GameItem } from "./GameItem";
-import { Games } from "./Games";
-import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { IBracketGame, BracketGame } from "../../BracketEditor/BracketGame";
-import { BracketDefinition, _bracketManager } from "../../Brackets/BracketDefinitions";
-import { RegionSwapper_BottomGame } from "../../BracketEditor/GridAdjusters/RegionSwapper_BottomGame";
-import { Adjuster_WantToGrowUpAtTopOfGrid } from "../../BracketEditor/GridAdjusters/Adjuster_WantToGrowUpAtTopOfGrid";
-import { TableIO } from "../../Interop/TableIO";
-import { Adjuster_SwapGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";
-import { GameMoverTests } from "../../BracketEditor/GameMoverTests";
-import { Adjuster_SwapAdjacentGameRegonsForOverlap } from "../../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
-import { Toolbar, ToolbarItem } from "./Toolbar";
-import { LogoHeader } from "./LogoHeader";
-import { StatusBox } from "./StatusBox";
-import { Stack, IStackStyles, IStackItemStyles } from '@fluentui/react';
-import { Grid } from "../../BracketEditor/Grid";
+import { DirectionalHint } from "@fluentui/react";
+
+import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
+import { AppContext, IAppContext, TheAppContext } from "../../AppContext/AppContext";
+import { IAppStateAccess } from "../../AppContext/IAppStateAccess";
+import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
 import { GameNum } from "../../BracketEditor/GameNum";
-import { GridTests } from "../../BracketEditor/GridTests";
-import { GridRankerTests } from "../../BracketEditor/GridRankerTests";
-import { OADate } from "../../Interop/Dates";
-import { TrackingCache } from "../../Interop/TrackingCache";
-import { BracketSources } from "../../Brackets/BracketSources";
-import { ParserTests } from "../../Interop/Parser";
+import { Grid } from "../../BracketEditor/Grid";
+import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
+import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
+import { BracketDefinition } from "../../Brackets/BracketDefinitions";
+import { _bracketManager } from "../../Brackets/BracketManager";
+import { Coachstate } from "../../Coaching/Coachstate";
+import { CoachTransition } from "../../Coaching/CoachTransition";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 import { JsCtx } from "../../Interop/JsCtx";
-import { FastRangeAreas, FastRangeAreasTest } from "../../Interop/FastRangeAreas";
+import { RangeCaches, RangeCacheItemType } from "../../Interop/RangeCaches";
+import { TableIO } from "../../Interop/TableIO";
+import { _TimerStack } from "../../PerfTimer";
+import { SetupBook, SetupState } from "../../Setup";
+import { s_staticConfig } from "../../StaticConfig";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { UnitTests } from "../../Tests/UnitTests";
+import { BracketOption, BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
+import { About } from "./About";
+import { BracketChooser } from "./BracketChooser";
+import { Games } from "./Games";
+import { HelpLink } from "./HelpLink";
+import { HeroList, HeroListFormat, HeroListItem } from "./HeroList";
+import { LogoHeader } from "./LogoHeader";
+import { Progress } from "./Progress";
+import { StatusBox } from "./StatusBox";
+import { Teachable, TeachableId } from "./Teachable";
+import { Toolbar, ToolbarItem } from "./Toolbar";
+import { Dispatcher } from "../../BracketEditor/Dispatcher";
+import { FreezeDays } from "../../commands/FreezeDays";
 
 /* global console, Excel, require  */
 
@@ -45,158 +49,150 @@ export interface AppProps
     isOfficeInitialized: boolean;
 }
 
-export class UnitTestContext
-{
-    m_testName: string;
-
-    get CurrentTest(): string { return this.m_testName; }
-
-    StartTest(testName: string)
-    {
-        this.m_testName = testName;
-    }
-}
-
 export interface AppState
 {
     heroList: HeroListItem[];
     heroListFormat: HeroListFormat;
     heroTitle: string;
 
-    setupState: SetupState;
     errorMessage: string;
-    selectedBracket: string;
     bracketOptions: BracketOption[];
+    customBracketOptions: BracketOption[];
     games: IBracketGame[];
     topToolbar: ToolbarItem[];
+    debugToolbar: ToolbarItem[];
     mainToolbar: ToolbarItem[];
+    aboutShowing: boolean;
+    heroListDirty: boolean;
+    bracketMayHaveDirectEdits: boolean;
+    sheetsHidden: boolean;
+    panesFrozen: boolean;
 }
 
-export default class App extends React.Component<AppProps, AppState>
+export default class App extends React.Component<AppProps, AppState> implements IAppStateAccess
 {
-    static version: string = "1.0.11.0";
+    static version: string = s_staticConfig.version;
+    private targetDivRef: React.RefObject<HTMLDivElement> = null;
 
     m_appContext: AppContext;
 
     constructor(props, context)
     {
         super(props, context);
+
+        this.m_appContext = new AppContext();
+        this.m_appContext.setDelegates(
+            null,
+            null,
+            this.getGames.bind(this),
+            this /*IAppStateAccess*/);
+
         this.state =
         {
             heroList: [],
             heroListFormat: HeroListFormat.Vertical,
-            heroTitle: "Setup a new bracket workbook!",
-            setupState: SetupState.NoBracketStructure,
+            heroTitle: "",
             errorMessage: "",
-            selectedBracket: "",
-            bracketOptions: BracketStructureBuilder.getStaticAvailableBrackets(),
+            bracketOptions: BracketDefBuilder.getStaticAvailableBrackets(),
+            customBracketOptions: [],
             games: [],
             mainToolbar: [],
             topToolbar: this.buildTopToolbar(),
-    };
+            debugToolbar: this.buildDebugToolbar(),
+            aboutShowing: false,
+            heroListDirty: false,
+            bracketMayHaveDirectEdits: false,
+            sheetsHidden: false,
+            panesFrozen: false
+        };
 
-        this.m_appContext = new AppContext();
-        this.m_appContext.setDelegates(
-            this.addLogMessage.bind(this),
-            this.invalidateHeroList.bind(this),
-            this.getSelectedBracket.bind(this),
-            this.getGames.bind(this));
+
+        this.targetDivRef = React.createRef();
     }
 
-    static async doUnitTests(appContext: IAppContext)
+    // IAppStateAccess Implementation
+    set HeroListDirty(dirty: boolean)
     {
-        let curTest = "";
-        const testContext: UnitTestContext = new UnitTestContext();
+        this.setState({ heroListDirty: dirty });
+    }
+
+    get HeroListDirty(): boolean
+    {
+        return this.state?.heroListDirty ?? false;;
+    }
+
+    set BracketDirtyForBracketEdit(dirty: boolean)
+    {
+        this.setState({ bracketMayHaveDirectEdits: dirty });
+    }
+
+    get BracketDirtyForBracketEdit(): boolean
+    {
+        return this.state?.bracketMayHaveDirectEdits ?? false;
+    }
+
+    set SheetsHidden(hidden: boolean)
+    {
+        this.setState({ sheetsHidden: hidden });
+    }
+
+    get SheetsHidden(): boolean
+    {
+        return this.state?.sheetsHidden ?? false;
+    }
+
+    set DaysFrozen(frozen: boolean)
+    {
+        this.setState({ panesFrozen: frozen });
+    }
+
+    get DaysFrozen(): boolean
+    {
+        return this.state?.panesFrozen ?? false;
+    }
+
+    static async resetCoachingTips(appContext: IAppContext)
+    {
+        appContext.Teaching.resetTeachableStates();
+        appContext.Messages.message(["All coaching tips have been reset. If you want to see them in this session, right click and select Refresh"], null, 10000);
+    }
+
+    static async launchHelp(appContext: IAppContext)
+    {
+        appContext;
+        window.open(HelpLink.buildHelpLink("BracketBuilder.html"));
+    }
+
+    static async doIntegrationTests(appContext: IAppContext)
+    {
+        const results = [];
+
+        const outStream = new StreamWriter((line) => results.push(line));
 
         try
         {
-            FastRangeAreasTest.buildCellListForRangeInfoTests();
-            ParserTests.testParseStringTests();
-            ParserTests.testParseExcelColumnRowReferenceTests();
-            ParserTests.testParseExcelAddressTests();
-            OADate.TestFromOADateTests();
-
-
-            // first, dump the grid for the current sheet. this is handy if you are building
-            // unit tests since it gives you a way to generate a grid...
-            await Excel.run(
-                async (ctx) =>
-                {
-                    const context: JsCtx = new JsCtx(ctx);
-                    const grid: Grid = await Grid.createGridFromBracket(context, appContext.getSelectedBracket());
-
-                    grid.logGridCondensed();
-                    context.releaseAllTrackedItems();
-                });
-
-
-            OADate.TestMinutesFromTimeStringTests();
-
-            GridRankerTests.test_danglingFeeder_vs_swappedGame(appContext, testContext);
-            GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext, testContext);
-
-            GridTests.test_getConnectedGridItemForGameResult_ConnectedByLine(appContext, testContext);
-            GridTests.test_getConnectedGridItemForGameResult_ConnectedAdjacent(appContext, testContext);
-            GridTests.test_getConnectedGridItemForGameResult_NotConnected(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
-
-            RegionSwapper_BottomGame.testRegionSwap1(appContext, testContext);
-            Adjuster_WantToGrowUpAtTopOfGrid.testInsertSpaceAtTopOfGrid(appContext, testContext);
-            Adjuster_SwapGameRegonsForOverlap.testSwapRegionsForGameOverlap(appContext, testContext);
-            Adjuster_SwapAdjacentGameRegonsForOverlap.testSwapAdjacentRegionsForGameOverlap(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_DragOutgoingFeederDown_DontAdjustAdjacentCollision(appContext, testContext);
-
-            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow_ButFavorHomogeneity(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_GrowConnectedGameDown_RoomToGrow(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtTop_DragTopFeedConnectedGameDown_ShiftConnectedGameDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop_ButFavorHomogeneity(appContext, testContext);
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameUp_GrowConnectedGameByTop(appContext, testContext);
-            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp_ButFavorHomogeneity(appContext, testContext);
-//FAIL            GameMoverTests.test_GrowItemAtTop_DragTopFeedConnectedGameAndLineUp(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnectedGameAndLineDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame_BlockedByGameBelow(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragBottomFeedConnected_ShrinkConnectedGame(appContext, testContext);
-
-            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_GameTooSmallToShrink_ShiftGameUp(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_RoomToGrow_ShrinkConnectedGame(appContext, testContext);
-            GameMoverTests.test_ShrinkItemAtBottom_DragBottomFeedConnectedGameUp_NoRoomToGrow_ShrinkConnectedGame(appContext, testContext);
-
-            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameAndLineDown(appContext, testContext);
-            GameMoverTests.test_GrowItemAtBottom_DragOutgoingConnectedGameDown(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_FitInAvailableSpace(appContext, testContext);
-
-            GameMoverTests.test_ShiftItemDown_MaintainBuffer_PushGameDown(appContext, testContext);
-            GameMoverTests.test_ShiftItemUp_AllowBufferShrink_FavorLessSparsity(appContext, testContext);
-            GameMoverTests.test_ShiftItemUp_MaintainBufferPushGameUp(appContext, testContext);
-
-            GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
-
-            GameMoverTests.test_DropItemToSwapHomeAway_Swapped(appContext, testContext);
-            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedSources_Swapped(appContext, testContext);
-            GameMoverTests.test_ItemMovedOutgoingFeederRequiresHomeAwaySwap(appContext, testContext);
-
-//FAIL            GameMoverTests.test_DropItemToSwapHomeAwayWithConnectedOutgoingMultipleLevels_Swapped(appContext, testContext);
-            GameMoverTests.test_MoveItemWithConnectedTopFeeder_ShiftByNegativeConnectedItem(appContext, testContext);
-            GameMoverTests.test_MoveItemWithConnectedTopFeeder_MoveConnectedItem(appContext, testContext);
-            GameMoverTests.test_MoveItemWithConnectedBottomFeederAndConnectedOutgoing_RecurseWillCauseOverlap_SimpleShiftAllGames(appContext, testContext);
-
-            // GameMoverTests.test_GrowItemDown_PushColumnAdjacentItemDown(appContext, testContext);
-            //await StructureEditor.testGridClick(appContext);
-
-            appContext.logTimeout("tests complete", 5000);
+            await IntentionsTest.runAllTests(appContext, outStream);
         }
         catch (e)
         {
-            appContext.log(
-                `TEST FAILURE: ${testContext.CurrentTest} (${
-                e
-                })`);
+            results.push(`EXCEPTION CAUGHT: ${e}`);
         }
+
+        appContext.Messages.message([...results, "Integration Tests Complete"]);
+    }
+
+    setSheetsHidden(hidden: boolean)
+    {
+        this.setState({
+            sheetsHidden: hidden
+        });
+    }
+
+    setPanesFrozen(frozen: boolean)
+    {
+        this.setState({
+            panesFrozen: frozen
+        });
     }
 
     buildTopToolbar(): ToolbarItem[]
@@ -213,6 +209,15 @@ export default class App extends React.Component<AppProps, AppState>
                 {
                     await StructureEditor.undoClick(appContext);
                     return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.Undo,
+                    title: "Undo",
+                    text: "Sometimes if you get stuck, you have to undo a couple of steps and try adding games in a different order or by selecting a different location to add the game",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomAutoEdge,
+                    isWide: true
                 }
             });
         listItems.push(
@@ -238,12 +243,34 @@ export default class App extends React.Component<AppProps, AppState>
                     await StructureEditor.syncBracketChangesFromGameSheetClick(appContext);
                     appContext;
                     return true;
+                },
+//                teachableProps:
+//                {
+//                    id: TeachableId.DirtyGame,
+//                    isWide: true,
+//                    title: "Needs updated",
+//                    text: "Some part of this game was directly edited, like team name, field, or time. Update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar.",
+//                    visibleDelay: 1000,
+//                    directionalHint: DirectionalHint.bottomAutoEdge,
+//                }
+            });
+        listItems.push(
+            {
+                icon: "Brush",
+                primaryText: "Shade games by priority",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await Prioritizer.shadeGamesByPriorityClick(appContext);
+                    appContext;
+                    return true;
                 }
             });
         listItems.push(
             {
-                icon: "Hide3",
-                primaryText: "Toggle showing data sheets",
+                icon: this.m_appContext.AppStateAccess.SheetsHidden ? "View" : "Hide3",
+                primaryText: this.m_appContext.AppStateAccess.SheetsHidden ? "Unhide data sheets" : "Hide bracket data sheets",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
@@ -254,17 +281,112 @@ export default class App extends React.Component<AppProps, AppState>
             });
         listItems.push(
             {
-                icon: "AlertSolid",
-                primaryText: "Run Unit Tests",
+                icon: this.m_appContext.AppStateAccess.DaysFrozen ? "Unlock" : "Lock",
+                primaryText: this.m_appContext.AppStateAccess.DaysFrozen ? "Unfreeze days of the week" : "Freeze days of the week rows",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    await App.doUnitTests(appContext);
+                    await FreezeDays.toggleDayFreezeClick(appContext);
                     return true;
                 }
             });
+        listItems.push(
+            {
+                icon: "ActionCenter",
+                primaryText: "Reset Coaching Tips",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await App.resetCoachingTips(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
+                icon: "CompletedSolid",
+                primaryText: "Apply the finishing touches",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.finalizeClick(appContext);
+                    return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.FinishingTouches,
+                    title: "Finish Up",
+                    text:
+                        "Congratulations! All your games are in the bracket. Now its time to apply the finishing touches. This will set the print area, format the titles to appear above the bracket, and hide the bracket sheets. The tournament data will still be on the left of the bracket, but don't worry, it won't print or show up on a PDF you create.",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomRightEdge,
+                    isWide: true
+                }
+            });
 
+        listItems.push(
+            {
+                icon: "Help",
+                primaryText: "About traynrex red",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    appContext;
+                    this.showAboutDialog();
+                    return true;
+                }
+            });
+        return listItems;
+    }
+
+    buildDebugToolbar(): ToolbarItem[]
+    {
+        let listItems: ToolbarItem[] = [];
+
+        if (!s_staticConfig.isLocalHost)
+            return listItems;
+
+            listItems.push(
+                {
+                    icon: "LadybugSolid",
+                    primaryText: "Run Unit Tests",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await UnitTests.doUnitTests(appContext);
+                        return true;
+                    }
+                });
+
+            listItems.push(
+                {
+                    icon: "Bug",
+                    primaryText: "Run Integration Tests",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await App.doIntegrationTests(appContext);
+                        return true;
+                    }
+                });
+
+            listItems.push(
+                {
+                    icon: "Copy",
+                    primaryText: "Copy selected area",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.copySelectionToClipboardClick(appContext);
+                        return true;
+                    }
+                });
         return listItems;
     }
 
@@ -316,17 +438,6 @@ export default class App extends React.Component<AppProps, AppState>
                     return true;
                 }
             });
-        listItems.push(
-            {
-                icon: "CompletedSolid",
-                primaryText: "Apply the finishing touches",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
-                    await StructureEditor.finalizeClick(appContext);
-                    return true;
-                }
-            });
 
         return listItems;
     }
@@ -336,249 +447,312 @@ export default class App extends React.Component<AppProps, AppState>
         return this.state.games;
     }
 
+    mergeBracketOptions(customOptions: BracketOption[])
+    {
+        const builtinOptions = BracketDefBuilder.getStaticAvailableBrackets();
+        const map = new Map<string, BracketOption>();
+
+        for (let _o of builtinOptions)
+            map.set(_o.key, _o);
+
+        for (let _o of customOptions)
+            map.set(_o.key, _o);
+
+        const newOptions = [];
+
+        for (let key of map.keys())
+            newOptions.push(map.get(key));
+
+        this.setState(
+            {
+                bracketOptions: newOptions,
+                customBracketOptions: customOptions
+            }
+        );
+    }
+
+    componentDidUpdate(prevProps: AppProps, prevState: AppState)
+    {
+        prevProps;
+
+        if ((this.state.bracketMayHaveDirectEdits || this.state.heroListDirty)
+            && !(prevState.bracketMayHaveDirectEdits || prevState.heroListDirty))
+        {
+            this.postHeroListRebuild();
+        }
+
+        if ((this.state.panesFrozen != prevState.panesFrozen)
+            || (this.state.sheetsHidden != prevState.sheetsHidden))
+        {
+            this.postUpdateTopToolbar();
+        }
+    }
+
+    postUpdateTopToolbar()
+    {
+        this.setState(
+            {
+                topToolbar: this.buildTopToolbar()
+            });
+    }
+
+    async postHeroListRebuild()
+    {
+        await Excel.run(async (ctx) =>
+        {
+            const context: JsCtx = new JsCtx(ctx);
+
+            await this.rebuildHeroList(context);
+        });
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: App.addLogMessage
 
         Add a log message to the UI
     ----------------------------------------------------------------------------*/
-    addLogMessage(message: string)
+
+    async rebuildHeroList(context: JsCtx)
     {
-        this.setState({ errorMessage: message });
+        await Dispatcher.ExclusiveDispatchSilent(
+            async (ctx) => { await this.rebuildHeroListWork(ctx) }, context);
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: App.invalidateHeroList
+        %%Function: App.rebuildHeroList
 
         Invalidate the top level hero list (and maybe supporting parameters
         below in the UI)
     ----------------------------------------------------------------------------*/
-    async invalidateHeroList(context: JsCtx)
+    async rebuildHeroListWork(context: JsCtx)
     {
-        AppContext.checkpoint("ihl.1");
-        let setupState: SetupState;
-        let bracketChoice: string;
+        const topLevelTimerName = "rebuildHeroList";
 
-        [setupState, bracketChoice] = await (this.getSetupState(context));
-        AppContext.checkpoint("ihl.2");
-        let format: HeroListFormat;
-        let list: HeroListItem[];
-        let title: string;
-        AppContext.checkpoint("ihl.3");
-//        let bracketChoice: string = await SetupBook.getBracketChoiceOrNull(context);
-        AppContext.checkpoint("ihl.4");
-        if (bracketChoice == null)
-            bracketChoice = this.state.selectedBracket;
-
-        AppContext.checkpoint("ihl.5");
-        let games: IBracketGame[] = await this.getGamesList(context, this.m_appContext, bracketChoice);
-        AppContext.checkpoint("ihl.6");
-
-
-        AppContext.checkpoint("ihl.7");
-        [format, title, list] = HeroList.buildHeroList(setupState);
-        AppContext.checkpoint("ihl.8");
-        let items: ToolbarItem[] = [];
-
-        if (setupState == SetupState.Ready)
+        console.log("RHL: resetting dirty state");
+        _TimerStack.pushTimer(topLevelTimerName, true);
+        try
         {
-            items = this.buildMainToolbar();
-        }
+            this.setState(
+                {
+                    bracketMayHaveDirectEdits: false,
+                    heroListDirty: false
+                });
 
-        // update the games list
+            const bookmark: string = "rebuildHeroList";
+            context.pushTrackingBookmark(bookmark);
 
-        AppContext.checkpoint("ihl.9");
-        this.setState(
-            {
-                heroList: list,
-                heroListFormat: format,
-                heroTitle: title,
-                setupState: setupState,
-                games: games,
-                selectedBracket: bracketChoice,
-                mainToolbar: items
-            });
-    }
+            await _TimerStack.timeThisAsync(
+                "buildFastFormulaAreas",
+                async () =>
+                {
+                    await FastFormulaAreas.populateAllCaches(context, true);
+                });
 
-    async ensureBracketLoadedFromSheet(context: JsCtx, bracketTableName: string)
-    {
-        if (!_bracketManager.IsCached(bracketTableName))
-        {
-            let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(bracketTableName);
-            let loading: BracketDefinition =
-            {
-                name: bracketDef.name,
-                teamCount: bracketDef.teamCount,
-                tableName: bracketDef.tableName,
-                games: []
-            };
+            await _TimerStack.timeThisAsync(
+                "populateBracketManager",
+                async () =>
+                {
+                    await _bracketManager.populateBracketsIfNecessary(context);
+                });
 
-            let gameDefs: any[] = await TableIO.readDataFromExcelTable(
-                context,
-                bracketDef.tableName,
-                ["Game", "Winner", "Loser", "Top", "Bottom"],
-                true);
+            await _TimerStack.timeThisAsync(
+                "populateRangeCaches",
+                async () =>
+                {
+                    await RangeCaches.PopulateIfNeeded(context, this.m_appContext.SelectedBracket);
+                });
 
-            for (let game of gameDefs)
-            {
-                loading.games.push(
+            let format: HeroListFormat;
+            let list: HeroListItem[];
+            let title: string;
+
+            let games: IBracketGame[];
+            await _TimerStack.timeThisAsync(
+                "getGamesList",
+                async () =>
+                {
+                    games = await this.getGamesList(context, this.m_appContext, this.m_appContext.SelectedBracket);
+                });
+
+            let items: ToolbarItem[] = [];
+
+            await _TimerStack.timeThisAsync(
+                "buildToolbars",
+                async () =>
+                {
+                    [format, title, list] = HeroList.buildHeroList(this.m_appContext.WorkbookSetupState, this.mergeBracketOptions.bind(this), this.state.customBracketOptions.length > 0);
+
+                    if (this.m_appContext.WorkbookSetupState == SetupState.Ready)
                     {
-                        winner: game.Winner,
-                        loser: game.Loser,
-                        topSource: game.Top,
-                        bottomSource: game.Bottom
-                    });
-            }
-            _bracketManager.setCache(loading);
+                        items = this.buildMainToolbar();
+
+                        let countGamesLinked = 0;
+                        let countGamesNeedRepair = 0;
+                        let countGamesBroken = 0;
+
+                        for (let game of games)
+                        {
+                            if (game.IsLinkedToBracket)
+                            {
+                                countGamesLinked++;
+                            }
+                            if (game.NeedsDataPull)
+                            {
+                                countGamesNeedRepair++;
+                            }
+                            if (game.IsBroken)
+                            {
+                                countGamesBroken++;
+                            }
+                        }
+                        if (countGamesBroken > 0)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
+                        else if (countGamesNeedRepair > 0)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.DirtyGameFound);
+                        else if (countGamesLinked == games.length)
+                        {
+                            if (await (Grid.isFinishingTouchesApplied(context)))
+                                this.m_appContext.Teaching.transitionState(CoachTransition.FinishTouches);
+                            else
+                                this.m_appContext.Teaching.transitionState(CoachTransition.AllGamesLinked);
+                        }
+                        else if (countGamesLinked == 0)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.NoGamesLinked);
+                        else if (countGamesLinked == 1)
+                            this.m_appContext.Teaching.transitionState(CoachTransition.OneGameLinked);
+                    }
+                });
+
+            // update the games list in the state
+
+            AppContext.checkpoint("ihl.9");
+            this.setState(
+                {
+                    heroList: list,
+                    heroListFormat: format,
+                    heroTitle: title,
+                    games: games,
+                    mainToolbar: items
+                });
+
+            context.releaseCacheObjectsUntil(bookmark);
+        }
+        catch (e)
+        {
+            console.log(`rebuildHeroListWork caught: ${e.message}`);
+        }
+        finally
+        {
+            _TimerStack.popTimersUntil(topLevelTimerName);
+            console.log("RHL: finishing RHL");
         }
     }
+
 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        await this.ensureBracketLoadedFromSheet(context, `${bracket}Bracket`);
-        let bracketDef: BracketDefinition = BracketStructureBuilder.getBracketDefinition(`${bracket}Bracket`);
+        _TimerStack.pushTimer("getGamesList.getBracket");
+        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracket);
 
         if (bracketDef == null)
             return [];
 
         let games: IBracketGame[] = [];
+        _TimerStack.popTimer();
 
         const bookmark: string = "getGamesList";
 
         context.pushTrackingBookmark(bookmark);
 
-        appContext.Timer.pushTimer("getGamesList - inner loop");
+        _TimerStack.pushTimer("getGamesList - inner loop");
         for (let i = 0; i < bracketDef.games.length; i++)
         {
             let temp: IBracketGame = await BracketGame.CreateFromGameNumber(context, appContext, bracket, new GameNum(i));
             games.push(temp);
         }
 
-        context.releaseTrackedItemsUntil(bookmark);
+        context.releaseCacheObjectsUntil(bookmark);
         await context.sync();
-        appContext.Timer.stopAllAggregatedTimers();
-        appContext.Timer.popTimer();
+        _TimerStack.stopAllAggregatedTimers();
+        _TimerStack.popTimer();
 
         return games;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: App.getSetupState
-
-        Get the setup state of the workbook and opportunistically return the
-        bracket choice as well
-    ----------------------------------------------------------------------------*/
-    async getSetupState(context: JsCtx): Promise<[SetupState, string]>
-    {
-        AppContext.checkpoint("gss.1");
-        let setupState: SetupState;
-        let bracketChoice: string;
-
-        if (context != null)
-            [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context);
-        else
-            await Excel.run(async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
-
-                [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context)
-                context.releaseAllTrackedItems();
-            });
-        AppContext.checkpoint("gss.2");
-
-        return [setupState, bracketChoice];
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: App.getSelectedBracket
-
-        Get the bracket the user has selected
-    ----------------------------------------------------------------------------*/
-    getSelectedBracket(): string
-    {
-        return this.state.selectedBracket;
-    }
-
+    // setup the initial state as well as the initial coaching state
+    // (this is our opportunity to figure out what state the workbook
+    // is in when the addin is initialized)
     async componentDidMount()
     {
         let setupState: SetupState;
         let bracketChoice: string;
 
-        [setupState, bracketChoice] = await (this.getSetupState(null));
-        let format: HeroListFormat;
-        let list: HeroListItem[];
-        let title: string;
-
-        [format, title, list] = HeroList.buildHeroList(setupState);
-        // figure out our top level menu.... Setup, or bracket editing
-        this.setState(
-            {
-                heroListFormat: format,
-                heroList: list,
-                heroTitle: title,
-                selectedBracket: "",
-                setupState: setupState,
-                games: []
-            });
-
         // now grab the games async and have it update
-        Excel.run(
+        await Excel.run(
             async (ctx) =>
             {
+                const context = new JsCtx(ctx);
+
+                const customBracketOptions = await SetupBook.getCustomBracketOptions(context, this.m_appContext);
+                this.mergeBracketOptions(customBracketOptions);
+
+                [setupState, bracketChoice] = await SetupBook.getSetupState(context);
+                if (setupState != SetupState.Ready)
+                    this.m_appContext.Teaching.Coachstate = Coachstate.BracketCreation;
+
+                this.m_appContext.SelectedBracket = bracketChoice;
+                this.m_appContext.WorkbookSetupState = setupState;
+
+                await RangeCaches.PopulateIfNeeded(context, bracketChoice);
+
+                // set the initial state for frozen and hidden
+                const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+                const locationFroze = sheet.freezePanes.getLocationOrNullObject();
+                const defSheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketDefBuilder.SheetName);
+                defSheet.load("visibility");
+
+                await context.sync("freeze and hidden check");
+                const frozen = !locationFroze.isNullObject;
+                const hidden = !(defSheet.isNullObject || (defSheet.visibility === Excel.SheetVisibility.visible));
+
+                if (this.m_appContext.SelectedBracket == null)
+                    this.m_appContext.SelectedBracket = "T8";
+
+                let format: HeroListFormat;
+                let list: HeroListItem[];
+                let title: string;
+        
+                [format, title, list] = HeroList.buildHeroList(setupState, this.mergeBracketOptions.bind(this), customBracketOptions.length > 0);
+                // figure out our top level menu.... Setup, or bracket editing
+                this.setState(
+                    {
+                        heroListFormat: format,
+                        heroList: list,
+                        heroTitle: title,
+                        games: [],
+                        panesFrozen: frozen,
+                        sheetsHidden: hidden
+                    });
+
                 this.m_appContext.setProgressVisible(true);
                 try
                 {
                     const context: JsCtx = new JsCtx(ctx);
 
-                    await this.invalidateHeroList(context);
-                    context.releaseAllTrackedItems();
+                    // this is the only blocking wait for rebuildHeroList. BE CAREFUL not to add
+                    // more -- they would likely deadlock!
+                    await this.rebuildHeroList(context);
+                    context.releaseAllCacheObjects();
                 }
                 catch (e)
                 {
 
                 }
+                SetupBook.registerBindingsForEdits(context, this.m_appContext);
                 this.m_appContext.setProgressVisible(false);
             });
     }
-
-    async click()
-    {
-        try
-        {
-            AppContext.checkpoint("testing");
-            await Excel.run(async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
-
-                AppContext.checkpoint("state: " + await SetupBook.getWorkbookSetupState(context));
-                /**
-                 * Insert your Excel code here
-                 */
-                const range = context.Ctx.workbook.getSelectedRange();
-
-                // Read the range address
-                range.load("address");
-                range.format.fill.load("color");
-                await context.sync();
-                AppContext.checkpoint(`The color is ${range.format.fill.color}.`);
-
-
-                // Update the fill color
-//                range.format.fill.color = "#FFFFFF";
-                range.format.fill.clear();
-//                StructureEditor.formatConnectingLineRange(context, range);
-
-                await context.sync();
-                AppContext.checkpoint(`The range address was ${range.address}.`);
-                context.releaseAllTrackedItems();
-            });
-        }
-        catch (error)
-        {
-            console.error(error);
-        }
-    };
 
     /*----------------------------------------------------------------------------
         %%Function: App.updateSelectedBracketChoice
@@ -588,9 +762,17 @@ export default class App extends React.Component<AppProps, AppState>
     ----------------------------------------------------------------------------*/
     updateSelectedBracketChoice(selectedBracket: string)
     {
-        this.setState({
-            selectedBracket: selectedBracket
-        });
+        this.m_appContext.SelectedBracket = selectedBracket;
+    }
+
+    hideAboutDialog()
+    {
+        this.setState({ aboutShowing: false });
+    }
+
+    showAboutDialog()
+    {
+        this.setState({ aboutShowing: true });
     }
 
     render()
@@ -604,33 +786,44 @@ export default class App extends React.Component<AppProps, AppState>
                     title={title}
                     logo={require("./../../../assets/TW-Logo.png")}
                     message="Please sideload your addin to see app body."
-                    appContext={this.m_appContext}
                     initialVisibility={true}/>
             );
         }
 
         let insertBracketChooserMaybe = () =>
         {
-            if (this.state.setupState == SetupState.NoBracketChoice ||
-                this.state.setupState == SetupState.NoBracketStructure)
+            if (this.m_appContext.WorkbookSetupState == SetupState.NoBracketChoice
+                || this.m_appContext.WorkbookSetupState == SetupState.NoBracketStructure
+                || this.m_appContext.WorkbookSetupState == SetupState.NoBracketData)
             {
                 return (
-                    <BracketChooser alignment="center"
-                        updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
-                            bracketOptions={this.state.bracketOptions} />
+                    <div>
+                        <Teachable
+                            isWide={true}
+                            id={TeachableId.BracketBuilder }
+                            title="Get started here"
+                            text="Choose the number of teams in the tournament and then click on Build this bracket!"
+                            visibleDelay={1000}
+                            directionalHint={DirectionalHint.bottomLeftEdge}>
+                            <BracketChooser alignment="center"
+                                            updateBracketChoiceDelegate={this.updateSelectedBracketChoice.bind(this)}
+                                            bracketOptions={this.state.bracketOptions} initialBracket={this.m_appContext.SelectedBracket}/>
+                        </Teachable>
+
+                    </div>
                 );
             }
             else
                 return (<span/>);
         }
 
-        const games = this.state.setupState == SetupState.Ready
-                          ? (<Games appContext={this.m_appContext} bracketName="T9"/>)
+        const games = this.m_appContext.WorkbookSetupState == SetupState.Ready
+                          ? (<Games />)
                           : "";
 
         const maybeToolbar =
-            this.state.setupState == SetupState.Ready
-                ? (<Toolbar message={""} appContext={this.m_appContext} items={this.state.mainToolbar} alignment="center"/>)
+            this.m_appContext.WorkbookSetupState == SetupState.Ready
+                ? (<Toolbar message={""} items={this.state.mainToolbar} alignment="center"/>)
                 : "";
         const versionLabelProps: CSS.Properties =
         {
@@ -648,7 +841,33 @@ export default class App extends React.Component<AppProps, AppState>
         {
             root: { overflow: 'auto' }
         };
+        const welcomeItemStyle: IStackItemStyles =
+        {
+            root: { overflow: 'auto', padding: "1rem" }
+        };
 
+
+
+        const customOptionText =
+            this.state.customBracketOptions.length > 0
+                ? (<p>If you want to use a custom-built bracket, you can load the bracket by clicking on <em>Load Custom Brackets</em></p>)
+                : (<span />);
+
+        const welcome = this.m_appContext.WorkbookSetupState == SetupState.Ready || this.m_appContext.WorkbookSetupState == "U"
+            ? ""
+            : (
+                <Stack.Item styles={welcomeItemStyle}>
+                    <h1>Welcome!</h1>
+                    <p>
+                    </p>
+                    <p>To get started, choose the size of your bracket above and then click
+                        the <em>Build This Bracket!</em> button!</p>
+                    {customOptionText}
+                    <p>For help, click on the ? button on the toolbar, or just hover over a button to get
+                        a tip about what it does.
+                    </p>
+                </Stack.Item>
+            );
         const stackStyles: IStackStyles =
         {
             root:
@@ -657,38 +876,42 @@ export default class App extends React.Component<AppProps, AppState>
             }
         };
 
+        const debugToolbar = s_staticConfig.isLocalHost
+            ? (<Toolbar alignment="start" message={""} items={this.state.debugToolbar} />)
+            : (<span />);
+
         return (
             <div>
-                <Stack styles={stackStyles}>
-                    <Stack.Item styles={headerItemStyle}>
-                        <LogoHeader/>
-                        <Toolbar alignment="start" message={""} appContext={this.m_appContext} items={this.state.topToolbar}/>
-                    </Stack.Item>
-                    <Progress
-                        title=""
-                        logo={null}
-                        message="Working on it..."
-                        initialVisibility={false}
-                        appContext={this.m_appContext}
-                    />
-                    <Stack.Item styles={bodyHeaderItemStyle}>
-                        <HeroList message={this.state.heroTitle} items={this.state.heroList} appContext={this.m_appContext} heroListFormat={this.state.heroListFormat}>
-                            {insertBracketChooserMaybe()}
-                        </HeroList>
-                        {maybeToolbar}
-                    </Stack.Item>
-                    <Stack.Item styles={bodyItemStyle}>
-                        <div style={ gamesStyle }>
-                            {games}
-                        </div>
-                    </Stack.Item>
-                    <Stack.Item styles={footerItemStyle}>
-                        <StatusBox appContext={this.m_appContext}/>
-                        <div style={versionLabelProps}>
-                            {App.version}
-                        </div>
-                    </Stack.Item>
-                </Stack>
+                <TheAppContext.Provider value={this.m_appContext}>
+                    <About closeDelegate={this.hideAboutDialog.bind(this)} showDialog={this.state.aboutShowing} />
+                    <Stack styles={stackStyles}>
+                        <Stack.Item styles={headerItemStyle}>
+                            <LogoHeader/>
+                            <Toolbar alignment="start" message={""} items={this.state.topToolbar} />
+                            {debugToolbar}
+                        </Stack.Item>
+                        <Progress
+                            title=""
+                            logo={null}
+                            message="Working on it..."
+                            initialVisibility={false}/>
+                        <Stack.Item styles={bodyHeaderItemStyle}>
+                            <HeroList message={this.state.heroTitle} items={this.state.heroList} heroListFormat={this.state.heroListFormat}>
+                                {insertBracketChooserMaybe()}
+                            </HeroList>
+                            {maybeToolbar}
+                        </Stack.Item>
+                        {welcome}
+                        <Stack.Item styles={bodyItemStyle}>
+                            <div style={ gamesStyle }>
+                                {games}
+                            </div>
+                        </Stack.Item>
+                        <Stack.Item styles={footerItemStyle}>
+                            <StatusBox/>
+                        </Stack.Item>
+                    </Stack>
+                </TheAppContext.Provider>
             </div>
         );
     }

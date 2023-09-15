@@ -1,36 +1,54 @@
+import { s_staticConfig } from "../StaticConfig";
 import { JsCtx } from "./JsCtx";
 
 export interface PopulateCacheDelegate
 {
-    (context: JsCtx): Promise<any>;
+    (context: JsCtx): Promise<{ type: ObjectType, o: any }>;
 }
 
 export interface PopulateCacheWithArrayDelegate
 {
-    (context: JsCtx): Promise<any[]>;
+    (context: JsCtx): Promise<{ type: ObjectType, o: any }[]>;
+}
+
+export class ObjectType
+{
+    static Null = null;
+    static JsObject = "JS";
+    static TrObject = "TR";
+}
+
+export class CacheObject
+{
+    type: ObjectType;
+    o: any;
+
+    constructor(type: ObjectType, o: any)
+    {
+        this.type = type;
+        this.o = o;
+    }
 }
 
 class CacheItem
 {
-    m_objects: any[];
+    m_objects: CacheObject[];
 
-    get Objects(): any[] { return this.m_objects; }
+    get Objects(): CacheObject[] { return this.m_objects; }
 
-    static CreateFromObject(object: any): CacheItem
+    static CreateFromObject(o: CacheObject): CacheItem
     {
         const cacheItem: CacheItem = new CacheItem();
 
-        cacheItem.m_objects = [object];
+        cacheItem.m_objects = [o];
         return cacheItem;
     }
 
-    static CreateFromObjects(objects: any[]): CacheItem
+    static CreateFromObjects(objects: CacheObject[]): CacheItem
     {
         const cacheItem: CacheItem = new CacheItem();
 
-        cacheItem.m_objects = [];
-        for (let object of objects)
-            cacheItem.m_objects.push(object);
+        cacheItem.m_objects = [...objects];
 
         return cacheItem;
     }
@@ -46,26 +64,33 @@ export class TrackingCache
         const bkmk: string = `__bkmk:${bookmark}`;
 
         this.m_order.push(bkmk);
-        console.log(`push bookmark: ${bkmk}`);
+        if (s_staticConfig.logTrackingCache)
+            console.log(`push bookmark: ${bkmk}`);
     }
 
-    addTrackedItems(context: JsCtx, key: string, items: any[])
+    addCacheObjects(context: JsCtx, key: string, items: CacheObject[])
     {
 //        if (this.m_trackedItems.has(key))
 //        {
 //            console.log(`tracking an item already tracked: [${key}]->${item}`)
 //        }
 
-//        console.log(`adding tracked item key ${key}, type ${typeof (item)}`);
         for (let item of items)
         {
+            if (s_staticConfig.logTrackingCache)
+                console.log(`adding tracked item key ${key}, type ${typeof (item.o)}`);
+
+            if (item.type != ObjectType.JsObject)
+                continue;
+            
             try
             {
-                context.Ctx.trackedObjects.add(item);
+                context.Ctx.trackedObjects.add(item.o);
             }
             catch (e)
             {
-                console.log(`caught ${e} trying to track ${key}`);
+                if (s_staticConfig.logTrackingCache)
+                    console.log(`caught ${e} trying to track ${key}`);
                 return; // don't record this as tracked...'
             }
         }
@@ -73,19 +98,26 @@ export class TrackingCache
         this.m_order.push(key);
     }
 
-    addTrackedItem(context: JsCtx, key: string, item: any)
+    addCacheObject(context: JsCtx, key: string, o: CacheObject)
     {
-        this.addTrackedItems(context, key, [item])
+        this.addCacheObjects(context, key, [o])
     }
 
-    releaseItems(context: JsCtx, key: string)
+    releaseCacheObjects(context: JsCtx, key: string)
     {
         const item: CacheItem = this.m_trackedItems.get(key);
 
-        //            console.log(`releasing tracked item key ${key}, type ${typeof (item)}`);
+        // item could still be null here -- it might have been released
+        if (item == null)
+            return;
+
+        if (s_staticConfig.logTrackingCache)
+            console.log(`releasing tracked item key ${key}, type ${typeof (item)}`);
+
         for (let object of item.Objects)
         {
-            context.Ctx.trackedObjects.remove(object);
+            if (object.type == ObjectType.JsObject)
+                context.Ctx.trackedObjects.remove(object.o);
         }
 
         this.m_trackedItems.set(key, null);
@@ -101,7 +133,8 @@ export class TrackingCache
 
             if (bookmark != null && bookmark == key)
             {
-                console.log(`released until: ${bookmark}`);
+                if (s_staticConfig.logTrackingCache)
+                    console.log(`released until: ${bookmark}`);
                 return;
             }
 
@@ -111,7 +144,7 @@ export class TrackingCache
                 continue;
             }
 
-            this.releaseItems(context, key);
+            this.releaseCacheObjects(context, key);
         }
 
         this.m_trackedItems.clear();
@@ -123,17 +156,18 @@ export class TrackingCache
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: TrackingCache.getTrackedItemOrNull
+        %%Function: TrackingCache.getCacheObjectOrNull
 
         returns a single tracked object. if there are multipe objects associated
         with this key, it will return the first one.
     ----------------------------------------------------------------------------*/
-    getTrackedItemOrNull(key: string): any
+    getCacheObjectOrNull(key: string): CacheObject | null
     {
         if (this.m_trackedItems.has(key))
         {
             const item: CacheItem = this.m_trackedItems.get(key);
 
+            // item could still be null here -- it might have been released
             if (item == null)
                 return null;
 
@@ -143,49 +177,77 @@ export class TrackingCache
         return null;
     }
 
-    getTrackedItemsOrNull(key: string): any[]
+    getCacheObjectsOrNull(key: string): CacheObject[] | null
     {
         if (this.m_trackedItems.has(key))
         {
             const item:CacheItem = this.m_trackedItems.get(key);
 
+            // item could still be null here -- it might have been released
             if (item == null)
                 return null;
 
             return item.Objects;
         }
-            
+
         return null;
     }
 
 
-    async getTrackedItem(context: JsCtx, key: string, del: PopulateCacheDelegate): Promise<any>
+    async getCacheItemOrPopulate(context: JsCtx, key: string, del: PopulateCacheDelegate): Promise<CacheObject | null>
     {
-        let val: any = this.getTrackedItemOrNull(key);
+        let val: CacheObject = this.getCacheObjectOrNull(key);
 
         if (val != null)
             return val;
 
         val = await del(context);
 
-        if (val != null)
-            this.addTrackedItem(context, key, val);
+        if (val && val.type != ObjectType.Null)
+            this.addCacheObject(context, key, val);
 
         return val;
     }
 
-    async getTrackedItems(context: JsCtx, key: string, del: PopulateCacheWithArrayDelegate): Promise<any[]>
+    async getCacheObjectsOrPopulate(context: JsCtx, key: string, del: PopulateCacheWithArrayDelegate): Promise<CacheObject[] | null>
     {
-        let val: any[] = this.getTrackedItemsOrNull(key);
-
-        if (val != null)
-            return val;
-
-        const vals: any[] = await del(context);
+        let vals: CacheObject[] = this.getCacheObjectsOrNull(key);
 
         if (vals != null)
-            this.addTrackedItems(context, key, vals);
+            return vals;
 
-        return val;
+        vals = await del(context);
+
+        if (vals != null)
+            this.addCacheObjects(context, key, vals);
+
+        return vals;
+    }
+
+    compareKeyOrder(left: string, right: string): number
+    {
+        let iLeft;
+        let iRight;
+
+        for (let i = 0; i < this.m_order.length; i++)
+        {
+            const check = this.m_order[i];
+
+            if (check == left)
+                iLeft = i;
+            if (check == right)
+                iRight = i;
+        }
+
+        if (iLeft == iRight)
+            return 0;
+
+        if (iLeft == undefined)
+            return -iRight;
+
+        if (iRight == undefined)
+            return iLeft;
+            
+        return iLeft - iRight;
     }
 }
