@@ -1,6 +1,8 @@
 import * as CSS from "csstype";
 import * as React from "react";
 
+import '../taskpane.css'
+
 import { DirectionalHint } from "@fluentui/react";
 
 import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
