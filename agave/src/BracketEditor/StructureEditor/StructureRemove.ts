@@ -17,6 +17,53 @@ import { Grid, GridColumnType } from "../Grid";
 import { GridItem } from "../GridItem";
 import { _undoManager } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
+import { s_staticConfig } from "../../StaticConfig";
+import { GridChange, GridChangeOperation } from "../GridChange";
+import { StructureEditor } from "./StructureEditor";
+import { Intentions } from "../../Interop/Intentions/Intentions";
+import { GameId } from "../GameId";
+
+export class RemovedGameValues
+{
+    m_mapGameIdValues = new Map<number, any[][]>();
+
+    addGameValues(id: GameId, values: any[][])
+    {
+        this.m_mapGameIdValues.set(id.Value, values);
+    }
+
+    getGameValues(id: GameId): any[][]
+    {
+        if (this.m_mapGameIdValues.has(id.Value))
+            return this.m_mapGameIdValues.get(id.Value);
+
+        return null;
+    }
+
+    getTopScoreOrEmpty(id: GameId): string
+    {
+        if (id && this.m_mapGameIdValues.has(id.Value))
+            return this.m_mapGameIdValues.get(id.Value)[0][1];
+
+        return "";
+    }
+
+    getBottomScoreOrEmpty(id: GameId): string
+    {
+        if (id && this.m_mapGameIdValues.has(id.Value))
+        {
+            const values = this.m_mapGameIdValues.get(id.Value);
+
+            // if it was too small to have a bottom team, return empty
+            if (values.length < 9)
+                return "";
+
+            return values[values.length - 1][1];
+        }
+
+        return "";
+    }
+}
 
 export class StructureRemove
 {
@@ -128,28 +175,9 @@ export class StructureRemove
         //            context.Ctx.trackedObjects.remove(mergedRange);
         //            context.Ctx.trackedObjects.remove(sheet);
 
-
         // lastly, deal with any named ranges in the range (the caller may have already dealt
         // with the games expected ranges
-        const names = await context.getTrackedItemOrPopulate(
-            "workbookNamesItems",
-            async (context): Promise<any> =>
-            {
-                context.Ctx.workbook.load("names");
-                await context.sync("GTI names");
-                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
-            });
-
-        for (let _item of names)
-        {
-            if (_item.type == Excel.NamedItemType.error)
-                tns.push(TnDeleteGlobalName.Create(_item.name));
-            else if (_item.type == Excel.NamedItemType.range)
-            {
-                if (RangeInfo.isOverlapping(rangeInfo, Ranges.createRangeInfoFromFormula(_item.formula)) != RangeOverlapKind.None)
-                    tns.push(TnDeleteGlobalName.Create(_item.name));
-            }
-        }
+        tns.push(...await Ranges.tnsDeleteOverlappingGlobalNames(context, rangeInfo));
         return tns;
     }
 
@@ -177,6 +205,11 @@ export class StructureRemove
         }
         else
         {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("missed cache in getTeamSourceNameOverrideValueForNamedRange");
+            }
             let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
             if (range == null)
@@ -224,6 +257,11 @@ export class StructureRemove
         }
         else
         {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("missed cache in getTeamSourceNameValueForNamedRange");
+            }
             let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
             if (range == null)
@@ -267,15 +305,14 @@ export class StructureRemove
                     [],
                     [f2[0][0]]
                 ];
-//            formulas.push([]);
-//            formulas[0] = [];
-//            formulas[0].push(f1[0][0]);
-//            formulas.push([]);
-//            formulas.push([]);
-//            formulas[2].push(f2[0][0]);
         }
         else
         {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("missed cache in getFieldAndTimeOverrideValuesForNamedRange");
+            }
             let range: Excel.Range = await Ranges.getRangeForNamedCell(context, cellName);
 
             if (range == null)
@@ -328,19 +365,19 @@ export class StructureRemove
         if (overrideText1 && overrideText1 != null && overrideText1 != "")
             map.push(
                 {
-                    teamNumber: FormulaBuilder.getTeamNumberFromTeamNum(game.TopTeamName),
+                    teamId: game.TopTeamName,
                     name: overrideText1,
                     priority: 0
                 });
         if (overrideText2 && overrideText2 != null && overrideText2 != "")
             map.push(
                 {
-                    teamNumber: FormulaBuilder.getTeamNumberFromTeamNum(game.BottomTeamName),
+                    teamId: game.BottomTeamName,
                     name: overrideText2,
                     priority: 0
                 });
 
-        await GameDataSources.updateGameDataSourcesTeamNames(context, map);
+        tns.push(...await GameDataSources.updateGameDataSourcesTeamNames(context, map));
         if (field && field != null && field != "")
             tns.push(...await GameDataSources.updateGameInfo(context, game.GameId.GameNum, field, time, game.SwapTopBottom));
 
@@ -358,17 +395,11 @@ export class StructureRemove
     {
         const tns = [];
 
-        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.TopTeamCellName) != null)
-            tns.push(TnDeleteGlobalName.Create(game.TopTeamCellName));
-        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.BottomTeamCellName) != null)
-            tns.push(TnDeleteGlobalName.Create(game.BottomTeamCellName));
-        if (await RangeInfo.getRangeInfoForNamedCellFaster(context, game.GameNumberCellName) != null)
-            tns.push(TnDeleteGlobalName.Create(game.GameNumberCellName));
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.BottomTeamCellName));
+        tns.push(...await Ranges.tnsDeleteGlobalName(context, game.GameNumberCellName));
 
         return tns;
-//        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
-//        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
-//        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
     }
 
     /*----------------------------------------------------------------------------
@@ -408,16 +439,6 @@ export class StructureRemove
 
             if (!liteRemove)
                 tns.push(...await this.removeNamedRanges(context, game));
-            /*
-                        // obliterate can't deal with the named ranges (there's no way to map
-                        // range back to named item), but we know the names, so we can delete them
-                        AppContext.checkpoint("remgm.6");
-                        await Ranges.ensureGlobalNameDeleted(context, game.TopTeamCellName);
-                        AppContext.checkpoint("remgm.7");
-                        await Ranges.ensureGlobalNameDeleted(context, game.BottomTeamCellName);
-                        AppContext.checkpoint("remgm.8");
-                        await Ranges.ensureGlobalNameDeleted(context, game.GameNumberCellName);
-                        AppContext.checkpoint("remgm.9");*/
         }
 
         AppContext.checkpoint("remgm.4");
@@ -428,8 +449,10 @@ export class StructureRemove
         return tns;
     }
 
-    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo)
+    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo, removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
+        const tns: IIntention[] = [];
+
         if (game.IsBroken)
         {
             let topRow = Number.MAX_VALUE;
@@ -469,8 +492,9 @@ export class StructureRemove
 
             rangeSelected = new RangeInfo(topRow, bottomRow - topRow + 1, firstCol, lastCol - firstCol + 1);
             // can't let the normal (undoable) remove happen. need to obliterate the selection
-            await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/);
-            return;
+            tns.push(...await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/));
+
+            return tns;
         }
 
         // if we can't bind to the game, and if the selection is a single cell, then
@@ -481,7 +505,7 @@ export class StructureRemove
                 [`Cannot find game ${game.GameId.Value} in the bracket`],
                 { topic: HelpTopic.FAQ_BrokenBracket });
 
-            return;
+            return tns;
         }
 
         // find the given game in the grid
@@ -495,9 +519,21 @@ export class StructureRemove
 
             // remove won't change any field/times
             _undoManager.setUndoGrid(grid, []);
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName);
-            return;
+
+            const changes: GridChange[] = grid.diff(gridNew, game.BracketName);
+
+            for (let item of changes)
+            {
+                if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
+                    throw new Error("can't have an insert operation when only removing games");
+
+                tns.push(...await ApplyGridChange.executeRemoveChange(appContext, context, item, game.BracketName, removedGameValues));
+            }
+
+            return tns;
         }
+
+        return tns;
     }
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.findAndRemoveGame
@@ -510,7 +546,7 @@ export class StructureRemove
         If there is no selected range, then find the given game and remove it.
 
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
+    static async findAndRemoveGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string, removedGameValues?: RemovedGameValues)
     {
         const bookmark: string = "findAndRemoveGame";
 
@@ -557,15 +593,19 @@ export class StructureRemove
 
         _TimerStack.popTimer();
 
+        const tns: Intentions = new Intentions();
+
         _TimerStack.pushTimer("removeBoundGames");
         for (let _game of games)
-            await this.removeBoundGame(appContext, context, grid, _game, rangeSelected);
+            tns.AddTns(await this.removeBoundGame(appContext, context, grid, _game, rangeSelected, removedGameValues));
         _TimerStack.popTimer();
 
         // last, obliterate the rest of the range
         _TimerStack.pushTimer("obliterate selection");
         if (!rangeSelected.IsSingleCell)
-            await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/);
+            tns.AddTns(await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/));
         _TimerStack.popTimer();
+
+        await tns.Execute(context);
     }
 }

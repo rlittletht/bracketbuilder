@@ -61,6 +61,13 @@ module.exports = async (env, options) =>
                         filename: "assets/[name][ext][query]",
                     },
                 },
+                {
+                    test: /\.css$/,
+                    use: [
+                        'style-loader',
+                        'css-loader'
+                    ]
+                }
             ],
         },
         plugins: [
@@ -106,7 +113,7 @@ module.exports = async (env, options) =>
                 "Access-Control-Allow-Origin": "*",
             },
             https: env.WEBPACK_BUILD || options.https !== undefined ? options.https : await getHttpsOptions(),
-            port: process.env.npm_package_config_dev_server_port || 3000,
+            port: process.env.npm_package_config_dev_server_port || 3000
         },
     };
 

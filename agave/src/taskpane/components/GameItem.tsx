@@ -14,7 +14,6 @@ export interface GameItemProps
 {
     idx: number;
     game: IBracketGame;
-    bracketName: string;
     linkedToGrid: boolean;
     teachableAdd: TeachableActiveDelegate;
     teachableRemove: TeachableActiveDelegate;
@@ -46,7 +45,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
 
     static async DoRemoveGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
-        _TimerStack.pushTimer("DoRemoveGame");
+        _TimerStack.pushTimer("DoRemoveGame", true);
         appContext.Teaching.clearCoachmark();
         await StructureEditor.findAndRemoveGameClick(appContext, bracketGame);
         _TimerStack.popTimer();
@@ -94,7 +93,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 )
                 : ( <span/> );
 
-        const dirty =
+        const dirty = 
             this.props.game.NeedsDataPull && !this.props.game.IsBroken
                 ? (
                     <Teachable
@@ -102,7 +101,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                         idx={this.props.idx}
                         isWide={true}
                         title={"Needs updated"}
-                        text={"Some part of this game was manually changed, like the team name, field, or time. You can update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar. Its next to the undo and redo buttons."}
+                        text={"Some part of this game was directly edited, like team name, field, or time. Update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar."}
                         visibleDelay={1000}
                         directionalHint={DirectionalHint.rightBottomEdge}>
                         <FontIcon aria-label="Dirty" iconName="branchfork2" className={iconColors.branchColor}></FontIcon>

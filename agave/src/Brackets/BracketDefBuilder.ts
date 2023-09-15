@@ -44,6 +44,24 @@ export class BracketDefBuilder
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: BracketDefBuilder.getTeamNames
+    ----------------------------------------------------------------------------*/
+    static getTeamNames(bracket: BracketDefinition): string[]
+    {
+        const teams: string[] = [];
+
+        for (let game of bracket.games)
+        {
+            if (BracketManager.IsTeamSourceStatic(game.topSource))
+                teams.push(game.topSource);
+            if (BracketManager.IsTeamSourceStatic(game.bottomSource))
+                teams.push(game.bottomSource);
+        }
+
+        return teams;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getStaticAvailableBrackets
 
         return an array of bracket options for the static brackets we can create
@@ -77,7 +95,7 @@ export class BracketDefBuilder
         const actualSource = (placement == TeamPlacement.Top) ? targetGame.topSource : targetGame.bottomSource;
 
         if (actualSource != sourceExpected)
-            throw new Error(`sourceExpected(${sourceExpected}) != actual(${actualSource}))`);
+            throw new Error(`advance to game G${advanceNum.GameId.Value} has wrong source: sourceExpected(${sourceExpected}) != actual(${actualSource}))`);
     }
 
     static verifySourceAdvanceCorrect(games: GameDefinition[], advanceExpected: string, source: string)
@@ -138,6 +156,23 @@ export class BracketDefBuilder
 
                 if (!isChampionship && !BracketManager.IsTeamSourceStatic(gameDef.bottomSource))
                     this.verifySourceAdvanceCorrect(def.games, `B${new GameNum(num).GameId.Value}`, gameDef.bottomSource);
+
+                const teams = this.getTeamNames(def);
+
+                if (teams.length != def.teamCount)
+                    throw new Error(`Number of defined teams ${teams.length} doesn't equal the team bracket size ${def.teamCount}`);
+
+                const mapTeamPresent = new Map<string, number>();
+
+                for (let team of teams)
+                {
+                    const check = team.toUpperCase();
+
+                    if (mapTeamPresent.has(check))
+                        throw new Error(`Found team ${team} playing for the first time more than once in the bracket`);
+
+                    mapTeamPresent.set(check, 1);
+                }
             }
             catch (e)
             {
@@ -152,11 +187,8 @@ export class BracketDefBuilder
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getBracketDefinition
     ----------------------------------------------------------------------------*/
-    static getBracketDefinition(bracketTableName: string): BracketDefinition
+    static getStaticBracketDefinition(bracketTableName: string): BracketDefinition
     {
-        if (_bracketManager.IsCached(bracketTableName))
-            return _bracketManager.Bracket;
-
         let match: BracketDefinition = null;
 
         s_brackets.forEach(
@@ -171,6 +203,10 @@ export class BracketDefBuilder
         return match;
     }
 
+    static getStaticBrackets(): BracketDefinition[]
+    {
+        return s_brackets;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.insertBracketDefinitionAtRow
@@ -190,8 +226,12 @@ export class BracketDefBuilder
         const rowLastTableData: number = rowFirstTableData + bracketDefinition.games.length - 1;
         const rowCheckLines: number = rowLastTableData + 2;
 
-        let rng: Excel.Range = sheet.getCell(row, 1);
-        rng.values = [[bracketDefinition.name]];
+        let rng: Excel.Range = sheet.getRangeByIndexes(row, 1, 1, 3);
+        rng.values = [[bracketDefinition.name, "", `${bracketDefinition.teamCount} Team Double Elimination Bracket`]];
+
+        rng = sheet.getRangeByIndexes(row, 3, 1, 2);
+        rng.format.font.bold = true;
+
         await context.sync();
 
         // create an empty table for the bracket
@@ -235,8 +275,8 @@ export class BracketDefBuilder
                 ""
             ],
             [
-                `=(${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2`,
-                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"Team*")`
+                `=INT((${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2)`,
+                `=COUNTA(${bracketDefinition.tableName}[[Top]:[Bottom]])-${Ranges.addressFromCoordinates([rowCheckLines + 2, 2], null)}-${Ranges.addressFromCoordinates([rowCheckLines + 3, 2], null)}`
             ],
             [
                 `=${Ranges.addressFromCoordinates([rowCheckLines + 1, 1], null)}`,
@@ -288,16 +328,23 @@ export class BracketDefBuilder
     ----------------------------------------------------------------------------*/
     static async buildSpecificBracketCore(context: JsCtx, appContext: IAppContext, fastTables: IFastTables)
     {
-        const bracketChoice: string = appContext.getSelectedBracket();
-        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
+        const bracketChoice: string = appContext.SelectedBracket;
 
-        let bracketTable: Excel.Table =
-            await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketChoice);
+        let bracketDefinition: BracketDefinition = _bracketManager.getBracket(bracketChoice);
 
-        const bracketDefinition: BracketDefinition = this.getBracketDefinition(`${bracketChoice}Bracket`);
-
-        if (bracketTable == null)
+        if (bracketDefinition == null)
         {
+            // we don't have this bracket cached yet, add the static definition to the workbook
+            const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
+
+            let bracketTable: Excel.Table =
+                await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketChoice);
+
+            bracketDefinition = this.getStaticBracketDefinition(`${bracketChoice}Bracket`);
+
+            if (bracketTable != null)
+                throw new Error("should not have already had a table for this bracket -- the bracket manager should have already loaded it!");
+
             if (bracketDefinition == null)
             {
                 appContext.Messages.error([`Don't know how to build bracket for choice: '${bracketChoice}'`]);
@@ -307,6 +354,10 @@ export class BracketDefBuilder
             const rowFirst: number = await Sheets.findFirstEmptyRowAfterAllData(context, bracketsSheet, 35);
 
             await this.insertBracketDefinitionAtRow(context, bracketsSheet, fastTables, rowFirst + 2, bracketDefinition);
+
+            // now we can load this in the bracket manager
+            _bracketManager.setDirty(true);
+            await _bracketManager.populateBracketsIfNecessary(context, bracketChoice);
         }
 
         await GridBuilder.buildGridSheet(context);

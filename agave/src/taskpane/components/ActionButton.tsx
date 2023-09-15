@@ -37,11 +37,8 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
 
     async onButtonClick()
     {
-        _TimerStack.clear();
-        _TimerStack.pushTimer("actionButton");
+        // don't add things around the delegate without considering race conditions!
         await this.props.delegate(this.context, this.state.bracketGame);
-        _TimerStack.popTimer();
-        _TimerStack.clear();
     }
 
     render()

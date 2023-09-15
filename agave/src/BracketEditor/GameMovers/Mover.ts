@@ -170,13 +170,10 @@ export class Mover
 
         if (options.length > 0)
         {
-            if (s_staticConfig.logMoveTree)
+            for (let item of options)
             {
-                for (let item of options)
-                {
-                    if (item.rank != -1)
-                        this.pushOption(item);
-                }
+                if (item.rank != -1)
+                    this.pushOption(item);
             }
             return true;
         }

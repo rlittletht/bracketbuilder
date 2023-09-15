@@ -10,6 +10,7 @@
     --header-padding-top: 0rem;
     --body-padding: 1rem;
     --body-width: calc(var(--main-width) + 2 * var(--body-padding));
+    --scrollable-bottom-margin: 1.25em;
 }
 
 html {
@@ -54,12 +55,67 @@ article {
     flex-direction: row;
     max-width: var(--article-width);
     width: var(--article-width);
-    height: calc(100% - 2 * var(--article-padding));
+    --height: calc(100% - 2 * var(--article-padding));
     padding: var(--article-padding);
     padding-top: 0;
     padding-right: calc(2 * var(--article-padding));
     margin: 0;
+    margin-bottom: var(--scrollable-bottom-margin);
     overflow-y: auto;
+}
+
+section {
+    clear: both;
+}
+
+content {
+    display: block;
+}
+
+heading.active, heading:hover {
+    border-radius: 10%;
+    background: radial-gradient(rgba(255, 255, 255, 1),rgba(255, 255, 255, .05));
+}
+
+heading {
+    color: #111;
+    line-height: 125%;
+    margin-top: 0rem;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+article > heading {
+    font-size: 4rem;
+    margin-top: 0;
+    font-weight: bolder;
+    font-variant: small-caps;
+}
+
+article > section > heading {
+    font-size: 3.25rem;
+}
+
+article > section > content > section > heading {
+    font-size: 2.5rem;
+    margin-top: 2rem;
+}
+
+article > section > content > section > content > section > heading {
+    font-size: 2rem;
+    margin-top: 1rem;
+}
+
+article > section > content > section > content > section > content > section > heading {
+    font-size: 1.7rem;
+    margin-top: 1rem;
+}
+
+article > section > content > section > content > section > content > section > content > section > heading {
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    font-style: italic;
 }
 
 footer {
@@ -84,6 +140,38 @@ zoomable img {
         top: 2vh;
     }
 
+zoomableInline {
+}
+
+    zoomableInline img {
+        transition: transform 0.25s ease;
+        position: relative;
+        top: .4rem;
+        background: red;
+    }
+
+        zoomableInline img:active {
+            max-width: 45vw;
+            max-height: 45vh;
+            position: absolute;
+            left: 25vw;
+            top: 50vh;
+        }
+
+zoomableTall img {
+    transition: transform 0.25s ease;
+}
+
+    zoomableTall img:active {
+        width: auto;
+        height: 100%;
+        max-width: 90vw;
+        max-height: 90vh;
+        position: absolute;
+        left: 10vw;
+        top: 2vh;
+    }
+
 steps {
     display: flex;
     vertical-align: middle;
@@ -99,30 +187,31 @@ iconic {
     background: white;
     height: 5rem;
     display: flex;
-
 }
 
 steps p {
     margin: 0;
 }
-    iconic img {
-        transition: transform 0.25s ease;
-        height: 4.9rem;
-        object-fit: contain;
-    }
 
-        iconic img:active {
-            width: 60vw;
-            height: 30vh;
-            position: relative;
-        }
+iconic img {
+    transition: transform 0.25s ease;
+    height: 4.9rem;
+    object-fit: contain;
+}
+
+    iconic img:active {
+        width: 60vw;
+        height: 30vh;
+        position: relative;
+    }
 
 nav {
     box-sizing: border-box;
     flex: 0 1 auto;
     width: var(--nav-width);
-    height: calc(100% - 2 * var(--nav-padding));
+    --height: calc(100% - 2 * var(--nav-padding));
     margin: 0;
+    margin-bottom: var(--scrollable-bottom-margin);
     overflow-y: auto;
 }
 
@@ -156,6 +245,11 @@ nav {
     nav > ul > ul > ul > li > a {
         font-variant: normal;
         font-size: 1rem;
+    }
+
+    nav > ul > ul > ul > ul > li > a {
+        font-variant: normal;
+        font-size: .9rem;
     }
 
     nav ul li a {
@@ -208,18 +302,81 @@ red {
     padding-left: .5rem;
 }
 
+skimmable{
+    font-weight: 700;
+}
+
+cmd {
+    font-style: italic;
+}
+
+prodRef {
+}
+
+eltRef {
+    font-style: italic;
+    font-variant: small-caps;
+}
+
+superEm {
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+dl {
+    display: flex;
+    flex-flow: row wrap;
+    --border: solid #333;
+    --border-width: 1px 1px 0 0;
+    margin-left: 1.5rem;
+}
+
+dt {
+    flex-basis: 10%;
+    padding: 2px 4px;
+    --background: #333;
+    text-align: left;
+    --color: #fff;
+}
+
+dd {
+    flex-basis: 80%;
+    flex-grow: 1;
+    margin: 0;
+    padding: 2px 4px;
+    --border-bottom: 1px solid #333;
+}
+
 img.logo {
     height: 3rem
 }
 
 floatNone {
-    display: flex;
-    padding: 0.25rem;
+    display: inline-block;
+    float: none;
 }
+
+    floatNone img {
+        position: relative;
+        top: .35rem;
+        line-height: 2rem;
+    }
 
 floatRight {
     float: right;
     padding-left: 1rem;
+}
+
+
+placeholder {
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    height: 5em;
+    width: 100%;
+    border: solid 2pt black;
+    display: flex;
+    background: white;
 }
 
 gallery {

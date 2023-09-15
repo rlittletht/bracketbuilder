@@ -38,7 +38,7 @@ export class StructureInsertTests
 
         const { insertAt, game } = setupTest(grid, gridExpected);
 
-        const { gridNew, failReason } = StructureInsert.buildNewGridForGameInsertAtSelection(insertAt, grid, game);
+        const { gridNew, failReason, selectRange } = StructureInsert.buildNewGridForGameInsertAtSelection(insertAt, grid, game);
 
         const rank: number = GridRanker.getGridRank(gridNew, bracket);
 

@@ -81,6 +81,9 @@ export class BracketInfoBuilder
         rngFieldsHeader.format.font.bold = true;
         rngFieldsHeader.format.font.size = 22;
 
+        GridBuilder.formatColumns(sheet, ["B:B"], 81);
+        GridBuilder.formatColumns(sheet, ["C:D"], 168);
+
         await context.sync();
     }
 }

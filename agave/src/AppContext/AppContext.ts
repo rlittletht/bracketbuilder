@@ -7,6 +7,7 @@ import { s_staticConfig } from "../StaticConfig";
 import { IAppContextMessages, AppContextMessages, SetMessageDelegate, ClearMessageDelegate } from "./AppContextMessages";
 import { IAppContextTeaching, AppContextTeaching } from "./AppContextTeaching";
 import { SetupState } from "../Setup";
+import { IAppStateAccess } from "./IAppStateAccess";
 
 
 export interface IAppContext
@@ -16,24 +17,21 @@ export interface IAppContext
 
     Messages: IAppContextMessages;
     Teaching: IAppContextTeaching;
+    AppStateAccess: IAppStateAccess;
 
-    setHeroListDirty(isDirty?: boolean);
-    /*async*/ rebuildHeroListIfNeeded(context: JsCtx);
-    getSelectedBracket();
+    get SelectedBracket(): string;
+    set SelectedBracket(bracket: string);
+    get WorkbookSetupState(): SetupState;
+    set WorkbookSetupState(state: SetupState);
+
     getGames(): IBracketGame[];
     setProgressVisible(visible: boolean);
     setProgressVisibilityDelegate(del: ProgressVisibilityDelegate);
-    get SetupStateFromState(): SetupState;
 }
 
-export interface RebuildHeroListDelegate
+export interface SetAppStateDelegate
 {
-    (context: JsCtx): void
-}
-
-export interface GetSelectedBracketDelegate
-{
-    (): string;
+    (state: boolean): void;
 }
 
 export interface GetGamesDelegate
@@ -55,13 +53,13 @@ export class AppContext implements IAppContext
 {
     Messages: AppContextMessages = new AppContextMessages();
     Teaching: AppContextTeaching;
+    AppStateAccess: IAppStateAccess = null;
 
+    m_selectedBracket: string = null;
+    m_setupState: SetupState = "U";
     m_durableState: DurableState = new DurableState();
-    m_heroListNeedsRebuilt: boolean = false;
 
     m_progressVisibilityDelegate: ProgressVisibilityDelegate;
-    m_rebuildHeroListDelegate: RebuildHeroListDelegate;
-    m_getSelectedBracket: GetSelectedBracketDelegate;
     m_getGames: GetGamesDelegate;
     m_getSetupStateDelegate: GetSetupStateDelegate;
 
@@ -73,14 +71,14 @@ export class AppContext implements IAppContext
         this.Teaching = new AppContextTeaching(this.m_durableState);
     }
 
-    get SetupStateFromState(): SetupState
+    get WorkbookSetupState(): SetupState
     {
-        return this.m_getSetupStateDelegate?.() ?? "U";
+        return this.m_setupState;
     }
 
-    async setHeroListDirty(isDirty?: boolean)
+    set WorkbookSetupState(state: SetupState)
     {
-        this.m_heroListNeedsRebuilt = isDirty ?? true;
+        this.m_setupState = state;
     }
 
     setProgressVisible(visible: boolean)
@@ -94,20 +92,14 @@ export class AppContext implements IAppContext
             console.log(message);
     }
 
-    async rebuildHeroListIfNeeded(context: JsCtx)
+    get SelectedBracket(): string
     {
-        if (this.m_heroListNeedsRebuilt)
-            await this.m_rebuildHeroListDelegate?.(context);
-
-        this.m_heroListNeedsRebuilt = false;
+        return this.m_selectedBracket;
     }
 
-    getSelectedBracket(): string
+    set SelectedBracket(bracket: string)
     {
-        if (this.m_getSelectedBracket)
-            return this.m_getSelectedBracket();
-
-        return "";
+        this.m_selectedBracket = bracket;
     }
 
     getGames(): IBracketGame[]
@@ -121,17 +113,13 @@ export class AppContext implements IAppContext
     setDelegates(
         addMessageDelegate: SetMessageDelegate,
         clearMessageDelegate: ClearMessageDelegate,
-        invalidateHeroList: RebuildHeroListDelegate,
-        getSelectedBracket: GetSelectedBracketDelegate,
         getGames: GetGamesDelegate,
-        getSetupState: GetSetupStateDelegate
-        )
+        appStateAccess: IAppStateAccess)
     {
         this.Messages.setMessageDelegates(addMessageDelegate, clearMessageDelegate);
-        this.m_rebuildHeroListDelegate = invalidateHeroList;
-        this.m_getSelectedBracket = getSelectedBracket;
         this.m_getGames = getGames;
-        this.m_getSetupStateDelegate = getSetupState;
+        this.AppStateAccess = appStateAccess;
+
     }
 
     setProgressVisibilityDelegate(progressVisibilityDelegate: ProgressVisibilityDelegate)

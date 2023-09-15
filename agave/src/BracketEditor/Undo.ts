@@ -105,7 +105,7 @@ export class UndoManager
         if (this.m_undoStack.length == 0)
             return;
 
-        let bracketName: string = await StructureEditor.getBracketName(context);
+        let bracketName: string = appContext.SelectedBracket;
         let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         let undoItem: UndoItem = this.m_undoStack.pop();
 
@@ -128,7 +128,7 @@ export class UndoManager
         if (this.m_redoStack.length == 0)
             return;
 
-        let bracketName: string = await StructureEditor.getBracketName(context);
+        let bracketName: string = appContext.SelectedBracket;
         let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         let undoItem: UndoItem = this.m_redoStack.pop();
 

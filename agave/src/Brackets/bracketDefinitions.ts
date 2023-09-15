@@ -220,7 +220,7 @@ export const s_brackets: BracketDefinition[] =
             { winner: "T7", loser: "B9", topSource: "Team 5", bottomSource: "Team 6" },
             { winner: "T13", loser: "T8", topSource: "Team 7", bottomSource: "Team 8" },
             { winner: "B13", loser: "T9", topSource: "W1", bottomSource: "Team 9" },
-            { winner: "t14", loser: "T12", topSource: "Team 10", bottomSource: "W2" },
+            { winner: "T14", loser: "T12", topSource: "Team 10", bottomSource: "W2" },
             { winner: "B14", loser: "B10", topSource: "W3", bottomSource: "Team 11" },
             { winner: "T11", loser: "", topSource: "L4", bottomSource: "L2" },
             { winner: "B11", loser: "", topSource: "L5", bottomSource: "L3" },
@@ -379,7 +379,47 @@ export const s_brackets: BracketDefinition[] =
                    { winner: "", loser: "", topSource: "W29", bottomSource: "" },                   // 30
                 ]
         },
+        {
+            name: "16 Team",
+            teamCount: 16,
+            tableName: "T16Bracket",
+            games:
+                [
+                    { winner: "T9", loser: "T13", topSource: "Team 1", bottomSource: "Team 2" },
+                    { winner: "B9", loser: "B13", topSource: "Team 3", bottomSource: "Team 4" },
+                    { winner: "T10", loser: "T14", topSource: "Team 5", bottomSource: "Team 6" },
+                    { winner: "B10", loser: "B14", topSource: "Team 7", bottomSource: "Team 8" },
+                    { winner: "T11", loser: "T15", topSource: "Team 9", bottomSource: "Team 10" },
+                    { winner: "B11", loser: "B15", topSource: "Team 11", bottomSource: "Team 12" },
+                    { winner: "T12", loser: "T16", topSource: "Team 13", bottomSource: "Team 14" },
+                    { winner: "B12", loser: "B16", topSource: "Team 15", bottomSource: "Team 16" },
+                    { winner: "T21", loser: "B20", topSource: "W1", bottomSource: "W2" },
+                    { winner: "B21", loser: "T19", topSource: "W3", bottomSource: "W4" },
+                    { winner: "T22", loser: "B18", topSource: "W5", bottomSource: "W6" },
+                    { winner: "B22", loser: "T17", topSource: "W7", bottomSource: "W8" },
+                    { winner: "B17", loser: "", topSource: "L1", bottomSource: "L2" },
+                    { winner: "T18", loser: "", topSource: "L3", bottomSource: "L4" },
+                    { winner: "B19", loser: "", topSource: "L5", bottomSource: "L6" },
+                    { winner: "T20", loser: "", topSource: "L7", bottomSource: "L8" },
+                    { winner: "T23", loser: "", topSource: "L12", bottomSource: "W13" },
+                    { winner: "B23", loser: "", topSource: "W14", bottomSource: "L11" },
+                    { winner: "T24", loser: "", topSource: "L10", bottomSource: "W15" },
+                    { winner: "B24", loser: "", topSource: "W16", bottomSource: "L9" },
+                    { winner: "T25", loser: "T27", topSource: "W9", bottomSource: "W10" },
+                    { winner: "B25", loser: "T26", topSource: "W11", bottomSource: "W12" },
+                    { winner: "B27", loser: "", topSource: "W17", bottomSource: "W18" },
+                    { winner: "B26", loser: "", topSource: "W19", bottomSource: "W20" },
+                    { winner: "T30", loser: "T29", topSource: "W21", bottomSource: "W22" },
+                    { winner: "B28", loser: "", topSource: "L22", bottomSource: "W24" },
+                    { winner: "T28", loser: "", topSource: "L21", bottomSource: "W23" },
+                    { winner: "B29", loser: "", topSource: "W27", bottomSource: "W26" },
+                    { winner: "B30", loser: "", topSource: "L25", bottomSource: "W28" },
+                    { winner: "T31", loser: "B31", topSource: "W25", bottomSource: "W29" },
+                    { winner: "T32", loser: "", topSource: "W30", bottomSource: "L30" },
+                    { winner: "", loser: "", topSource: "W31", bottomSource: "" },
 
+                ]
+        }
 ];
 
 

@@ -4,7 +4,7 @@ import * as React from "react";
 import { DirectionalHint, MessageBar, MessageBarType } from '@fluentui/react';
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { Coachstate } from "../../Coaching/Coachstate";
-import { IHelpInfo } from "../../Coaching/HelpInfo";
+import { IHelpInfo, HelpInfo } from "../../Coaching/HelpInfo";
 import { HelpLink } from "./HelpLink";
 import { Teachable, TeachableId } from "./Teachable";
 
@@ -130,7 +130,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
         const help =
             helpLink
                 ? (
-                    <HelpLink helpLink={helpLink} text={this.state.helpInfo.text}>
+                    <HelpLink helpLink={HelpInfo.BuildHelpLink(helpLink)} text={this.state.helpInfo.text}>
                         {this.state.helpInfo.node}
                     </HelpLink>)
                 : ( <span/>);
@@ -155,7 +155,7 @@ export class StatusBox extends React.Component<StatusBoxProps, StatusBoxState>
                 title={title}
                 text={text}
                 visibleDelay={500}
-                directionalHint={DirectionalHint.bottomRightEdge}
+                directionalHint={DirectionalHint.topAutoEdge}
                 isWide={true}>
                 {messageBar}
             </Teachable>

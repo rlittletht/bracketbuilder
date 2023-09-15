@@ -1,11 +1,11 @@
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources } from "../../Brackets/GameDataSources";
 import { OADate } from "../../Interop/Dates";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { JsCtx } from "../../Interop/JsCtx";
-import { Ranges } from "../../Interop/Ranges";
+import { Ranges, RangeInfo } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
 import { BracketGame, IBracketGame } from "../BracketGame";
 import { GameFormatting } from "../GameFormatting";
@@ -13,7 +13,12 @@ import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { UndoGameDataItem, UndoManager } from "../Undo";
 import { StructureInsert } from "./StructureInsert";
-import { StructureRemove } from "./StructureRemove";
+import { RemovedGameValues, StructureRemove } from "./StructureRemove";
+import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
+import { ObjectType } from "../../Interop/TrackingCache";
+import { RangeCaches } from "../../Interop/RangeCaches";
+import { TnSelect } from "../../Interop/Intentions/TnSelect";
+import { GridBuilder } from "../../Brackets/GridBuilder";
 
 export class ApplyGridChange
 {
@@ -22,14 +27,14 @@ export class ApplyGridChange
 
         Take two grids, diff them, and apply the changes
     ----------------------------------------------------------------------------*/
-    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string): Promise<UndoGameDataItem[]>
+    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string, selectRange?: RangeInfo): Promise<UndoGameDataItem[]>
     {
         // now, diff the grids
         const changes: GridChange[] = grid.diff(gridNew, bracketName);
 
         grid.logChanges(changes);
 
-        return await this.applyChanges(appContext, context, gridNew, changes, bracketName);
+        return await this.applyChanges(appContext, context, gridNew, changes, bracketName, selectRange);
     }
 
     /*----------------------------------------------------------------------------
@@ -38,7 +43,7 @@ export class ApplyGridChange
         if the Op is RemoveLite, there's really nothing to do -- the Insert is
         going to assume all the named ranges are already there
     ----------------------------------------------------------------------------*/
-    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string): Promise<IIntention[]>
+    static async executeRemoveChange(appContext: IAppContext, context: JsCtx, change: GridChange, bracketName: string, removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
         const tns: IIntention[] = [];
 
@@ -82,6 +87,11 @@ export class ApplyGridChange
         }
         else
         {
+            const areas: FastFormulaAreas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+
+            if (areas)
+                removedGameValues?.addGameValues(game.GameId, areas.getValuesForRangeInfo(game.FullGameRange));
+
             AppContext.checkpoint("appc.10");
             tns.push(...await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite));
             AppContext.checkpoint("appc.11");
@@ -97,8 +107,9 @@ export class ApplyGridChange
         the formulas and text. The names and structure are assumed to already
         be there.
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string): Promise<UndoGameDataItem>
+    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string, removedGameValues?: RemovedGameValues): Promise<{ undoItem: UndoGameDataItem, tns: IIntention[] }>
     {
+        const tns: IIntention[] = [];
         const bookmark: string = "executeAddChange";
 
         context.pushTrackingBookmark(bookmark);
@@ -108,25 +119,19 @@ export class ApplyGridChange
         {
             if (change.ChangeOp == GridChangeOperation.InsertLite)
                 // nothing to undo since there's no action...
-                return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
-
-            AppContext.checkpoint("appc.14.1");
-
-            const range: Excel.Range = Ranges.rangeFromRangeInfo(
-                context.Ctx.workbook.worksheets.getActiveWorksheet(),
-                change.Range);
+                return { undoItem: new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined), tns: tns };
 
             // just format the range as an underline
-            GameFormatting.formatConnectingLineRangeRequest(range);
+            tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(change.Range));
 
             const linesText = [];
             for (let i = 0; i < change.Range.ColumnCount; i++)
                 linesText.push(GameFormatting.s_mapGridColumnType.get(gridRef.getColumnType(change.Range.FirstColumn + i)));
 
-            range.formulas = [linesText];
+            tns.push(TnSetFormulas.Create(change.Range, [linesText]));
 
             AppContext.checkpoint("appc.14.2");
-            return new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined);
+            return { undoItem: new UndoGameDataItem(undefined, undefined, undefined, undefined, undefined), tns: tns };
         }
 
         let game: BracketGame = new BracketGame();
@@ -157,21 +162,23 @@ export class ApplyGridChange
 
             AppContext.checkpoint("appc.17");
 
-            undoGameDataItem =
-                await GameDataSources.updateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+            const { undoItem, tns: tnsUpdate }  =
+                GameDataSources.tnsUpdateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+
+            undoGameDataItem = undoItem;
+            tns.push(...tnsUpdate);
         }
 
         if (game.IsChampionship)
-            await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range);
+            tns.push(...await StructureInsert.insertChampionshipGameAtRange(appContext, context, game, change.Range));
         else
-            await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite);
+            tns.push(...await StructureInsert.insertGameAtRange(appContext, context, gridRef, game, change.Range, change.IsConnectedTop, change.IsConnectedBottom, change.ChangeOp == GridChangeOperation.InsertLite, removedGameValues));
 
         AppContext.checkpoint("appc.18");
 
         context.releaseCacheObjectsUntil(bookmark);
-        await context.sync("EAC release");
 
-        return undoGameDataItem;
+        return { undoItem: undoGameDataItem, tns: tns };
     }
 
     /*----------------------------------------------------------------------------
@@ -179,7 +186,7 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string): Promise<UndoGameDataItem[]>
+    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string, selectRange?: RangeInfo): Promise<UndoGameDataItem[]>
     {
         let undoGameDataItems: UndoGameDataItem[] = [];
 
@@ -188,7 +195,8 @@ export class ApplyGridChange
         _TimerStack.pushTimer("applyChanges:executeRemoveChange");
 
         const removeTns: Intentions = new Intentions();
-        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
+        await FastFormulaAreas.populateAllCaches(context);
+        const removedGameValues: RemovedGameValues = new RemovedGameValues();
 
         // do all the removes first
         for (let item of changes)
@@ -197,7 +205,7 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Insert || item.ChangeOp == GridChangeOperation.InsertLite)
                 continue;
 
-            removeTns.AddTns(await this.executeRemoveChange(appContext, context, item, bracketName));
+            removeTns.AddTns(await this.executeRemoveChange(appContext, context, item, bracketName, removedGameValues));
         }
 
         await removeTns.Execute(context);
@@ -208,6 +216,22 @@ export class ApplyGridChange
         // and now do all the adds
 
         _TimerStack.pushTimer("applyChanges:executeAddChange");
+
+        await RangeCaches.PopulateIfNeeded(context, appContext.SelectedBracket);
+        await FastFormulaAreas.populateAllCaches(context);
+
+        // populate the global names cache
+        await context.getTrackedItemOrPopulate(
+            "workbookNamesItems",
+            async (context): Promise<any> =>
+            {
+                context.Ctx.workbook.load("names");
+                await context.sync("GTI names");
+                return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
+            });
+
+        const addGameTns: Intentions = new Intentions();
+
         AppContext.checkpoint("appc.12");
         for (let item of changes)
         {
@@ -215,12 +239,19 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Remove || item.ChangeOp == GridChangeOperation.RemoveLite)
                 continue;
 
-            let undoGameDataItem: UndoGameDataItem =
-                await this.executeAddChange(appContext, context, gridRef, item, bracketName);
+            const { undoItem: undoGameDataItem, tns } =
+                await this.executeAddChange(appContext, context, gridRef, item, bracketName, removedGameValues);
 
+            addGameTns.AddTns(tns);
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))
                 undoGameDataItems.push(undoGameDataItem);
         }
+
+        if (selectRange)
+            addGameTns.Add(TnSelect.Create(selectRange.bottomLeft(), GridBuilder.SheetName));
+
+        await addGameTns.Execute(context);
+
         _TimerStack.popTimer();
 
         return undoGameDataItems;

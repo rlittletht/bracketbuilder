@@ -1,6 +1,6 @@
 import { AppContext } from "../AppContext/AppContext";
 import { BracketDefinition } from "../Brackets/BracketDefinitions";
-import { BracketManager } from "../Brackets/BracketManager";
+import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
 import { OADate } from "../Interop/Dates";
@@ -23,6 +23,7 @@ import { GridGameInsert } from "./GridGameInsert";
 import { GridItem } from "./GridItem";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
+import { HelpTopic } from "../Coaching/HelpInfo";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -117,6 +118,9 @@ export class Grid
     getDateFromGridColumn(column: number): Date
     {
         column = column - this.m_firstGridPattern.FirstColumn;
+
+        if (column < 0 || column >= this.m_datesForGrid.length || this.m_datesForGrid[column] == null)
+            return new Date();
 
         return this.m_datesForGrid[column];
     }
@@ -756,28 +760,17 @@ export class Grid
         return grid;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: Grid.getGridColumnDateValues
-
-        This requires thet m_firstGridPattern is already loaded (we will use the
-        first repeating column as the first column we need a date for)
-    ----------------------------------------------------------------------------*/
-    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    static getRowForGameDates(context: JsCtx, firstGridPattern: RangeInfo): number
     {
-        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        context.Ctx.trackedObjects.add(sheet);
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const columns: RangeInfo = firstGridPattern.offset(-firstGridPattern.FirstRow, firstGridPattern.FirstRow, 0, 1);
 
-        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
-        const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
-
-        rngColumns.load("values");
-        await context.sync();
+        const colData = areas.getValuesForRangeInfo(columns);
 
         // walk backwards up the column to find the first non-empty cell. This is the date row
-        const colData: any[][] = rngColumns.values;
         let rowDates: number = -1;
 
-        for (let i = this.m_firstGridPattern.FirstRow - 1; i >= 0; i--)
+        for (let i = firstGridPattern.FirstRow - 1; i >= 0; i--)
         {
             if (colData[i][0] != null && colData[i][0] != "")
             {
@@ -786,34 +779,95 @@ export class Grid
             }
         }
 
+        return rowDates;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getGridColumnDateValues
+
+        This requires thet m_firstGridPattern is already loaded (we will use the
+        first repeating column as the first column we need a date for)
+    ----------------------------------------------------------------------------*/
+    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    {
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
+        const areasMerges: Excel.RangeAreas = await context.getTrackedItemOrPopulate(
+            FastFormulaAreas.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+            async (context: JsCtx): Promise<CacheObject> =>
+            {
+                if (s_staticConfig.throwOnCacheMisses)
+                {
+                    debugger;
+                    throw new Error("cache miss on getGridColumnDateValues mergeAreas");
+                }
+
+                const areasMerges = FastFormulaAreas.requestMergedAreasType(context, FastFormulaAreasItems.GameGrid);
+                await context.sync("request merged areas cache miss");
+                return { type: ObjectType.JsObject, o: areasMerges };
+            });
+        let sheet: Excel.Worksheet = null;
+
+        let colData: any[][];
+        let dateValues: any[][];
+
+        const columns: RangeInfo = this.m_firstGridPattern.offset(-this.m_firstGridPattern.FirstRow, this.m_firstGridPattern.FirstRow, 0, 1);
+
+        if (areas)
+        {
+            colData = areas.getValuesForRangeInfo(columns);
+        }
+        else
+        {
+            if (s_staticConfig.throwOnCacheMisses)
+            {
+                debugger;
+                throw new Error("cache miss on getGridColumnDateValues");
+            }
+
+            sheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+            context.Ctx.trackedObjects.add(sheet);
+
+            const rngColumns: Excel.Range = Ranges.rangeFromRangeInfo(sheet, columns);
+
+            rngColumns.load("values");
+            await context.sync();
+            colData = rngColumns.values;
+        }
+
+        // walk backwards up the column to find the first non-empty cell. This is the date row
+        let rowDates = Grid.getRowForGameDates(context, this.m_firstGridPattern);
+
         if (rowDates == -1)
         {
-            context.Ctx.trackedObjects.remove(sheet);
-            throw new Error("couldn't find date for column");
+            if (sheet)
+                context.Ctx.trackedObjects.remove(sheet);
+
+            throw new Error("couldn't find row for dates");
         }
 
         let range: RangeInfo = new RangeInfo(rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
-        const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
-        let areas: Excel.RangeAreas = rng.getMergedAreasOrNullObject();
+        if (areas)
+        {
+            dateValues = areas.getValuesForRangeInfo(range);
+        }
+        else
+        {
+            const rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, range);
 
-        areas.load("areaCount");
-        areas.load("rowIndex");
-        areas.load("columnIndex");
-        areas.load("columnCount");
-        areas.load("areas");
-        rng.load("values");
-        await context.sync();
+            rng.load("values");
+            await context.sync();
+
+            dateValues = rng.values;
+        }
 
         // build an array of merged area mappings
-        const data: any[][] = rng.values;
+        let merges: number[] = Array.from({ length: dateValues[0].length }, () => 0);
 
-        let merges: number[] = Array.from({ length: data[0].length }, () => 0);
-
-        if (!areas.isNullObject)
+        if (!areasMerges.isNullObject)
         {
-            for (let i = 0; i < areas.areaCount; i++)
+            for (let i = 0; i < areasMerges.areaCount; i++)
             {
-                const rangeAreas: Excel.RangeCollection = areas.areas;
+                const rangeAreas: Excel.RangeCollection = areasMerges.areas;
                 const rangeArea: Excel.Range = rangeAreas.items[i];
 
                 let iMerge = rangeArea.columnIndex - range.FirstColumn;
@@ -830,9 +884,9 @@ export class Grid
         let dates: Date[] = [];
 
         let i = 0;
-        while (i < data[0].length)
+        while (i < dateValues[0].length)
         {
-            let item = data[0][i];
+            let item = dateValues[0][i];
             if (item == null || item == "")
             {
                 i++;
@@ -851,8 +905,10 @@ export class Grid
             }
         }
 
-        // now 
-        context.Ctx.trackedObjects.remove(sheet);
+        // now
+        if (sheet)
+            context.Ctx.trackedObjects.remove(sheet);
+
         return dates;
     }
 
@@ -879,9 +935,9 @@ export class Grid
             Title | Score | Line | Title | Score | Line
 
     ----------------------------------------------------------------------------*/
-    getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
+    static getFirstGridPatternCell(fastRangeAreas: FastRangeAreas): RangeInfo
     {
-        let range: RangeInfo = new RangeInfo(8, 1, 0, 1);
+        let range: RangeInfo = new RangeInfo(0, 1, 0, 1);
 
         let matchedPatterns = 0;
         let firstMatchedRow = -1;
@@ -1002,8 +1058,8 @@ export class Grid
 
         _TimerStack.pushTimer("build fastRangeAreas");
         let sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
-        await FastFormulaAreas.populateFastFormulaAreaCachesForAllSheets(context);
-
+        await FastFormulaAreas.populateAllCaches(context);
+        
         // the following should just get what we already populated above
         const fastFormulaAreas = await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         const fastRangeAreasSmaller: FastRangeAreas =
@@ -1015,7 +1071,7 @@ export class Grid
                         context,
                         "bigGridCache",
                         sheet,
-                        new RangeInfo(8, 28, 0, 25));
+                        new RangeInfo(0, 28, 0, 25));
 
                     return { type: ObjectType.TrObject, o: areas };
                 });
@@ -1023,7 +1079,7 @@ export class Grid
 
         AppContext.checkpoint("lgfb.1");
         _TimerStack.pushTimer("getFirstGridPatternCell");
-        this.m_firstGridPattern = this.getFirstGridPatternCell(fastRangeAreasSmaller);
+        this.m_firstGridPattern = Grid.getFirstGridPatternCell(fastRangeAreasSmaller);
 
         if (this.m_firstGridPattern == null)
             throw new Error("could not load grid pattern");
@@ -1037,7 +1093,9 @@ export class Grid
         _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracketName);
+        if (!bracketDef)
+            throw new Error("bracket not cached in loadGridFromBracket");
 
         AppContext.checkpoint("lgfb.2");
         _TimerStack.pushTimer("loadGridFromBracket::loop");
@@ -1723,7 +1781,7 @@ export class Grid
                     && this.doesRangeOverlap(outgoingCheck) == RangeOverlapKind.None)
                 {
                     // there is nothing next to the outgoing feeder point. add an item
-                    const newItem = this.addLineRange(outgoingCheck.offset(0, 1, 0, 9));
+                    const newItem = this.addLineRange(outgoingCheck.offset(0, 1, 0, 36));
                     newItem.IsEphemeral = true;
                 }
 
@@ -2235,49 +2293,56 @@ export class Grid
         if ((source1 != null && source1.fuzzyMatchRow(requested.FirstRow, 3))
             || (source2 != null && (source2.fuzzyMatchRow(requested.FirstRow, 3))))
         {
-            if (source1 != null && source1.fuzzyMatchRow(requested.FirstRow, 3))
+            // if we end up falling through, we don't want to clobber the original
+            // source1 and source2
+            let source1New = source1;
+            let source2New = source2;
+
+            if (source1New != null && source1New.fuzzyMatchRow(requested.FirstRow, 3))
             {
-                matched = source1;
-                other = source2;
+                matched = source1New;
+                other = source2New;
             }
             else
             {
-                matched = source2;
-                other = source1;
-                const temp = source1;
-                source1 = source2;
-                source2 = temp;
+                matched = source2New;
+                other = source1New;
+                const temp = source1New;
+                source1New = source2New;
+                source2New = temp;
                 fSwapTopBottom = !fSwapTopBottom;
             }
             requested.setRow(matched.FirstRow - 1);
 
-            if (source1 && source2 && source1.FirstRow > source2.FirstRow)
-                return GridGameInsert.createFailedGame("Can't insert the game as requested -- the top game would be below the bottom game");
-
-            // now grow to including outgoing
-            if (outgoing != null)
+            // if we thing the bottom game is above the top game, then just disregard this request. we are probably
+            // over-thinking the requested location
+            if (!(source1New && source2New && source1New.FirstRow > source2New.FirstRow))
             {
-                if (game.IsChampionship)
-                    return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
+                // now grow to including outgoing
+                if (outgoing != null)
+                {
+                    if (game.IsChampionship)
+                        return GridGameInsert.createFailedGame("championship game can't have outgoing feed");
 
-                return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
-                    source1,
-                    source2,
-                    outgoing,
+                    return this.buildGridGameForOneAnchoredSourceWithOutgoingPresent(
+                        source1New,
+                        source2New,
+                        outgoing,
+                        matched,
+                        other,
+                        requested,
+                        fSwapTopBottom);
+                }
+
+                return this.buildGridGameForAnchoredSourceNoOutgoingPresent(
+                    source1New,
+                    source2New,
                     matched,
                     other,
                     requested,
+                    game.IsChampionship,
                     fSwapTopBottom);
             }
-
-            return this.buildGridGameForAnchoredSourceNoOutgoingPresent(
-                source1,
-                source2,
-                matched,
-                other,
-                requested,
-                game.IsChampionship,
-                fSwapTopBottom);
         }
 
         // ok, our requested range has no relationship to either sources. now figure out
@@ -2344,18 +2409,21 @@ export class Grid
                 fSwapTopBottom);
         }
 
+        const extendedGrid = this.clone();
+        extendedGrid.extendUnconnectedOutgoingFeeders([]);
+
         // and lastly, what to do if there are no sources at all...just find the first non-conflicting
         // place to put it
         if (requested.FirstColumn == this.m_firstGridPattern.FirstColumn)
         {
-            requested.setRow(this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4));
+            requested.setRow(extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4));
         }
         else
         {
             requested.setRow(
                 Math.max(
-                    this.getFirstEmptyRowToUse(requested.FirstColumn - 1, requested.FirstColumn - 1, 2),
-                    this.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
+                    extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn - 1, requested.FirstColumn - 1, 2),
+                    extendedGrid.getFirstEmptyRowToUse(requested.FirstColumn, requested.FirstColumn, 4)));
         }
 
         let gameInsert: GridGameInsert = new GridGameInsert();
@@ -2595,13 +2663,13 @@ export class Grid
 
         must provide a column for the game to be inserted into
     ----------------------------------------------------------------------------*/
-    buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): [Grid, string]
+    buildNewGridForGameAdd(game: IBracketGame, requested: RangeInfo): {newGrid: Grid, selectRange: RangeInfo, reason: string }
     {
         let gridNew: Grid = this.clone();
         let gameInsert: GridGameInsert;
 
         // before we do any clever readjustments of the grid for common conflicts,
-        // first see if they are requesting a speciric range for insertion. if they
+        // first see if they are requesting a specific range for insertion. if they
         // are, then we don't want to try to second guess them...
 
         if (requested.RowCount <= 8)
@@ -2625,7 +2693,7 @@ export class Grid
 
         if (gameInsert.m_failReason != null)
         {
-            return [null, gameInsert.m_failReason];
+            return { newGrid: null, reason: gameInsert.m_failReason, selectRange: null };
         }
 
         if (gameInsert.m_rangeFeederTop != null)
@@ -2648,7 +2716,7 @@ export class Grid
         newItem.setStartTime(game.StartTime);
         newItem.setField(game.Field);
 
-        return [gridNew, null];
+        return { newGrid: gridNew, reason: null, selectRange: gameInsert.Range };
     }
 
     logGridCondensedString(): string
@@ -2735,7 +2803,12 @@ export class Grid
         if (selected.FirstRow < this.m_firstGridPattern.FirstRow
             || selected.FirstColumn < this.m_firstGridPattern.FirstColumn)
         {
-            throw new TrError([`The current selection is outside the current bracket grid. Please select a cell on the grid starting at ${this.m_firstGridPattern.toFriendlyString()}`]);
+            throw new TrError(
+                [
+                    `The current selection is outside the current bracket grid. Please select a cell on the grid starting at ${this.m_firstGridPattern.toFriendlyString()}`
+                ],
+                { topic: HelpTopic.FAQ_InsertLocation }
+            );
         }
 
         if (selected.RowCount == 1)

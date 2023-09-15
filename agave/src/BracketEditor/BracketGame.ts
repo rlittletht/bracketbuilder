@@ -1,14 +1,14 @@
 
 import { AppContext, IAppContext } from "../AppContext/AppContext";
 import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
-import { BracketManager } from "../Brackets/BracketManager";
+import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { OADate } from "../Interop/Dates";
 import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
 import { JsCtx } from "../Interop/JsCtx";
-import { RangeCaches } from "../Interop/RangeCaches";
+import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { ObjectType } from "../Interop/TrackingCache";
 import { _TimerStack } from "../PerfTimer";
@@ -403,7 +403,7 @@ export class BracketGame implements IBracketGame
 
                 let data = null;
 
-                const { rangeInfo: gameDataRange, formulaCacheType: type } = RangeCaches.get(RangeCaches.s_gameFieldsAndTimesDataBody);
+                const { rangeInfo: gameDataRange, formulaCacheType: type } = RangeCaches.getCacheByType(RangeCacheItemType.FieldsAndTimesBody);
                 if (gameDataRange != null)
                 {
                     const areasCache = FastFormulaAreas.getFastFormulaAreaCacheForType(context, type);
@@ -562,15 +562,18 @@ export class BracketGame implements IBracketGame
         Load the static portions of this game, and if possible, load its linkage
         into the current bracket schedule
     ----------------------------------------------------------------------------*/
-    LoadSync(bracketName: string, gameNum: GameNum): IBracketGame
+    LoadSync(bracketChoice: string, gameNum: GameNum): IBracketGame
     {
         AppContext.checkpoint("l.1");
 
-        let bracketDefinition: BracketDefinition = BracketDefBuilder.getBracketDefinition(`${bracketName}Bracket`);
+        const bracketDefinition = _bracketManager.getBracket(bracketChoice);
+
+        if (!bracketDefinition)
+            throw new Error("bracket not cached in LoadSync");
 
         AppContext.checkpoint("l.2");
         this.m_gameNum = gameNum;
-        this.m_bracketName = bracketName;
+        this.m_bracketName = bracketChoice;
 
         this.m_bracketGameDefinition = bracketDefinition.games[gameNum.Value];
         this.m_swapTopBottom = false;

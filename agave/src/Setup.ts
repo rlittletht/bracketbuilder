@@ -1,7 +1,7 @@
 
 import { IAppContext } from "./AppContext/AppContext";
 import { BracketInfoBuilder as BracketDataBuilder, BracketInfoBuilder } from "./Brackets/BracketInfoBuilder";
-import { BracketDefBuilder } from "./Brackets/BracketDefBuilder";
+import { BracketDefBuilder, BracketOption } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
@@ -10,6 +10,11 @@ import { FastTables } from "./Interop/FastTables";
 import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";
 import { RangeInfo } from "./Interop/Ranges";
+import { RangeCaches, RangeCacheItemType } from "./Interop/RangeCaches";
+import { BracketDefinition } from "./Brackets/BracketDefinitions";
+import { _bracketManager } from "./Brackets/BracketManager";
+import { Dispatcher, DispatchWithCatchDelegate } from "./BracketEditor/Dispatcher";
+import { GridBuilder } from "./Brackets/GridBuilder";
 
 export class SetupState
 {
@@ -99,35 +104,16 @@ export class SetupBook
 
 
     /*----------------------------------------------------------------------------
-        %%Function: SetupBook.getBracketDefinitionsAvailable
-
-        return an array of bracket definitions available in this workbook
-    ----------------------------------------------------------------------------*/
-    static async getBracketDefinitionsAvailable(context: JsCtx, bracketStructureSheet: Excel.Worksheet): Promise<string[]>
-    {
-        if (bracketStructureSheet == null)
-            return null;
-
-        let brackets: string[] = [];
-
-        bracketStructureSheet.tables.load("items");
-        await context.sync();
-
-        for (let bracketTable of bracketStructureSheet.tables.items)
-            brackets.push(bracketTable.name);
-
-        if (brackets.length > 0)
-            return null;
-
-        return brackets;
-    }
-
-
-    /*----------------------------------------------------------------------------
         %%Function: SetupBook.getWorkbookSetupState
 
         get the current state of the workbook (does it have bracket definitions,
         a chosen bracket, etc)
+
+        Normally this is cached in appContext on initial load of the addin
+        OR after we have built the bracket
+
+        after this is called, the bracketManager will be up to date with the
+        chosen bracket (if selected)
     ----------------------------------------------------------------------------*/
     static async getWorkbookSetupState(context: JsCtx): Promise<[SetupState, string]>
     {
@@ -135,8 +121,19 @@ export class SetupBook
 
         if (areasCache)
         {
-            // we have a workbook structure. see if we have 
+            // we have the bracket workbook structures created. get the selected bracket
+            const bracketChoice = await this.getBracketChoiceOrNull(context);
+
+            if (bracketChoice == null)
+                return [SetupState.NoBracketChoice, null];
+
+            if (RangeCaches.getCacheByType(RangeCacheItemType.BracketDefBody) != null)
+                return [SetupState.Ready, bracketChoice];
         }
+
+        // if we get here, we don't have a cache or we had a bracket choice, but we haven't
+        // cached the bracket definition range -- do it the slow way
+
         // any bracket workbook has to have a BracketStructure sheet
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(context);
 
@@ -147,12 +144,9 @@ export class SetupBook
 
         if (bracketChoice != null)
         {
-            const bracketTable: Excel.Table = await this.getBracketTableOrNull(context, bracketStructureSheet, bracketChoice);
+            const bracketDefinition = await _bracketManager.populateBracketsIfNecessary(context, bracketChoice);
 
-            if (bracketTable.isNullObject)
-                return [SetupState.NoBracketData, bracketChoice];
-
-            if (await this.getBracketsDataSheetOrNull(context) == null)
+            if (!bracketDefinition)
                 return [SetupState.NoBracketData, bracketChoice];
 
             return [SetupState.Ready, bracketChoice];
@@ -186,8 +180,7 @@ export class SetupBook
                 const context: JsCtx = new JsCtx(ctx);
 
                 await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
-                appContext.setHeroListDirty();
-                await appContext.rebuildHeroListIfNeeded(context);
+                appContext.AppStateAccess.HeroListDirty = true;
                 context.releaseAllCacheObjects();
             });
         }
@@ -200,6 +193,83 @@ export class SetupBook
         }
 
         return true;
+    }
+
+    static async getCustomBracketOptions(context: JsCtx, appContext: IAppContext): Promise<BracketOption[]>
+    {
+        const brackets = await SetupBook.loadCustomBracketsAsync(context, appContext);
+        const bracketOptions: BracketOption[] = [];
+
+        for (let _bracket of brackets)
+        {
+            bracketOptions.push(
+                {
+                    key: _bracket.tableName.substr(0, _bracket.tableName.length - 7),
+                    name: `${_bracket.name}*`
+                });
+        }
+
+        return bracketOptions;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: SetupBook.getSetupState
+
+        get the setup state for the workbook.
+    ----------------------------------------------------------------------------*/
+    static async getSetupState(context: JsCtx): Promise<[SetupState, string]>
+    {
+        const [setupState, bracketChoice] = await SetupBook.getWorkbookSetupState(context);
+
+        return [setupState, bracketChoice];
+    }
+
+    static async loadCustomBracketsAsync(context: JsCtx, appContext: IAppContext, reportMissingBrackets?: boolean): Promise<BracketDefinition[]>
+    {
+        const brackets: BracketDefinition[] = [];
+
+        _bracketManager.setDirty(true);
+
+        await FastFormulaAreas.populateAllCaches(context);
+        try
+        {
+            await _bracketManager.populateBracketsIfNecessary(context);
+            brackets.push(..._bracketManager.getBrackets());
+        }
+        catch (error)
+        {
+            if (error instanceof TrError)
+            {
+                appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
+            }
+            else if (reportMissingBrackets)
+            {
+                appContext.Messages.error(
+                    [
+                        "There are either no custom brackets defined in this workbook, or there is a problem with the definitions.",
+                        "Make sure the bracket definitions are on a sheet named 'BracketDefs' and the tables are correctly named.",
+                        "DETAILS:",
+                        ...StatusBox.linesFromError(error)
+                    ],
+                    { topic: HelpTopic.FAQ_CustomBrackets });
+            }
+        }
+
+        return brackets;
+    }
+
+    static async loadCustomBrackets(appContext: IAppContext): Promise<BracketDefinition[]>
+    {
+        const brackets: BracketDefinition[] = [];
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            brackets.push(...await this.loadCustomBracketsAsync(context, appContext, true));
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+
+        return brackets;
     }
 
     /*----------------------------------------------------------------------------
@@ -222,9 +292,22 @@ export class SetupBook
             await Excel.run(async (ctx) =>
             {
                 const context: JsCtx = new JsCtx(ctx);
+
+                await _bracketManager.populateBracketsIfNecessary(context, appContext.SelectedBracket);
                 await BracketDefBuilder.buildSpecificBracketCore(context, appContext, fastTables);
-                appContext.setHeroListDirty();
-                await appContext.rebuildHeroListIfNeeded(context);
+
+                // now update the workbook setup state
+                const [setupState, bracketChoice] = await (SetupBook.getSetupState(context));
+
+                if (appContext.SelectedBracket != bracketChoice)
+                    throw new Error(`selectedBracket != bracketChoice (${appContext.SelectedBracket} != {bracketChoice})`);
+
+                appContext.WorkbookSetupState = setupState;
+
+                appContext.AppStateAccess.HeroListDirty = true;
+                RangeCaches.SetDirty(true);
+
+                SetupBook.registerBindingsForEdits(context, appContext);
                 context.releaseAllCacheObjects();
             });
         }
@@ -238,6 +321,19 @@ export class SetupBook
 
         appContext.setProgressVisible(false);
         return false;
+    }
+
+    static async registerBindingsForEdits(context: JsCtx, appContext: IAppContext)
+    {
+        if (appContext.WorkbookSetupState != SetupState.Ready)
+            return;
+
+        const sheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+        context.Ctx.workbook.bindings.add(
+            sheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
+                () => { appContext.AppStateAccess.BracketDirtyForBracketEdit = true; });
+
+        await context.sync();
     }
 }
 

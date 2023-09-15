@@ -9,6 +9,16 @@ import { FastFormulaAreasItems } from "./FastFormulaAreas";
 import { JsCtx } from "./JsCtx";
 import { RangeInfo } from "./Ranges";
 
+export class RangeCacheItemType
+{
+    static FieldsAndTimesBody = "FNT#Body";
+    static FieldsAndTimesHeader = "FNT#Header";
+    static TeamNamesBody = "TN#Body";
+    static TeamNamesHeader = "TN#Header";
+    static BracketDefBody = "BD#Body";
+    static BracketDefHeader = "BD#Header";
+}
+
 export class RangeCacheItem
 {
     Name: string;
@@ -25,25 +35,34 @@ export class RangeCacheItem
     }
 }
 
+interface RangeCachedItem
+{
+    sheetName: string,
+    rangeInfo: RangeInfo,
+    formulaCacheType: FastFormulaAreasItems
+}
+
 export class RangeCaches
 {
-    static s_gameFieldsAndTimesHeader = "bracketSourceHeader";
-    static s_teamNamesHeader = "teamNamesHeader";
-    static s_bracketDefHeader = "bracketDefHeader";
-    static s_gameFieldsAndTimesDataBody = "bracketSourceDataRange";
-    static s_teamNamesDataBody = "teamNamesDataRange";
-    static s_bracketDefDataBody = "bracketDefDataRange";
     static s_isDirty: boolean = true;
     static s_lastBracket: string = "";
 
     static m_items = new Map<string, RangeCacheItem>();
 
-    static add(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems)
+    static get BracketCached(): string
+    {
+        if (this.s_lastBracket != "" && !this.s_isDirty && this.m_items.has(RangeCacheItemType.BracketDefBody))
+            return this.s_lastBracket;
+
+        return null;
+    }
+
+    private static add(name: string, sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems)
     {
         this.m_items.set(name, new RangeCacheItem(name, sheetName, rangeInfo, formulaCacheType));
     }
 
-    static get(name: string): { sheetName: string, rangeInfo: RangeInfo, formulaCacheType: FastFormulaAreasItems } | null
+    static get(name: string): RangeCachedItem | null
     {
         if (!this.m_items.has(name))
             return { sheetName: null, rangeInfo: null, formulaCacheType: null};
@@ -51,6 +70,11 @@ export class RangeCaches
         const item = this.m_items.get(name);
 
         return { sheetName: item.SheetName, rangeInfo: item.RangeInfo, formulaCacheType: item.FormulaCacheType };
+    }
+
+    static getCacheByType(type: RangeCacheItemType, id?: string): RangeCachedItem | null
+    {
+        return this.get(`${type}${id ?? ""}`);
     }
 
     static async GetRange(context: JsCtx, delegate: (context: JsCtx) => Promise<any>): Promise<any>
@@ -108,6 +132,9 @@ export class RangeCaches
         if (!this.s_isDirty && this.s_lastBracket == bracketChoice)
             return;
 
+        this.s_isDirty = false;
+        this.s_lastBracket = bracketChoice;
+
         let bracketBodyRange: RangeInfo = null;
         let teamNamesBodyRange: RangeInfo = null;
         let bracketDefRange: RangeInfo = null;
@@ -162,20 +189,20 @@ export class RangeCaches
 
         if (bracketBodyRange)
         {
-            this.add(this.s_gameFieldsAndTimesDataBody, GameDataSources.SheetName, bracketBodyRange, FastFormulaAreasItems.GameData);
-            this.add(this.s_gameFieldsAndTimesHeader, GameDataSources.SheetName, bracketBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
+            this.add(RangeCacheItemType.FieldsAndTimesBody, GameDataSources.SheetName, bracketBodyRange, FastFormulaAreasItems.GameData);
+            this.add(RangeCacheItemType.FieldsAndTimesHeader, GameDataSources.SheetName, bracketBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
         }
 
         if (teamNamesBodyRange)
         {
-            this.add(this.s_gameFieldsAndTimesDataBody, GameDataSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.GameData);
-            this.add(this.s_gameFieldsAndTimesHeader, GameDataSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
+            this.add(RangeCacheItemType.TeamNamesBody, GameDataSources.SheetName, teamNamesBodyRange, FastFormulaAreasItems.GameData);
+            this.add(RangeCacheItemType.TeamNamesHeader, GameDataSources.SheetName, teamNamesBodyRange.offset(-1, 1), FastFormulaAreasItems.GameData);
         }
 
         if (bracketDefRange)
         {
-            this.add(this.s_bracketDefDataBody, BracketDefBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketDefs);
-            this.add(this.s_bracketDefHeader, BracketDefBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketDefs);
+            this.add(RangeCacheItemType.BracketDefBody, BracketDefBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketDefs);
+            this.add(RangeCacheItemType.BracketDefHeader, BracketDefBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketDefs);
         }
     }
 }

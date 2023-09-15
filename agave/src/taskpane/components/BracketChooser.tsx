@@ -85,7 +85,7 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
         {
             root: {
                 display: "flex",
-                maxWidth: 100,
+                maxWidth: 150,
                 paddingRight: 0,
 //                alignItems: "right",
 //                textAlign: "right",
@@ -110,7 +110,7 @@ export class BracketChooser extends React.Component<BracketChooserProps, Bracket
         return (
             <div style={{ textAlign: this.props.alignment, display: "flex", justifyContent: "center" }}>
                 <Stack horizontal tokens={{ childrenGap: 10 }} styles={stackStyles}>
-                    <Stack.Item>Bracket Size:</Stack.Item>
+                    <Stack.Item>Bracket:</Stack.Item>
                     <Stack.Item>
                         <ComboBox
                             label=""

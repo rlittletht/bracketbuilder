@@ -29,7 +29,7 @@ export class Dispatcher
 {
     static RequireBracketReady(appContext: IAppContext): boolean
     {
-        if (appContext.SetupStateFromState == SetupState.Ready)
+        if (appContext.WorkbookSetupState == SetupState.Ready)
             return true;
 
         appContext.Messages.error(
@@ -105,4 +105,29 @@ export class Dispatcher
             });
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: Dispatcher.ExclusiveDispatchSilent
+
+        Same as ExclusiveDispatchWithCatch, but doesn't clear coach
+        states/messages
+    ----------------------------------------------------------------------------*/
+    static async ExclusiveDispatchSilent(delegate: DispatchWithCatchDelegate, context: JsCtx)
+    {
+        console.log("before exclusive");
+        try
+        {
+            await _mutex.runExclusive(
+                async () =>
+                {
+                    console.log("inside exclusive");
+                    await delegate(context);
+                });
+        }
+        catch (e)
+        {
+            console.log(`caught: ${e.message}`);
+        }
+
+        console.log("after exclusive");
+    }
 }

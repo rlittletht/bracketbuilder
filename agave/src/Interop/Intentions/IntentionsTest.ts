@@ -14,7 +14,7 @@ export class IntentionsTest
 {
     static async runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
-        await TestRunner.runAllTests(this, TestResult, appContext, outStream);
+        await TestRunner.runAllTestsAsync(this, TestResult, appContext, outStream);
     }
 
     static async test_FormulaIntention_CurrentWorksheet(result: TestResult)
@@ -48,6 +48,9 @@ export class IntentionsTest
 
                 await tns.Execute(context);
 
+                // test combination of create and delete global names
+                // (delete "foo", create "foo")
+                // delete "bar", create foo, create bar
                 context.releaseAllCacheObjects();
             });
     }

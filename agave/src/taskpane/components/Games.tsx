@@ -5,7 +5,6 @@ import { GameItem } from "./GameItem";
 // import styles from '../taskpane.css';
 
 export interface GamesProps {
-    bracketName: string;
 }
 
 export interface GamesState {
@@ -41,7 +40,7 @@ export class Games extends React.Component<GamesProps, GamesState>
             gameItems.push((
                 <GameItem idx={idx} teachableAdd=
                     {() => teachable} teachableRemove={() => false}
-                    bracketName={this.props.bracketName} game={game} key={idx} linkedToGrid={game.IsLinkedToBracket} />
+                    game={game} key={idx} linkedToGrid={game.IsLinkedToBracket} />
             ));
         }
 

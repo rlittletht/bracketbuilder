@@ -35,6 +35,11 @@ export class TnSetFormulas implements IIntention
         tn.m_formulas = formulas;
         tn.m_sheetName = sheet;
 
+        if (range.RowCount != formulas.length)
+            throw new Error(`RowCount (${range.RowCount}) != formulas.length(${formulas.length})`);
+
+        if (range.ColumnCount != formulas[0].length)
+            throw new Error(`RowCount (${range.ColumnCount}) != formulas[0].length(${formulas[0].length})`);
         return tn;
     }
 

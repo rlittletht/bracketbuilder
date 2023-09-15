@@ -26,6 +26,19 @@ export class PerfTimer
         this.m_perfTimerStack = [];
     }
 
+    popTimersUntil(message: string)
+    {
+        while (this.m_perfTimerStack.length > 0)
+        {
+            const thisTimer = this.m_perfTimerStack[this.m_perfTimerStack.length - 1].timerName;
+
+            const timerName = this.popTimer() ?? message;
+
+            if (timerName == message)
+                return;
+        }
+    }
+
     pushTimer(message: string, summarizeChildrenOnly?: boolean)
     {
         if (!s_staticConfig.perfTimers)
@@ -97,10 +110,13 @@ export class PerfTimer
         }
     }
 
-    popTimer()
+    popTimer(): string
     {
         if (!s_staticConfig.perfTimers)
-            return;
+            return null;
+
+        if (this.m_perfTimerStack.length == 0)
+            return null;
 
         let timer: PerfTimerItem = this.m_perfTimerStack.pop();
         PerfTimer.pauseTimerAndAccumulate(timer);
@@ -109,6 +125,8 @@ export class PerfTimer
 
         const childSummary = this.reportPerfTimerItem(timer);
         this.appendSummaryToRemainingTimers(childSummary);
+
+        return timer.timerName;
     }
 
     startAggregatedTimer(key: string, message: string)

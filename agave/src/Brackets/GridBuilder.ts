@@ -193,7 +193,7 @@ export class GridBuilder
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
         let rngHeader: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
 
-        rngHeader.formulas = [["=TournamentTitle"], ["=TournamentSubTitle"], ["=TournamentLocation"]]
+        rngHeader.formulas = [["=IF(LEN(TournamentTitle)>0,TournamentTitle,\"\")"], ["=IF(LEN(TournamentSubTitle)>0,TournamentSubTitle,\"\")"], ["=IF(LEN(TournamentLocation)>0,TournamentLocation,\"\")"]];
         rngHeader.format.font.bold = true;
         rngHeader.format.font.size = 26;
 

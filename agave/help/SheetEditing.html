@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>TwBracketBuilder Help</title>
     <link rel="stylesheet" href="./rex.css" />
+    <script src="./rex.js"></script>
     <style>
     </style>
 </head>
@@ -29,355 +30,404 @@
     <main>
         <nav>
             <ul>
-                <li><a href="./BracketBuilder-Help.html">Getting Started</a></li>
-                <ul>
-                    <li><a href="./BracketBuilder-Help.html#intro">Introduction</a></li>
-                    <li><a href="./BracketBuilder-Help.html#quickstart">Quick Walk-through</a></li>
-                </ul>
-                <li><a href="./SheetEditing.html#Advanced">Editing the sheet</a></li>
-                <ul>
-                    <li><a href="./SheetEditing.html#workbook">Workbook Structure</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#Games">Games Sheet</a></li>
-                        <li><a href="./SheetEditing.html#TeamsAndFields">TeamsAndFields Sheet</a></li>
-                        <li><a href="./SheetEditing.html#BracketInfo">BracketInformation Sheet</a></li>
-
-                    </ul>
-                    <li><a href="./SheetEditing.html#structure">Bracket Sheet Structure</a></li>
-                    <li><a href="./SheetEditing.html#anatomy">Formulas and Names</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#teamName">Team Names</a></li>
-                        <li><a href="./SheetEditing.html#score">Scores</a></li>
-                        <li><a href="./SheetEditing.html#field">Field</a></li>
-                        <li><a href="./SheetEditing.html#gameNum">Game Number</a></li>
-                    </ul>
-                    <li><a href="./SheetEditing.html#editable">What's safe to edit?</a></li>
-                    <ul>
-                        <li><a href="./SheetEditing.html#moving">Manually moving games</a></li>
-                        <li><a href="./SheetEditing.html#lines">Changing lines</a></li>
-                        <li><a href="./SheetEditing.html#what-if">Removing What-If Game</a></li>
-                    </ul>
-                </ul>
+                <li><a href="./BracketBuilder.html">Getting Started</a></li>
+                <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
                 <li><a href="./Commands.html#Commands">Builder Functions</a></li>
-                <ul>
-                    <li><a href="./Commands.html#Controls">Main Interface</a></li>
-                    <li><a href="./Commands.html#Controls">Main Tools</a></li>
-                    <ul>
-                        <li><a href="./Commands.html#Undo">Undo/Redo</a></li>
-                        <li><a href="./Commands.html#UpdateBracket">Update Bracket</a></li>
-                        <li><a href="./Commands.html#Priorities">Shade Priorities</a></li>
-                        <li><a href="./Commands.html#ShowHide">Show/Hide Sheets</a></li>
-                        <li><a href="./Commands.html#ResetTeaching">Reset Teaching Callouts</a></li>
-                        <li><a href="./Commands.html#FinishingTouches">Finishing Touches</a></li>
-                        <li><a href="./Commands.html#Help">Help</a></li>
-                    </ul>
-                    <li><a href="./Commands.html#BracketTools">Bracket Tools</a></li>
-                    <ul>
-                        <li><a href="./Commands.html#PickUpGame">Pick up Game</a></li>
-                        <li><a href="./Commands.html#DropGame">Drop Game</a></li>
-                        <li><a href="./Commands.html#RemoveGame">Remove Game</a></li>
-                        <li><a href="./Commands.html#RepairGame">Repair Game</a></li>
-                    </ul>
-                    <li><a href="./Commands.html#GameCommands">Game Commands</a></li>
-                    <li><a href="./Licenses.html">License Information</a></li>
-                    <li><a href="./Privacy.html">Privacy Information</a></li>
-                </ul>
+                <li><a href="./CustomBrackets.html#">Custom Brackets</a></li>
+                <li><a href="./FAQ.html#FAQ">FAQ/Scenarios</a></li>
+                <li><a href="./Licenses.html#Licenses">Licenses</a></li>
+                <li><a href="./Privacy.html#Privacy">Privacy</a></li>
             </ul>
         </nav>
+        <article id="sheetEditing">
+            <section id="Advanced">
+                <heading navText="Editing the sheet">Editing the Sheet</heading>
+                <content>
+                    <p>
+                        Here we are going to go into more depth explaining <em>how</em> things work along with the underlying
+                        structure in the worksheet. The goal is for you to understand how to fine-tune the bracket
+                        without breaking the underlying formulas/formatting
+                    </p>
+                    <br clear="all" />
+                    <section id="workbook">
+                        <heading>Workbook Structure</heading>
+                        <content>
+                            <zoomable>
+                                <floatRight style="width: 50vw;margin-top: -4rem"><img class="whiteBack" src="Images/Sheets.png" /></floatRight>
+                            </zoomable>
+                            <p>
+                                After you create click on <em>Build This Bracket</em>, you will have several sheets
+                                in your workbook. The <em>Games</em> sheet is the one with the real bracket on it, and its what you
+                                will be working with most of the time. The other sheets have data for and about your bracket.
+                            </p>
+                            <br clear="all" />
+                            <zoomable>
+                                <floatRight style="width: 30vw;padding-top: 2rem"><img class="whiteBack" src="Images/GamesSheet.png" /></floatRight>
+                            </zoomable>
+                            <section id="Games">
+                                <heading>Games Sheet</heading>
+                                <content>
+                                    <p> The <em>Games sheet</em> has the actual bracket grid on it and is what you will be building and eventually publishing</p>
+                                    <p>This sheet has several things you need to customize to get your bracket looking the way you want</p>
+                                    <section id="buildingCell">
+                                        <heading>BUILDING Cell</heading>
+                                        <content>
+                                            <p>
+                                                The Building cell (A1) starts out with "BUILDING" in the cell. When the text <em>BUILDING</em> is in this cell,
+                                                each game will show the teams involved if they are known, but if we don't know which team will be playing,
+                                                then the game will show W1 or L1 (for example) to show that the team will be the Winner of game 1 (hence W1), or
+                                                the loser of game 1 (L1)
+                                            </p>
+                                            <p>
+                                                You will usually want to clear cell A1 in order to remove the W1/L1 team names from the sheet ot make a cleaner
+                                                looking bracket
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section id="TournamentInformation">
+                                        <heading>Tournament Information</heading>
+                                        <content>
+                                            <p>
+                                                There are several things to customize in this section. They will change the title and location information
+                                                for the bracket as well as allow you to customize the tournament host and last updated time. As you edit these cells
+                                                you should see the title block changing.
+                                            </p>
+                                            <p>
+                                                NOTE: You won't see the <em>hosted</em> or <em>last update</em> items until you apply the finishing touches to the
+                                                bracket.
+                                            </p>
+                                            <p>
+                                                The FieldCount item lets you tell BracketBuilder how many fields you have. As BracketBuilder adds games to the
+                                                bracket, it will <em>try</em> to play games on the next field and at the next time slot. This really doesn't work
+                                                out very well, but it does put the games on different fields and at different times, which makes it a little easier
+                                                to change the <em>TeamsAndFields</em> sheet. (If we didn't do this, then all you would see would be the same field
+                                                and time for every single game)
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section>
+                                        <heading>Start Date</heading>
+                                        <content>
+                                            <p>
+                                                There is a row of days at the top of the bracket. Each of these days automatically update from the previous day, <b>except</b>
+                                                for the first day. If you change the date in the first day, then all of the other days will update and your bracket
+                                                will get a new start date.
+                                            </p>
+                                            <br clear="all" />
+                                            <zoomableTall>
+                                                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/TeamAndFields.png" /></floatRight>
+                                            </zoomableTall>
+                                        </content>
+                                    </section>
+                                </content>
+                            </section>
+                            <section>
+                                <heading><a name="TeamsAndFields">TeamsAndFields Sheet</a></heading>
+                                <content>
+                                    <p>
+                                        The <eltRef>TeamsAndFields</eltRef> sheet has two tables on it -- <eltRef>BracketSourceData</eltRef> and <eltRef>TeamNames</eltRef>.
+                                    </p>
+                                    <section>
+                                        <heading>Field and Times (BracketSourceData)</heading>
+                                        <content>
+                                            <p>
+                                                The Fields and Times table has the field and time for each of the games. It starts out with "Ballfield" as the field
+                                                name for every field, but as you create the bracket, <prodRef>BracketBuilder</prodRef> tries to automatically assign
+                                                fields to the games, using the count from the Tournament Information on the <em>Games</em> sheet. For example, if
+                                                there are two fields, the first game will get Field #1, the second game will get Field #2, and the third game will
+                                                go back to Field #1 but at a later time.
+                                            </p>
+                                            <p>
+                                                The time for each game starts out as 12:00am. Game times will get assigned by <prodRef>BracketBuilder</prodRef> as
+                                                you add games to the bracket. The first games on Saturday/Sunday will get 9:00am, the next games will get 12:00pm
+                                                and so on. On weekdays, the games get 6:00pm when they are added, and the next games get 9:00pm
+                                            </p>
+                                            <p>
+                                                These game times are most likely not going to be correct, but after you add all the games, it should be easy to
+                                                change game times in this table.
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section>
+                                        <heading>Team Names</heading>
+                                        <content>
+                                            <p>
+                                                The next table on the <eltRef>TeamsAndFields</eltRef> sheet is the Team Name table. This is where you put in
+                                                the names of the teams and the Priority (if you are going to use Priority shading). The Team ID corresponds
+                                                to the draw, so the first team drawn is Team 1 and so on.
+                                            </p>
+                                            <br clear="all" />
+                                            <zoomableTall>
+                                                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/BracketInfo.png" /></floatRight>
+                                            </zoomableTall>
+                                        </content>
+                                    </section>
+                                </content>
+                            </section>
+                            <section>
+                                <heading><a name="BracketInfo">BracketInfo Sheet</a></heading>
+                                <content>
+                                    <p>
+                                        The <em>BracketInfo</em> sheet has two tables on it that summarize your tournament bracket.
+                                    </p>
+                                    <p>
+                                        The first table is the <em>Game Results</em>. This table will get updated as you fill out the scores in your
+                                        bracket -- it will should you a summary of the games that were played, who won, and the scores
+                                    </p>
+                                    <p>
+                                        The second table is the <em>Schedule</em> for your tournament. This is a very helpful table for uploading
+                                        to scheduling software/umpire assigning programs (like ArbiterSports, for example).
+                                    </p>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+                    <section id="structure">
+                        <heading>Bracket Game Structure</heading>
+                        <content>
+                            <br clear="all"/>
+                            <zoomable>
+                                <floatRight style="width: 15vw;padding-top: 2rem"><img class="whiteBack" src="Images/GameOnGrid.png"/></floatRight>
+                            </zoomable>
+                            <p>
+                                The bracket is laid out on a grid in the worksheet. Each game relies on the underlying
+                                formatting of this grid.
+                            <p>
+                                Each game requires a minimum of 9 rows (though 11 rows is recommended). These rows alternate between
+                                <em>content</em> rows and <em>border/line</em> rows, which is why we need so many rows for a game.
+                                For an 11 row game, you have:
+                                <ol>
+                                    <li>Top Team Name</li>
+                                    <li>Top game line</li>
+                                    <li>Loser advances to note</li>
+                                    <li>(blank line row)</li>
+                                    <li>Field</li>
+                                    <li>(blank line row)</li>
+                                    <li>Time</li>
+                                    <li>(blank line row)</li>
+                                    <li>blank content line)</li>
+                                    <li>Bottom game line</li>
+                                    <li>Bottom team name</li>
+                                </ol>
+                                <zoomable>
+                                    <floatRight style="width: 15vw"><img class="whiteBack" src="Images/GameOnGrid-Columns.png" /></floatRight>
+                                </zoomable>
+                                Even when there is no content or no line, the rows continue to alternate. This allows games to
+                                be placed anywhere on the grid.
+                            </p>
+                            <p>
+                                Each game always requires at least 3 columns. BracketBuilder will never create a game with other than 3 columns, but you
+                                will learn later that there are things you can do to customize your bracket that will keep the structure working
+                                while still letting you get creative.
+                            </p>
+                            <p>
+                                These three columns consists of a <em>description</em> column (for the team name, field, time, etc.), a
+                                <em>game number</em> column, and a <em>border/line</em> column. Just like with the rows, this pattern repeats
+                                even if there is no content.
+                            </p>
+                            <section id="anatomy">
+                                <heading>Game Parts</heading>
+                                <content>
+                                    <br clear="all"/>
+                                    <zoomableTall>
+                                        <floatRight style="width: 15vw;margin-top: -2rem"><img src="Images/GameAnatomy.png" class="whiteBack"/></floatRight>
+                                    </zoomableTall>
+                                    <p>
+                                        Most of the parts of a game come from formulas and cell names, which make it possible for the games to automatically
+                                        update with winners/losers as scores are entered.
+                                    </p>
+                                    <section id="teamName">
+                                        <heading>Team Name</heading>
+                                        <content>
+                                            <p> There is a team name at the top and bottom of every game</p>
+                                            <p>
+                                                The first game for each team is a little special -- the team name
+                                                comes from the TeamsAndFields sheet, where there is a table that maps team numbers to their team name. If you want
+                                                to change the name of a team, you can edit the team name on the TeamsAndFields sheet <b>OR</b> you can just type
+                                                the team name into the cell. When you type the name of the team directly on the bracket sheet, the game will be
+                                                marked as "dirty" so you can update the TeamsAndFields sheet later (more on this later in <em>Updating bracket with changes</em>.
+                                            </p>
+                                            <p>
+                                                For all of the other games in the bracket, the team name will be automatically filled in based on who won or lost
+                                                in the bracket. These cells also have a name assigned to them identifies the
+                                                cell for later games in the bracket. <b>DO NOT EDIT</b> these team names.
+                                            </p>
+                                            <p>
+                                                You can format the team names however you like, but DO NOT merge the team name cells with any other cells.
+                                            </p>
+                                            <p>
+                                                While you are building the bracket, you will see things like "W1" or "L1" which means that the team
+                                                name is the winner of game 1, or the loser of game 1. When you are done building the bracket, you might want to remove
+                                                those W1/L1 designations for a cleaner bracket. To do this, just delete the word "BUILDING" in cell A1 on the sheet.
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section id="score">
+                                        <heading>Score</heading>
+                                        <content>
+                                            <p>
+                                                Every game has score cells for the top and bottom teams. As you fill in these scores, later bracket games
+                                                will automatically update with the winners/losers of each game.
+                                            </p>
+                                            <p>
+                                                Enter only numbers into these score cells. You can format them however you like, but DO NOT merge the score cell
+                                                with any other cells.
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section id="field">
+                                        <heading>Field/Time</heading>
+                                        <content>
+                                            <p>
+                                                Each game has a field cell and a time cell that shows the field and time that the game is. This field and time
+                                                information come from
+                                                the TeamsAndFields sheet and the bracket will automatically update when you make changes.
+                                            </p>
+                                            <p>
+                                                You can also edit the field and time information directly on the bracket by just typing into the cell. When you edit
+                                                the field or time information directly on the bracket, the game will be marked as dirty.
+                                            </p>
+                                            <p>
+                                                <b>BE CAREFULL!</b> If you copy/paste field or time information, you will probably end up copying <em>the formula</em> instead
+                                                of the actual text, which means the information will be wrong when you edit the bracket info sheet. Its best
+                                                to avoid copy/paste unless you are sure you are just copying/pasting text.
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section id="gameNum">
+                                        <heading>Game Number</heading>
+                                        <content>
+                                            <p>
+                                                The game number is automatically filled in for each game. The several cells are merged together so the game number
+                                                will show up positioned properly within the game.
+                                            </p>
+                                        </content>
+                                    </section>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+                    <section id="editable">
+                        <heading>What's Safe to edit?</heading>
+                        <content>
+                            <p>
+                                The previous section described all the special things about the games -- formulas and cell names. For the most
+                                part, any blank cell can be filled in with whatever you want. BracketBuilder won't know that its there, so it
+                                might insert something on top of it, but it won't break the underlying structure. Once your bracket is built,
+                                you are pretty much free to add whatever decorations you want (logos, pictures, etc.)
+                            </p>
+                        </content>
+                    </section>
+                    <section id="moving">
+                        <heading>Moving Games Manually</heading>
+                        <content>
+                            <p>
+                                In other sections, we talk about using the addin to move games (pick them up and put them somewhere else),
+                                or even removing the game from the bracket and adding it on a new day. But what if the addin just won't
+                                do what you want, or if you want to move the game in a special way? You can do that as long as you keep
+                                the underlying formulas and names in-tact.
+                            </p>
+                            <p>
+                                The best way to do this is use <em>cut and paste</em>. By cutting the cells and pasting them, you are
+                                guaranteeing that the formulas remain intact and you don't get name conflicts on the sheet.
+                                If the paste doesn't work out the way you want, you can always use Excel's Undo feature to go back to where you were.
+                            </p>
+                            <p>
+                                NOTE: When you cut and paste, make sure you select the entire game, from the top team name to the border line cell
+                                next to the bottom team name. This will ensure that you have all 3 columns included. When you paste, make sure you
+                                select the right cell for the top team name.
+                            </p>
+                        </content>
+                    </section>
+                    <section id="lines">
+                        <heading>Borders/Lines</heading>
+                        <content>
+                            <p>
+                                If you want to manually connect (or extend) a line in the bracket, the easiest way is to copy a line cell
+                                (which is really just a cell in a line column or line row which is filled with the Black color). If you copy
+                                an existing line cell and then paste after you select the cells that connect or draw the border you want.
+                            </p>
+                            <p>
+                                If you want to erase a line or border, just select the cells for the line/border and change the fill color
+                                to none. This will effectively erase the border or line
+                            </p>
+                        </content>
+                    </section>
+                    <section id="what-if">
+                        <heading>Deleting the What-If Game</heading>
+                        <content>
+                            <p>
+                                In a double elimination bracket, teams are only eliminated after losing two games. This applies to the
+                                championship game as well. The championship game is played between the team that has won every game (no losses),
+                                and the team that has only one loss. This means that if the team with no losses loses the championship
+                                game, then that is their first loss. Since they have to lose two games to be eliminated, there has to be
+                                one final game (referred to as the <em>what-if</em> or <em>if necessary</em> game). When you build a bracket,
+                                it will get marked as "if first loss".
+                            </p>
+                            <p>
+                                There's a 50/50 chance that the what-if game will actually need to be played. Often the team with no losses will
+                                win the championship game, which means there is no need for a what-if game. If you want to clean up the bracket,
+                                you can delete the what-if game. We also want to reformat the game so it fills all of the space that the
+                                championship and what-if games were taking up.
+                            </p>
+                            <p>
+                                There are a few steps to take to do this:
+                            </p>
+                            <ol>
+                                <li>Select the cell with "Champion" in it cut and paste it under the winning teams name (the cell will have "if first loss" in it)</li>
+                                <li>Select all the cells you want to clear out (don't include the Champion label you just pasted) and clear the cells (use Delete key)</li>
+                                <li>
+                                    Select all the cells you want to remove borders/lines from (don't include the line underneath the winning team's name)
+                                    and fill the cells with <em>No fill</em>
+                                </li>
+                                <gallery>
+                                    <galleryItem style="width: 30%">
+                                        <img src="Images/MoveChampion.png" class="whiteBackSmaller" />
+                                        <galleryCaption>
+                                            1) Move Champion label
+                                        </galleryCaption>
+                                    </galleryItem>
+                                    <galleryItem style="width: 30%">
+                                        <img src="Images/DeleteWhatIfText.png" class="whiteBackSmaller" />
+                                        <galleryCaption>2) Delete what-if text</galleryCaption>
+                                    </galleryItem>
+                                    <galleryItem style="width: 30%">
+                                        <img src="Images/DeleteLines.png" class="whiteBackSmaller" />
+                                        <galleryCaption>3) Remove what-if borders/lines</galleryCaption>
+                                    </galleryItem>
+                                </gallery>
+                                <p>Now we want to clean things up a bit and get the winning team name and the champion label centered properly</p>
+                                <li>
+                                    Select one of the cells underneath the team name (one that is filled black), copy, select the rest of the cells to the right
+                                    so you extend the line to reach the end of the space, and paste
+                                </li>
+                                <li>Select the winning team name and the cells next to it over the line you just extended, click on <em>Merge & Center</em> (after all, we don't need a score anymore>'</li>
+                                <li>Select the champion label and the cells next to it, click on <em>Merge & Center</em></li>
+                                <li>All done!</li>
+                            </ol>
+                            <gallery>
+                                <galleryItem style="width:20%">
+                                    <img src="Images/ExtendChampionLine.png" class="whiteBackSmaller" />
+                                    <galleryCaption>4) Extend line under winner</galleryCaption>
+                                </galleryItem>
+                                <galleryItem style="width:20%">
+                                    <img src="Images/MergeChampionTeam.png" class="whiteBackSmaller" />
+                                    <galleryCaption>5) Merge winning team's name</galleryCaption>
+                                </galleryItem>
+                                <galleryItem style="width:20%">
+                                    <img src="Images/MergeChampion.png" class="whiteBackSmaller" />
+                                    <galleryCaption>6) Merge champion label</galleryCaption>
+                                </galleryItem>
+                                <galleryItem style="width:20%">
+                                    <img src="Images/FinalChampion.png" class="whiteBackSmaller" />
+                                    <galleryCaption>All done!</galleryCaption>
+                                </galleryItem>
 
-        <article>
-            <h2><a name="Advanced">Editing the Sheet</a></h2>
-            <p>
-                Here we are going to go into more depth explaining <em>how</em> things work along with the underlying
-                structure in the worksheet. The goal is for you to understand how to fine-tune the bracket
-                without breaking the underlying formulas/formatting
-            </p>
-            <br clear="all" />
-            <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="Images/Sheets.png" /></floatRight>
-            <h3><a name="workbook">Workbook Structure</a></h3>
-            <p>
-                After you create click on <em>Build This Bracket</em>, you will have several sheets
-                in your workbook. The <em>Games</em> sheet is the one with the real bracket on it, and its what you
-                will be working with most of the time. The other sheets have data for and about your bracket.
-            </p>
-            <br clear="all" />
-            <floatRight style="width: 50vw;padding-top: 2rem"><img class="whiteBack" src="Images/GamesSheet.png" /></floatRight>
-            <h4><a name="Games">Games Sheet</a></h4>
-            <p> The <em>Games sheet</em> has the actual bracket grid on it and is what you will be building and eventually publishing</p>
-            <p>This sheet has several things you need to customize to get your bracket looking the way you want</p>
-            <h5>BUILDING Cell</h5>
-            <p>
-                The Building cell (A1) starts out with "BUILDING" in the cell. When the text <em>BUILDING</em> is in this cell,
-                each game will show the teams involved if they are known, but if we don't know which team will be playing,
-                then the game will show W1 or L1 (for example) to show that the team will be the Winner of game 1 (hence W1), or
-                the loser of game 1 (L1)
-            </p>
-            <p>
-                You will usually want to clear cell A1 in order to remove the W1/L1 team names from the sheet ot make a cleaner
-                looking bracket
-            </p>
-            <h5>Tournament Information</h5>
-            <p>
-                There are several things to customize in this section. They will change the title and location information
-                for the bracket as well as allow you to customize the tournament host and last updated time. As you edit these cells
-                you should see the title block changing.
-            </p>
-            <p>
-                NOTE: You won't see the <em>hosted</em> or <em>last update</em> items until you apply the finishing touches to the
-                bracket.
-            </p>
-            <p>
-                The FieldCount item lets you tell BracketBuilder how many fields you have. As BracketBuilder adds games to the
-                bracket, it will <em>try</em> to play games on the next field and at the next time slot. This really doesn't work
-                out very well, but it does put the games on different fields and at different times, which makes it a little easier
-                to change the <em>TeamsAndFields</em> sheet. (If we didn't do this, then all you would see would be the same field
-                and time for every single game)
-            </p>
-            <h5>Start Date</h5>
-            <p>
-                There is a row of days at the top of the bracket. Each of these days automatically update from the previous day, <b>except</b>
-                for the first day. If you change the date in the first day, then all of the other days will update and your bracket
-                will get a new start date.
-            </p>
-            <br clear="all" />
-            <floatRight style="width: 2 0vw;padding-top: 2rem"><img class="whiteBack" src="Images/TeamAndFields.png" /></floatRight>
-            <h4><a name="TeamsAndFields">TeamsAndFields Sheet</a></h4>
-            <p>
-                The <em>TeamsAndFields<</em> sheet has two tables on it.
-            </p>
-            <p>
-                The Fields and Times table has the field and time for each of the games. It starts out with "Ballfield" as the field
-                name for every field, but as you create the bracket, BracketBuilder tries to automatically assign fields to the games,
-                using the count from the Tournament Information on the <em>Games</em> sheet. For example, if there are two fields, the first
-                game will get Field #1, the second game will get Field #2, and the third game will go back to Field #1 but at a later time.
-            </p>
-            <p>
-                The time for each game starts out as 12:00am. Game times will get assigned by BracketBuilder as you add games
-                to the bracket. The first games on Saturday/Sunday will get 9:00am, the next games will get 12:00pm and so on. On weekdays,
-                the games get 6:00pm when they are added, and the next games get 9:00pm
-            </p>
-            <p>
-                These game times are most likely not going to be correct, but after you add all the games, it should be easy to
-                change game times in this table.
-            </p>
-            <p>
-                The next table on the <em>TeamsAndFields</em> sheet is the Team Inforamation table. This is where you put in
-                the names of the teams and the Priority (if you are going to use Priority shading). The Team Number corresponds
-                to the draw, so the first team drawn is Team 1 and so on.
-            </p>
-            <br clear="all" />
-            <floatRight style="width: 2 0vw;padding-top: 2rem"><img class="whiteBack" src="Images/BracketInfo.png" /></floatRight>
-            <h4><a name="BracketInfo">BracketInfo Sheet</a></h4>
-            <p>
-                The <em>BracketInfo</em> sheet has two tables on it that summarize your tournament bracket.
-            </p>
-            <p>
-                The first table is the <em>Game Results</em>. This table will get updated as you fill out the scores in your
-                bracket -- it will should you a summary of the games that were played, who won, and the scores
-            </p>
-            <p>
-                The second table is the <em>Schedule</em> for your tournament. This is a very helpful table for uploading
-                to scheduling software/umpire assigning programs (like ArbiterSports, for example).
-            </p>
-            <br clear="all" />
-            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/GameOnGrid.png" /></floatRight>
-            <h3><a name="structure">Sheet Structure</a></h3>
-            <p>
-                The bracket is laid out on a grid in the worksheet. Each game relies on the underlying
-                formatting of this grid.
-            <p>
-                Each game requires a minimum of 9 rows (though 11 rows is recommended). These rows alternate between
-                <em>content</em> rows and <em>border/line</em> rows, which is why we need so many rows for a game.
-                For an 11 row game, you have:
-                <ol>
-                    <li>Top Team Name</li>
-                    <li>Top game line</li>
-                    <li>Loser advances to note</li>
-                    <li>(blank line row)</li>
-                    <li>Field</li>
-                    <li>(blank line row)</li>
-                    <li>Time</li>
-                    <li>(blank line row)</li>
-                    <li>blank content line)</li>
-                    <li>Bottom game line</li>
-                    <li>Bottom team name</li>
-                </ol>
-                <floatRight style="width: 20vw"><img class="whiteBack" src="Images/GameOnGrid-Columns.png" /></floatRight>
-                Even when there is no content or no line, the rows continue to alternate. This allows games to
-                be placed anywhere on the grid.
-            </p>
-            <p>
-                Each game always requires at least 3 columns. BracketBuilder will never create a game with other than 3 columns, but you
-                will learn later that there are things you can do to customize your bracket that will keep the structure working
-                while still letting you get creative.
-            </p>
-            <p>
-                These three columns consists of a <em>description</em> column (for the team name, field, time, etc.), a
-                <em>game number</em> column, and a <em>border/line</em> column. Just like with the rows, this pattern repeats
-                even if there is no content.
-            </p>
-            <floatRight style="width: 30vw;padding-top: 2rem"><img src="Images/GameAnatomy.png" class="whiteBack" /></floatRight>
-            <h3><a name="anatomy" />Game Formulas</h3>
-            <p>
-                Most of the parts of a game come from formulas and cell names, which make it possible for the games to automatically
-                update with winners/losers as scores are entered.
-            </p>
-            <h4><a name="teamName" />Team Name</h4>
-            <p> There is a team name at the top and bottom of every game</p>
-            <p>
-                The first game for each team is a little special -- the team name
-                comes from the TeamsAndFields sheet, where there is a table that maps team numbers to their team name. If you want
-                to change the name of a team, you can edit the team name on the TeamsAndFields sheet <b>OR</b> you can just type
-                the team name into the cell. When you type the name of the team directly on the bracket sheet, the game will be
-                marked as "dirty" so you can update the TeamsAndFields sheet later (more on this later in <em>Updating bracket with changes</em>.
-            </p>
-            <p>
-                For all of the other games in the bracket, the team name will be automatically filled in based on who won or lost
-                in the bracket. These cells also have a name assigned to them identifies the
-                cell for later games in the bracket. <b>DO NOT EDIT</b> these team names.
-            </p>
-            <p>
-                You can format the team names however you like, but DO NOT merge the team name cells with any other cells.
-            </p>
-            <p>
-                While you are building the bracket, you will see things like "W1" or "L1" which means that the team
-                name is the winner of game 1, or the loser of game 1. When you are done building the bracket, you might want to remove
-                those W1/L1 designations for a cleaner bracket. To do this, just delete the word "BUILDING" in cell A1 on the sheet.
-            </p>
-            <h4><a name="score" />Score</h4>
-            <p>
-                Every game has score cells for the top and bottom teams. As you fill in these scores, later bracket games
-                will automatically update with the winners/losers of each game.
-            </p>
-            <p>
-                Enter only numbers into these score cells. You can format them however you like, but DO NOT merge the score cell
-                with any other cells.
-            </p>
-            <h4><a name="field" />Field/Time</h4>
-            <p>
-                Each game has a field cell and a time cell that shows the field and time that the game is. This field and time
-                information come from
-                the TeamsAndFields sheet and the bracket will automatically update when you make changes.
-            </p>
-            <p>
-                You can also edit the field and time information directly on the bracket by just typing into the cell. When you edit
-                the field or time information directly on the bracket, the game will be marked as dirty.
-            </p>
-            <p>
-                <b>BE CAREFULL!</b> If you copy/paste field or time information, you will probably end up copying <em>the formula</em> instead
-                of the actual text, which means the information will be wrong when you edit the bracket info sheet. Its best
-                to avoid copy/paste unless you are sure you are just copying/pasting text.
-            </p>
-            <h4><a name="gameNum" />Game Number</h4>
-            <p>
-                The game number is automatically filled in for each game. The several cells are merged together so the game number
-                will show up positioned properly within the game.
-            </p>
-            <h3><a name="editable" />What's Safe to edit?</h3>
-            <p>
-                The previous section described all the special things about the games -- formulas and cell names. For the most
-                part, any blank cell can be filled in with whatever you want. BracketBuilder won't know that its there, so it
-                might insert something on top of it, but it won't break the underlying structure. Once your bracket is built,
-                you are pretty much free to add whatever decorations you want (logos, pictures, etc.)
-            </p>
-            <h4><a name="moving" />Moving Games Manually</h4>
-            <p>
-                In other sections, we talk about using the addin to move games (pick them up and put them somewhere else),
-                or even removing the game from the bracket and adding it on a new day. But what if the addin just won't
-                do what you want, or if you want to move the game in a special way? You can do that as long as you keep
-                the underlying formulas and names in-tact.
-            </p>
-            <p>
-                The best way to do this is use <em>cut and paste</em>. By cutting the cells and pasting them, you are
-                guaranteeing that the formulas remain intact and you don't get name conflicts on the sheet.
-                If the paste doesn't work out the way you want, you can always use Excel's Undo feature to go back to where you were.
-            </p>
-            <p>
-                NOTE: When you cut and paste, make sure you select the entire game, from the top team name to the border line cell
-                next to the bottom team name. This will ensure that you have all 3 columns included. When you paste, make sure you
-                select the right cell for the top team name.
-            </p>
-            <h4><a name="lines" />Borders/Lines</h4>
-            <p>
-                If you want to manually connect (or extend) a line in the bracket, the easiest way is to copy a line cell
-                (which is really just a cell in a line column or line row which is filled with the Black color). If you copy
-                an existing line cell and then paste after you select the cells that connect or draw the border you want.
-            </p>
-            <p>
-                If you want to erase a line or border, just select the cells for the line/border and change the fill color
-                to none. This will effectively erase the border or line
-            </p>
-            <h4><a name="what-if" />Deleting the What-If Game</h4>
-            <p>
-                In a double elimination bracket, teams are only eliminated after losing two games. This applies to the
-                championship game as well. The championship game is played between the team that has won every game (no losses),
-                and the team that has only one loss. This means that if the team with no losses loses the championship
-                game, then that is their first loss. Since they have to lose two games to be eliminated, there has to be
-                one final game (referred to as the <em>what-if</em> or <em>if necessary</em> game). When you build a bracket,
-                it will get marked as "if first loss".
-            </p>
-            <p>
-                There's a 50/50 chance that the what-if game will actually need to be played. Often the team with no losses will
-                win the championship game, which means there is no need for a what-if game. If you want to clean up the bracket,
-                you can delete the what-if game. We also want to reformat the game so it fills all of the space that the
-                championship and what-if games were taking up.
-            </p>
-            <p>
-                There are a few steps to take to do this:
-            </p>
-            <ol>
-                <li>Select the cell with "Champion" in it cut and paste it under the winning teams name (the cell will have "if first loss" in it)</li>
-                <li>Select all the cells you want to clear out (don't include the Champion label you just pasted) and clear the cells (use Delete key)</li>
-                <li>
-                    Select all the cells you want to remove borders/lines from (don't include the line underneath the winning team's name)
-                    and fill the cells with <em>No fill</em>
-                </li>
-                <gallery>
-                    <galleryItem style="width: 30%">
-                        <img src="Images/MoveChampion.png" class="whiteBackSmaller" />
-                        <galleryCaption>
-                            1) Move Champion label
-                        </galleryCaption>
-                    </galleryItem>
-                    <galleryItem style="width: 30%">
-                        <img src="Images/DeleteWhatIfText.png" class="whiteBackSmaller" />
-                        <galleryCaption>2) Delete what-if text</galleryCaption>
-                    </galleryItem>
-                    <galleryItem style="width: 30%">
-                        <img src="Images/DeleteLines.png" class="whiteBackSmaller" />
-                        <galleryCaption>3) Remove what-if borders/lines</galleryCaption>
-                    </galleryItem>
-                </gallery>
-                <p>Now we want to clean things up a bit and get the winning team name and the champion label centered properly</p>
-                <li>
-                    Select one of the cells underneath the team name (one that is filled black), copy, select the rest of the cells to the right
-                    so you extend the line to reach the end of the space, and paste
-                </li>
-                <li>Select the winning team name and the cells next to it over the line you just extended, click on <em>Merge & Center</em> (after all, we don't need a score anymore>'</li>
-                <li>Select the champion label and the cells next to it, click on <em>Merge & Center</em></li>
-                <li>All done!</li>
-            </ol>
-            <gallery>
-                <galleryItem style="width:20%">
-                    <img src="Images/ExtendChampionLine.png" class="whiteBackSmaller" />
-                    <galleryCaption>4) Extend line under winner</galleryCaption>
-                </galleryItem>
-                <galleryItem style="width:20%">
-                    <img src="Images/MergeChampionTeam.png" class="whiteBackSmaller" />
-                    <galleryCaption>5) Merge winning team's name</galleryCaption>
-                </galleryItem>
-                <galleryItem style="width:20%">
-                    <img src="Images/MergeChampion.png" class="whiteBackSmaller" />
-                    <galleryCaption>6) Merge champion label</galleryCaption>
-                </galleryItem>
-                <galleryItem style="width:20%">
-                    <img src="Images/FinalChampion.png" class="whiteBackSmaller" />
-                    <galleryCaption>All done!</galleryCaption>
-                </galleryItem>
-
-            </gallery>
-
-
+                            </gallery>
+                        </content>
+                    </section>
+                </content>
+            </section>
         </article>
 
     </main>
