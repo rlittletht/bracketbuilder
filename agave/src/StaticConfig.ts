@@ -29,7 +29,7 @@ export interface StaticConfig
     throwOnCacheMisses: boolean;
 }
 
-const isLocalHost = false; // window.location.host.indexOf('localhost') > -1;
+const isLocalHost = window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
