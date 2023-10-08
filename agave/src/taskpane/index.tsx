@@ -25,6 +25,8 @@ const render = (Component) =>
     );
 };
 
+Office.initialize = () => { };
+
 /* Render application after Office initializes */
 Office.onReady(() =>
 {

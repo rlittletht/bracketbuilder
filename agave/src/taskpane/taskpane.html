@@ -11,8 +11,24 @@
     <title>TrainWreck Bracket Builder</title>
 
     <!-- Office JavaScript API -->
-    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.debug.js"></script>
+    <!-- <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.debug.js"></script> -->
     <!-- <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/beta/hosted/office.js"></script> -->
+    <script language="javascript">
+        window.onload = 
+            function ()
+            {
+                if (navigator.userAgent.indexOf("Trident") !== -1)
+                {
+                    var html =
+                        "I'm sorry, BracketBuilder does not support running on Internet Explorer.<br/><br/>"
+                        + "This version of Office still uses Internet Explorer for Office add-ins. You will need to upgrade to Office Perpetual 2021, or the latest Office 365 subscription product in order to use Bracket Builder."
+                        + "<br/><br/>If you think you are getting this error incorrectly, please contact us at <a href='mailt:red@traynrex.com'>red@traynrex.com</a>.";
+
+                    document.getElementsByTagName("body")[0].innerHTML = html;
+                }
+            };
+    </script>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
 
     <!-- For more information on Fluent UI, visit https://developer.microsoft.com/fluentui#/. -->
     <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css" />
