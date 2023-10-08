@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TwBracketBuilder Help</title>
+    <link rel="stylesheet" href="./rex.css" />
+    <script src="./rex.js"></script>
+    <style>
+    </style>
+</head>
+<body>
+    <header>
+        <logo>
+            <img class="logo" src="Images/ModernTrainWithTRex.png" />
+        </logo>
+        <product>
+            <productHeader>
+                <h1> Bracket Builder </h1>
+            </productHeader>
+            <productName>
+                &gt;traynrex <red>RED</red>&lt;
+            </productName>
+        </product>
+        <logo>
+            <img class="logo" src="Images/VintageTrainRTLWithTRex.png" />
+        </logo>
+
+    </header>
+    <main>
+        <nav>
+            <ul>
+                <li><a href="./BracketBuilder.html#help">Getting Started</a></li>
+                <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
+                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
+                <li><a href="./CustomBrackets.html#CustomBrackets">Custom Brackets</a></li>
+                <li><a href="./FAQ.html#FAQ">FAQ/Scenarios</a></li>
+                <li><a href="./Licenses.html#Licenses">Licenses</a></li>
+                <li><a href="./Privacy.html#Privacy">Privacy</a></li>
+            </ul>
+        </nav>
+        <article id="help">
+            <section id="help">
+                <heading>Getting Started</heading>
+                <content>
+
+                    <section id="Intro">
+                        <heading>Introduction</heading>
+                        <content>
+                            <zoomable>
+                                <floatRight style="width: 30vw;padding-top: 2rem"><img class="whiteBack" src="Images/FullBracket.png" /></floatRight>
+                            </zoomable>
+                            <p>
+                                Making tournament brackets like this one can be tedious -- you have to figure out which games
+                                have to play on which days, and you get bogged
+                                down in making sure the formatting works and that you don't <i>cross the lines</i>. It doesn't
+                                help that the recommended double-elimination brackets for Little League can be a little
+                                hard to follow.
+                            </p>
+
+                            <p>
+                                Bracket Builder addresses all of these problems. Every game in the bracket
+                                conforms to the double-elimination bracket, and every time you add a game,
+                                it will format the cells to connect the games. It will even adjust your
+                                entire bracket to avoid the most common bracket building headaches, namely
+                                things like reordering games to make games fit without crossing lines.
+                            </p>
+                            <p>
+                                When your bracket is built and you have <i>applied the finishing touches</i>,
+                                you can add scores to the bracket and the team names will automatically fill
+                                in as you progress through the bracket. This is very helpful if you want to export
+                                the bracket to a PDF and post it to the web to keep everyone up to date.
+                            </p>
+                            <p>
+                                Go through these help topics to first get started with your first bracket, and then
+                                dive into the advanced topics to learn how to tweak your bracket without breaking
+                                things.
+                            </p>
+                        </content>
+                    </section>
+                    <section id="Compat">
+                        <heading>Compatibility </heading>
+                        <content>
+                            <p>
+                                First, a note able these brackets and their compatibility. This add-in creates double-elimination
+                                tournament brackets that conform
+                                to Little League's Approved Double Elimination Tournament Brackets. If you intend to use these for a
+                                Little League tournament, remember they must still be approved in order to be used in the
+                                Little League tournament. This add-in just helps you create and format the bracket.
+                            </p>
+                        </content>
+                    </section>
+                    <section id="QuickWalk">
+                        <heading>Quick Walk-Through</heading>
+                        <content>
+                            <zoomableTall>
+                                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/ChooseSize.png" /></floatRight>
+                            </zoomableTall>
+                            <p>
+                                Ok, there's a lot of details we could go into, but let's just do a quick
+                                walk-through to get you used to it.
+                            </p>
+                            <ul>
+                                <li>
+                                    Create a new workbook and insert the Add-In.
+                                </li>
+                                <li>Choose "9 Team" and click Build a bracket to setup your workbook.</li>
+                                <li>
+                                    Select D6 and type "6/25/22" - this is the start of our tournament
+                                    (notice that all the dates changed for the rest of the tournament)
+                                </li>
+                                <li>Select cell D7 (because we want to insert on Saturday 6/25)</li>
+                                <li>
+                                    Insert game 1 (Click "+" for game 1
+                                    <zoomableInline>
+                                        <floatNone style="width: 136px">
+                                            <img src="Images/Game1.png" class="whiteBack">
+                                        </floatNone>
+                                    </zoomableInline>)
+                                </li>
+                                <li>Insert game 2</li>
+                                <li>Insert game 3</li>
+                                <li>Insert game 4</li>
+                                <li>Select cell G7 (so we insert games on 6/26 now)</li>
+                                <li>
+                                    Insert game 5 (notice that the grid adjusted to make space for the
+                                    game)
+                                </li>
+                                <li>Insert game 6 (since G1 and G2 played on Saturday)</li>
+                                <li>Insert game 9</li>
+                            </ul>
+                            <p>
+                                At this point, we can't fit any more games on Sunday because G7 requires G5, G8 requires
+                                G6, and G10 requires G5. Since G5 and G6 play on Sunday, we can't play G7, G8, or G10 until
+                                Monday.
+                            </p>
+                            <ul>
+                                <li>Select J7 (for Monday)</li>
+                                <li>Insert game 7</li>
+                                <li>Insert game 8</li>
+                                <li>Insert game 10</li>
+                            </ul>
+                            Ok, that looks a little funky. Maybe we could do better.
+                            <br>
+                            <ul>
+                                <li>
+                                    Click Undo
+                                    <floatNone style="width: 22px;">
+                                        <img src="Images/UndoIcon.png" class="whiteBack" style="max-width: 122px">
+                                    </floatNone>
+                                    three times. Games 10, 8, and 7 should be gone now.
+                                </li>
+                                <li>(Make sure J7 is still selected)</li>
+                                <li>Insert game 8</li>
+                                <li>Insert game 7</li>
+                                <li>Insert game 10</li>
+                            </ul>
+                            Ok, that looks better... All we did was change the order we inserted the games and
+                            <prodRef>BracketBuilder</prodRef> was able
+                            to make a better guess about the position.
+                            <ul>
+                                <li>Select M7 (for Tuesday)</li>
+                                <li>Insert game 11</li>
+                                <li>Insert game 12</li>
+                                <li>Select P7</li>
+                                <li>Insert game 13</li>
+                                <li>Insert game 14</li>
+                                <li>Select S7</li>
+                                <li>Insert game 15</li>
+                                <li>Select V7</li>
+                                <li>Insert game 16</li>
+                                <li>Select Y7</li>
+                                <li>Insert game 17</li>
+                                <li>Select AB7</li>
+                                <li>Insert champion (game 18)</li>
+                            </ul>
+                            <p>
+                                At this point, the bracket is done. Now let's go back and fix the team
+                                names. Go to the TeamsAndFields sheet. Fill out the team names for the
+                                bracket (fill in cells B23 to B31with team names).
+                            </p>
+                            <p>
+                                Now back on the Games sheet, you can click on each "Field #1" or "6:00
+                                PM" and put the correct field and time. (You could also do this on the
+                                TeamsAndFields sheet).
+                            </p>
+                            <p>
+                                Lastly, let's fill in some tournament information. Go to the
+                                "TournamentInfo" sheet:
+                            </p>
+                            <zoomable>
+                                <floatRight style="width: 15vw;padding-top: 2rem"><img class="whiteBack" src="Images/FinishingTouches.png" /></floatRight>
+                            </zoomable>
+                            <ul>
+                                <li>Select B1, enter "9 Team Tournament"</li>
+                                <li>Select B2, enter "Sample Walkthrough"</li>
+                                <li>Select B3, enter "Al Houghton Stadium"</li>
+                                <li>Select B4, enter "Little League Dr, San Bernardino, CA</li>
+                                <li>Select B5, enter "Little League"</li>
+                            </ul>
+                            <p>
+                                And the final step is to apply the finishing touches to the bracket:
+                                <ul>
+                                    <li>
+                                        Click on the <cmdRef>Finishing Touches</cmdRef>
+                                    </li>
+                                    (
+                                    <floatNone style="width: 22px;">
+                                        <img src="Images/FinishingTouchesIcon.png" class="whiteBack" style="max-width: 122px">
+                                    </floatNone>) button.
+                                </ul>
+                            </p>
+                            And there you go... A completed bracket, formatted and ready for printing.
+                            <br>
+                        </content>
+                    </section>
+                    <section id="detailed">
+                        <heading>Detailed Instructions</heading>
+                        <content>
+                            <zoomableTall>
+                                <floatRight style="width: 15vw;margin-top: -4rem"><img class="whiteBack" src="Images/ChooseSize.png" /></floatRight>
+                            </zoomableTall>
+                            <p>
+                                In this detailed start section, we will build the same bracket that we built in the QuickStart, but we will
+                                go a little further in depth as we build it, along with links to more information.
+                            </p>
+
+                            <p>
+                                The first thing you have to do is build the bracket workbook. <prodRef>BracketBuilder</prodRef> comes with lots of
+                                built-in double elimination brackets for various team sizes. You can choose the size of the bracket using the
+                                bracket chooser. You can also create custom brackets, which is covered in <a href="./CustomBrackets.html">CustomBrackets</a>.
+                            </p>
+                            <p>
+                                For this example, <skimmable>select a 9 Team bracket</skimmable> by choosing <em>9 Teams</em> in the Bracket Chooser.
+                            </p>
+                            <p>
+                                Once you click "Build a bracket", your workbook will be setup to start building out your bracket. You will see that a bunch
+                                of new sheets were added to your workbook. You can read the details about all of these sheets on the
+                                <a href="./SheetEditing.html">Editing the Sheet</a> help pages.
+                            </p>
+                            <section id="startingBracket">
+                                <heading>Starting the Bracket</heading>
+                                <content>
+                                    <zoomable>
+                                        <floatRight style="width: 20rem">
+                                            <img src="Images/GridAndTaskpane.png" style="margin-top: -2em" alt="Grid and taskpane screen clipping" class="whiteBack">
+                                        </floatRight>
+                                    </zoomable>
+                                    <p>
+                                        The <eltRef>Games Sheet</eltRef> is where we will spend most of our time when building a tournament bracket.
+                                        This sheet has the tournament information as well as the bracket itself. This is also where you will be building
+                                        the actual bracket.
+                                    </p>
+                                    <p>If you want more information on all of the items on the <eltRef>Games Sheet</eltRef>, go <a href="./SheetEditing.html#Games">here</a></p>
+                                    <p>For now, we're going to jump in and get started.</p>
+
+                                    <section id="bracketDates">
+                                        <heading>Bracket Dates</heading>
+                                        <content>
+                                            <p>
+                                                The days of the tournament are <em>Self Healing</em> -- that means that if you change on of the dates for the tournament,
+                                                then all the later dates will automatically update. We will take advantage of this to set the first day of our tournament.
+                                                Just <skimmable>click on the first date</skimmable> (cell D6) and just enter whatever you want to be the first day of the
+                                                tournament. For our example, <skimmable>enter 6/25/22 in cell D6</skimmable>.
+                                            </p>
+                                            <p>
+                                                Once you update the first date, all of the other dates should automatically change. If you had entered a date that wasn't
+                                                a Saturday, then the days of the week would have also changed.
+                                            </p>
+                                        </content>
+                                    </section>
+                                    <section id="addingGames">
+                                        <heading navText="Adding Games">Adding Games to the bracket</heading>
+                                        <content>
+                                            <p>
+                                                Now lets add some games to our bracket.
+                                            </p>
+                                            <section>
+                                                <heading>Adding the first game</heading>
+                                                <content>
+                                                    <p>
+                                                        <prodRef>BracketBuilder</prodRef> tries to make adding games as easy as possible, but that can be pretty hard sometimes.
+                                                        It tries to <em>do what you want</em> when you insert a game, but sometimes you might want it to
+                                                        <skimmable>do something automatically, </skimmable> and sometimes you want it do just <skimmable>do exactly what you told it</skimmable> to do.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Select cell A1</skimmable> (if its not already selected), and then click the <cmd>Add Game</cmd> button
+                                                        (
+                                                        <zoomableInline>
+                                                            <floatNone style="width: 136px">
+                                                                <img src="Images/Game1.png" class="whiteBack">
+                                                            </floatNone>
+                                                        </zoomableInline>)
+                                                        to insert the game. Since this is the very first game being added to the bracket, your selection will automatically be moved to Column D.
+                                                    </p>
+                                                    <p>
+                                                        Notice that the game was given a start time of 9am and it was put on Field #1. The time and field were automatically <em>guessed</em>.
+                                                        Take a look at <a href="./FAQ.html#FieldTimes">Guessing Field Times</a> for more information.
+                                                    </p>
+                                                    <zoomable>
+                                                        <floatRight style="width: 15rem">
+                                                            <img src="Images/Game1Inserted.png" style="margin-top: -2em" alt="Grid and taskpane screen clipping" class="whiteBack">
+                                                        </floatRight>
+                                                    </zoomable>
+                                                </content>
+                                            </section>
+                                            <section>
+                                                <heading>Bracket changes after a game is inserted</heading>
+                                                <content>
+                                                    <zoomableTall>
+                                                        <floatRight style="width:7rem">
+                                                            <img src="Images/Taskpane-1-game.png" style="margin-top: -2em" alt="Grid and taskpane screen clipping" class="whiteBack">
+                                                        </floatRight>
+                                                    </zoomableTall>
+                                                    <p> Now that you have a game inserted, let's take a moment and see what has changed.</p>
+                                                    <p>
+                                                        The most obvious change after inserting a game is that a game is now on the grid. To learn more about the structure
+                                                        of games on the grid, check out <a href="./SheetEditing#structure">Bracket Game Structure</a>
+                                                    </p>
+                                                    <p>
+                                                        Another thing that has changed is the <prodRef>BracketBuidler</prodRef> taskpane on the right side. The game you just
+                                                        inserted is now shaded gray. Games without gray shading are still waiting to be placed on the bracket while
+                                                        games shaded gray are already on the bracket.
+                                                    </p>
+                                                    <p>
+                                                        Note that the <eltRef>Add Game</eltRef> button still works even if the game is already added to the bracket. If you click
+                                                        <eltRef>Add Game</eltRef> for an already inserted game, then the game will first be removed from the bracket, and then
+                                                        inserted.
+                                                    </p>
+                                                    <p>
+                                                        The <eltRef>TeamsAndFields</eltRef> sheet has also been updated with the time and field for the game you just inserted.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section>
+                                                <heading>Adding more games</heading>
+                                                <content>
+                                                    <p>
+                                                        Our bracket can play 3 more games on Saturday -- the first 8 teams can play on Saturday, and the 9th team (which hsa a bye)
+                                                        will play on Sunday.
+                                                    </p>
+                                                    <p>
+                                                        Go ahead and <skimmable>Click the + (Add Game) button</skimmable> for Game 2. This will insert Game 2 in the next available
+                                                        location on the bracket on Saturday. Notice that since we have 2 fields for this tournament, this game also plays
+                                                        at 9:00am on Saturday, but on Field #2
+                                                    </p>
+                                                    <p>
+                                                        Now <skimmable>Click the + button</skimmable> for Game 3. With only 2 fields, we can't play this game at 9:00am on Saturday
+                                                        (we are out of fields), so we now move the the 12:00pm slot and start over with Field #1.
+                                                        Lastly, <skimmable>Add Game 4</skimmable>.
+                                                    </p>
+                                                    <p>
+                                                        At this point we have placed all the games on Saturday that can be played. Go ahead and try to add game 5 by
+                                                        <skimmable>Clicking on the + for Game 5</skimmable>. <prodRef>BracketBuilder</prodRef> will notice that you
+                                                        can't place Game 5 in the same column as Game 1 -- Game 5 needs to connect with the winner from Game 1 (W1).
+                                                    </p>
+                                                    <zoomable>
+                                                        <floatRight style="width:15em">
+                                                            <img src="Images/Error-after-game5.png" style="margin-top: -2em" alt="Grid and taskpane screen clipping" class="whiteBack">
+                                                        </floatRight>
+                                                    </zoomable>
+                                                    <p>
+                                                        When you try to place this game you will get an error message telling you why the game couldn't be placed, and in this case it
+                                                        will suggest where you need to place the game.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section>
+                                                <heading>Select the next day</heading>
+                                                <content>
+                                                    <p>
+                                                        Now we want to play the next set of games on Sunday. To do this, <skimmable>Click on Cell G1</skimmable>. Clicking in Column G
+                                                        tells <prodRef>BracketBuilder</prodRef> that you now want to insert games in this column, which is Sunday.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Insert Game 5</skimmable> into the bracket. Notice how the bracket was adjusted so Game 5 would fit at the top of the
+                                                        Sunday Column? All of the games on Saturday shifted down a little bit to make room for Game 5.
+                                                    </p>
+                                                    <p>
+                                                        Now let's <skimmable>Add Games 5, 6, and 9</skimmable> to the bracket. We can't add Games 7 or 8 because they require Games 5 and
+                                                        6 to be played first. Notice that when you added game 6, it put it at the bottom of the Sunday column, and when you added game 9,
+                                                        it automatically placed it connecting to Games 2 and 3.
+                                                    </p>
+                                                    <p>
+                                                        Now <skimmable>Click on Cell J1</skimmable> in order to start adding games to Monday. <skimmable>Add Games 7 and 8</skimmable>.
+                                                        Notice how Game 8 need to be connected to Game 6. In order to make that happen without overlapping other games,
+                                                        <prodRef>BracketBuilder</prodRef> rearranged the bracket by swapping some games around, which made it possible to insert Game 8
+                                                        at the bottom of Monday, and connect it to Game 6.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Add Game 10</skimmable>. Notice that Game 10 is played at 9:00pm on Field #1. This is probably not a great time, but
+                                                        you can adjust it later. Also notice that in order to connect Game 4 and Game 5 to Game 10, the grid had to be rearranged again
+                                                        to make things work.
+                                                    </p>
+                                                    <p>
+                                                        Now let's take a look at our grid. The bottom of the bracket looks a little weird. Game 7 is sort of on its own. We can do better.
+                                                        This is a good time to take advantage of the undo feature and try things again. <skimmable>Click on the Undo button 3 times</skimmable>
+                                                        <floatNone style="width: 22px;">
+                                                            <img src="Images/UndoIcon.png" class="whiteBack" style="max-width: 122px">
+                                                        </floatNone>.
+                                                        This will undo the last 3 actions we took (which were inserting Games 10, 8 and 7). Notice how all the bracket rearranging was
+                                                        undone as well.
+                                                    </p>
+                                                    <p>
+                                                        Now let's see if we can make things a little better. Many times, you can get a better outcome just by changing the order you
+                                                        insert the games. Let's try that out.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Make sure J1 is still selected</skimmable> and <skimmable>Add Game 8</skimmable> instead of Game 7. This let's
+                                                        Game 6 easily connect with Game 8 without having to worry about moving Game 7 around. Now <skimmable>Add Game 7</skimmable>.
+                                                        This puts Game 7 at the bottom of the column. Lastly <skimmable>Add Game 10</skimmable>. Now our bracket looks a little nicer.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section>
+                                                <heading>Adding the rest of the games</heading>
+                                                <content>
+                                                    <p>
+                                                        Now we are going to finish adding all the games to the bracket.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Click on M1</skimmable> and then <skimmable>Add Games 11 and 12.</skimmable>
+                                                        Next <skimmable>Click on P1</skimmable> and then <skimmable>Add Games 13 and 14.</skimmable> This will finish off
+                                                        the days where we can play two games in a day. Now we will be down to one game a day.
+                                                    </p>
+                                                    <p>
+                                                        We are just going to click on the next day and add the next game for each game until we are done with the tournament.
+                                                        <skimmable>Click on S1, add Game 15</skimmable> then <skimmable>Click on V1, add Game 16</skimmable>. Now we are down to the
+                                                        final what-if game. This game will only need to be played if team from the Winners bracket loses the game. Otherwise, it won't need to be
+                                                        played.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Click on Y1</skimmable> and then <skimmable>Add Game 17</skimmable>. Notice that this game has extra text at the top of it
+                                                        indicating <em>If first loss</em>.
+                                                    </p>
+                                                    <p>
+                                                        Lastly, we want to place our <eltRef>Champion Game</eltRef>. This isn't really a game, but we want to have the winner of the tournament
+                                                        designated, so we have one final game we call the <em>Champion game</em>. <skimmable>Click on cell AB1 and add Champion</skimmable>. This
+                                                        will automatically format the champion at the end of the tournament.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                        </content>
+                                    </section>
+                                    <section id="finishingBracket">
+                                        <heading>Finishing the bracket</heading>
+                                        <content>
+                                            <p>
+                                                Now that we have added all the games, there are some final things we want to do in this walk-through.
+                                            </p>
+                                            <section>
+                                                <heading>Changing the team names</heading>
+                                                <content>
+                                                    <zoomable>
+                                                        <floatRight style="width:10em">
+                                                            <img src="Images/Teams-editing.png" style="margin-top: -2em" alt="Grid and taskpane screen clipping" class="whiteBack">
+                                                        </floatRight>
+                                                    </zoomable>
+                                                    <p>
+                                                        All the teams still have their default names (Team 1, Team 2, and so on). Presumably you have the names of the 9 teams
+                                                        involved in the tournament. You probably also did a blind draw to get an order for the teams, which means you have an order
+                                                        for the teams, 1 to 9.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Click on the <eltRef>TeamsAndFields</eltRef> sheet</skimmable> so you can edit the team names. You will see a table
+                                                        at the bottom of the sheet. This table has a list of the team ids ("team 1, team 2, etc") and their names.
+                                                        <skimmable>Change the team names</skimmable> to match your team names. Make sure to put them in according to the order
+                                                        of the draw. This will ensure the correct teams get any bye games, and the correct matchups happen according to the official bracket.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section>
+                                                <heading>Changing the tournament information</heading>
+                                                <content>
+                                                    <p>
+                                                        Now let's change the inforamtion about the tournament so our bracket has the right information at the top of it.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Click on the <eltRef>Games</eltRef> sheet</skimmable> so we can get back to the bracket. On the left side, notice
+                                                        that there is information like the title for the tournament, subtitle, etc.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Click on Cell B12</skimmable> to edit the <eltRef>Tournament Title</eltRef>. Change the title to "9 Team Tournament".
+                                                        Let's continue and edit the remaining information. <skimmable>Click on Cell B14</skimmable> and change the <eltRef>Sub-Title</eltRef>
+                                                        to "Sample Walkthrough". <skimmable>Click on Cell B15, enter "Al Houghton Stadium".</skimmable>
+                                                        <skimmable>Click on Cell B17, enter "Little League Dr, San Bernardino, CA".</skimmable>. Lastly,
+                                                        <skimmable>Click on Cell B19, enter "LITTLE LEAGUE".</skimmable>
+                                                    </p>
+                                                    <p>
+                                                        As you edited each of these cells, the actual tournament information at the top of the bracket should have updated to match
+                                                        what you typed in.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section>
+                                                <heading>Finishing Touches</heading>
+                                                <content>
+                                                    <p>
+                                                        At this point, the bracket is done but it still doesn't look great. Printing the bracket would not look good at all.
+                                                        Go ahead, <skimmable>Go to Print Preview</skimmable>, and notice how really bad it looks. There are a number
+                                                        of formatting changes that have to happen to make the bracket look good.
+                                                    </p>
+                                                    <p>
+                                                        <skimmable>Click on the <cmd>Finishing Touches</cmd> button</skimmable>
+                                                        (
+                                                        <floatNone style="width: 22px;">
+                                                            <img src="Images/FinishingTouchesIcon.png" class="whiteBack" style="max-width: 122px">
+                                                        </floatNone>). This will format the print area, merge all the title cells, add the hosting information, and a couple
+                                                        other final adjustments.
+                                                    </p>
+                                                    <p>
+                                                        Now <skimmable>go back to Print Preview</skimmable> and notice how much better the bracket looks, fitting on one page
+                                                        and ready to print or convert to PDF for sharing.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                        </content>
+                                    </section>
+                                </content>
+                            </section>
+                        </content>
+                    </section>
+                </content>
+            </section>
+        </article>
+    </main>
+</body>
+</html>

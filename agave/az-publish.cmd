@@ -16,7 +16,8 @@ if .%ROOT_NAME% == . echo No root name specified!&goto LUsage
 set STG_ACCOUNT=%ROOT_NAME%stg
 if .%1 == . echo No publish account specified!&goto LExit
 
-call az storage blob upload-batch --account-name %STG_ACCOUNT% -s .\dist -d $web --auth-mode login
+echo az storage blob sync -c $web -s ".\dist" --account-name %ROOT_NAME%stg
+call az storage blob sync -c $web -s ".\dist" --account-name %ROOT_NAME%stg
 echo az cdn endpoint purge --resource-group %GROUP_NAME% --name %ROOT_NAME%cdnendpoint --profile-name %ROOT_NAME%cdn --content-paths "/*" "/assets/*" "/help/*"
 call az cdn endpoint purge --resource-group %GROUP_NAME% --name %ROOT_NAME%cdnendpoint --profile-name %ROOT_NAME%cdn --content-paths "/*" "/assets/*" "/help/*"
 

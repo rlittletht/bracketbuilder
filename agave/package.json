@@ -1,9 +1,9 @@
 {
-  "name": "office-addin-taskpane-react",
-  "version": "0.0.1",
+  "name": "traynrex-red",
+  "version": "1.2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OfficeDev/Office-Addin-TaskPane-React.git"
+    "url": "https://github.com/rlittletht/bracketbuilder.git"
   },
   "license": "MIT",
   "config": {
@@ -18,8 +18,8 @@
     "lint": "office-addin-lint check",
     "lint:fix": "office-addin-lint fix",
     "prettier": "office-addin-lint prettier",
-    "provision": "az-provision %npm_config_subscription% TwBBld WestUs twbbld",
-    "publish": "az-publish %npm_config_subscription% TwBBld WestUs twbbld",
+    "provision": "az-provision %npm_config_subscription% TraynrexRed WestUs trredaddin",
+    "publish": "az-publish %npm_config_subscription% TraynrexRed WestUs trredaddin",
     "start": "office-addin-debugging start manifest.xml",
     "start:desktop": "office-addin-debugging start manifest.xml desktop",
     "start:web": "office-addin-debugging start manifest.xml web",

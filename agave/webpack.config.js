@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
 const urlDev = "https://localhost:3000/";
-const urlProd = "https://twbbldcdnendpoint.azureedge.net/";
+const urlProd = "https://addin.red.traynrex.com/";
 
 async function getHttpsOptions()
 {
