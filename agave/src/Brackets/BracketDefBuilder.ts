@@ -37,10 +37,25 @@ export class BracketDefBuilder
         bracketDefinition.games.forEach(
             (gameDef: GameDefinition, gameNum: number) =>
             {
-                values.push([gameNum + 1, gameDef.winner, gameDef.loser, gameDef.topSource, gameDef.bottomSource]);
+                values.push([gameNum + 1, gameDef.winner, gameDef.loser, gameDef.topSource, gameDef.bottomSource, gameDef.topSeed ?? "", gameDef.bottomSeed ?? ""]);
             });
 
         return values;
+    }
+
+    static getTeamSeedNames(bracket: BracketDefinition): { team: string, seed: string }[]
+    {
+        const teams: { team: string, seed: string }[] = [];
+
+        for (let game of bracket.games)
+        {
+            if (BracketManager.IsTeamSourceStatic(game.topSource))
+                teams.push({ team: game.topSource, seed: game.topSeed ?? "" });
+            if (BracketManager.IsTeamSourceStatic(game.bottomSource))
+                teams.push({ team: game.bottomSource, seed: game.bottomSeed ?? "" });
+        }
+
+        return teams;
     }
 
     /*----------------------------------------------------------------------------
@@ -61,6 +76,20 @@ export class BracketDefBuilder
         return teams;
     }
 
+    static getSeedNames(bracket: BracketDefinition): string[]
+    {
+        const seeds: string[] = [];
+
+        for (let game of bracket.games)
+        {
+            if ((game.topSeed ?? "") != "")
+                seeds.push(game.topSeed);
+            if ((game.bottomSeed ?? "") != "")
+                seeds.push(game.bottomSeed);
+        }
+
+        return seeds;
+    }
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getStaticAvailableBrackets
 
@@ -73,6 +102,8 @@ export class BracketDefBuilder
         s_brackets.forEach(
             (bracket: BracketDefinition) =>
             {
+                BracketDefBuilder.verifyBracketConsistency(bracket);
+
                 brackets.push(
                     {
                         key: bracket.tableName.substr(0, bracket.tableName.length - 7),
@@ -120,6 +151,29 @@ export class BracketDefBuilder
         }
     }
 
+    static verifyAndRecordSeed(mapSeeds: Map<string, number>, source: string, seed: string | undefined)
+    {
+        if (mapSeeds.size > 0)
+        {
+            if (BracketManager.IsTeamSourceStatic(source))
+            {
+                if ((seed ?? "") == "")
+                    throw new Error(`team ${source} specified but no seed ${seed} defined`);
+            }
+        }
+
+        if ((seed ?? "") != "")
+        {
+            if (mapSeeds.has(seed))
+                throw new Error(`seed ${seed} specified more than once`);
+
+            mapSeeds.set(seed, 1);
+
+            if (!BracketManager.IsTeamSourceStatic(source))
+                throw new Error(`seed ${seed} defined for non-static source ${source}`);
+        }
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.verifyBracketConsistency
 
@@ -127,6 +181,9 @@ export class BracketDefBuilder
     ----------------------------------------------------------------------------*/
     static verifyBracketConsistency(def: BracketDefinition)
     {
+        // if there are seeds, they have to be complete
+        const mapSeeds = new Map<string, number>();
+
         for (let num = 0; num < def.games.length; num++)
         {
             const gameDef = def.games[num];
@@ -134,6 +191,9 @@ export class BracketDefBuilder
 
             try
             {
+                this.verifyAndRecordSeed(mapSeeds, gameDef.topSource, gameDef.topSeed);
+                this.verifyAndRecordSeed(mapSeeds, gameDef.bottomSource, gameDef.bottomSeed);
+
                 let isChampionship = false;
 
                 if (gameDef.winner && gameDef.winner != "")
@@ -156,23 +216,6 @@ export class BracketDefBuilder
 
                 if (!isChampionship && !BracketManager.IsTeamSourceStatic(gameDef.bottomSource))
                     this.verifySourceAdvanceCorrect(def.games, `B${new GameNum(num).GameId.Value}`, gameDef.bottomSource);
-
-                const teams = this.getTeamNames(def);
-
-                if (teams.length != def.teamCount)
-                    throw new Error(`Number of defined teams ${teams.length} doesn't equal the team bracket size ${def.teamCount}`);
-
-                const mapTeamPresent = new Map<string, number>();
-
-                for (let team of teams)
-                {
-                    const check = team.toUpperCase();
-
-                    if (mapTeamPresent.has(check))
-                        throw new Error(`Found team ${team} playing for the first time more than once in the bracket`);
-
-                    mapTeamPresent.set(check, 1);
-                }
             }
             catch (e)
             {
@@ -182,6 +225,26 @@ export class BracketDefBuilder
                 throw newError;
             }
         }
+
+        const teams = this.getTeamNames(def);
+
+        if (teams.length != def.teamCount)
+            throw new Error(`Number of defined teams ${teams.length} doesn't equal the team bracket size ${def.teamCount}`);
+
+        const mapTeamPresent = new Map<string, number>();
+
+        for (let team of teams)
+        {
+            const check = team.toUpperCase();
+
+            if (mapTeamPresent.has(check))
+                throw new Error(`Found team ${team} playing for the first time more than once in the bracket`);
+
+            mapTeamPresent.set(check, 1);
+        }
+
+        if (mapSeeds.size > 0 && mapSeeds.size != teams.length)
+            throw new Error(`incorrect number of seed names defined: ${mapSeeds.size} != ${teams.length}`);
     }
 
     /*----------------------------------------------------------------------------
@@ -240,14 +303,14 @@ export class BracketDefBuilder
             sheet,
             fastTables,
             bracketDefinition.tableName,
-            Ranges.addressFromCoordinates([rowFirstTable, 1], [rowFirstTable, 7]),
-            ["Game", "Winner", "Loser", "Top", "Bottom", "CountTopCheck", "CountBottomCheck"]);
+            Ranges.addressFromCoordinates([rowFirstTable, 1], [rowFirstTable, 9]),
+            ["Game", "Winner", "Loser", "Top", "Bottom", "CountTopCheck", "CountBottomCheck", "TopSeedName", "BottomSeedName"]);
 
         await Tables.appendArrayToTableSlow(
             context,
             bracketDefinition.tableName,
             this.getArrayValuesFromBracketDefinition(bracketDefinition),
-            ["Game", "Winner", "Loser", "Top", "Bottom"]);
+            ["Game", "Winner", "Loser", "Top", "Bottom", "TopSeedName", "BottomSeedName"]);
 
         rng = sheet.getRangeByIndexes(rowFirstTableData, 6, 1, 2);
         rng.formulas =
@@ -269,23 +332,23 @@ export class BracketDefBuilder
         rng = sheet.getRangeByIndexes(rowCheckLines, 1, 4, 2);
         rng.formulas =
             <any[][]>
-        [
             [
-                `=MAX(${Ranges.addressFromCoordinates([rowFirstTableData, 1], [rowLastTableData, 1])})`,
-                ""
-            ],
-            [
-                `=INT((${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2)`,
-                `=COUNTA(${bracketDefinition.tableName}[[Top]:[Bottom]])-${Ranges.addressFromCoordinates([rowCheckLines + 2, 2], null)}-${Ranges.addressFromCoordinates([rowCheckLines + 3, 2], null)}`
-            ],
-            [
-                `=${Ranges.addressFromCoordinates([rowCheckLines + 1, 1], null)}`,
-                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"L*")`
-            ],
-            [
-                `=${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} - 1`,
-                `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"W*")`
-            ]
+                [
+                    `=MAX(${Ranges.addressFromCoordinates([rowFirstTableData, 1], [rowLastTableData, 1])})`,
+                    ""
+                ],
+                [
+                    `=INT((${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} + 1) / 2)`,
+                    `=COUNTA(${bracketDefinition.tableName}[[Top]:[Bottom]])-${Ranges.addressFromCoordinates([rowCheckLines + 2, 2], null)}-${Ranges.addressFromCoordinates([rowCheckLines + 3, 2], null)}`
+                ],
+                [
+                    `=${Ranges.addressFromCoordinates([rowCheckLines + 1, 1], null)}`,
+                    `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"L*")`
+                ],
+                [
+                    `=${Ranges.addressFromCoordinates([rowCheckLines, 1], null)} - 1`,
+                    `=COUNTIF(${bracketDefinition.tableName}[[Top]:[Bottom]],"W*")`
+                ]
             ];
         await context.sync();
 

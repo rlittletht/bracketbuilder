@@ -451,23 +451,23 @@ export class GameDataSources
             gameInfoHeader);
 
         let formulasTeamNames: any[][] = [];
-        const teamNameHeader: any[] = ["ID", "Name", "Priority"];
+        const teamNameHeader: any[] = ["ID", "Name", "Priority", "Seed"];
 
         const teamNameMap = new Map<string, TeamNameMap>();
-        const teamNames = BracketDefBuilder.getTeamNames(bracketDefinition);
+        const teamNames = BracketDefBuilder.getTeamSeedNames(bracketDefinition);
 
         teamNames.sort(
-            (left: string, right: string) =>
+            (left: { team: string, seed: string }, right: { team: string, seed: string }) =>
             {
-                return GameDataSources.compareNumberedItems(left, right);
+                return GameDataSources.compareNumberedItems(left.team, right.team);
             });
         
         for (let i: number = 0; i < teamNames.length; i++)
         {
-            formulasTeamNames.push([`${teamNames[i]}`, `Team ${i + 1}`, 0]);
+            formulasTeamNames.push([`${teamNames[i].team}`, `Team ${i + 1}`, 0, `${teamNames[i].seed}`]);
         }
 
-        range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 3);
+        range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 4);
         range.formulas = formulasTeamNames;
 
         const rangeFirstColumn = sheet.getRanges("A:A");
@@ -484,7 +484,7 @@ export class GameDataSources
             sheet,
             fastTables,
             "TeamNames",
-            Ranges.addressFromCoordinates([formulasGameInfo.length + 3, 0], [formulasGameInfo.length + 3 + formulasTeamNames.length - 1, 2]),
+            Ranges.addressFromCoordinates([formulasGameInfo.length + 3, 0], [formulasGameInfo.length + 3 + formulasTeamNames.length - 1, 3]),
             teamNameHeader);
     }
 }
