@@ -46,8 +46,8 @@ export class BracketManager
             tableName,
             header,
             dataBody,
-            ["Game", "Winner", "Loser", "Top", "Bottom"],
-            true);
+            ["Game", "Winner", "Loser", "Top", "Bottom", "TopSeedName", "BottomSeedName"],
+            false);
 
         for (let game of gameDefs)
         {
@@ -56,7 +56,9 @@ export class BracketManager
                     winner: game.Winner,
                     loser: game.Loser,
                     topSource: game.Top,
-                    bottomSource: game.Bottom
+                    bottomSource: game.Bottom,
+                    topSeed: game.TopSeedName,
+                    bottomSeed: game.BottomSeedName
                 });
         }
         return bracket;
