@@ -13,9 +13,11 @@ export class GlobalDataBuilder
 
     static async addGlobalDataToSheet(context: JsCtx, sheet: Excel.Worksheet, rowStart: number)
     {
-        let rng: Excel.Range = sheet.getRangeByIndexes(rowStart, 0, 13, 2);
+        let rng: Excel.Range = sheet.getRangeByIndexes(rowStart, 0, 15, 2);
         rng.values =
         [
+            ["", "FILL IN TOURNAMENT INFORMATION BELOW"],
+            ["", ""],
             ["Tournament:", "TOURNAMENT TITLE"],
             ["",""],
             ["SubTitle:", "(sub-title)"],
@@ -32,19 +34,27 @@ export class GlobalDataBuilder
         ];
         rng.format.horizontalAlignment = Excel.HorizontalAlignment.left;
         await context.sync();
-        rng = sheet.getRangeByIndexes(rowStart, 0, 13, 1);
+        rng = sheet.getRangeByIndexes(rowStart, 0, 15, 1);
         rng.format.font.bold = true;
         rng.format.font.size = 10;
 
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentTitle", [rowStart, 1]);
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentSubtitle", [rowStart + 2, 1]);
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentLocation", [rowStart + 4, 1]);
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentAddress", [rowStart + 6, 1]);
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentHost", [rowStart + 8, 1]);
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "LastUpdate", [rowStart + 10, 1]);
-        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "FieldCount", [rowStart + 12, 1]);
+        rng = sheet.getRangeByIndexes(rowStart, 0, 1, 2);
+        rng.format.font.bold = true;
+        rng.format.font.size = 13;
+        rng.format.font.underline = Excel.RangeUnderlineStyle.single;
 
-        rng = sheet.getRangeByIndexes(rowStart + 10, 1, 1, 1);
+        rng = sheet.getRange("A:B");
+        rng.format.fill.color = "#F2F2F2";
+        
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentTitle", [rowStart + 2, 1]);
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentSubtitle", [rowStart + 4, 1]);
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentLocation", [rowStart + 6, 1]);
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentAddress", [rowStart + 8, 1]);
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "TournamentHost", [rowStart + 10, 1]);
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "LastUpdate", [rowStart + 12, 1]);
+        await Ranges.createOrReplaceNamedRangeByIndex(context, sheet, "FieldCount", [rowStart + 14, 1]);
+
+        rng = sheet.getRangeByIndexes(rowStart + 12, 1, 1, 1);
         rng.numberFormat = [["m/d/yy HH:mm"]];
     }
 
