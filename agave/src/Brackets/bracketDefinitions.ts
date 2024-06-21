@@ -189,12 +189,12 @@ export const s_brackets: BracketDefinition[] =
             tableName: "T10Bracket",
             games:
                 [
-                    { winner: "T5", loser: "T8", topSource: "Team 1", bottomSource: "Team 2", topSeed: "Seed 8", bottomSeed: "Seed 9" },
-                    { winner: "B6", loser: "B7", topSource: "Team 3", bottomSource: "Team 4", topSeed: "Seed 7", bottomSeed: "Seed 10" },
-                    { winner: "T11", loser: "T7", topSource: "Team 5", bottomSource: "Team 6", topSeed: "Seed 4", bottomSeed: "Seed 5" },
-                    { winner: "B12", loser: "B8", topSource: "Team 7", bottomSource: "Team 8", topSeed: "Seed 3", bottomSeed: "Seed 6" },
-                    { winner: "B11", loser: "B9", topSource: "W1", bottomSource: "Team 9", bottomSeed: "Seed 1" },
-                    { winner: "T12", loser: "T10", topSource: "Team 10", bottomSource: "W2", topSeed: "Seed 2" },
+                    { winner: "T5", loser: "T8", topSource: "Team 1", bottomSource: "Team 2" },
+                    { winner: "B6", loser: "B7", topSource: "Team 3", bottomSource: "Team 4" },
+                    { winner: "T11", loser: "T7", topSource: "Team 5", bottomSource: "Team 6" },
+                    { winner: "B12", loser: "B8", topSource: "Team 9", bottomSource: "Team 10" },
+                    { winner: "B11", loser: "B9", topSource: "W1", bottomSource: "Team 7" },
+                    { winner: "T12", loser: "T10", topSource: "Team 8", bottomSource: "W2" },
                     { winner: "T9", loser: "", topSource: "L3", bottomSource: "L2" },
                     { winner: "B10", loser: "", topSource: "L1", bottomSource: "L4" },
                     { winner: "B14", loser: "", topSource: "W7", bottomSource: "L5" },
@@ -206,9 +206,9 @@ export const s_brackets: BracketDefinition[] =
                     { winner: "T18", loser: "T17", topSource: "W11", bottomSource: "W12" },
                     { winner: "B17", loser: "", topSource: "W14", bottomSource: "W13" },
                     { winner: "B18", loser: "", topSource: "L15", bottomSource: "W16" },
-                    { winner: "T19", loser: "B19", topSource: "W15", bottomSource: "W17" },
-                    { winner: "T20", loser: "", topSource: "W18", bottomSource: "L18" },
-                    { winner: "", loser: "", topSource: "W19", bottomSource: "" },
+                    { winner: "T19", loser: "", topSource: "W15", bottomSource: "W17" },
+                    { winner: "T20", loser: "B19", topSource: "W18", bottomSource: "L19" },
+                    { winner: "", loser: "", topSource: "W19", bottomSource: "" }
                 ]
         },
         {

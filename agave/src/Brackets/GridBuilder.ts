@@ -59,7 +59,7 @@ export class GridBuilder
         aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowStart + 1, col], null)}, "DDDD")`);
         aryFirstRow.push(null);
         aryFirstRow.push(null);
-        arySecondRow.push(OADate.ToOADate(new Date(Date.parse("6/17/2023"))) - (7 / 24));
+        arySecondRow.push(OADate.ToOADate(new Date(Date.parse("6/15/2024"))) - (7 / 24));
         arySecondRow.push(null);
         arySecondRow.push(null);
 

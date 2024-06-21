@@ -135,7 +135,7 @@ export class BracketDefBuilder
         const sourceNum = sourceId.GameNum;
 
         if (sourceNum.Value < 0 || sourceNum.Value >= games.length)
-            throw new Error(`bad advance to game number {sourceNum.Value} in bracket - out of bounds`);
+            throw new Error(`bad advance to game number ${sourceNum.Value} in bracket - out of bounds`);
 
         const sourceGame = games[sourceNum.Value];
 
