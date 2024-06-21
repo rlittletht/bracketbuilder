@@ -387,6 +387,19 @@ export default class App extends React.Component<AppProps, AppState> implements 
                         return true;
                     }
                 });
+
+            listItems.push(
+                {
+                    icon: "Rain",
+                    primaryText: "Push all games today to the next day (insert a day into the bracket)",
+                    cursor: "cursorPointer",
+                    stateChecker: null,
+                    delegate: async (appContext: IAppContext): Promise<boolean> =>
+                    {
+                        await StructureEditor.insertGameDayForSchedulePushClick(appContext);
+                        return true;
+                    }
+                });
         return listItems;
     }
 

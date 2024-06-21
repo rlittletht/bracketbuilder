@@ -35,6 +35,16 @@ export class GridBuilder
     }
 
 
+    static pushSingleDayGridFormulas(aryFirstRow: any[], arySecondRow: any[], row: number, col: number)
+    {
+        aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([row, col], null)}, "DDDD")`);
+        aryFirstRow.push(null);
+        aryFirstRow.push(null);
+        arySecondRow.push(`=${Ranges.addressFromCoordinates([row, col - 3], null)} + 1`);
+        arySecondRow.push(null);
+        arySecondRow.push(null);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.addDayGridFormulas
 
@@ -67,12 +77,7 @@ export class GridBuilder
         while (--days > 0)
         {
             col += 3;
-            aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowStart + 1, col], null)}, "DDDD")`);
-            aryFirstRow.push(null);
-            aryFirstRow.push(null);
-            arySecondRow.push(`=${Ranges.addressFromCoordinates([rowStart + 1, col - 3], null)} + 1`);
-            arySecondRow.push(null);
-            arySecondRow.push(null);
+            this.pushSingleDayGridFormulas(aryFirstRow, arySecondRow, rowStart + 1, col);
         }
 
         ary.push(aryFirstRow);

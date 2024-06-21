@@ -29,6 +29,9 @@ let _moveSelection: RangeInfo = null;
 
 export class StructureEditor
 {
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.copySelectionToClipboardClick
+    ----------------------------------------------------------------------------*/
     static async copySelectionToClipboardClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -39,6 +42,25 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await this.copySelectionToClipboard(appContext, context);
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.insertGameDayForSchedulePush
+    ----------------------------------------------------------------------------*/
+    static async insertGameDayForSchedulePushClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.insertGameDayForSchedulePush(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
         };
 
@@ -346,6 +368,43 @@ export class StructureEditor
 
         const selString = gridSelection.logGridCondensedString();
         navigator.clipboard.writeText(selString);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.insertGameDayForSchedulePush
+
+        Insert a new day for the game, and update all the formulas to reflect the
+        new day
+    ----------------------------------------------------------------------------*/
+    static async insertGameDayForSchedulePush(appContext: IAppContext, context: JsCtx)
+    {
+        const selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+        const bracketName: string = appContext.SelectedBracket;
+        
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        if (!StructureInsert.adjustRangeInfoForGameInfoColumn(selection, grid))
+            throw new Error("can't find the day you are trying to push");
+
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        const colReference: string = `${Ranges.getColName(selection.FirstColumn)}:${Ranges.getColName(selection.FirstColumn)}`;
+
+        const rangeLine: Excel.Range = sheet.getRange(colReference).insert(Excel.InsertShiftDirection.right);
+
+        rangeLine.format.columnWidth = 0.9;
+        rangeLine.format.font.color = "black";
+        rangeLine.format.fill.clear();
+        const rangeScore: Excel.Range = sheet.getRange(colReference).insert(Excel.InsertShiftDirection.right);
+
+        rangeScore.format.columnWidth = 17.28;
+        rangeScore.format.font.color = "black";
+        rangeScore.format.fill.clear();
+
+        const rangeDay: Excel.Range = sheet.getRange(colReference).insert(Excel.InsertShiftDirection.right);
+
+        rangeDay.format.columnWidth = 113;
+        rangeDay.format.font.color = "black";
+        rangeDay.format.fill.clear();
     }
 
     /*----------------------------------------------------------------------------
