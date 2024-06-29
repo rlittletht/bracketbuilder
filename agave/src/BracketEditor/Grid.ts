@@ -657,6 +657,26 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Grid.getTopFeederPoint
+    ----------------------------------------------------------------------------*/
+    getFeederPoints(gameItem: GridItem): [RangeInfo, RangeInfo]
+    {
+        const ranges: (RangeInfo | null)[] = [];
+
+        if (gameItem.isLineRange)
+            throw new Error("can't get feeder points for non game items");
+
+        ranges.push(gameItem.TopTeamRange.offset(1, 1, -1, 1));
+
+        if (gameItem.BottomTeamRange == null)
+            ranges.push(null);
+        else
+            ranges.push(gameItem.BottomTeamRange.offset(-1, 1, -1, 1));
+
+        return [ranges[0], ranges[1]];
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Grid.getAllGameLines
 
         find the in and out lines for this game

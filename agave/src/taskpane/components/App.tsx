@@ -293,6 +293,31 @@ export default class App extends React.Component<AppProps, AppState> implements 
             });
         listItems.push(
             {
+                icon: "Rain",
+                primaryText: "Push all games today to the next day (insert a day into the bracket)",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.insertGameDayForSchedulePushClick(appContext);
+                    return true;
+                }
+            });
+
+        listItems.push(
+            {
+                icon: "DeleteRows",
+                primaryText: "Convert this bracket to a modified double elimination bracket",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.convertBracketToModifiedDoubleEliminationClick(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
                 icon: "ActionCenter",
                 primaryText: "Reset Coaching Tips",
                 cursor: "cursorPointer",
@@ -388,18 +413,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
                     }
                 });
 
-            listItems.push(
-                {
-                    icon: "Rain",
-                    primaryText: "Push all games today to the next day (insert a day into the bracket)",
-                    cursor: "cursorPointer",
-                    stateChecker: null,
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await StructureEditor.insertGameDayForSchedulePushClick(appContext);
-                        return true;
-                    }
-                });
         return listItems;
     }
 

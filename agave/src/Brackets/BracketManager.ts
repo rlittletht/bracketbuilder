@@ -1,6 +1,6 @@
 
 import { GameId } from "../BracketEditor/GameId";
-import { BracketDefinition, GameResultType, TeamPlacement } from "./BracketDefinitions";
+import { BracketDefinition, GameResultType, TeamPlacement, GameDefinition } from "./BracketDefinitions";
 import { JsCtx } from "../Interop/JsCtx";
 import { BracketDefBuilder } from "./BracketDefBuilder";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
@@ -182,7 +182,7 @@ export class BracketManager
     ----------------------------------------------------------------------------*/
     async populateBracketsIfNecessary(context: JsCtx, bracket?: string): Promise<BracketDefinition>
     {
-        // only repopulate if not dirty.
+        // only repopulate if dirty.
         // NOTE: If you ask for a bracket that we haven't cached yet, but you believe that we
         // have subsequently added to the workbook (because we built the specific bracket), then
         // you MUST dirty the bracket manager first. We won't automatically reload
@@ -287,6 +287,23 @@ export class BracketManager
             return isNaN(+source.substring(1, source.length - 1));
 
         return false;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: BracketManager.isBracketDoubleEliminination
+
+        This is a standard double eliminination bracket if the last game in the
+        bracket is a what-if game -- the top and bottom sources will come from the
+        same game.
+    ----------------------------------------------------------------------------*/
+    static isBracketDoubleEliminination(bracket: BracketDefinition): boolean
+    {
+        if (bracket.games.length < 2)
+            throw new Error("invalid bracket");
+
+        const game: GameDefinition = bracket.games[bracket.games.length - 2];
+
+        return (this.GameIdFromWinnerLoser(game.topSource).equals(this.GameIdFromWinnerLoser(game.bottomSource)));
     }
 }
 

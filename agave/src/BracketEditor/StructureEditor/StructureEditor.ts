@@ -24,6 +24,15 @@ import { StructureRemove } from "./StructureRemove";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { BracketInfoBuilder } from "../../Brackets/BracketInfoBuilder";
+import { RangeCaches } from "../../Interop/RangeCaches";
+import { BracketDefinition, GameDefinition } from "../../Brackets/BracketDefinitions";
+import { _bracketManager } from "../../Brackets/BracketManager";
+import { BracketManager } from "../../Brackets/BracketManager";
+import { SetupBook } from "../../Setup";
+import { Sheets, EnsureSheetPlacement } from "../../Interop/Sheets";
+import { BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
+import { GameId } from "../GameId";
+import { GameNum } from "../GameNum";
 
 let _moveSelection: RangeInfo = null;
 
@@ -61,6 +70,32 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await this.insertGameDayForSchedulePush(appContext, context);
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.convertBracketToModifiedDoubleEliminationClick
+
+        Convert the currect bracket to a modified double elimination bracket
+        (i.e. remove the what-if game and go directly to the champion)
+
+        This is done when you don't need the what-if game because the winners
+        bracket team won the championship game. This lets you clean up the
+        bracket
+    ----------------------------------------------------------------------------*/
+    static async convertBracketToModifiedDoubleEliminationClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.convertBracketToModifiedDoubleElimination(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
         };
 
@@ -370,6 +405,92 @@ export class StructureEditor
         navigator.clipboard.writeText(selString);
     }
 
+    static async convertBracketToModifiedDoubleElimination(appContext: IAppContext, context: JsCtx)
+    {
+        const bracketName: string = appContext.SelectedBracket;
+
+        // first, confirm that the current loaded bracked is standard double elimination
+        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracketName);
+
+        if (!BracketManager.isBracketDoubleEliminination(bracketDef))
+        {
+            appContext.Messages.error(
+                [
+                    "This bracket is already a modified double elimination bracket."
+                ],
+                { topic: HelpTopic.Commands_ConvertBracket });
+
+            return;
+        }
+
+        const whatifGame: GameDefinition = bracketDef.games[bracketDef.games.length - 2];
+
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        if (grid.findGameItem(GameId.CreateFromGameNum(new GameNum(bracketDef.games.length - 2))) != null)
+        {
+            appContext.Messages.error(
+                [
+                    "The what-if game is still in the bracket.",
+                    "You cannot convert this bracket to a modified double elimination until the game is removed"
+                ],
+                { topic: HelpTopic.Commands_ConvertBracket });
+
+            return;
+        }
+
+        // ok, we want to modify the bracket on the sheet to be a modified double elimination
+        // bracket
+
+        const bracketsSheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketDefBuilder.SheetName, null, EnsureSheetPlacement.Last);
+
+        let bracketTable: Excel.Table =
+            await SetupBook.getBracketTableOrNull(context, bracketsSheet, bracketName);
+
+        if (bracketTable == null)
+            throw new Error("can't find bracket definition");
+
+        bracketTable.load("rows/count");
+        await context.sync();
+
+        const winnerRow: Excel.TableRow = bracketTable.rows.getItemAt(bracketTable.rows.count - 1);
+        const winnerRowRange: Excel.Range = winnerRow.getRange();
+        const whatifRow: Excel.TableRow = bracketTable.rows.getItemAt(bracketTable.rows.count - 2);
+        const whatifRowRange: Excel.Range = whatifRow.getRange();
+        const championshipRow: Excel.TableRow = bracketTable.rows.getItemAt(bracketTable.rows.count - 3);
+        const championshipRowRange: Excel.Range = championshipRow.getRange();
+
+        winnerRowRange.load("formulas");
+        championshipRowRange.load("formulas");
+
+        await context.sync();
+
+        const winnerFormulas: any[][] = winnerRowRange.formulas;
+        const championshipFormulas: any[][] = championshipRowRange.formulas;
+
+        winnerFormulas[0][0] = bracketDef.games.length - 1;
+        winnerFormulas[0][1] = "";
+        winnerFormulas[0][2] = "";
+        winnerFormulas[0][3] = whatifGame.topSource;
+        winnerFormulas[0][4] = "";
+        championshipFormulas[0][2] = ""; // the loser goes nowhere now
+
+        winnerRowRange.formulas = winnerFormulas;
+        championshipRowRange.formulas = championshipFormulas;
+
+        whatifRowRange.getEntireRow().delete(Excel.DeleteShiftDirection.up);
+        await context.sync();
+
+        _bracketManager.setDirty(true);
+        RangeCaches.SetDirty(true);
+        // must invalidate all of our caches
+        context.releaseAllCacheObjects();
+        // and now do all the adds
+        await FastFormulaAreas.populateAllCaches(context);
+        await RangeCaches.PopulateIfNeeded(context, bracketName);
+        await _bracketManager.populateBracketsIfNecessary(context);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameDayForSchedulePush
 
@@ -405,6 +526,67 @@ export class StructureEditor
         rangeDay.format.columnWidth = 113;
         rangeDay.format.font.color = "black";
         rangeDay.format.fill.clear();
+
+        // now fixup the formulas for this day and the next day
+        const aryData: any[] = [];
+        const aryFirstRow: any[] = [];
+        const arySecondRow: any[] = [];
+
+        aryData.push(aryFirstRow);
+        aryData.push(arySecondRow);
+
+        GridBuilder.pushDayGridFormulas(aryFirstRow, arySecondRow, 4, selection.FirstColumn, 2);
+
+        const days: Excel.Range = sheet.getRangeByIndexes(4, selection.FirstColumn, 2, 6);
+        days.formulas = aryData;
+
+        GridBuilder.mergeAndFormatDayRequest(sheet, 4, selection.FirstColumn);
+
+        // commit all these changes...
+        await context.sync();
+
+        // must invalidate all of our caches
+        context.releaseAllCacheObjects();
+        // and now do all the adds
+
+        await FastFormulaAreas.populateAllCaches(context);
+
+        // now for every game that just transited through this day, just extend the
+        // line. for every game that should have played on this day, move the game
+        // also add a line, but add text about the suspension
+        
+        const gridNewOriginal = await Grid.createGridFromBracket(context, bracketName);
+        const gridNew = gridNewOriginal.clone();
+
+        // look in the column we shifted over...
+        const items: GridItem[] = gridNewOriginal.getOverlappingItems(new RangeInfo(gridNewOriginal.FirstGridPattern.FirstRow, 200, selection.FirstColumn + 3, 3));
+
+        //  now go through them
+        for (let item of items)
+        {
+            if (item.isLineRange)
+            {
+                // just extend
+                const newLine: RangeInfo = RangeInfo.createFromCorners(item.Range.offset(0, 1, -3, 1), item.Range.offset(0, 1, -1, 1));
+                gridNew.addLineRange(newLine);
+            }
+            else
+            {
+                // extend lines for both incoming
+                gridNew.getAllGameLines(item);
+
+                const [topFeederPoint, bottomFeederPoint] = gridNew.getFeederPoints(item);
+
+                gridNew.addLineRange(RangeInfo.createFromCorners(topFeederPoint.offset(0, 1, -2, 3), topFeederPoint));
+
+                if (bottomFeederPoint != null)
+                    gridNew.addLineRange(RangeInfo.createFromCorners(bottomFeederPoint.offset(0, 1, -2, 3), bottomFeederPoint));
+            }
+        }
+
+            // move isn't going to change any field/times
+        _undoManager.setUndoGrid(grid, []);
+        await ApplyGridChange.diffAndApplyChanges(appContext, context, gridNewOriginal, gridNew, bracketName);
     }
 
     /*----------------------------------------------------------------------------

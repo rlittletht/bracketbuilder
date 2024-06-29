@@ -17,7 +17,6 @@ export interface ActionButtonProps
 
 export interface ActionButtonState
 {
-    bracketGame: IBracketGame;
 }
 
 export class ActionButton extends React.Component<ActionButtonProps, ActionButtonState>
@@ -28,17 +27,12 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
     constructor(props, context)
     {
         super(props, context);
-
-        this.state =
-        {
-            bracketGame: props.bracketGame,
-        }
     }
 
     async onButtonClick()
     {
         // don't add things around the delegate without considering race conditions!
-        await this.props.delegate(this.context, this.state.bracketGame);
+        await this.props.delegate(this.context, this.props.bracketGame);
     }
 
     render()
