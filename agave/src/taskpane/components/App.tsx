@@ -775,7 +775,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 {
 
                 }
-                SetupBook.registerBindingsForEdits(context, this.m_appContext);
+                await SetupBook.registerBindingsForEdits(context, this.m_appContext);
                 this.m_appContext.setProgressVisible(false);
             });
     }

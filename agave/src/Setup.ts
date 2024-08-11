@@ -307,8 +307,12 @@ export class SetupBook
                 appContext.AppStateAccess.HeroListDirty = true;
                 RangeCaches.SetDirty(true);
 
-                SetupBook.registerBindingsForEdits(context, appContext);
+                await SetupBook.registerBindingsForEdits(context, appContext);
                 context.releaseAllCacheObjects();
+
+                // lastly, make sure the grid is activated
+                const gridSheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+                gridSheet.activate();
             });
         }
         catch (error)
