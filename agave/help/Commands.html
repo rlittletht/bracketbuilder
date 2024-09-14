@@ -4,300 +4,414 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>TwBracketBuilder Help</title>
-    <link rel="stylesheet" href="./rex.css" />
+    <link rel="stylesheet" href="./rex.css"/>
     <script src="./rex.js"></script>
     <style>
     </style>
 </head>
 <body>
-    <header>
-        <logo>
-            <img class="logo" src="Images/ModernTrainWithTRex.png" />
-        </logo>
-        <product>
-            <productHeader>
-                <h1> Bracket Builder </h1>
-            </productHeader>
-            <productName>
-                &gt;traynrex <red>RED</red>&lt;
-            </productName>
-        </product>
-        <logo>
-            <img class="logo" src="Images/VintageTrainRTLWithTRex.png" />
-        </logo>
+<header>
+    <logo>
+        <img class="logo" src="Images/ModernTrainWithTRex.png"/>
+    </logo>
+    <product>
+        <productHeader>
+            <h1> Bracket Builder </h1>
+        </productHeader>
+        <productName>
+            &gt;traynrex <red>RED</red>&lt;
+        </productName>
+    </product>
+    <logo>
+        <img class="logo" src="Images/VintageTrainRTLWithTRex.png"/>
+    </logo>
 
-    </header>
-    <main>
-        <nav>
+</header>
+<main>
+<nav>
+    <ul>
+        <li>
+            <a href="./BracketBuilder.html#help">Getting Started</a>
+        </li>
+        <li>
+            <a href="./SheetEditing.html#sheetEditing">Editing the sheet</a>
+        </li>
+        <li>
+            <a href="./Commands.html#Commands">Builder Functions</a>
+        </li>
+        <li>
+            <a href="./CustomBrackets.html#CustomBrackets">Custom Brackets</a>
+        </li>
+        <li>
+            <a href="./FAQ.html#FAQ">FAQ/Scenarios</a>
+        </li>
+        <li>
+            <a href="./ReleaseNotes.html#ReleaseNotes">Release Notes</a>
+        </li>
+        <li>
+            <a href="./Licenses.html#Licenses">Licenses</a>
+        </li>
+        <li>
+            <a href="./Privacy.html#Privacy">Privacy</a>
+        </li>
+    </ul>
+</nav>
+<article id="Commands">
+<section id="Commands">
+<heading>Builder Functions</heading>
+<content>
+<floatRight style="width: 30vw;margin-top: -4em">
+    <img class="whiteBack" src="Images/FullAddin.png"/>
+</floatRight>
+<p>
+    So far we have only looked at some of the features in BracketBuilder. This page will go into
+    a lot more detail on each of the commands that are provided
+</p>
+<p> Let's start with an overview of the parts of the addin</p>
+<section id="MainInterface">
+    <heading>Main Interface</heading>
+    <content>
+        <p>
+            There are several main parts of BracketBuilder that you will be working with:
             <ul>
-                <li><a href="./BracketBuilder.html">Getting Started</a></li>
-                <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
-                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
-                <li><a href="./CustomBrackets.html#">Custom Brackets</a></li>
-                <li><a href="./FAQ.html">FAQ/Scenarios</a></li>
-                <li><a href="./Licenses.html">Licenses</a></li>
-                <li><a href="./Privacy.html">Privacy</a></li>
+                <li>Main tools - this is where tools for the whole bracket will be </li>
+                <li>Bracket tools - this is where tools for working with games in the bracket are</li>
+                <li>Games list - games already on the bracket are shaded gray, others are white</li>
+                <li>Message area - informational messages and errors will show up here</li>
+                <li>Version number - helpful for making sure you have the latest version</li>
             </ul>
-        </nav>
-        <article id="Commands">
-            <section id="Commands">
-                <heading>Builder Functions</heading>
-                <content>
-                    <floatRight style="width: 30vw;margin-top: -4em"><img class="whiteBack" src="Images/FullAddin.png" /></floatRight>
-                    <p>
-                        So far we have only looked at some of the features in BracketBuilder. This page will go into
-                        a lot more detail on each of the commands that are provided
-                    </p>
-                    <p> Let's start with an overview of that parts of the addin'</p>
-                    <section id="Controls">
-                        <heading>Main Interface</heading>
-                        <content>
-                            <p>
-                                There are several main parts of BracketBuilder that you will be working with:
-                                <ul>
-                                    <li>Main tools - this is where tools for the whole bracket will be </li>
-                                    <li>Bracket tools - this is where tools for working with games in the bracket are</li>
-                                    <li>Games list - games already on the bracket are shaded gray, others are white</li>
-                                    <li>Message area - informational messages and errors will show up here</li>
-                                    <li>Version number - helpful for making sure you have the latest version</li>
-                                </ul>
-                            </p>
-                        </content>
-                    </section>
-                    <section id="Controls">
-                        <heading>Main Tools</heading>
-                        <content>
-                            <p>
-                                The <em>Main Tools</em> are on the toolbar at the top of BracketBuilder (just underneath
-                                the Trains logo.
-                            </p>
-                            <p> These tools interact with the entire bracket or with the add-in.</p>
-                            <br clear="all" />
-                            <section id="Undo">
-                                <heading>Undo/Redo</heading>
-                                <content>
-                                    <floatRight style="width: 20vw; margin-top: -3rem"><img class="whiteBack" src="Images/UndoRedo.png" /></floatRight>
+        </p>
+    </content>
+</section>
+<section id="MainTools">
+<heading>Main Tools</heading>
+<content>
+<p>
+    The <em>Main Tools</em> are on the toolbar at the top of BracketBuilder (just underneath
+    the Trains logo.
+</p>
+<p> These tools interact with the entire bracket or with the add-in.</p>
+<br clear="all"/>
+<section id="Undo">
+    <heading>Undo/Redo</heading>
+    <content>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/UndoRedo.png"/>
+        </floatRight>
 
-                                    <p>
-                                        BracketBuilder can't integrate directly with Excel's undo functionality, so we implement our own. For most operations,
-                                        like inserting or removing a game, you can click the <em>Undo</em> to go back. You should be able to go back all the
-                                        way to the beginning of the bracket, unless you have closed and reopened the workbook.
-                                    </p>
-                                    <p>When you undo something, you can also click <em>Redo</em> if you decide you want it back.</p>
-                                    <p>
-                                        Undo is very useful when you are building a bracket and you find yourself working into a corner -- that is,
-                                        if you have placed the games and you find yourself unable to continue because you should have done things
-                                        in a different order (like placing a difficult game first, even though its not the next game on the list
-                                        of games to add).
-                                    </p>
-                                    <br clear="all" />
-                                </content>
-                            </section>
-                            <section id="Update">
-                                <heading navText="Update Bracket">Update Bracket with Changes</heading>
-                                <content>
-                                    <floatRight style="width: 20vw; margin-top: -3rem"><img class="whiteBack" src="Images/UpdateBracket.png" /></floatRight>
+        <p>
+            BracketBuilder can't integrate directly with Excel's undo functionality, so we implement our own. For most operations,
+            like inserting or removing a game, you can click the <em>Undo</em> to go back. You should be able to go back all the
+            way to the beginning of the bracket, unless you have closed and reopened the workbook.
+        </p>
+        <p>When you undo something, you can also click <em>Redo</em> if you decide you want it back.</p>
+        <p>
+            Undo is very useful when you are building a bracket and you find yourself working into a corner -- that is,
+            if you have placed the games and you find yourself unable to continue because you should have done things
+            in a different order (like placing a difficult game first, even though its not the next game on the list
+            of games to add).
+        </p>
+        <br clear="all"/>
+    </content>
+</section>
+<section id="Update">
+    <heading navText="Update Bracket">Update Bracket with Changes</heading>
+    <content>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/UpdateBracket.png"/>
+        </floatRight>
 
-                                    <p>
-                                        You can change team names, fields, and times directly on the bracket by just typing into the cell (right on top
-                                        of the formula). (NOTE: For team names, only do this for the first game the team plays). When you do this,
-                                        BracketBuilder notices that there is a difference between the text in the bracket and the data on the
-                                        "TeamsAndFields" Sheet. When this happens, the game is considered "dirty".
-                                    </p>
-                                    <p>
-                                        It can be very useful (though not required) for the TeamsAndFields sheet to be kept
-                                        up-to-date with what is on the bracket. To update the TeamsAndFields sheet, click on the <em>Update Bracket</em>
-                                        button. All the games at this point will no longer be dirty.
-                                    </p>
-                                    <br clear="all" />
-                                </content>
-                            </section>
-                            <section id="Priorities">
-                                <heading>Shade Priorities</heading>
-                                <content>
-                                    <floatRight style="width: 20vw; margin-top: -3rem"><img class="whiteBack" src="Images/ShadePriorities.png" /></floatRight>
+        <p>
+            You can change team names, fields, and times directly on the bracket by just typing into the cell (right on top
+            of the formula). (NOTE: For team names, only do this for the first game the team plays). When you do this,
+            BracketBuilder notices that there is a difference between the text in the bracket and the data on the
+            "TeamsAndFields" Sheet. When this happens, the game is considered "dirty".
+        </p>
+        <p>
+            It can be very useful (though not required) for the TeamsAndFields sheet to be kept
+            up-to-date with what is on the bracket. To update the TeamsAndFields sheet, click on the <em>Update Bracket</em>
+            button. All the games at this point will no longer be dirty.
+        </p>
+        <br clear="all"/>
+    </content>
+</section>
+<section id="Priorities">
+    <heading>Shade Priorities</heading>
+    <content>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/ShadePriorities.png"/>
+        </floatRight>
 
-                                    <p>
-                                        Its unfortunate that BracketBuilder includes this feature, but it is sadly a reality for many leagues.
-                                        For whatever reason, a game may be considered higher or lower priority based on the teams participating. The
-                                        original reason behind this was about teams that provided volunteer support for the tournament and teams
-                                        that did not. Teams that provide volunteer support are a higher priority when assigning scarce volunteer
-                                        resources for the game. A game with two volunteer teams is the highest priority, next is games with one of
-                                        each, and lastly is games with two teams providing no volunteer support.
-                                    </p>
-                                    <p>
-                                        When you click on the <em>Shade Priorities</em> button, BracketBuilder will shade each game green/yellow/red
-                                        according to the teams involved with the game, according to the priorities assigned to each team. Games that can't
-                                        be determined yet (because the teams aren't known) will not get shaded <b>unless</b> its irrelevant which team
-                                        wins the previous game. For example, if the top team for a game comes from the winner of Game 2, and Game 2 has
-                                        two volunteer teams, then it doesn't matter who wins -- the top team is guaranteed to be a volunteer team.
-                                    </p>
-                                    <p>
-                                        On the TeamsAndFields sheet, each team has a priority (0 is highest, 1 is lowest). By default, all teams are
-                                        highest priority (0). You can change these priorities to change the way games are shaded
-                                    </p>
-                                    <p>I really hope most people don't have to use this feature...</p>
-                                </content>
-                            </section>
-                            <section id="ShowHide">
-                                <heading>Show/Hide Sheets</heading>
-                                <content>
-                                    <br clear="all" />
+        <p>
+            Its unfortunate that BracketBuilder includes this feature, but it is sadly a reality for many leagues.
+            For whatever reason, a game may be considered higher or lower priority based on the teams participating. The
+            original reason behind this was about teams that provided volunteer support for the tournament and teams
+            that did not. Teams that provide volunteer support are a higher priority when assigning scarce volunteer
+            resources for the game. A game with two volunteer teams is the highest priority, next is games with one of
+            each, and lastly is games with two teams providing no volunteer support.
+        </p>
+        <p>
+            When you click on the <em>Shade Priorities</em> button, BracketBuilder will shade each game green/yellow/red
+            according to the teams involved with the game, according to the priorities assigned to each team. Games that can't
+            be determined yet (because the teams aren't known) will not get shaded <b>unless</b> its irrelevant which team
+            wins the previous game. For example, if the top team for a game comes from the winner of Game 2, and Game 2 has
+            two volunteer teams, then it doesn't matter who wins -- the top team is guaranteed to be a volunteer team.
+        </p>
+        <p>
+            On the TeamsAndFields sheet, each team has a priority (0 is highest, 1 is lowest). By default, all teams are
+            highest priority (0). You can change these priorities to change the way games are shaded
+        </p>
+        <p>I really hope most people don't have to use this feature...</p>
+    </content>
+</section>
+<section id="ShowHide">
+    <heading>Show/Hide Sheets</heading>
+    <content>
+        <br clear="all"/>
 
-                                    <floatRight style="width: 20vw; margin-top: -3rem"><img class="whiteBack" src="Images/ShowHideSheets.png" /></floatRight>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/ShowHideSheets.png"/>
+        </floatRight>
 
-                                    <p>
-                                        There are several sheets <em>behind the scenes</em> that BracketBuilder uses. If you are planning on using
-                                        Excel to create a PDF for your bracket (using File/Export and choose PDF), then you probably don't want all
-                                        these sheets to be visible.'
-                                    </p>
-                                    <p>To switch between showing or hiding these sheets, click on the <em>Show/Hide</em> button</p>
-                                </content>
-                            </section>
-                            <section id="ResetTeaching">
-                                <heading>Reset Teaching</heading>
-                                <content>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw; margin-top: -3rem"><img class="whiteBack" src="Images/ResetTeaching.png" /></floatRight>
+        <p>
+            There are several sheets <em>behind the scenes</em> that BracketBuilder uses. If you are planning on using
+            Excel to create a PDF for your bracket (using File/Export and choose PDF), then you probably don't want all
+            these sheets to be visible.
+        </p>
+        <p>To switch between showing or hiding these sheets, click on the <em>Show/Hide</em> button</p>
+    </content>
+</section>
+<section id="LockDays">
+    <heading>Lock Days</heading>
+    <content>
+        <br clear="all"/>
 
-                                    <p>
-                                        As you get started with BracketBuilder, you will notice coaching hints showing up. If you point your mouse at
-                                        these coaching marks, you will see a teaching callout show up with some (hopefully) helpful information. These
-                                        teaching callouts try not to show up too often, and many of them stop showing up after you see them a few times.
-                                        You can also choose to <em>never show again</em>
-                                    </p>
-                                    <p>
-                                        You might find that you want to get them back, though. If that happens, you can click on <em>
-                                            Reset Coaching
-                                            Tips
-                                        </em> and they will start showing up again.
-                                    </p>
-                                </content>
-                            </section>
-                            <section id="FinishingTouches">
-                                <heading>Finishing Touches</heading>
-                                <content>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw; margin-top: -3rem"><img class="whiteBack" src="Images/FinishingTouches.png" /></floatRight>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/LockDays.png"/>
+        </floatRight>
 
-                                    <p>
-                                        When you are done placing all your games in the bracket, you will notice that the bracket still doesn't look
-                                        completely polished -- the titles aren't centered, you have extra days in the bracket, and so on.
-                                    </p>
-                                    <p>
-                                        At this point, if you click on <em>finishing touches</em>, BracketBuilder will do some cleaning up to make
-                                        your bracket look polished:
-                                        <ul>
-                                            <li>The final day of the bracket is stretched out to cover both the final game as well as the <em>champion</em></li>
-                                            <li>All other days are removed from the bracket after the final game</li>
-                                            <li>The title lines are merged and centered over the bracket</li>
-                                            <li>The <em>Hosted By</em> and <em>Last Updated</em> markers are put at the bottom of the bracket</li>
-                                            <li>
-                                                The <em>Print Area</em> for the sheet is defined to cover only the bracket (and not the information to the
-                                                left of the bracket)
-                                            </li>
-                                        </ul>
-                                    </p>
-                                    <p>
-                                        Once you apply the finishing touches to the bracket, you can print and only the bracket will get printed, or you
-                                        can export to PDF and only the bracket will get exported (assuming you use <em>Show/Hide</em> to hide the extra
-                                        sheets.
-                                    </p>
-                                </content>
-                            </section>
-                            <section id="Help">
-                                <heading>Help</heading>
-                                <content>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw; margin-top: -4rem"><img class="whiteBack" src="Images/Help.png" /></floatRight>
+        <p>
+            When you make really big brackets, you quickly run out of screen real estate to see the whole bracket. You can
+            zoom out, but Excel has annoying repaint bugs when the zoom level is very low (feel free to report them! maybe if
+            enough of us complain they might do something about it!)
+        </p>
+        <p>
+            In order to be able to see what days you are working with as you build the bracket, you can use Excel's <em>Freeze Panes</em>
+            functionality. That can be tedious to setup (and clear) repeatedly, so you can use the <em>Lock Days</em> command
+            to automatically set it up. You can do it again to unlock the days.
+        </p>
+    </content>
+</section>
+<section id="RainoutDay">
+    <heading>Rainout Entire Day</heading>
+    <content>
+        <br clear="all"/>
 
-                                    <p>Brings you to this help page.</p>
-                                </content>
-                            </section>
-                        </content>
-                    </section>
-                    <section id="BracketTools">
-                        <heading>Bracket Tools</heading>
-                        <content>
-                            <br clear="all" />
-                            <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/PickUpGame.png" /></floatRight>
-                            <section id="PickUpGame">
-                                <heading>Pick up Game</heading>
-                                <content>
-                                    <p>
-                                        If you want to move a game on the bracket, you can remove the game (and all of the games after it), and then
-                                        add the games back where you want them. BracktBuilder can also try to move the game for you, and fix up all
-                                        the connections. Its not perfect, and if your bracket is large it probably won't work. BUT, if all you want to
-                                        do is change the size of a game or make a simple move, then give this a try!
-                                    </p>
-                                    <p>
-                                        The first part of moving a game with BracketBuilder is to <em>pick up</em> the game. Just select any cell
-                                        in or on the game on the bracket, and click the <em>Pick Up Game</em> button. When you do this, the entire
-                                        game will get selected.
-                                    </p>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/DropGame.png" /></floatRight>
-                                </content>
-                            </section>
-                            <section id="DropGame">
-                                <heading>Drop Game</heading>
-                                <content>
-                                    <p>
-                                        After you have picked up the game, you should select where you want the game to go. If you just select
-                                        a single cell, this will get treated as the <em>Top Team</em> cell for the game. Otherwise, you can
-                                        select the entire range you want the game to go to. You should only select one column (don't include
-                                        the score or line columns). Once you have made your selection, click the <em>Drop Game</em> button.
-                                    </p>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/RemoveGame.png" /></floatRight>
-                                </content>
-                            </section>
-                            <section id="RemoveGame">
-                                <heading>Remove Game</heading>
-                                <content>
-                                    <p>
-                                        If you want to remove a game from the bracket, you can find the game in the list of games and
-                                        press the - sign to remove it. The other way to do it is to just select any cell in or on the game
-                                        in the bracket and click the <em>remove game</em> button.
-                                    </p>
-                                    <p>
-                                        Sometimes pieces of games get left behind, especially when the bracket is manually edited. If you want to
-                                        remove parts of a game that have been left behind, or to remove a broken game complete, select all of the
-                                        cells you want to clear and click the <em>remove game</em> button.
-                                    </p>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/RepairGame.png" /></floatRight>
-                                </content>
-                            </section>
-                            <section id="RepairGame">
-                                <heading>Repair Game</heading>
-                                <content>
-                                    <p>
-                                        Sometimes you can make formatting changes to the bracket, or even delete parts of the gaem. If this
-                                        happens, you can just Repair the game by clicking the <em>Repair Game</em> button. This will delete and
-                                        add the game back to the bracket, inserting all of the formulas and formatting to make things work again.
-                                    </p>
-                                    <br clear="all" />
-                                    <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/GameCommands.png" /></floatRight>
-                                </content>
-                            </section>
-                        </content>
-                    </section>
-                    <section id="GameCommands">
-                        <heading>Game Commands</heading>
-                        <content>
-                            <p>Each game in the game list will be shaded according to whether or not its already in the bracket. </p>
-                            <p>
-                                Games that
-                                are shaded gray are already in the bracket, and you can use the <em>Remove Game</em> button to remove that game.
-                            </p>
-                            <p>
-                                Games that are shaded white are not already in the bracket, and you can use the <em>Add Game</em> button to add
-                                the game to the bracket.
-                            </p>
-                        </content>
-                    </section>
-        </article>
-    </main>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/RainoutDay.png"/>
+        </floatRight>
+
+        <p>
+            I live in the Seattle area, so even well into June we have rainouts. This can be a pain in the bracket since
+            there's a lot of manual moving around you have to do, and the merged cells for days of the week is tedious.
+        </p>
+        <p>
+            To make this easier, use the <em>Rainout Day</em> command. This will insert a day into your bracket and
+            move all of the games on the day you are raining out to the following day. It will also extend the connections
+            across the day.
+        </p>
+        <p>
+            It's up to you to figure out how you want to markup the rainout day -- but at least the bracket made room for you!
+        </p>
+        <p>To switch between showing or hiding these sheets, click on the <em>Show/Hide</em> button</p>
+    </content>
+</section>
+<section id="RemoveWhatIf">
+    <heading>Convert Bracket to Modified Double Elimination</heading>
+    <content>
+        <br clear="all"/>
+
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/RemoveWhatIf.png"/>
+        </floatRight>
+
+        <p>
+            When you play the championship game, what happens if the team from the winner's bracket wins the game? Well,
+            you don't need the what-if game. How do you fix the bracket? You could do a lot of manual formatting, or you
+            could just convert the bracket to a modified double elimination bracket and remove the what-if game.
+        </p>
+        <p>
+            To do this, <b>first</b> remove the championship and what-if games from your bracket using the <em>Remove Game</em>
+            command. Then, click the <em>RemoveWhatIf</em> command to change the bracket to a modified double-elimination bracket. The
+            list of games should update immediately to no longer show the what-if. Now you can just place the championship game
+            where you want it and you should have the champion filled in automatically.
+        </p>
+        <p>To switch between showing or hiding these sheets, click on the <em>Show/Hide</em> button</p>
+    </content>
+</section>
+<section id="ResetTeaching">
+    <heading>Reset Teaching</heading>
+    <content>
+        <br clear="all"/>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/ResetTeaching.png"/>
+        </floatRight>
+
+        <p>
+            As you get started with BracketBuilder, you will notice coaching hints showing up. If you point your mouse at
+            these coaching marks, you will see a teaching callout show up with some (hopefully) helpful information. These
+            teaching callouts try not to show up too often, and many of them stop showing up after you see them a few times.
+            You can also choose to <em>never show again</em>
+        </p>
+        <p>
+            You might find that you want to get them back, though. If that happens, you can click on
+            <em>
+                Reset Coaching
+                Tips
+            </em> and they will start showing up again.
+        </p>
+    </content>
+</section>
+<section id="FinishingTouches">
+    <heading>Finishing Touches</heading>
+    <content>
+        <br clear="all"/>
+        <floatRight style="width: 20vw; margin-top: -3rem">
+            <img class="whiteBack" src="Images/FinishingTouches.png"/>
+        </floatRight>
+
+        <p>
+            When you are done placing all your games in the bracket, you will notice that the bracket still doesn't look
+            completely polished -- the titles aren't centered, you have extra days in the bracket, and so on.
+        </p>
+        <p>
+            At this point, if you click on <em>finishing touches</em>, BracketBuilder will do some cleaning up to make
+            your bracket look polished:
+            <ul>
+                <li>The final day of the bracket is stretched out to cover both the final game as well as the <em>champion</em></li>
+                <li>All other days are removed from the bracket after the final game</li>
+                <li>The title lines are merged and centered over the bracket</li>
+                <li>The <em>Hosted By</em> and <em>Last Updated</em> markers are put at the bottom of the bracket</li>
+                <li>
+                    The <em>Print Area</em> for the sheet is defined to cover only the bracket (and not the information to the
+                    left of the bracket)
+                </li>
+            </ul>
+        </p>
+        <p>
+            Once you apply the finishing touches to the bracket, you can print and only the bracket will get printed, or you
+            can export to PDF and only the bracket will get exported (assuming you use <em>Show/Hide</em> to hide the extra
+            sheets.
+        </p>
+    </content>
+</section>
+<section id="Help">
+    <heading>Help</heading>
+    <content>
+        <br clear="all"/>
+        <floatRight style="width: 20vw; margin-top: -4rem">
+            <img class="whiteBack" src="Images/Help.png"/>
+        </floatRight>
+
+        <p>Brings you to this help page.</p>
+    </content>
+</section>
+</content>
+</section>
+<section id="BracketTools">
+    <heading>Bracket Tools</heading>
+    <content>
+        <br clear="all"/>
+        <floatRight style="width: 20vw;padding-top: 2rem">
+            <img class="whiteBack" src="Images/PickUpGame.png"/>
+        </floatRight>
+        <section id="PickUpGame">
+            <heading>Pick up Game</heading>
+            <content>
+                <p>
+                    If you want to move a game on the bracket, you can remove the game (and all of the games after it), and then
+                    add the games back where you want them. BracktBuilder can also try to move the game for you, and fix up all
+                    the connections. Its not perfect, and if your bracket is large it probably won't work. BUT, if all you want to
+                    do is change the size of a game or make a simple move, then give this a try!
+                </p>
+                <p>
+                    The first part of moving a game with BracketBuilder is to <em>pick up</em> the game. Just select any cell
+                    in or on the game on the bracket, and click the <em>Pick Up Game</em> button. When you do this, the entire
+                    game will get selected.
+                </p>
+                <br clear="all"/>
+                <floatRight style="width: 20vw;padding-top: 2rem">
+                    <img class="whiteBack" src="Images/DropGame.png"/>
+                </floatRight>
+            </content>
+        </section>
+        <section id="DropGame">
+            <heading>Drop Game</heading>
+            <content>
+                <p>
+                    After you have picked up the game, you should select where you want the game to go. If you just select
+                    a single cell, this will get treated as the <em>Top Team</em> cell for the game. Otherwise, you can
+                    select the entire range you want the game to go to. You should only select one column (don't include
+                    the score or line columns). Once you have made your selection, click the <em>Drop Game</em> button.
+                </p>
+                <br clear="all"/>
+                <floatRight style="width: 20vw;padding-top: 2rem">
+                    <img class="whiteBack" src="Images/RemoveGame.png"/>
+                </floatRight>
+            </content>
+        </section>
+        <section id="RemoveGame">
+            <heading>Remove Game</heading>
+            <content>
+                <p>
+                    If you want to remove a game from the bracket, you can find the game in the list of games and
+                    press the - sign to remove it. The other way to do it is to just select any cell in or on the game
+                    in the bracket and click the <em>remove game</em> button.
+                </p>
+                <p>
+                    Sometimes pieces of games get left behind, especially when the bracket is manually edited. If you want to
+                    remove parts of a game that have been left behind, or to remove a broken game complete, select all of the
+                    cells you want to clear and click the <em>remove game</em> button.
+                </p>
+                <br clear="all"/>
+                <floatRight style="width: 20vw;padding-top: 2rem">
+                    <img class="whiteBack" src="Images/RepairGame.png"/>
+                </floatRight>
+            </content>
+        </section>
+        <section id="RepairGame">
+            <heading>Repair Game</heading>
+            <content>
+                <p>
+                    Sometimes you can make formatting changes to the bracket, or even delete parts of the gaem. If this
+                    happens, you can just Repair the game by clicking the <em>Repair Game</em> button. This will delete and
+                    add the game back to the bracket, inserting all of the formulas and formatting to make things work again.
+                </p>
+                <br clear="all"/>
+                <floatRight style="width: 20vw;padding-top: 2rem">
+                    <img class="whiteBack" src="Images/GameCommands.png"/>
+                </floatRight>
+            </content>
+        </section>
+    </content>
+</section>
+<section id="GameCommands">
+    <heading>Game Commands</heading>
+    <content>
+        <p>Each game in the game list will be shaded according to whether or not its already in the bracket. </p>
+        <p>
+            Games that
+            are shaded gray are already in the bracket, and you can use the <em>Remove Game</em> button to remove that game.
+        </p>
+        <p>
+            Games that are shaded white are not already in the bracket, and you can use the <em>Add Game</em> button to add
+            the game to the bracket.
+        </p>
+    </content>
+</section>
+</content>
+</section>
+</article>
+</main>
 </body>
 </html>

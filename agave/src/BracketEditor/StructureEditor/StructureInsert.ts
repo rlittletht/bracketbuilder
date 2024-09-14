@@ -322,6 +322,39 @@ export class StructureInsert
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: StructureInsert.adjustRangeInfoForGameInfoColumn
+
+        Adjust the requested range to be withing the gameInfo column. return false
+        if we can't adjust
+    ----------------------------------------------------------------------------*/
+    static adjustRangeInfoForGameInfoColumn(requested: RangeInfo, grid: Grid): boolean
+    {
+        const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
+
+        if (columnAdjacent != 0)
+        {
+            if (columnAdjacent == 1)
+            {
+                // they aren't in a team name column. if they are in the score column, then auto
+                // adjust back to the name
+                requested.shiftByColumns(-1);
+            }
+            else if (columnAdjacent == 2)
+            {
+                // if they are in the line column, that is closer to the _next_ team name
+                // column
+                requested.shiftByColumns(1);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: StructureInsert.buildNewGridForGameInsertAtSelection
 
         This is the non async portion of insert game at selection. Suitable for
@@ -342,26 +375,10 @@ export class StructureInsert
             };
         }
 
-        const columnAdjacent = (requested.FirstColumn - grid.FirstGridPattern.FirstColumn) % 3;
-
-        if (columnAdjacent != 0)
+        if (!this.adjustRangeInfoForGameInfoColumn(requested, grid))
         {
-            if (columnAdjacent == 1)
-            {
-                // they aren't in a team name column. if they are in the score column, then auto
-                // adjust back to the name
-                requested.shiftByColumns(-1);
-            }
-            else if (columnAdjacent == 2)
-            {
-                // if they are in the line column, that is closer to the _next_ team name
-                // column
-                requested.shiftByColumns(1);
-            }
-            else
-            {
-                const validColumns: string =
-                    `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
+            const validColumns: string =
+                `${Ranges.getColName(grid.FirstGridPattern.FirstColumn)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 3)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 6)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 9)}, `
@@ -372,17 +389,16 @@ export class StructureInsert
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 24)}, `
                     + `${Ranges.getColName(grid.FirstGridPattern.FirstColumn + 27)}`;
 
-                return {
-                    gridNew: null,
-                    failReason: [
-                        "Can't insert game at the current location.",
-                        `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
-                    ],
-                    topic: HelpTopic.FAQ_InsertLocation,
-                    coachState: Coachstate.AfterInsertGameFailed,
-                    selectRange: null
-                };
-            }
+            return {
+                gridNew: null,
+                failReason: [
+                    "Can't insert game at the current location.",
+                    `Please select a cell in a Team Name column, not a score column or a line column. Valid columns include (${validColumns})`
+                ],
+                topic: HelpTopic.FAQ_InsertLocation,
+                coachState: Coachstate.AfterInsertGameFailed,
+                selectRange: null
+            };
         }
 
         // let's confirm that this games predecessor's are not in the same column

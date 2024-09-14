@@ -28,17 +28,18 @@
 
     </header>
     <main>
-        <nav>
-            <ul>
-                <li><a href="./BracketBuilder.html">Getting Started</a></li>
-                <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
-                <li><a href="./Commands.html#Commands">Builder Functions</a></li>
-                <li><a href="./CustomBrackets.html#CustomBrackets">Custom Brackets</a></li>
-                <li><a href="./FAQ.html#FAQ">FAQ/Scenarios</a></li>
-                <li><a href="./Licenses.html#Licenses">Licenses</a></li>
-                <li><a href="./Privacy.html#Privacy">Privacy</a></li>
-            </ul>
-        </nav>
+    <nav>
+        <ul>
+            <li><a href="./BracketBuilder.html#help">Getting Started</a></li>
+            <li><a href="./SheetEditing.html#sheetEditing">Editing the sheet</a></li>
+            <li><a href="./Commands.html#Commands">Builder Functions</a></li>
+            <li><a href="./CustomBrackets.html#CustomBrackets">Custom Brackets</a></li>
+            <li><a href="./FAQ.html#FAQ">FAQ/Scenarios</a></li>
+            <li><a href="./ReleaseNotes.html#ReleaseNotes">Release Notes</a></li>
+            <li><a href="./Licenses.html#Licenses">Licenses</a></li>
+            <li><a href="./Privacy.html#Privacy">Privacy</a></li>
+        </ul>
+    </nav>
         <article id="CustomBrackets">
             <section id="CustomBrackets">
                 <heading navText="Custom Brackets">What if I want a different kind of bracket?</heading>
@@ -65,9 +66,13 @@
                         <heading navText="Structure">Bracket Definitions</heading>
                         <content>
                             <p>
-                                Each bracket has a very specific format. You can see sample brackets at <a href="./BracketDefsSample.xlsx">Bracket Samples</a>.
+                                Each bracket has a very specific format. You can see sample brackets at <a href="./BracketDefsSample.xlsx">Bracket Samples</a>. 
                                 There is extra information in the definition table -- this is there to try to help you avoid common mistakes
                                 when creating a bracket, like having multiple games feeding into the same game.
+                            </p>
+                            <p>
+                                If you are looking for single elimination bracket examples, look at <a href="./SingleEliminationDefinitions.xlsx">Single Elimination Bracket Definitions</a>.
+                                These single elimination brackets are ready to go once you <a href="./CustomBrackets.html#Loading">load the definitions</a>.
                             </p>
                             <section>
                                 <heading>BracketDef Sheet Size</heading>
@@ -212,6 +217,11 @@
 
                     <section id="Loading">
                         <heading>Loading Custom Brackets</heading>
+                        <zoomable>
+                            <floatRight style="width: 20vw">
+                                <img src="Images/LoadCustomBracket.png" class="whiteBackSmaller"/>
+                            </floatRight>
+                        </zoomable>
                         <content>
                             <p>
                                 If you add the <prodRef>BracketBuilder</prodRef> add-in to a workbook that already has a correctly
@@ -220,6 +230,11 @@
                                 brackets -- this is helpful to reload your custom brackets as you work through issues. Every time it tries
                                 to load a custom bracket it will validate it and report any errors. You can correct these errors and
                                 try to reload the bracket
+                            </p>
+                            <p>
+                                The example image shows what the <prodRef>BracketBuilder</prodRef> looks like when you add it to
+                                the <a href="./SingleEliminationDefinitions.xlsx">Single Elimination Bracket Definitions</a> workbook. All 16
+                                definitions are loaded and available to build.
                             </p>
                             <p>
                                 Another way to load a custom bracket is to create a built-in bracket for the number of teams you want

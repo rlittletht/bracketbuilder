@@ -31,69 +31,89 @@ export class GridBuilder
 
         const rangeVerticalLine = sheet.getRangeByIndexes(row, col + 2, 2, 1);
 
+        const rangeJustDay = sheet.getRangeByIndexes(row, col, 1, 1);
+        rangeJustDay.numberFormat = [["General"]];
+
+        const rangeJustDate = sheet.getRangeByIndexes(row + 1, col, 1, 1);
+        rangeJustDate.numberFormat = [["mmmm d"]];
+
         GameFormatting.formatConnectingLineRangeRequest(rangeVerticalLine);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: GridBuilder.pushSingleDayGridFormulas
+
+        push a single day grid set of formulas
+    ----------------------------------------------------------------------------*/
+    static pushSingleDayGridFormulas(aryFirstRow: any[], arySecondRow: any[], rowIndex: number, col: number)
+    {
+        aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowIndex + 1, col], null)}, "DDDD")`);
+        aryFirstRow.push(null);
+        aryFirstRow.push(null);
+        arySecondRow.push(`=${Ranges.addressFromCoordinates([rowIndex + 1, col - 3], null)} + 1`);
+        arySecondRow.push(null);
+        arySecondRow.push(null);
+    }
+
+    static pushDayGridFormulas(aryFirstRow: any[], arySecondRow: any[], rowIndex: number, colStart: number, days: number)
+    {
+        // now loop through the rest of the days for the number given
+        while (days-- > 0)
+        {
+            this.pushSingleDayGridFormulas(aryFirstRow, arySecondRow, rowIndex, colStart);
+            colStart += 3;
+        }
+    }
 
     /*----------------------------------------------------------------------------
-        %%Function: GridBuilder.addDayGridFormulas
+        %%Function: GridBuilder.addDayGridStaticAndFormulas
 
         each day is 3 columns (the team, the score, and the vertical line)
     ----------------------------------------------------------------------------*/
-    static async addDayGridFormulas(sheet: Excel.Worksheet, rowStart: number, colStart: number, days: number)
+    static async addDayGridStaticAndFormulas(sheet: Excel.Worksheet, firstRowIndex: number, firstColumnIndex: number, days: number)
     {
         if (days <= 1)
             throw new Error("days must be > 1");
 
         const daysSpan: number = days * 3;
 
-        let rng: Excel.Range = sheet.getRangeByIndexes(rowStart, colStart, 2, daysSpan);
+        let rng: Excel.Range = sheet.getRangeByIndexes(firstRowIndex, firstColumnIndex, 2, daysSpan);
         let ary: any[][] = [];
 
-        let col: number = colStart;
+        let col: number = firstColumnIndex;
 
         let aryFirstRow: any[] = [];
         let arySecondRow: any[] = [];
 
         // first, we have a static day
-        aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowStart + 1, col], null)}, "DDDD")`);
+        aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([firstRowIndex + 1, col], null)}, "DDDD")`);
         aryFirstRow.push(null);
         aryFirstRow.push(null);
         arySecondRow.push(OADate.ToOADate(new Date(Date.parse("6/15/2024"))) - (7 / 24));
         arySecondRow.push(null);
         arySecondRow.push(null);
 
-        // now loop through the rest of the days for the number given
-        while (--days > 0)
-        {
-            col += 3;
-            aryFirstRow.push(`=TEXT(${Ranges.addressFromCoordinates([rowStart + 1, col], null)}, "DDDD")`);
-            aryFirstRow.push(null);
-            aryFirstRow.push(null);
-            arySecondRow.push(`=${Ranges.addressFromCoordinates([rowStart + 1, col - 3], null)} + 1`);
-            arySecondRow.push(null);
-            arySecondRow.push(null);
-        }
+        this.pushDayGridFormulas(aryFirstRow, arySecondRow, firstRowIndex, col + 3, days - 1);
 
         ary.push(aryFirstRow);
         ary.push(arySecondRow);
 
         rng.formulas = ary;
 
-        rng = sheet.getRangeByIndexes(rowStart + 1, colStart, 1, daysSpan);
+        rng = sheet.getRangeByIndexes(firstRowIndex + 1, firstColumnIndex, 1, daysSpan - 1);
         rng.numberFormat = [["mmmm d"]];
 
         // now merge and format the cells
-        col = colStart;
+        col = firstColumnIndex;
         // and add a left border just for our first day
-        const rangeJustDays = sheet.getRangeByIndexes(rowStart, colStart, 2, 1);
+        const rangeJustDays = sheet.getRangeByIndexes(firstRowIndex, firstColumnIndex, 2, 1);
 
         rangeJustDays.format.borders.getItem('EdgeLeft').style = Excel.BorderLineStyle.continuous;
         rangeJustDays.format.borders.getItem('EdgeLeft').weight = Excel.BorderWeight.thick;
 
-        while (col < colStart + daysSpan)
+        while (col < firstColumnIndex + daysSpan)
         {
-            this.mergeAndFormatDayRequest(sheet, rowStart, col);
+            this.mergeAndFormatDayRequest(sheet, firstRowIndex, col);
             col += 3;
         }
     }
@@ -209,7 +229,7 @@ export class GridBuilder
         this.formatColumns(sheet, ["A:A"], 60);
         this.formatColumns(sheet, ["B:B"], 256);
         this.formatColumns(sheet, ["C:C"], 32);
-        this.addDayGridFormulas(sheet, 4, 3, GridBuilder.maxDays);
+        this.addDayGridStaticAndFormulas(sheet, 4, 3, GridBuilder.maxDays);
 
         await GlobalDataBuilder.addGlobalDataToSheet(context, sheet, 11);
 //        await this.addTipsAndDirections(context, sheet);
