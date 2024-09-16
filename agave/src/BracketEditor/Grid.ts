@@ -1,5 +1,4 @@
 import { AppContext } from "../AppContext/AppContext";
-import { BracketDefinition } from "../Brackets/BracketDefinitions";
 import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
@@ -24,6 +23,7 @@ import { GridItem } from "./GridItem";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { HelpTopic } from "../Coaching/HelpInfo";
+import { IBracketDefinitionData } from "../Brackets/IBracketDefinitionData";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -1113,7 +1113,7 @@ export class Grid
         _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracketName);
+        let bracketDef: IBracketDefinitionData = _bracketManager.getBracket(bracketName);
         if (!bracketDef)
             throw new Error("bracket not cached in loadGridFromBracket");
 

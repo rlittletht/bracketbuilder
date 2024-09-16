@@ -13,7 +13,6 @@ import { GameNum } from "../../BracketEditor/GameNum";
 import { Grid } from "../../BracketEditor/Grid";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 import { _bracketManager } from "../../Brackets/BracketManager";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { CoachTransition } from "../../Coaching/CoachTransition";
@@ -40,6 +39,7 @@ import { Teachable, TeachableId } from "./Teachable";
 import { Toolbar, ToolbarItem } from "./Toolbar";
 import { Dispatcher } from "../../BracketEditor/Dispatcher";
 import { FreezeDays } from "../../commands/FreezeDays";
+import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
 
 /* global console, Excel, require  */
 
@@ -679,7 +679,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
         _TimerStack.pushTimer("getGamesList.getBracket");
-        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracket);
+        let bracketDef: IBracketDefinitionData = _bracketManager.getBracket(bracket);
 
         if (bracketDef == null)
             return [];

@@ -1,6 +1,7 @@
 
 import { AppContext, IAppContext } from "../AppContext/AppContext";
-import { BracketDefinition, GameDefinition } from "../Brackets/BracketDefinitions";
+import { IBracketGameDefinition } from "../Brackets/IBracketGameDefinition";
+import { IBracketDefinitionData } from "../Brackets/IBracketDefinitionData";
 import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
@@ -19,7 +20,7 @@ import { StructureRemove } from "./StructureEditor/StructureRemove";
 export interface IBracketGame
 {
     // these are the static definitions
-    get BracketGameDefinition(): GameDefinition;
+    get BracketGameDefinition(): IBracketGameDefinition;
     get SwapTopBottom(): boolean;
     get BracketName(): string; // "T2" for 2 team bracket, etc. Can derive table name from it
     get GameId(): GameId; // this is the game id (1 based) in the overall static bracket definition
@@ -74,7 +75,7 @@ export interface IBracketGame
 
 export class BracketGame implements IBracketGame
 {
-    m_bracketGameDefinition: GameDefinition;
+    m_bracketGameDefinition: IBracketGameDefinition;
     m_swapTopBottom: boolean;
     m_bracketName: string;
     m_gameNum: GameNum;
@@ -181,7 +182,7 @@ export class BracketGame implements IBracketGame
     }
 
     // getters
-    get BracketGameDefinition(): GameDefinition { return this.m_bracketGameDefinition; }
+    get BracketGameDefinition(): IBracketGameDefinition { return this.m_bracketGameDefinition; }
     get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
     get BracketName(): string { return this.m_bracketName;  }
     get GameId(): GameId { return this.m_gameNum.GameId; }

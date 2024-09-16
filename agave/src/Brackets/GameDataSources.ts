@@ -1,5 +1,4 @@
 
-import { BracketDefinition } from "./BracketDefinitions";
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges, RangeInfo } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
@@ -21,6 +20,7 @@ import { TestRunner } from "../Support/TestRunner";
 import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
 import { s_staticConfig } from "../StaticConfig";
+import { IBracketDefinitionData } from "./IBracketDefinitionData";
 
 export interface TeamNameMap
 {
@@ -413,7 +413,7 @@ export class GameDataSources
         most up-to-date info, even if it hasn't been pushed back to this bracket
         source sheet.
     ----------------------------------------------------------------------------*/
-    static async buildGameDataSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: BracketDefinition)
+    static async buildGameDataSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: IBracketDefinitionData)
     {
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GameDataSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 

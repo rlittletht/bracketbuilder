@@ -11,10 +11,10 @@ import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";
 import { RangeInfo } from "./Interop/Ranges";
 import { RangeCaches, RangeCacheItemType } from "./Interop/RangeCaches";
-import { BracketDefinition } from "./Brackets/BracketDefinitions";
 import { _bracketManager } from "./Brackets/BracketManager";
 import { Dispatcher, DispatchWithCatchDelegate } from "./BracketEditor/Dispatcher";
 import { GridBuilder } from "./Brackets/GridBuilder";
+import { IBracketDefinitionData } from "./Brackets/IBracketDefinitionData";
 
 export class SetupState
 {
@@ -224,9 +224,9 @@ export class SetupBook
         return [setupState, bracketChoice];
     }
 
-    static async loadCustomBracketsAsync(context: JsCtx, appContext: IAppContext, reportMissingBrackets?: boolean): Promise<BracketDefinition[]>
+    static async loadCustomBracketsAsync(context: JsCtx, appContext: IAppContext, reportMissingBrackets?: boolean): Promise<IBracketDefinitionData[]>
     {
-        const brackets: BracketDefinition[] = [];
+        const brackets: IBracketDefinitionData[] = [];
 
         _bracketManager.setDirty(true);
 
@@ -258,9 +258,9 @@ export class SetupBook
         return brackets;
     }
 
-    static async loadCustomBrackets(appContext: IAppContext): Promise<BracketDefinition[]>
+    static async loadCustomBrackets(appContext: IAppContext): Promise<IBracketDefinitionData[]>
     {
-        const brackets: BracketDefinition[] = [];
+        const brackets: IBracketDefinitionData[] = [];
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {

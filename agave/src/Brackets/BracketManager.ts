@@ -1,6 +1,6 @@
 
 import { GameId } from "../BracketEditor/GameId";
-import { BracketDefinition, GameResultType, TeamPlacement, GameDefinition } from "./BracketDefinitions";
+import { GameResultType, TeamPlacement } from "./BracketDefinitions";
 import { JsCtx } from "../Interop/JsCtx";
 import { BracketDefBuilder } from "./BracketDefBuilder";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
@@ -9,10 +9,12 @@ import { TableIO } from "../Interop/TableIO";
 import { _TimerStack } from "../PerfTimer";
 import { HelpTopic } from "../Coaching/HelpInfo";
 import { TrError } from "../Exceptions";
+import { IBracketDefinitionData } from "./IBracketDefinitionData";
+import { IBracketGameDefinition } from "./IBracketGameDefinition";
 
 export class BracketManager
 {
-    m_bracketsMap: Map<string, BracketDefinition> = new Map<string, BracketDefinition>();
+    m_bracketsMap: Map<string, IBracketDefinitionData> = new Map<string, IBracketDefinitionData>();
 
     m_dirty: boolean = true; // do we need to reload the brackets from the workbook?
 
@@ -32,9 +34,9 @@ export class BracketManager
 
         Load the bracket definition and name from the given read values
     ----------------------------------------------------------------------------*/
-    static loadBracketFromValues(bracketName: string, tableName: string, header: any[][], dataBody: any[][], bracketNameValues: any[][]): BracketDefinition
+    static loadBracketFromValues(bracketName: string, tableName: string, header: any[][], dataBody: any[][], bracketNameValues: any[][]): IBracketDefinitionData
     {
-        const bracket: BracketDefinition =
+        const bracket: IBracketDefinitionData =
         {
             name: bracketNameValues[0][0],
             teamCount: +bracketName.substring(1),
@@ -70,7 +72,7 @@ export class BracketManager
         Load the requested bracket from the workbook -- maybe use the caches, but
         if not present, do it the slow way.
     ----------------------------------------------------------------------------*/
-    static async loadBracketFromWorkbook(context: JsCtx, bracketName: string, sheetName: string): Promise<BracketDefinition>
+    static async loadBracketFromWorkbook(context: JsCtx, bracketName: string, sheetName: string): Promise<IBracketDefinitionData>
     {
         let values: any[][];
         let header: any[][];
@@ -180,7 +182,7 @@ export class BracketManager
         Populate the given bracket (or all brackets) if necessary. If a specific
         bracket was requested, then return that bracket's definition
     ----------------------------------------------------------------------------*/
-    async populateBracketsIfNecessary(context: JsCtx, bracket?: string): Promise<BracketDefinition>
+    async populateBracketsIfNecessary(context: JsCtx, bracket?: string): Promise<IBracketDefinitionData>
     {
         // only repopulate if dirty.
         // NOTE: If you ask for a bracket that we haven't cached yet, but you believe that we
@@ -222,7 +224,7 @@ export class BracketManager
     /*----------------------------------------------------------------------------
         %%Function: BracketManager.getBrackets
     ----------------------------------------------------------------------------*/
-    getBrackets(): BracketDefinition[]
+    getBrackets(): IBracketDefinitionData[]
     {
         const brackets = [];
 
@@ -296,12 +298,12 @@ export class BracketManager
         bracket is a what-if game -- the top and bottom sources will come from the
         same game.
     ----------------------------------------------------------------------------*/
-    static isBracketDoubleEliminination(bracket: BracketDefinition): boolean
+    static isBracketDoubleEliminination(bracket: IBracketDefinitionData): boolean
     {
         if (bracket.games.length < 2)
             throw new Error("invalid bracket");
 
-        const game: GameDefinition = bracket.games[bracket.games.length - 2];
+        const game: IBracketGameDefinition = bracket.games[bracket.games.length - 2];
 
         return (this.GameIdFromWinnerLoser(game.topSource).equals(this.GameIdFromWinnerLoser(game.bottomSource)));
     }
