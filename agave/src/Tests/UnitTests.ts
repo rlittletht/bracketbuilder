@@ -16,6 +16,8 @@ import { ParserTests } from "../Interop/Parser";
 import { StreamWriter } from "../Support/StreamWriter";
 import { _bracketManager } from "../Brackets/BracketManager";
 import { GameDataSourcesTests } from "../Brackets/GameDataSources";
+import { TourneyTests } from "../Tourney/TourneyTests";
+import { TimeWithoutDateTests } from "../Support/TimeWithoutDateTests";
 
 export class UnitTests
 {
@@ -42,6 +44,8 @@ export class UnitTests
                     context.releaseAllCacheObjects();
                 });
 
+            TimeWithoutDateTests.runAllTests(appContext, outStream);
+            TourneyTests.runAllTests(appContext, outStream);
             GameDataSourcesTests.runAllTests(appContext, outStream);
             StructureInsertTests.runAllTests(appContext, outStream);
             FastFormulaAreasTest.runAllTests(appContext, outStream);
