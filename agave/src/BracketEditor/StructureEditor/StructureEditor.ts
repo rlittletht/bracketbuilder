@@ -33,7 +33,7 @@ import { BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
 import { GameId } from "../GameId";
 import { GameNum } from "../GameNum";
 import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
-import * as BracketGameDefinition from "../../Brackets/IBracketGameDefinition";
+import { IBracketGameDefinition } from "../../Brackets/IBracketGameDefinition";
 
 let _moveSelection: RangeInfo = null;
 
@@ -411,9 +411,9 @@ export class StructureEditor
         const bracketName: string = appContext.SelectedBracket;
 
         // first, confirm that the current loaded bracked is standard double elimination
-        let bracketDef: IBracketDefinitionData = _bracketManager.getBracket(bracketName);
+        let bracketDef: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracketName);
 
-        if (!BracketManager.isBracketDoubleEliminination(bracketDef))
+        if (!BracketManager.IsBracketDefinitionDataDoubleEliminination(bracketDef))
         {
             appContext.Messages.error(
                 [
@@ -424,7 +424,7 @@ export class StructureEditor
             return;
         }
 
-        const whatifGame: BracketGameDefinition.IBracketGameDefinition = bracketDef.games[bracketDef.games.length - 2];
+        const whatifGame: IBracketGameDefinition = bracketDef.games[bracketDef.games.length - 2];
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 

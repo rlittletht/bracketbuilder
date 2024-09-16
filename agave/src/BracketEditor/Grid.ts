@@ -1113,7 +1113,7 @@ export class Grid
         _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: IBracketDefinitionData = _bracketManager.getBracket(bracketName);
+        let bracketDef: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracketName);
         if (!bracketDef)
             throw new Error("bracket not cached in loadGridFromBracket");
 

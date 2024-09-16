@@ -390,7 +390,7 @@ export class BracketDefBuilder
     {
         const bracketChoice: string = appContext.SelectedBracket;
 
-        let bracketDefinition: IBracketDefinitionData = _bracketManager.getBracket(bracketChoice);
+        let bracketDefinition: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracketChoice);
 
         if (bracketDefinition == null)
         {

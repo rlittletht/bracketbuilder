@@ -567,7 +567,7 @@ export class BracketGame implements IBracketGame
     {
         AppContext.checkpoint("l.1");
 
-        const bracketDefinition = _bracketManager.getBracket(bracketChoice);
+        const bracketDefinition = _bracketManager.GetBracketDefinitionData(bracketChoice);
 
         if (!bracketDefinition)
             throw new Error("bracket not cached in LoadSync");

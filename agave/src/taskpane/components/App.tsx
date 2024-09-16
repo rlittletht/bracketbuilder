@@ -678,8 +678,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        _TimerStack.pushTimer("getGamesList.getBracket");
-        let bracketDef: IBracketDefinitionData = _bracketManager.getBracket(bracket);
+        _TimerStack.pushTimer("getGamesList.GetBracketDefinitionData");
+        let bracketDef: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracket);
 
         if (bracketDef == null)
             return [];

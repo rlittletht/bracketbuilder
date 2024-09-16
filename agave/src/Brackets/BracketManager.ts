@@ -67,12 +67,12 @@ export class BracketManager
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketManager.loadBracketFromWorkbook
+        %%Function: BracketManager.LoadBracketDefinitionDataFromWorkbook
 
         Load the requested bracket from the workbook -- maybe use the caches, but
         if not present, do it the slow way.
     ----------------------------------------------------------------------------*/
-    static async loadBracketFromWorkbook(context: JsCtx, bracketName: string, sheetName: string): Promise<IBracketDefinitionData>
+    static async LoadBracketDefinitionDataFromWorkbook(context: JsCtx, bracketName: string, sheetName: string): Promise<IBracketDefinitionData>
     {
         let values: any[][];
         let header: any[][];
@@ -189,7 +189,7 @@ export class BracketManager
         // have subsequently added to the workbook (because we built the specific bracket), then
         // you MUST dirty the bracket manager first. We won't automatically reload
         if (!this.m_dirty)
-            return bracket ? this.getBracket(bracket) : null;
+            return bracket ? this.GetBracketDefinitionData(bracket) : null;
 
         this.m_dirty = false;
 
@@ -207,7 +207,7 @@ export class BracketManager
                 // brackets is the list of brackets to populate
                 for (let _bracket of brackets)
                 {
-                    const bracketDef = await BracketManager.loadBracketFromWorkbook(context, _bracket, BracketDefBuilder.SheetName);
+                    const bracketDef = await BracketManager.LoadBracketDefinitionDataFromWorkbook(context, _bracket, BracketDefBuilder.SheetName);
 
                     if (bracketDef)
                         this.m_bracketsMap.set(_bracket, bracketDef)
@@ -222,9 +222,9 @@ export class BracketManager
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketManager.getBrackets
+        %%Function: BracketManager.GetBracketDefinitionsData
     ----------------------------------------------------------------------------*/
-    getBrackets(): IBracketDefinitionData[]
+    GetBracketDefinitionsData(): IBracketDefinitionData[]
     {
         const brackets = [];
 
@@ -237,9 +237,9 @@ export class BracketManager
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketManager.getBracket
+        %%Function: BracketManager.GetBracketDefinitionData
     ----------------------------------------------------------------------------*/
-    getBracket(bracket: string)
+    GetBracketDefinitionData(bracket: string): IBracketDefinitionData
     {
         if (!this.m_bracketsMap.has(bracket))
             return null;
@@ -247,11 +247,22 @@ export class BracketManager
         return this.m_bracketsMap.get(bracket);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketManager.GameIdFromWinnerLoser
+
+        Get the GameId from the Winner or Loser string ("W1" or "L2", etc)
+    ----------------------------------------------------------------------------*/
     static GameIdFromWinnerLoser(winnerLoser: string): GameId
     {
         return new GameId(Number(winnerLoser.substring(1)));
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketManager.GetTeamPlacementFromAdvance
+
+        Figure out if this the advancement string points to the top or bottom
+        of a the target game
+    ----------------------------------------------------------------------------*/
     static GetTeamPlacementFromAdvance(advance: string): TeamPlacement
     {
         const placement = advance.substring(0, 1);
@@ -266,6 +277,11 @@ export class BracketManager
         throw new Error("bad team placement string - corrupt internal bracket");
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketManager.GetGameResultTypeFromSource
+
+        Return whether this is result yields a winner or a loser
+    ----------------------------------------------------------------------------*/
     static GetGameResultTypeFromSource(source: string): GameResultType
     {
         const result = source.substring(0, 1);
@@ -280,6 +296,12 @@ export class BracketManager
         throw new Error("bad game result type string - corrupt internal bracket");
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: BracketManager.IsTeamSourceStatic
+
+        Return whether the source of this game is a static team ("Team 1") or
+        is the result of a game ("W1" or "L1").
+    ----------------------------------------------------------------------------*/
     static IsTeamSourceStatic(source: string): boolean
     {
         if (source.length > 3 || source.length == 1)
@@ -292,13 +314,13 @@ export class BracketManager
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: BracketManager.isBracketDoubleEliminination
+        %%Function: BracketManager.IsBracketDefinitionDataDoubleEliminination
 
         This is a standard double eliminination bracket if the last game in the
         bracket is a what-if game -- the top and bottom sources will come from the
         same game.
     ----------------------------------------------------------------------------*/
-    static isBracketDoubleEliminination(bracket: IBracketDefinitionData): boolean
+    static IsBracketDefinitionDataDoubleEliminination(bracket: IBracketDefinitionData): boolean
     {
         if (bracket.games.length < 2)
             throw new Error("invalid bracket");

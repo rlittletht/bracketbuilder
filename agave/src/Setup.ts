@@ -234,7 +234,7 @@ export class SetupBook
         try
         {
             await _bracketManager.populateBracketsIfNecessary(context);
-            brackets.push(..._bracketManager.getBrackets());
+            brackets.push(..._bracketManager.GetBracketDefinitionsData());
         }
         catch (error)
         {
