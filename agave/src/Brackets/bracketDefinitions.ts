@@ -1,5 +1,4 @@
 import { IBracketDefinitionData } from "./IBracketDefinitionData";
-import { IBracketGameDefinition } from "./IBracketGameDefinition";
 
 export class TeamPlacement
 {
