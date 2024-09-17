@@ -40,12 +40,65 @@ export class TourneyRestriction
         return restriction;
     }
 
+    get EarliestStart(): TimeWithoutDate
+    {
+        return this.m_earliestStart;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyRestriction.AppliesToField
+    ----------------------------------------------------------------------------*/
+    AppliesToFieldDate(field: TourneyField, date?: DateWithoutTime): boolean
+    {
+        if (this.m_fields != null)
+        {
+            let fieldMatch: boolean = false;
+
+            for (const _field of this.m_fields)
+            {
+                if (_field.Name === field.Name)
+                {
+                    fieldMatch = true;
+                    break;
+                }
+            }
+
+            // if this restriction is limited to a set of fields and we aren't
+            // in that set, this doesn't apply to us
+            if (fieldMatch == false)
+                return false;
+        }
+
+        // they don't care about date...we match
+        if (date === null || date === undefined)
+            return true;
+
+        // if no fields list, check date
+        if (this.m_date != null)
+        {
+            if (this.m_date.getDate() != date.utcMidnightDateObj.getTime())
+                // this restriction doesn't refer to this date
+                return false;
+        }
+
+        // see if the days-of-week apply...
+        if (this.m_daysOfWeek != null)
+        {
+            if (!this.m_daysOfWeek.Has(date.getDay()))
+                // doesn't apply to us
+                return false;
+        }
+
+        // else, this applies to us
+        return true;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: TourneyRestriction.IsAllowedDateTime
 
         same as IsAllowed but takes a combined Date (Date/Time together)
     ----------------------------------------------------------------------------*/
-    IsAllowedDateTime(field: string, dateTime: Date): boolean
+    IsAllowedDateTime(field: TourneyField, dateTime: Date): boolean
     {
         return this.IsAllowed(field, new DateWithoutTime(dateTime), TimeWithoutDate.CreateForDate(dateTime));
     }
@@ -55,41 +108,10 @@ export class TourneyRestriction
 
         Is this field/date/time not allowed per this restriction?
     ----------------------------------------------------------------------------*/
-    IsAllowed(field: string, date: DateWithoutTime, time: TimeWithoutDate): boolean
+    IsAllowed(field: TourneyField, date: DateWithoutTime, time: TimeWithoutDate): boolean
     {
-        if (this.m_fields != null)
-        {
-            let fieldMatch: boolean = false;
-
-            for (const _field in this.m_fields)
-            {
-                if (_field === field)
-                {
-                    fieldMatch = true;
-                    break;
-                }
-            }
-
-            // if this restriction is limited to a set of fields and we aren't
-            // in that set, then we are OK
-            if (fieldMatch == false)
-                return true;
-        }
-
-        if (this.m_date != null)
-        {
-            if (this.m_date.getTime() != date.getTime())
-                // this restriction doesn't refer to this date
-                return true;
-        }
-
-        // see if the days-of-week apply...
-        if (this.m_daysOfWeek != null)
-        {
-            if (!this.m_daysOfWeek.Has(date.getDay()))
-                // doesn't apply to us
-                return true;
-        }
+        if (!this.AppliesToFieldDate(field, date))
+            return true;
 
         // now lets check the restriction
         if (this.m_earliestStart != null)

@@ -78,6 +78,14 @@ export class TimeWithoutDateTests
         result.assertIsEqual(0, TimeWithoutDate.Compare(expected, time));
     }
 
+    static test_NotMidnight_FromTimeOnlyHour_ParseVerify(result: TestResult)
+    {
+        const time = TimeWithoutDate.CreateForTime(23);
+        const expected = TimeWithoutDate.CreateForTimeString("23:00");
+
+        result.assertIsEqual(0, TimeWithoutDate.Compare(expected, time));
+    }
+
     static test_NotMidnight_FromTimeString(result: TestResult)
     {
         const time = TimeWithoutDate.CreateForTimeString("23:59:59");

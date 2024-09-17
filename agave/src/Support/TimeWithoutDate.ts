@@ -3,7 +3,7 @@ export class TimeWithoutDate
 {
     private m_utcTimeNoDate: Date;
 
-    static s_msecPerSecond = 60;
+    static s_msecPerSecond = 1000;
     static s_msecPerMinute = TimeWithoutDate.s_msecPerSecond * 60;
     static s_msecPerHour = TimeWithoutDate.s_msecPerMinute * 60;
 
@@ -15,6 +15,11 @@ export class TimeWithoutDate
             this.m_utcTimeNoDate.setTime(msecTotal);
     }
 
+
+    get Value(): number
+    {
+        return this.m_utcTimeNoDate.getTime();
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: TimeWithoutDate.CreateForDate
