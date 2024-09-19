@@ -1,3 +1,4 @@
+import { TimeWithoutDate } from "./TimeWithoutDate";
 
 export class DateWithoutTime
 {
@@ -33,6 +34,11 @@ export class DateWithoutTime
     static CreateForEpochDays(days: number)
     {
         return new DateWithoutTime(days * 86_400_000);
+    }
+
+    GetDateWithTime(time: TimeWithoutDate): Date
+    {
+        return new Date(this.m_utcDateNoTime.getTime() + time.Value);
     }
 
     GetDay(): number

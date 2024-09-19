@@ -12,8 +12,9 @@ import { TourneyPenalties } from "./TourneyPenalties";
 import { Grid } from "../BracketEditor/Grid";
 import { DateWithoutTime } from "../Support/DateWithoutTime";
 import { GameNum } from "../BracketEditor/GameNum";
+import { TourneyGameIterator } from "./TourneyGameIterator";
 
-export class TourneyDef
+export class TourneyDef implements Iterable<TourneyGameDef>
 {
     private m_rules: TourneyRules;
     private m_games: Map<number, TourneyGameDef>;
@@ -175,7 +176,10 @@ export class TourneyDef
         let nextGame = this.GetNextGameToSchedule();
 
         while (nextGame != null)
+        {
             this.AddGame(nextGame);
+            nextGame = this.GetNextGameToSchedule();
+        }
     }
 
     /*----------------------------------------------------------------------------
@@ -186,13 +190,11 @@ export class TourneyDef
         const rules = TourneyRules.Create();
 
         const startDate = grid.getDateFromGridColumn(grid.FirstGridPattern.FirstColumn);
-        
+
         rules.SetStart(startDate);
 
         for (const fieldName of grid.getAllAvailableFields())
-        {
             rules.AddField(fieldName, false, 180);
-        }
 
         rules.AddDefaultFieldRestrictions();
 
@@ -218,5 +220,22 @@ export class TourneyDef
             });
 
         return tourney;
+    }
+
+    [Symbol.iterator]()
+    {
+        // build an ordered list of games (basically, by date by time)
+        const unordered: TourneyGameDef[] = [];
+
+        for (const game of this.m_games.values())
+            unordered.push(game);
+
+        const ordered = unordered.sort(
+            (left: TourneyGameDef, right: TourneyGameDef) =>
+            {
+                return left.DateTimeNumber - right.DateTimeNumber;
+            });
+
+        return new TourneyGameIterator(ordered);
     }
 }

@@ -31,6 +31,11 @@ export class TourneyGameDef
         return this.m_slot;
     }
 
+    get DateTimeNumber(): number
+    {
+        return this.m_date.GetDateWithTime(this.m_slot.Start).getTime();
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: TourneyGameDef.Create
     ----------------------------------------------------------------------------*/

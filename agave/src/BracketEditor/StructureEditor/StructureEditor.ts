@@ -338,14 +338,16 @@ export class StructureEditor
 
             const tourneyDef = TourneyDef.CreateFromGrid(grid, bracketName);
 
+            tourneyDef.ScheduleAllRemainingGames();
+
             const bookmark: string = "luckyWholeSchedule";
             context.pushTrackingBookmark(bookmark);
 
-            while (true)
+            for(const newGame of tourneyDef)
             {
-                const newGame: TourneyGameDef = tourneyDef.GetNextGameToSchedule();
-                if (newGame == null)
-                    break;
+                // don't schedule games already on the grid...
+                if (grid.getItemForGameId(newGame.GameNum.GameId) != null)
+                    continue;
 
                 const date = newGame.GameDate;
                 const time = newGame.Slot.Start.GetMinutesSinceMidnight();
@@ -380,9 +382,6 @@ export class StructureEditor
                     succeeded = false;
                     break;
                 }
-
-                // lastly, add this game to the tourney
-                tourneyDef.AddGame(newGame);
             }
             if (succeeded)
             {
