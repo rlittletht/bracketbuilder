@@ -1,10 +1,9 @@
-
-import { DateWithoutTime } from "epoq";
 import { TourneyField } from "./TourneyField";
 import { TourneyRestriction } from "./TourneyRestriction";
 import { TourneyDaysOfWeek } from "./TourneyDaysOfWeek";
 import { TimeWithoutDate } from "../Support/TimeWithoutDate";
 import { TourneyFieldSlot } from "./TourneyFieldSlot";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
 
 export class TourneyRules
 {
@@ -25,6 +24,29 @@ export class TourneyRules
     get Fields(): TourneyField[]
     {
         return this.m_fields;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyRules.GetMatchingField
+    ----------------------------------------------------------------------------*/
+    GetMatchingField(name: string): TourneyField
+    {
+        for (const field of this.m_fields)
+        {
+            if (field.Name === name)
+                return field;
+        }
+
+        return null;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyRules.SetStart
+    ----------------------------------------------------------------------------*/
+    SetStart(date: DateWithoutTime): TourneyRules
+    {
+        this.m_startDate = date;
+        return this;
     }
 
     /*----------------------------------------------------------------------------

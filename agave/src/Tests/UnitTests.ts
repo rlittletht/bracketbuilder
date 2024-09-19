@@ -18,6 +18,8 @@ import { _bracketManager } from "../Brackets/BracketManager";
 import { GameDataSourcesTests } from "../Brackets/GameDataSources";
 import { TourneyTests } from "../Tourney/TourneyTests";
 import { TimeWithoutDateTests } from "../Support/TimeWithoutDateTests";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { DateWithoutTimeTests } from "../Support/DateWithoutTimeTests";
 
 export class UnitTests
 {
@@ -45,6 +47,7 @@ export class UnitTests
                 });
 
             TimeWithoutDateTests.runAllTests(appContext, outStream);
+            DateWithoutTimeTests.runAllTests(appContext, outStream);
             TourneyTests.runAllTests(appContext, outStream);
             GameDataSourcesTests.runAllTests(appContext, outStream);
             StructureInsertTests.runAllTests(appContext, outStream);

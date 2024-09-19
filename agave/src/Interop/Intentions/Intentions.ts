@@ -44,8 +44,11 @@ export class Intentions
 
         for (let tn of this.m_intentions)
             tn.Execute(context);
-
         _TimerStack.popTimer();
+
+        _TimerStack.pushTimer("context.sync() after executing intentions");
+
         await context.sync("tnsX");
+        _TimerStack.popTimer();
     }
 }

@@ -1,4 +1,3 @@
-import { DateWithoutTime } from "epoq";
 import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
 import { TestRunner } from "../Support/TestRunner";
@@ -12,6 +11,10 @@ import { TourneyFieldSlot } from "./TourneyFieldSlot";
 import { TimeWithoutDate } from "../Support/TimeWithoutDate";
 import { TourneyGameDef } from "./TourneyGameDef";
 import { GameId } from "../BracketEditor/GameId";
+import { TourneySlotManager } from "./TourneySlotManager";
+import { TourneySlots } from "./TourneySlots";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { GameNum } from "../BracketEditor/GameNum";
 
 export class TourneyTests
 {
@@ -81,10 +84,10 @@ export class TourneyTests
                 new TourneyFieldSlot(TimeWithoutDate.CreateForTime(16), rules.Fields[1])
             ];
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
-        const slots = def.BuildSlotListForDate(date);
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
 
     // this has an existing game that causes the rest of the slots to shift from their normal default
@@ -98,12 +101,12 @@ export class TourneyTests
                 .AddField("F2", false, 180)
                 .AddDefaultFieldRestrictions();
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
         const gameSlot: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(11), rules.Fields[0]);
 
         const def = new TourneyDef(BracketDefBuilder.getStaticBracketDefinition("T8Bracket"), rules);
 
-        def.AddGame(TourneyGameDef.Create(new GameId(0), date, gameSlot));
+        def.AddGame(TourneyGameDef.Create(new GameNum(0), date, gameSlot));
 
         // 9/15/2024 is a sunday...
         const expectedSlots =
@@ -115,9 +118,9 @@ export class TourneyTests
             new TourneyFieldSlot(TimeWithoutDate.CreateForTime(17), rules.Fields[0])
         ];
 
-        const slots = def.BuildSlotListForDate(date);
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
 
     // this has an existing game that causes the rest of the slots to shift from their normal default
@@ -131,12 +134,12 @@ export class TourneyTests
                 .AddField("F2", false, 180)
                 .AddDefaultFieldRestrictions();
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
         const gameSlot: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(14), rules.Fields[0]);
 
         const def = new TourneyDef(BracketDefBuilder.getStaticBracketDefinition("T8Bracket"), rules);
 
-        def.AddGame(TourneyGameDef.Create(new GameId(0), date, gameSlot));
+        def.AddGame(TourneyGameDef.Create(new GameNum(0), date, gameSlot));
 
         // 9/15/2024 is a sunday...
         const expectedSlots =
@@ -148,9 +151,9 @@ export class TourneyTests
             new TourneyFieldSlot(TimeWithoutDate.CreateForTime(17), rules.Fields[0])
         ];
 
-        const slots = def.BuildSlotListForDate(date);
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
 
     // this has an existing game that causes the rest of the slots to shift from their normal default
@@ -164,14 +167,14 @@ export class TourneyTests
                 .AddField("F2", false, 180)
                 .AddDefaultFieldRestrictions();
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
         const gameSlot1: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(11, 30), rules.Fields[0]);
         const gameSlot2: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(18, 0), rules.Fields[0]);
 
         const def = new TourneyDef(BracketDefBuilder.getStaticBracketDefinition("T8Bracket"), rules);
 
-        def.AddGame(TourneyGameDef.Create(new GameId(0), date, gameSlot1));
-        def.AddGame(TourneyGameDef.Create(new GameId(1), date, gameSlot2));
+        def.AddGame(TourneyGameDef.Create(new GameNum(0), date, gameSlot1));
+        def.AddGame(TourneyGameDef.Create(new GameNum(1), date, gameSlot2));
 
         // 9/15/2024 is a sunday...
         const expectedSlots =
@@ -182,9 +185,9 @@ export class TourneyTests
             new TourneyFieldSlot(TimeWithoutDate.CreateForTime(16), rules.Fields[1])
         ];
 
-        const slots = def.BuildSlotListForDate(date);
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
 
     // this has an existing game that causes the rest of the slots to shift from their normal default
@@ -198,14 +201,14 @@ export class TourneyTests
                 .AddField("F2", false, 180)
                 .AddDefaultFieldRestrictions();
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
         const gameSlot1: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(10, 30), rules.Fields[0]);
         const gameSlot2: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(17, 0), rules.Fields[0]);
 
         const def = new TourneyDef(BracketDefBuilder.getStaticBracketDefinition("T8Bracket"), rules);
 
-        def.AddGame(TourneyGameDef.Create(new GameId(0), date, gameSlot1));
-        def.AddGame(TourneyGameDef.Create(new GameId(1), date, gameSlot2));
+        def.AddGame(TourneyGameDef.Create(new GameNum(0), date, gameSlot1));
+        def.AddGame(TourneyGameDef.Create(new GameNum(1), date, gameSlot2));
 
         // 9/15/2024 is a sunday...
         const expectedSlots =
@@ -217,9 +220,9 @@ export class TourneyTests
             new TourneyFieldSlot(TimeWithoutDate.CreateForTime(20), rules.Fields[0]) 
         ];
 
-        const slots = def.BuildSlotListForDate(date);
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
 
     // this has an existing game that causes the rest of the slots to shift from their normal default
@@ -233,7 +236,7 @@ export class TourneyTests
                 .AddField("F2", false, 180)
                 .AddDefaultFieldRestrictions();
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
         const gameSlot1: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(10, 30), rules.Fields[0]);
         const gameSlot2: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(17), rules.Fields[0]);
 
@@ -242,9 +245,9 @@ export class TourneyTests
 
         const def = new TourneyDef(BracketDefBuilder.getStaticBracketDefinition("T8Bracket"), rules);
 
-        def.AddGame(TourneyGameDef.Create(new GameId(0), date, gameSlot1));
-        def.AddGame(TourneyGameDef.Create(new GameId(1), date, gameSlot2));
-        def.AddGame(TourneyGameDef.Create(new GameId(3), date, gameSlot3));
+        def.AddGame(TourneyGameDef.Create(new GameNum(0), date, gameSlot1));
+        def.AddGame(TourneyGameDef.Create(new GameNum(1), date, gameSlot2));
+        def.AddGame(TourneyGameDef.Create(new GameNum(3), date, gameSlot3));
 
         // 9/15/2024 is a sunday...
         const expectedSlots =
@@ -255,9 +258,9 @@ export class TourneyTests
             new TourneyFieldSlot(TimeWithoutDate.CreateForTime(20), rules.Fields[0])
         ];
 
-        const slots = def.BuildSlotListForDate(date);
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
 
     // this has an existing game that causes the rest of the slots to shift from their normal default
@@ -271,7 +274,7 @@ export class TourneyTests
                 .AddField("F2", false, 150)
                 .AddDefaultFieldRestrictions();
 
-        const date: DateWithoutTime = new DateWithoutTime("2024-09-15");
+        const date: DateWithoutTime = DateWithoutTime.CreateForDateString("2024-09-15");
         const gameSlot1: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(10, 30), rules.Fields[0]);
         const gameSlot2: TourneyFieldSlot = new TourneyFieldSlot(TimeWithoutDate.CreateForTime(17), rules.Fields[0]);
 
@@ -280,9 +283,9 @@ export class TourneyTests
 
         const def = new TourneyDef(BracketDefBuilder.getStaticBracketDefinition("T8Bracket"), rules);
 
-        def.AddGame(TourneyGameDef.Create(new GameId(0), date, gameSlot1));
-        def.AddGame(TourneyGameDef.Create(new GameId(1), date, gameSlot2));
-        def.AddGame(TourneyGameDef.Create(new GameId(3), date, gameSlot3));
+        def.AddGame(TourneyGameDef.Create(new GameNum(0), date, gameSlot1));
+        def.AddGame(TourneyGameDef.Create(new GameNum(1), date, gameSlot2));
+        def.AddGame(TourneyGameDef.Create(new GameNum(3), date, gameSlot3));
 
         // 9/15/2024 is a sunday...
         const expectedSlots =
@@ -294,10 +297,11 @@ export class TourneyTests
             new TourneyFieldSlot(TimeWithoutDate.CreateForTime(20), rules.Fields[0])
         ];
 
-        const slots = def.BuildSlotListForDate(date);
+        const slots = TourneySlots.CreateForAvailableSlotsOnDate(def, date);
 
-        result.assertIsEqual(expectedSlots, slots);
+        result.assertIsEqual(expectedSlots, slots.Slots);
     }
+
     static runAllTests(appContext: IAppContext, outStream: StreamWriter)
     {
         TestRunner.runAllTests(this, TestResult, appContext, outStream);

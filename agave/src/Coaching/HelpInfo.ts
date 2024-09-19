@@ -7,6 +7,7 @@ export class HelpTopic
     static Editing = "edit";
     static Commands = "commands";
     static Commands_PickupGame = "commands#pickup";
+    static Commands_LuckyOneGame = "faq#luckyOneGame";
     static Commands_RepairGame = "commands#repair";
     static Commands_ConvertBracket = "commands#convertBracket";
     static FAQ = "faq";

@@ -31,7 +31,6 @@
     "@fluentui/react": "^8.34.0",
     "async-mutex": "^0.3.2",
     "core-js": "^3.9.1",
-    "epoq": "^1.0.4",
     "es6-promise": "^4.2.8",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",

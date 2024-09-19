@@ -1,27 +1,31 @@
-import { DateWithoutTime } from "epoq";
 import { TourneyGameDef } from "./TourneyGameDef";
 import { TourneyRules } from "./TourneyRules";
 import { BracketDefinition } from "../Brackets/BracketDefinition";
 import { IBracketDefinitionData } from "../Brackets/IBracketDefinitionData";
 import { GameId } from "../BracketEditor/GameId";
-import { BracketManager } from "../Brackets/BracketManager";
+import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { IBracketGameDefinition } from "../Brackets/IBracketGameDefinition";
 import { TimeWithoutDate } from "../Support/TimeWithoutDate";
 import { TourneyFieldSlot } from "./TourneyFieldSlot";
+import { TourneySlotManager } from "./TourneySlotManager";
+import { TourneyPenalties } from "./TourneyPenalties";
+import { Grid } from "../BracketEditor/Grid";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { GameNum } from "../BracketEditor/GameNum";
 
 export class TourneyDef
 {
     private m_rules: TourneyRules;
     private m_games: Map<number, TourneyGameDef>;
     private m_bracket: BracketDefinition;
-
-    private static s_penaltyMax = 65535;
+    private m_slotManager: TourneySlotManager;
 
     constructor(bracketDefinitionData: IBracketDefinitionData, rules: TourneyRules)
     {
         this.m_bracket = new BracketDefinition(bracketDefinitionData);
         this.m_rules = rules;
         this.m_games = new Map<number, TourneyGameDef>();
+        this.m_slotManager = new TourneySlotManager(this);
     }
 
     get Rules(): TourneyRules
@@ -29,15 +33,25 @@ export class TourneyDef
         return this.m_rules;
     }
 
+    get Games(): Map<number, TourneyGameDef>
+    {
+        return this.m_games;
+    }
+
+    get Bracket(): BracketDefinition
+    {
+        return this.m_bracket;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: TourneyDef.AddGame
     ----------------------------------------------------------------------------*/
     AddGame(game: TourneyGameDef)
     {
-        if (this.m_games.has(game.Id.Value))
-            throw new Error(`tourney already has game {game.Id.Value} scheduled`);
+        if (this.m_games.has(game.GameNum.Value))
+            throw new Error(`tourney already has game {game.GameNum.Value} scheduled`);
 
-        this.m_games.set(game.Id.Value, game);
+        this.m_games.set(game.GameNum.Value, game);
     }
 
     /*----------------------------------------------------------------------------
@@ -58,166 +72,42 @@ export class TourneyDef
 
         otherwise, try the next day...rinse and repeat
     ----------------------------------------------------------------------------*/
-    ScheduleGame(id: GameId): TourneyGameDef
+    ScheduleGame(num: GameNum): TourneyGameDef
     {
         // first, what day can we play this on
-        const predecessors = this.m_bracket.GetGameRequirementsForGame(id);
+        const predecessors = this.m_bracket.GetGameRequirementsForGame(num);
 
-        let firstAvail: DateWithoutTime = this.m_rules.StartDate;
+        let firstAvailDate: DateWithoutTime = this.m_rules.StartDate;
 
-        for (const id of predecessors)
+        for (const num of predecessors)
         {
-            if (!this.m_games.has(id.Value))
+            if (!this.m_games.has(num.Value))
                 return null;
 
-            const preceding = this.m_games.get(id.Value);
+            const preceding = this.m_games.get(num.Value);
 
-            if (firstAvail.getDaysSinceEpoch() <= preceding.GameDate.getDaysSinceEpoch())
-                firstAvail = new DateWithoutTime(preceding.GameDate.getDaysSinceEpoch() + 1);
+            if (firstAvailDate.GetDaysSinceEpoch() <= preceding.GameDate.GetDaysSinceEpoch())
+                firstAvailDate = DateWithoutTime.CreateForEpochDays(preceding.GameDate.GetDaysSinceEpoch() + 1);
         }
 
-        return null;
-        // now we know the first date it can be scheduled on
-    }
+        let firstAvailSlot = this.m_slotManager.GetFirstSlotAvailableOrNullForDate(firstAvailDate);
+        let tries = 0;
 
-    /*----------------------------------------------------------------------------
-        %%Function: TourneyDef.FindOverlappingSlots
-
-        Return all the slots that overlap the given slot.  Uses the slot length
-        from the field
-    ----------------------------------------------------------------------------*/
-    FindOverlappingSlots(slot: TourneyFieldSlot, slots: TourneyFieldSlot[]): TourneyFieldSlot[]
-    {
-        const start: TimeWithoutDate = slot.Start;
-        const end: TimeWithoutDate = slot.End;
-        const overlapping: TourneyFieldSlot[] = [];
-
-        for (const check of slots)
+        while (firstAvailSlot == null)
         {
-            const checkStart: TimeWithoutDate = check.Start;
-            const checkEnd: TimeWithoutDate = check.End;
-
-            // SS >= CS < SE
-            if (checkStart.CompareTo(start) >= 0 && checkStart.CompareTo(end) < 0)
-                overlapping.push(check);
-            // SS > CE <= SE
-            else if (checkEnd.CompareTo(start) > 0 && checkEnd.CompareTo(end) <= 0)
-                overlapping.push(check);
-            // CS <= SS   SE >= CE
-            else if (checkStart.CompareTo(start) <= 0 && checkEnd.CompareTo(end) >= 0)
-                overlapping.push(check)
-        }
-
-        return overlapping;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: TourneyDef.BuildSlotListForDate
-
-        Build an ordered list (by preferred status)
-    ----------------------------------------------------------------------------*/
-    BuildSlotListForDate(date: DateWithoutTime): TourneyFieldSlot[]
-    {
-        const mapFieldSlotsInUse: Map<string, TourneyFieldSlot[]> = new Map<string, TourneyFieldSlot[]>();
-
-        for (const game of this.m_games.values())
-        {
-            if (game.GameDate.getDaysSinceEpoch() != date.getDaysSinceEpoch())
-                continue;
-
-            if (!mapFieldSlotsInUse.has(game.Field.Name))
-                mapFieldSlotsInUse.set(game.Field.Name, []);
-
-            mapFieldSlotsInUse.get(game.Field.Name).push(game.Slot);
-        }
-
-        const allFieldSlots: { pointer: number, slots: TourneyFieldSlot[] }[] = [];
-
-        const mapFieldSlotsAvailable: Map<string, TourneyFieldSlot[]> = new Map<string, TourneyFieldSlot[]>();
-
-        // go through each field
-        for (const field of this.m_rules.Fields)
-        {
-            const slotsInUse: TourneyFieldSlot[] = mapFieldSlotsInUse.has(field.Name) ? mapFieldSlotsInUse.get(field.Name) : [];
-            const slots: TourneyFieldSlot[] = mapFieldSlotsAvailable.has(field.Name) ? mapFieldSlotsInUse.get(field.Name) : [];
-
-            // now, build the ordered list of slots we want to use and check against the
-            // already scheduled slots...
-
-            let firstSlot = this.m_rules.GetFirstSlotForFieldDateAfterTime(field, date, null);
-
-            while (!this.m_rules.DoesProposalViolateRestrictions(field, date, firstSlot.Start))
+            if (tries > 31)
             {
-                let overlapping = this.FindOverlappingSlots(firstSlot, slotsInUse);
-
-                while (overlapping.length != 0)
-                {
-                    if (overlapping.length != 1)
-                        throw new Error("how did we get more than one overlapping slot?!?");
-
-                    // we can't use this slot. find the next slot we can take
-                    firstSlot = this.m_rules.GetFirstSlotForFieldDateAfterTime(field, date, overlapping[0].End);
-                    if (this.m_rules.DoesProposalViolateRestrictions(field, date, firstSlot.Start))
-                    {
-                        // we're completely done with this field
-                        firstSlot = null;
-                        break;
-                    }
-                    overlapping = this.FindOverlappingSlots(firstSlot, slotsInUse);
-                }
-
-                if (firstSlot == null)
-                    break;
-
-                slots.push(firstSlot);
-                firstSlot = this.m_rules.GetFirstSlotForFieldDateAfterTime(field, date, firstSlot.End);
+                // we tried 31 different days and failed. give up
+                return null;
             }
 
-            const sortedSlots = slots.sort(
-                (left, right) =>
-                {
-                    return left.Start.CompareTo(right.Start);
-                });
-
-            allFieldSlots.push({ pointer: 0, slots: sortedSlots });
+            // go to the next date and try again
+            firstAvailDate = DateWithoutTime.CreateForEpochDays(firstAvailDate.GetDaysSinceEpoch() + 1);
+            firstAvailSlot = this.m_slotManager.GetFirstSlotAvailableOrNullForDate(firstAvailDate);
+            tries++;
         }
 
-        const orderedSlots: TourneyFieldSlot[] = [];
-
-        // now walk through all the field slots in parallel and add them in preferred order (in start time order)
-        while (true)
-        {
-            let earliest: TimeWithoutDate = null;
-            let earliestIndex: string = null;
-
-            for (const idx in allFieldSlots)
-            {
-                const fieldSlot = allFieldSlots[idx];
-
-                if (fieldSlot.pointer == fieldSlot.slots.length)
-                    continue;
-
-                if (earliest == null || earliest.CompareTo(fieldSlot.slots[fieldSlot.pointer].Start) > 0)
-                {
-                    earliest = fieldSlot.slots[fieldSlot.pointer].Start;
-                    earliestIndex = idx;
-                }
-            }
-            // if we didn't find an earliest, it means we have no more slots on any field
-            if (earliest == null)
-                break;
-
-            // push the earliest preferred slot and increment that fields pointer since we pushed it
-            orderedSlots.push(allFieldSlots[earliestIndex].slots[allFieldSlots[earliestIndex].pointer]);
-            allFieldSlots[earliestIndex].pointer++;
-        }
-
-        return orderedSlots;
-    }
-
-    GetFirstSlotAvailableForDate(date: DateWithoutTime) //: TourneyFieldSlot
-    {
-        date;
+        return TourneyGameDef.Create(num, firstAvailDate, firstAvailSlot);
     }
 
     /*----------------------------------------------------------------------------
@@ -225,21 +115,27 @@ export class TourneyDef
 
         Calculate the rank penalty for this game for the current tourney
     ----------------------------------------------------------------------------*/
-    CalculateRankPenalty(id: GameId): number
+    CalculateRankPenalty(num: GameNum): { newGame: TourneyGameDef, rank: number }
     {
         let penalty = 0;
-        const gameDef: IBracketGameDefinition = this.m_bracket.GetGameDefinitionData(id);
+        const gameDef: IBracketGameDefinition = this.m_bracket.GetGameDefinitionData(num);
 
         // are all the predecessor's scheduled?
-        const predecessors = this.m_bracket.GetGameRequirementsForGame(id);
+        const predecessors = this.m_bracket.GetGameRequirementsForGame(num);
 
         for (const id of predecessors)
         {
             if (!this.m_games.has(id.Value))
-                return TourneyDef.s_penaltyMax;
+                return { newGame: null, rank: TourneyPenalties.s_penaltyMax };
         }
 
-        return penalty;
+        const newGame = this.ScheduleGame(num);
+        if (newGame == null)
+            return { newGame: null, rank: TourneyPenalties.s_penaltyMax };
+
+        penalty += TourneyPenalties.CalculateEliminationPenalty(this, gameDef, newGame);
+
+        return { newGame: newGame, rank: penalty };
     }
 
     /*----------------------------------------------------------------------------
@@ -251,7 +147,75 @@ export class TourneyDef
         Basically, for every unscheduled game, rank its suitability to schedule
         and take the one with the lowest rank (think of the rank as a penalty)
     ----------------------------------------------------------------------------*/
-    GetNextGameToSchedule() //: GameId
+    GetNextGameToSchedule(): TourneyGameDef
     {
+        let bestRank: { newGame: TourneyGameDef, rank: number } = { newGame: null, rank: TourneyPenalties.s_penaltyMax };
+
+        for (let gameNum = 0; gameNum < this.m_bracket.BracketSize; gameNum++)
+        {
+            if (this.m_games.has(gameNum))
+                continue;
+
+            const num = new GameNum(gameNum);
+            const thisRank = this.CalculateRankPenalty(num);
+
+            if (thisRank.rank < bestRank.rank)
+                bestRank = thisRank;
+        }
+
+        return bestRank.newGame;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyDef.ScheduleAllRemainingGames
+    ----------------------------------------------------------------------------*/
+    ScheduleAllRemainingGames()
+    {
+        let nextGame = this.GetNextGameToSchedule();
+
+        while (nextGame != null)
+            this.AddGame(nextGame);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyDef.CreateFromGrid
+    ----------------------------------------------------------------------------*/
+    static CreateFromGrid(grid: Grid, bracketName: string): TourneyDef
+    {
+        const rules = TourneyRules.Create();
+
+        const startDate = grid.getDateFromGridColumn(grid.FirstGridPattern.FirstColumn);
+        
+        rules.SetStart(startDate);
+
+        for (const fieldName of grid.getAllAvailableFields())
+        {
+            rules.AddField(fieldName, false, 180);
+        }
+
+        rules.AddDefaultFieldRestrictions();
+
+        const tourney = new TourneyDef(_bracketManager.GetBracketDefinitionData(bracketName), rules);
+
+        grid.enumerateMatching(
+            (item) =>
+            {
+                const num = item.GameNumber;
+                const date = grid.getDateFromGridItem(item);
+                const field = tourney.m_rules.GetMatchingField(item.Field);
+                const slot = new TourneyFieldSlot(TimeWithoutDate.CreateForMinutesSinceMidnight(item.StartTime), field);
+
+                const tourneyGame = TourneyGameDef.Create(num, date, slot);
+
+                tourney.AddGame(tourneyGame);
+
+                return true;
+            },
+            (item) =>
+            {
+                return !item.isLineRange;
+            });
+
+        return tourney;
     }
 }

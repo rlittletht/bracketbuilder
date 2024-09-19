@@ -26,15 +26,22 @@ export class ApplyGridChange
         %%Function: StructureEditor.diffAndApplyChanges
 
         Take two grids, diff them, and apply the changes
+
+        if forceGameData is true, then we want to use the time/field even if that
+        information is already set in the game data table -- we will override that
+        with the new data
     ----------------------------------------------------------------------------*/
-    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string, selectRange?: RangeInfo): Promise<UndoGameDataItem[]>
+    static async diffAndApplyChanges(appContext: IAppContext, context: JsCtx, grid: Grid, gridNew: Grid, bracketName: string, selectRange?: RangeInfo, forceGameData?: boolean): Promise<UndoGameDataItem[]>
     {
+        if (forceGameData === undefined)
+            forceGameData = false;
+
         // now, diff the grids
         const changes: GridChange[] = grid.diff(gridNew, bracketName);
 
         grid.logChanges(changes);
 
-        return await this.applyChanges(appContext, context, gridNew, changes, bracketName, selectRange);
+        return await this.applyChanges(appContext, context, gridNew, changes, bracketName, selectRange, forceGameData);
     }
 
     /*----------------------------------------------------------------------------
@@ -107,8 +114,11 @@ export class ApplyGridChange
         the formulas and text. The names and structure are assumed to already
         be there.
     ----------------------------------------------------------------------------*/
-    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string, removedGameValues?: RemovedGameValues): Promise<{ undoItem: UndoGameDataItem, tns: IIntention[] }>
+    static async executeAddChange(appContext: IAppContext, context: JsCtx, gridRef: Grid, change: GridChange, bracketName: string, removedGameValues?: RemovedGameValues, forceGameData?: boolean): Promise<{ undoItem: UndoGameDataItem, tns: IIntention[] }>
     {
+        if (forceGameData === undefined)
+            forceGameData = false;
+
         const tns: IIntention[] = [];
         const bookmark: string = "executeAddChange";
 
@@ -163,7 +173,7 @@ export class ApplyGridChange
             AppContext.checkpoint("appc.17");
 
             const { undoItem, tns: tnsUpdate }  =
-                GameDataSources.tnsUpdateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), false);
+                GameDataSources.tnsUpdateGameInfoIfNotSet(context, game.GameNum, game.Field, OADate.OATimeFromMinutes(game.StartTime), forceGameData);
 
             undoGameDataItem = undoItem;
             tns.push(...tnsUpdate);
@@ -186,8 +196,11 @@ export class ApplyGridChange
 
         apply the set of GridChanges calculated from a diff of two grids
     ----------------------------------------------------------------------------*/
-    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string, selectRange?: RangeInfo): Promise<UndoGameDataItem[]>
+    static async applyChanges(appContext: IAppContext, context: JsCtx, gridRef: Grid, changes: GridChange[], bracketName: string, selectRange?: RangeInfo, forceGameData?: boolean): Promise<UndoGameDataItem[]>
     {
+        if (forceGameData === undefined)
+            forceGameData = false;
+
         let undoGameDataItems: UndoGameDataItem[] = [];
 
         AppContext.checkpoint("appc.1");
@@ -239,8 +252,12 @@ export class ApplyGridChange
             if (item.ChangeOp == GridChangeOperation.Remove || item.ChangeOp == GridChangeOperation.RemoveLite)
                 continue;
 
+            _TimerStack.pushTimer("ApplyGridChange:executeAddChange");
+
             const { undoItem: undoGameDataItem, tns } =
-                await this.executeAddChange(appContext, context, gridRef, item, bracketName, removedGameValues);
+                await this.executeAddChange(appContext, context, gridRef, item, bracketName, removedGameValues, forceGameData);
+
+            _TimerStack.popTimer();
 
             addGameTns.AddTns(tns);
             if (UndoManager.shouldPushGameDataItems(undoGameDataItem))

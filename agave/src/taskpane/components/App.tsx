@@ -422,6 +422,32 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
         listItems.push(
             {
+                icon: "Play",
+                primaryText: "Lucky One Game",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.luckyOneGame(appContext);
+                    return true;
+                }
+            });
+
+        listItems.push(
+            {
+                icon: "FastForward",
+                primaryText: "Lucky Whole Schedule",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.luckyWholeSchedule(appContext);
+                    return true;
+                }
+            });
+
+        listItems.push(
+            {
                 icon: "Upload",
                 primaryText: "Pick up game for move",
                 cursor: "cursorPointer",

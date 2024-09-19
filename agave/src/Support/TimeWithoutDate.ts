@@ -24,7 +24,7 @@ export class TimeWithoutDate
     /*----------------------------------------------------------------------------
         %%Function: TimeWithoutDate.CreateForDate
     ----------------------------------------------------------------------------*/
-    static CreateForDate(date: Date)
+    static CreateForDate(date: Date): TimeWithoutDate
     {
         // we're going to assume we have the right time regardless of timezone...now
         // create a utc date with that same hour/minute/second...
@@ -36,11 +36,10 @@ export class TimeWithoutDate
             + date.getMilliseconds());
     }
 
-
     /*----------------------------------------------------------------------------
         %%Function: TimeWithoutDate.CreateForTime
     ----------------------------------------------------------------------------*/
-    static CreateForTime(hours: number, minutes?: number, seconds?: number, milliseconds?: number)
+    static CreateForTime(hours: number, minutes?: number, seconds?: number, milliseconds?: number): TimeWithoutDate
     {
         hours *= this.s_msecPerHour;
         minutes = (minutes ?? 0) * this.s_msecPerMinute;
@@ -50,6 +49,15 @@ export class TimeWithoutDate
         return new TimeWithoutDate(hours + minutes + seconds + milliseconds);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: TimeWithoutDate.CreateForMinutes
+    ----------------------------------------------------------------------------*/
+    static CreateForMinutesSinceMidnight(minutes: number): TimeWithoutDate
+    {
+        minutes *= this.s_msecPerMinute;
+
+        return new TimeWithoutDate(minutes);
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: TimeWithoutDate.CreateForTimeString
@@ -85,5 +93,13 @@ export class TimeWithoutDate
     Equals(other: TimeWithoutDate): boolean
     {
         return this.CompareTo(other) == 0;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TimeWithoutDate.GetMinutesSinceMidnight
+    ----------------------------------------------------------------------------*/
+    GetMinutesSinceMidnight(): number
+    {
+        return this.m_utcTimeNoDate.getUTCHours() * 60 + this.m_utcTimeNoDate.getUTCMinutes();
     }
 }

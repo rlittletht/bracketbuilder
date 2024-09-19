@@ -1,7 +1,7 @@
-import { DateWithoutTime } from "epoq";
 import { TourneyDaysOfWeek } from "./TourneyDaysOfWeek";
 import { TourneyField } from "./TourneyField";
 import { TimeWithoutDate } from "../Support/TimeWithoutDate";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
 
 /*----------------------------------------------------------------------------
     %%Class: TourneyRestriction.TourneyRestriction
@@ -76,7 +76,7 @@ export class TourneyRestriction
         // if no fields list, check date
         if (this.m_date != null)
         {
-            if (this.m_date.getDate() != date.utcMidnightDateObj.getTime())
+            if (!this.m_date.Equals(date))
                 // this restriction doesn't refer to this date
                 return false;
         }
@@ -84,7 +84,7 @@ export class TourneyRestriction
         // see if the days-of-week apply...
         if (this.m_daysOfWeek != null)
         {
-            if (!this.m_daysOfWeek.Has(date.getDay()))
+            if (!this.m_daysOfWeek.Has(date.GetDay()))
                 // doesn't apply to us
                 return false;
         }
@@ -100,7 +100,7 @@ export class TourneyRestriction
     ----------------------------------------------------------------------------*/
     IsAllowedDateTime(field: TourneyField, dateTime: Date): boolean
     {
-        return this.IsAllowed(field, new DateWithoutTime(dateTime), TimeWithoutDate.CreateForDate(dateTime));
+        return this.IsAllowed(field, DateWithoutTime.CreateForDateType(dateTime), TimeWithoutDate.CreateForDate(dateTime));
     }
 
     /*----------------------------------------------------------------------------

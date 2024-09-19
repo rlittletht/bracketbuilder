@@ -3,6 +3,7 @@ import { StreamWriter } from "../Support/StreamWriter";
 import { TestResult } from "../Support/TestResult";
 import { TestRunner } from "../Support/TestRunner";
 import { AmPmDecoration, Parser, TrimType } from "./Parser";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
 
 export class OADate
 {
@@ -25,6 +26,11 @@ export class OADate
         date = new Date(date.valueOf() + (1000.0 * 60 * date.getTimezoneOffset()));
 
         return date;
+    }
+
+    static DateWithoutTimeFromOADate(oaDate: number): DateWithoutTime
+    {
+        return DateWithoutTime.CreateForDateType(this.FromOADate(oaDate));
     }
 
     static OATimeFromMinutes(minutes: number): number
@@ -93,16 +99,21 @@ export class OADateTests
     }
 
 
-    static TestOADateTest(result: TestResult, oaDate: number, expected: Date)
+    static TestOADateTest(result: TestResult, oaDate: number, expected: Date, expectedDateWithoutTime: DateWithoutTime)
     {
-        let actual: Date = OADate.FromOADate(oaDate);
+        const expectedDateWithoutTimeCalc = DateWithoutTime.CreateForDateType(expected);
+
+        const actual: Date = OADate.FromOADate(oaDate);
+        const actualDateWithoutTime: DateWithoutTime = OADate.DateWithoutTimeFromOADate(oaDate);
 
         result.assertIsEqual(expected.valueOf(), actual.valueOf(), `${oaDate}`);
+        result.assertIsEqual(true, expectedDateWithoutTime.Equals(actualDateWithoutTime), `${oaDate}`);
+        result.assertIsEqual(true, expectedDateWithoutTimeCalc.Equals(actualDateWithoutTime), `${oaDate}`);
     }
 
     static test_FromOADateTests(result: TestResult)
     {
-        this.TestOADateTest(result, 26400, new Date(1972, 3, 11, 0, 0, 0));
-        this.TestOADateTest(result, 25569, new Date(1970, 0, 1, 0, 0, 0));
+        this.TestOADateTest(result, 26400, new Date(1972, 3, 11, 0, 0, 0), DateWithoutTime.CreateForDate(1972, 3, 11));
+        this.TestOADateTest(result, 25569, new Date(1970, 0, 1, 0, 0, 0), DateWithoutTime.CreateForDate(1970, 0, 1));
     }
 }

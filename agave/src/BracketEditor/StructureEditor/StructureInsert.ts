@@ -16,6 +16,7 @@ import { StructureRemove, RemovedGameValues } from "./StructureRemove";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
 import { TnCreateGlobalName } from "../../Interop/Intentions/TnCreateGlobalName";
+import { DateWithoutTime } from "../../Support/DateWithoutTime";
 
 export class StructureInsert
 {
@@ -285,7 +286,7 @@ export class StructureInsert
     ----------------------------------------------------------------------------*/
     static getNextTimeAndFieldForDate(
         grid: Grid,
-        date: Date,
+        date: DateWithoutTime,
         maxTime: number,
         fields: string[],
         count: number,
@@ -360,7 +361,7 @@ export class StructureInsert
         This is the non async portion of insert game at selection. Suitable for
         testing
     ----------------------------------------------------------------------------*/
-    static buildNewGridForGameInsertAtSelection(requested: RangeInfo, grid: Grid, game: IBracketGame):
+    static buildNewGridForGameInsertAtSelection(requested: RangeInfo, grid: Grid, game: IBracketGame, timeToUse?: number, fieldToUse?: string):
         { gridNew: Grid, failReason?: string[], coachState?: Coachstate, topic?: HelpTopic, selectRange: RangeInfo }
     {
         if (requested.FirstColumn < grid.FirstGridPattern.FirstColumn)
@@ -417,23 +418,31 @@ export class StructureInsert
                 return { gridNew: null, failReason: depFailReason, topic: depTopic, coachState: Coachstate.AfterInsertGameFailed, selectRange: null };
         }
 
-        // before we insert the game, let's figure out field and start time info. only do this if we have loaded
-        // the date information for the grid...
-        if (grid.AreDatesLoaded)
+        if (timeToUse !== undefined && fieldToUse !== undefined)
         {
-            const date: Date = grid.getDateFromGridColumn(requested.FirstColumn);
-            let maxTime: number = 0;
-            let count: number = 0;
-            let fields: string[] = [];
-
-            if (date != null)
+            game.SetStartTime(timeToUse);
+            game.SetField(fieldToUse);
+        }
+        else
+        {
+            // before we insert the game, let's figure out field and start time info. only do this if we have loaded
+            // the date information for the grid...
+            if (grid.AreDatesLoaded)
             {
-                [maxTime, count, fields] = grid.getLatestTimeForDate(date);
-                let nextTime: number;
-                let field: string;
-                [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
-                game.SetStartTime(nextTime);
-                game.SetField(field);
+                const date: DateWithoutTime = grid.getDateFromGridColumn(requested.FirstColumn);
+                let maxTime: number = 0;
+                let count: number = 0;
+                let fields: string[] = [];
+
+                if (date != null)
+                {
+                    [maxTime, count, fields] = grid.getLatestTimeForDate(date);
+                    let nextTime: number;
+                    let field: string;
+                    [nextTime, field] = this.getNextTimeAndFieldForDate(grid, date, maxTime, fields, count, grid.FieldsToUse);
+                    game.SetStartTime(nextTime);
+                    game.SetField(field);
+                }
             }
         }
 
@@ -456,9 +465,10 @@ export class StructureInsert
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame): Promise<boolean>
+    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame, dateToUse?: DateWithoutTime, timeToUse?: number, fieldToUse?: string): Promise<boolean>
     {
         const bookmark: string = "insertGameAtSelection";
+        const forceGameData: boolean = dateToUse !== undefined && timeToUse !== undefined && fieldToUse !== undefined;
 
         game.Unbind();
 
@@ -485,6 +495,15 @@ export class StructureInsert
         // now let's figure out where we want to insert the game
         let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
 
+        if (forceGameData)
+        {
+            // get the column for the requested date
+            const col = grid.getGridColumnFromDate(dateToUse);
+
+            requested.setColumn(col);
+            requested.setRow(0);
+        }
+
         if ((requested.FirstColumn < grid.FirstGridPattern.FirstColumn
             || (requested.FirstColumn > grid.FirstGridPattern.FirstColumn && requested.FirstColumn < grid.FirstGridPattern.FirstColumn + 3))
             && grid.IsEmpty)
@@ -495,7 +514,7 @@ export class StructureInsert
             requested = await Ranges.createRangeInfoForSelection(context);
         }
 
-        const { gridNew, failReason, coachState, topic, selectRange } = this.buildNewGridForGameInsertAtSelection(requested, grid, game);
+        const { gridNew, failReason, coachState, topic, selectRange } = this.buildNewGridForGameInsertAtSelection(requested, grid, game, timeToUse, fieldToUse);
         _TimerStack.popTimer();
        
         // caller 
@@ -514,7 +533,7 @@ export class StructureInsert
         _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
 
         let undoGameDataItems: UndoGameDataItem[] =
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName, selectRange);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName, selectRange, forceGameData);
 
         _TimerStack.popTimer();
 

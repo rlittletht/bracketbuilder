@@ -1,18 +1,19 @@
-import { DateWithoutTime } from "epoq";
 import { TimeWithoutDate } from "../Support/TimeWithoutDate";
 import { TourneyField } from "./TourneyField";
 import { GameId } from "../BracketEditor/GameId";
 import { TourneyFieldSlot } from "./TourneyFieldSlot";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { GameNum } from "../BracketEditor/GameNum";
 
 export class TourneyGameDef
 {
-    private m_gameId: GameId;
+    private m_gameNum: GameNum;
     private m_date: DateWithoutTime;
     private m_slot: TourneyFieldSlot;
 
-    get Id(): GameId
+    get GameNum(): GameNum
     {
-        return this.m_gameId;
+        return this.m_gameNum;
     }
 
     get GameDate(): DateWithoutTime
@@ -33,11 +34,11 @@ export class TourneyGameDef
     /*----------------------------------------------------------------------------
         %%Function: TourneyGameDef.Create
     ----------------------------------------------------------------------------*/
-    static Create(gameId: GameId, date: DateWithoutTime, slot: TourneyFieldSlot): TourneyGameDef
+    static Create(gameNum: GameNum, date: DateWithoutTime, slot: TourneyFieldSlot): TourneyGameDef
     {
         const game = new TourneyGameDef();
 
-        game.m_gameId = gameId;
+        game.m_gameNum = gameNum;
         game.m_date = date;
         game.m_slot = slot;
 
