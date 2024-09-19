@@ -17,7 +17,7 @@ import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
-import { _undoManager } from "../Undo";
+import { _undoManager, UndoGameDataItem } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureInsert } from "./StructureInsert";
 import { StructureRemove } from "./StructureRemove";
@@ -321,7 +321,83 @@ export class StructureEditor
 
     static async luckyWholeSchedule(appContext: IAppContext)
     {
-        appContext;
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+            const bracketName = appContext.SelectedBracket;
+
+            const gridStart: Grid = await this.gridBuildFromBracket(context, bracketName);
+            let finalSelectRange: RangeInfo;
+
+            let grid: Grid = gridStart;
+
+            let succeeded = true;
+
+            const tourneyDef = TourneyDef.CreateFromGrid(grid, bracketName);
+
+            const bookmark: string = "luckyWholeSchedule";
+            context.pushTrackingBookmark(bookmark);
+
+            while (true)
+            {
+                const newGame: TourneyGameDef = tourneyDef.GetNextGameToSchedule();
+                if (newGame == null)
+                    break;
+
+                const date = newGame.GameDate;
+                const time = newGame.Slot.Start.GetMinutesSinceMidnight();
+                const field = newGame.Slot.Field.Name;
+
+                const bracketGame: IBracketGame = appContext.getGames()[newGame.GameNum.Value];
+
+                if (await StructureInsert.ensureInsertingGameIsNotPresent(appContext, context, bracketGame))
+                {
+                    // we had to remove the game?!
+                    context.releaseCacheObjectsUntil(bookmark);
+                    context.pushTrackingBookmark(bookmark);
+                }
+
+                const insertRange = new RangeInfo(0, 1, grid.getGridColumnFromDate(date), 1);
+
+                const { gridNew, failReason, coachState, topic, selectRange } =
+                    StructureInsert.buildNewGridForGameInsertAtSelection(insertRange, grid, bracketGame, time, field);
+
+                grid = gridNew;
+                finalSelectRange = selectRange;
+
+                if (failReason)
+                {
+                    appContext.Messages.error(
+                        failReason,
+                        { topic: topic });
+
+                    if (coachState)
+                        appContext.Teaching.pushTempCoachstate(coachState);
+
+                    succeeded = false;
+                    break;
+                }
+
+                // lastly, add this game to the tourney
+                tourneyDef.AddGame(newGame);
+            }
+            if (succeeded)
+            {
+                _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
+
+                let undoGameDataItems: UndoGameDataItem[] =
+                    await ApplyGridChange.diffAndApplyChanges(appContext, context, gridStart, grid, bracketName, finalSelectRange, true);
+
+                _TimerStack.popTimer();
+
+                _undoManager.setUndoGrid(grid, undoGameDataItems);
+            }
+        }
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
     static async captureSelectionForMove(appContext: IAppContext)

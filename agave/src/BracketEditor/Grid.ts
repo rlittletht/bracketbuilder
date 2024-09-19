@@ -232,7 +232,7 @@ export class Grid
 
         while (remaining-- > 0)
         {
-            fields.push(StructureEditor.getNextFieldName(inUse, this.FieldsToUse));
+            fields.push(StructureEditor.getNextFieldName(fields, this.FieldsToUse));
         }
 
         return fields;
@@ -681,6 +681,9 @@ export class Grid
         }
 
         grid.m_firstGridPattern = this.m_firstGridPattern;
+        grid.m_datesForGrid = [...this.m_datesForGrid];
+        grid.m_fieldsToUse = this.m_fieldsToUse;
+
         return grid;
     }
 

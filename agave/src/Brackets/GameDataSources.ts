@@ -287,11 +287,26 @@ export class GameDataSources
             }
             else
             {
-                newValues.push([values[i][0], values[i][1], values[i][2], values[i][3]])
+                newValues.push(null);
             }
         }
 
-        return { undoItem: undoGameDataItem, tns: [TnSetValues.Create(rangeCache.rangeInfo, newValues, rangeCache.sheetName)] };
+        // now create tns for just the range we really want to set
+
+        const tns: IIntention[] = [];
+
+        for (let row = rangeCache.rangeInfo.FirstRow; row <= rangeCache.rangeInfo.LastRow; row++)
+        {
+            const iValue = row - rangeCache.rangeInfo.FirstRow;
+
+            if (newValues[iValue] !== null)
+            {
+                const valueRange = rangeCache.rangeInfo.offset(iValue, 1, 0, rangeCache.rangeInfo.ColumnCount);
+                tns.push(TnSetValues.Create(valueRange, [newValues[iValue]], rangeCache.sheetName));
+            }
+        }
+
+        return { undoItem: undoGameDataItem, tns: tns };
     }
 
     /*----------------------------------------------------------------------------

@@ -38,4 +38,11 @@ export class TourneySlotManager
         return slots.GetFirstOrNull();
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: TourneySlotManager.Invalidate
+    ----------------------------------------------------------------------------*/
+    Invalidate()
+    {
+        this.m_mapSlotsAvailable.clear();
+    }
 }

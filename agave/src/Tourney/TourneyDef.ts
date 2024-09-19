@@ -51,6 +51,7 @@ export class TourneyDef
         if (this.m_games.has(game.GameNum.Value))
             throw new Error(`tourney already has game {game.GameNum.Value} scheduled`);
 
+        this.m_slotManager.Invalidate();
         this.m_games.set(game.GameNum.Value, game);
     }
 

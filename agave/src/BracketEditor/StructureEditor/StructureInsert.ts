@@ -463,16 +463,15 @@ export class StructureInsert
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: StructureEditor.insertGameAtSelection
+        %%Function: StructureInsert.ensureInsertingGameIsNotPresent
+
+        when inserting a game, ensure that the game is not already in the bracket
+        return true if we had to remove the game (which means we have to rebuild
+        our caches)
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame, dateToUse?: DateWithoutTime, timeToUse?: number, fieldToUse?: string): Promise<boolean>
+    static async ensureInsertingGameIsNotPresent(appContext, context, game: IBracketGame): Promise<boolean>
     {
-        const bookmark: string = "insertGameAtSelection";
-        const forceGameData: boolean = dateToUse !== undefined && timeToUse !== undefined && fieldToUse !== undefined;
-
         game.Unbind();
-
-        context.pushTrackingBookmark(bookmark);
 
         // first, see if this game is already on the bracket, and if so, delete it
         await game.Bind(context, appContext);
@@ -481,6 +480,49 @@ export class StructureInsert
         {
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
             // need to release any of our cached items since we just edited the book
+            return true;
+        }
+
+        return false;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureInsert.getAdjustedRequestRangeFromSelection
+
+        get the current selection and possibly adjust it if we are going to
+        automatically jump to the right position
+    ----------------------------------------------------------------------------*/
+    static async getAdjustedRequestRangeFromSelection(appContext: IAppContext, context: JsCtx, grid: Grid): Promise<RangeInfo>
+    {
+        appContext;
+
+        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+
+        if ((requested.FirstColumn < grid.FirstGridPattern.FirstColumn
+                || (requested.FirstColumn > grid.FirstGridPattern.FirstColumn && requested.FirstColumn < grid.FirstGridPattern.FirstColumn + 3))
+            && grid.IsEmpty)
+        {
+            // move the selection to the first column
+            const range = Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), grid.FirstGridPattern.offset(0, 1, 0, 1));
+            range.select();
+            requested = await Ranges.createRangeInfoForSelection(context);
+        }
+
+        return requested;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: StructureEditor.insertGameAtSelection
+    ----------------------------------------------------------------------------*/
+    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame, dateToUse?: DateWithoutTime, timeToUse?: number, fieldToUse?: string): Promise<boolean>
+    {
+        const bookmark: string = "insertGameAtSelection";
+        const forceGameData: boolean = dateToUse !== undefined && timeToUse !== undefined && fieldToUse !== undefined;
+
+        context.pushTrackingBookmark(bookmark);
+
+        if (await this.ensureInsertingGameIsNotPresent(appContext, context, game))
+        {
             context.releaseCacheObjectsUntil(bookmark);
             context.pushTrackingBookmark(bookmark);
         }
@@ -493,25 +535,18 @@ export class StructureInsert
         _TimerStack.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
 
         // now let's figure out where we want to insert the game
-        let requested: RangeInfo = await Ranges.createRangeInfoForSelection(context);
+        let requested: RangeInfo;
 
         if (forceGameData)
         {
             // get the column for the requested date
             const col = grid.getGridColumnFromDate(dateToUse);
 
-            requested.setColumn(col);
-            requested.setRow(0);
+            requested = new RangeInfo(0, 1, col, 1);
         }
-
-        if ((requested.FirstColumn < grid.FirstGridPattern.FirstColumn
-            || (requested.FirstColumn > grid.FirstGridPattern.FirstColumn && requested.FirstColumn < grid.FirstGridPattern.FirstColumn + 3))
-            && grid.IsEmpty)
+        else
         {
-            // move the selection to the first column
-            const range = Ranges.rangeFromRangeInfo(context.Ctx.workbook.worksheets.getActiveWorksheet(), grid.FirstGridPattern.offset(0, 1, 0, 1));
-            range.select();
-            requested = await Ranges.createRangeInfoForSelection(context);
+            requested = await this.getAdjustedRequestRangeFromSelection(appContext, context, grid);
         }
 
         const { gridNew, failReason, coachState, topic, selectRange } = this.buildNewGridForGameInsertAtSelection(requested, grid, game, timeToUse, fieldToUse);
@@ -536,7 +571,6 @@ export class StructureInsert
             await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, game.BracketName, selectRange, forceGameData);
 
         _TimerStack.popTimer();
-
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);
         return true;
