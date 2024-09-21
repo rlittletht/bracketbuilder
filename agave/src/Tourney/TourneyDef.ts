@@ -73,19 +73,26 @@ export class TourneyDef implements Iterable<TourneyGameDef>
                 const day = game.GameDate.GetDaysSinceEpoch();
 
                 if (!daysMap.has(day))
-                    daysMap.set(day, day << 29);
+                    daysMap.set(day, 0);
 
                 daysMap.set(day, daysMap.get(day) | 1 << game.GameNum.Value);
             }
 
-            const hashes: number[] = [];
+            const hashes: string[] = [];
 
-            for (const hashEntry of daysMap.values())
+            const daysSorted: number[] = [];
+
+            for (const day of daysMap.keys())
+                daysSorted.push(day);
+
+            for (const day of daysSorted.sort((left, right) => { return left - right; }))
             {
-                hashes.push(hashEntry);
+                const value = daysMap.get(day);
+
+                hashes.push(`${day}:${value}`);
             }
 
-            this.m_hashCache = hashes.sort((left, right) => { return left - right; }).join("-");
+            this.m_hashCache = hashes.join("-");
         }
 
         return this.m_hashCache;

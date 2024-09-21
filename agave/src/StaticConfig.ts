@@ -54,7 +54,7 @@ export const s_staticConfig: StaticConfig =
     championSize: 12,
     advanceSize: 8,
     logMoveKeySetting: false && isLocalHost,
-    perfTimers: true,
+    perfTimers: isLocalHost,
     logTrackingCache: isLocalHost && false,
     logMoveTree: true && isLocalHost,
     appLogging: true && isLocalHost,

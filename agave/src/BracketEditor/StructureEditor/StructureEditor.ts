@@ -394,7 +394,7 @@ export class StructureEditor
 
                 _TimerStack.popTimer();
 
-                _undoManager.setUndoGrid(grid, undoGameDataItems);
+                _undoManager.setUndoGrid(gridStart, undoGameDataItems);
             }
         }
 

@@ -189,8 +189,8 @@ export const s_brackets: IBracketDefinitionData[] =
             { winner: "T18", loser: "T17", topSource: "W11", bottomSource: "W12" },
             { winner: "B17", loser: "", topSource: "W14", bottomSource: "W13" },
             { winner: "B18", loser: "", topSource: "L15", bottomSource: "W16" },
-            { winner: "T19", loser: "", topSource: "W15", bottomSource: "W17" },
-            { winner: "T20", loser: "B19", topSource: "W18", bottomSource: "L19" },
+            { winner: "T19", loser: "B19", topSource: "W15", bottomSource: "W17" },
+            { winner: "T20", loser: "", topSource: "W18", bottomSource: "L18" },
             { winner: "", loser: "", topSource: "W19", bottomSource: "" }
         ]
     },
