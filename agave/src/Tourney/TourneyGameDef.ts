@@ -49,4 +49,12 @@ export class TourneyGameDef
 
         return game;
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyGameDef.Clone
+    ----------------------------------------------------------------------------*/
+    Clone(): TourneyGameDef
+    {
+        return TourneyGameDef.Create(this.GameNum, DateWithoutTime.CreateForDateWithoutTime(this.GameDate), this.m_slot.Clone());
+    }
 }

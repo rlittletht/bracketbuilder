@@ -20,6 +20,8 @@ export class TourneyDef implements Iterable<TourneyGameDef>
     private m_games: Map<number, TourneyGameDef>;
     private m_bracket: BracketDefinition;
     private m_slotManager: TourneySlotManager;
+    private m_hashCache: string = null;
+    private m_rankPenaltyCache: number | null = null;
 
     constructor(bracketDefinitionData: IBracketDefinitionData, rules: TourneyRules)
     {
@@ -44,6 +46,66 @@ export class TourneyDef implements Iterable<TourneyGameDef>
         return this.m_bracket;
     }
 
+    get FirstGameDate(): DateWithoutTime
+    {
+        let earliest: DateWithoutTime = this.m_rules.StartDate;
+
+        for (const game of this.m_games.values())
+        {
+            if (earliest.CompareTo(game.GameDate) > 0)
+                earliest = game.GameDate;
+        }
+
+        return earliest;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyDef.GetHash
+    ----------------------------------------------------------------------------*/
+    GetHash(): string
+    {
+        if (this.m_hashCache == null)
+        {
+            const daysMap: Map<number, number> = new Map<number, number>();
+
+            for (const game of this.m_games.values())
+            {
+                const day = game.GameDate.GetDaysSinceEpoch();
+
+                if (!daysMap.has(day))
+                    daysMap.set(day, day << 29);
+
+                daysMap.set(day, daysMap.get(day) | 1 << game.GameNum.Value);
+            }
+
+            const hashes: number[] = [];
+
+            for (const hashEntry of daysMap.values())
+            {
+                hashes.push(hashEntry);
+            }
+
+            this.m_hashCache = hashes.sort((left, right) => { return left - right; }).join("-");
+        }
+
+        return this.m_hashCache;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyDef.Clone
+    ----------------------------------------------------------------------------*/
+    Clone(): TourneyDef
+    {
+        const clone = new TourneyDef(this.m_bracket.BracketDefinitionData, this.Rules);
+
+        for (const game of this.m_games.values())
+        {
+            clone.AddGame(game.Clone());
+        }
+
+        return clone;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: TourneyDef.AddGame
     ----------------------------------------------------------------------------*/
@@ -54,6 +116,7 @@ export class TourneyDef implements Iterable<TourneyGameDef>
 
         this.m_slotManager.Invalidate();
         this.m_games.set(game.GameNum.Value, game);
+        this.m_hashCache = null;
     }
 
     /*----------------------------------------------------------------------------
@@ -115,9 +178,24 @@ export class TourneyDef implements Iterable<TourneyGameDef>
     /*----------------------------------------------------------------------------
         %%Function: TourneyDef.CalculateRankPenalty
 
+        Calculate this tournaments rank penalty
+    ----------------------------------------------------------------------------*/
+    CalculateRankPenalty(): number
+    {
+        if (this.m_rankPenaltyCache == null)
+        {
+            this.m_rankPenaltyCache = TourneyPenalties.CalculateTourneyPenalty(this);
+        }
+
+        return this.m_rankPenaltyCache;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyDef.CalculateGameRankPenalty
+
         Calculate the rank penalty for this game for the current tourney
     ----------------------------------------------------------------------------*/
-    CalculateRankPenalty(num: GameNum): { newGame: TourneyGameDef, rank: number }
+    CalculateGameRankPenalty(num: GameNum): { newGame: TourneyGameDef, rank: number }
     {
         let penalty = 0;
         const gameDef: IBracketGameDefinition = this.m_bracket.GetGameDefinitionData(num);
@@ -137,7 +215,41 @@ export class TourneyDef implements Iterable<TourneyGameDef>
 
         penalty += TourneyPenalties.CalculateEliminationPenalty(this, gameDef, newGame);
 
+        penalty += TourneyPenalties.CalculateDatePenalty(this, gameDef, newGame);
+
         return { newGame: newGame, rank: penalty };
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyDef.GetNextGameOptionsToSchedule
+    ----------------------------------------------------------------------------*/
+    GetNextGameOptionsToSchedule(): TourneyGameDef[]
+    {
+        const options: TourneyGameDef[] = [];
+
+        let bestRank: { newGame: TourneyGameDef, rank: number } = { newGame: null, rank: TourneyPenalties.s_penaltyMax };
+
+        for (let gameNum = 0; gameNum < this.m_bracket.BracketSize; gameNum++)
+        {
+            if (this.m_games.has(gameNum))
+                continue;
+
+            const num = new GameNum(gameNum);
+            const thisRank = this.CalculateGameRankPenalty(num);
+
+            if (thisRank.rank < bestRank.rank)
+            {
+                options.length = 0;
+                options.push(thisRank.newGame);
+                bestRank = thisRank;
+            }
+            else if (thisRank.rank == bestRank.rank)
+            {
+                options.push(thisRank.newGame);
+            }
+        }
+
+        return options;
     }
 
     /*----------------------------------------------------------------------------
@@ -151,21 +263,9 @@ export class TourneyDef implements Iterable<TourneyGameDef>
     ----------------------------------------------------------------------------*/
     GetNextGameToSchedule(): TourneyGameDef
     {
-        let bestRank: { newGame: TourneyGameDef, rank: number } = { newGame: null, rank: TourneyPenalties.s_penaltyMax };
+        const options = this.GetNextGameOptionsToSchedule();
 
-        for (let gameNum = 0; gameNum < this.m_bracket.BracketSize; gameNum++)
-        {
-            if (this.m_games.has(gameNum))
-                continue;
-
-            const num = new GameNum(gameNum);
-            const thisRank = this.CalculateRankPenalty(num);
-
-            if (thisRank.rank < bestRank.rank)
-                bestRank = thisRank;
-        }
-
-        return bestRank.newGame;
+        return options[0];
     }
 
     /*----------------------------------------------------------------------------

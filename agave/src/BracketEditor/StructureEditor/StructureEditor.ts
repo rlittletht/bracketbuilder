@@ -36,6 +36,7 @@ import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
 import { IBracketGameDefinition } from "../../Brackets/IBracketGameDefinition";
 import { TourneyDef } from "../../Tourney/TourneyDef";
 import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
+import { TourneyRanker } from "../../Tourney/TourneyRanker";
 
 let _moveSelection: RangeInfo = null;
 
@@ -336,7 +337,8 @@ export class StructureEditor
 
             let succeeded = true;
 
-            const tourneyDef = TourneyDef.CreateFromGrid(grid, bracketName);
+            const existingTourney = TourneyDef.CreateFromGrid(grid, bracketName);
+            const tourneyDef = TourneyRanker.BuildBestRankedScheduleFromExisting(existingTourney);
 
             tourneyDef.ScheduleAllRemainingGames();
 

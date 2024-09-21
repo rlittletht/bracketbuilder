@@ -33,4 +33,12 @@ export class TourneyFieldSlot
 
         return new TimeWithoutDate(this.m_time.Value + slotLength * TimeWithoutDate.s_msecPerMinute);
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyFieldSlot.Clone
+    ----------------------------------------------------------------------------*/
+    Clone(): TourneyFieldSlot
+    {
+        return new TourneyFieldSlot(TimeWithoutDate.CreateForTimeWithoutDate(this.m_time), this.m_field);
+    }
 }

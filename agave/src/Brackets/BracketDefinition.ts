@@ -23,6 +23,11 @@ export class BracketDefinition
         return this.m_definition.games.length;
     }
 
+    get BracketDefinitionData(): IBracketDefinitionData
+    {
+        return this.m_definition;
+    }
+
     GetGameDefinitionData(num: GameNum): IBracketGameDefinition
     {
         return this.m_definition.games[num.Value];

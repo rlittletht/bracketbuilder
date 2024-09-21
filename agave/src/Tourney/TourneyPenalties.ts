@@ -1,17 +1,42 @@
 import { TourneyGameDef } from "./TourneyGameDef";
 import { TourneyDef } from "./TourneyDef";
 import { IBracketGameDefinition } from "../Brackets/IBracketGameDefinition";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
 
 export class TourneyPenalties
 {
     // we would like every team to play before any team is eliminated
-    static s_penaltyEarlyEliminiation = 5;
+    static s_penaltyEarlyEliminiation = 100;
 
     // maybe the last team is playing at the same time as the first elimination game? not as bad...
-    static s_penaltySimultaneousElimination = 2;
+    static s_penaltySimultaneousElimination = 50;
 
     // max penalty - can't play this game next
     static s_penaltyMax = 65535;
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyPenalties.CalculateTourneyPenalty
+
+        for now, the length of the tournament is the penalty
+    ----------------------------------------------------------------------------*/
+    static CalculateTourneyPenalty(tourney: TourneyDef): number
+    {
+        const lastGameNumber = tourney.Bracket.BracketDefinitionData.games.length - 1;
+
+        const championshipGame = tourney.Games.get(lastGameNumber);
+
+        return championshipGame.GameDate.GetDaysSinceEpoch() - tourney.FirstGameDate.GetDaysSinceEpoch();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyPenalties.CalculateDatePenalty
+    ----------------------------------------------------------------------------*/
+    static CalculateDatePenalty(tourney: TourneyDef, gameDef: IBracketGameDefinition, newGame: TourneyGameDef): number
+    {
+        gameDef;
+
+        return newGame.GameDate.GetDaysSinceEpoch() - tourney.FirstGameDate.GetDaysSinceEpoch();
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: TourneyPenalties.CalculateEliminationPenalty

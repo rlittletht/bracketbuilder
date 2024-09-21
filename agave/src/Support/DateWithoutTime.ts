@@ -12,6 +12,11 @@ export class DateWithoutTime
             this.m_utcDateNoTime.setTime(msecTotal);
     }
 
+    static CreateForDateWithoutTime(date: DateWithoutTime): DateWithoutTime
+    {
+        return new DateWithoutTime(date.m_utcDateNoTime.getTime());
+    }
+
     static CreateForDateString(dateString: string)
     {
         const time = Date.parse(dateString);
@@ -61,9 +66,9 @@ export class DateWithoutTime
         this.m_utcDateNoTime.setTime(days * 86_400_000);
     }
 
-    AddDays(days: number)
+    AddDays(days: number): DateWithoutTime
     {
-        this.SetDaysSinceEpoch(this.GetDaysSinceEpoch() + days);
+        return DateWithoutTime.CreateForEpochDays(this.GetDaysSinceEpoch() + days);
     }
 
     static Compare(left: DateWithoutTime, right: DateWithoutTime): number

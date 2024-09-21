@@ -22,6 +22,14 @@ export class TimeWithoutDate
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: TimeWithoutDate.CreateForTimeWithoutDate
+    ----------------------------------------------------------------------------*/
+    static CreateForTimeWithoutDate(time: TimeWithoutDate): TimeWithoutDate
+    {
+        return new TimeWithoutDate(time.m_utcTimeNoDate.getTime());
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: TimeWithoutDate.CreateForDate
     ----------------------------------------------------------------------------*/
     static CreateForDate(date: Date): TimeWithoutDate
