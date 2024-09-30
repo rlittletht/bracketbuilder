@@ -6,6 +6,16 @@ import { TimeWithoutDate } from "./TimeWithoutDate";
 
 export class TimeWithoutDateTests
 {
+    static test_rolloverAdd(result: TestResult)
+    {
+        const time = TimeWithoutDate.CreateForTime(23);
+        const rolled = new TimeWithoutDate(time.Value + TimeWithoutDate.s_msecPerHour * 1);
+
+        const expected = TimeWithoutDate.CreateForTime(0);
+
+        result.assertIsEqual(0, TimeWithoutDate.Compare(expected, rolled));
+    }
+
     static test_Midnight_FromDateLocalPST(result: TestResult)
     {
         const time = TimeWithoutDate.CreateForDate(new Date(Date.parse("01 Jan 2023 00:00:00 PST")));

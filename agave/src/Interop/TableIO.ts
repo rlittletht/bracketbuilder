@@ -1,4 +1,5 @@
 import { JsCtx } from "./JsCtx";
+import { ExcelTableData } from "./ExcelTableData";
 
 export class TableIO
 {
@@ -35,6 +36,15 @@ export class TableIO
         throw new Error(ePropagate);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: TableIO.readDataFromCachedExcelTable
+
+        Given a set of headersWanted, and the actual header and dataBody for
+        a table (already read somewhere else), return an array of values
+        conforming to the array of headersWanted.  If fRequired is true,
+        then throw if any headerWanted is missing; else, fill in null for
+        headerWanted columns not found
+    ----------------------------------------------------------------------------*/
     static readDataFromCachedExcelTable(
         sTable: string,
         header: any[][],
@@ -42,55 +52,11 @@ export class TableIO
         sHeaders: string[],
         fRequired: boolean): any[]
     {
-        let rgExcelHeader: string[] = header[0]; // get the first row (there's only one row anyway)
-        let mapRequestedToExcelCurrent: Map<string, number> = new Map<string, number>();
-        const data: any[] = [];
+        const tableData = ExcelTableData.CreateFromCachedExcelTable(sTable, header, dataBody, sHeaders, fRequired);
 
-        let i: number = 0;
-
-        while (i < rgExcelHeader.length)
-        {
-            mapRequestedToExcelCurrent.set(rgExcelHeader[i].toUpperCase(), i);
-            i++;
-        }
-
-        let headerMapping: any = {};
-
-        for (let sItem of sHeaders)
-        {
-            let iCol: number;
-            let sLookup: string = sItem.toUpperCase();
-
-            if (mapRequestedToExcelCurrent.has(sLookup))
-            {
-                headerMapping[sItem] = mapRequestedToExcelCurrent.get(sLookup);
-            }
-            else
-            {
-                if (fRequired)
-                    throw new Error("could not find required header field '" + sItem + "' in excel table " + sTable);
-
-                headerMapping[sItem] = -1;
-            }
-        }
-
-        for (let rgRow of dataBody)
-        {
-            let item: any = {};
-
-            for (let sItem of sHeaders)
-            {
-                if (headerMapping[sItem] === -1)
-                    item[sItem] = null;
-                else
-                    item[sItem] = rgRow[headerMapping[sItem]];
-            }
-
-            data.push(item);
-        }
-
-        return data;
+        return tableData.GetConvertedValueObjects();
     }
+
     // given a table name in the workbook, return an array of objects constructed of fields from sHeaders.
     // if fRequired is true, then throw if all the header fields are not present in the excel table.
     // returns null if there is no table in the workbook matching sTable

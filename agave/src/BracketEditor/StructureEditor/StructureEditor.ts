@@ -37,6 +37,7 @@ import { IBracketGameDefinition } from "../../Brackets/IBracketGameDefinition";
 import { TourneyDef } from "../../Tourney/TourneyDef";
 import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
 import { TourneyRanker } from "../../Tourney/TourneyRanker";
+import { TourneyRules } from "../../Tourney/TourneyRules";
 
 let _moveSelection: RangeInfo = null;
 
@@ -292,8 +293,9 @@ export class StructureEditor
 
             // try to extend the selection
             let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
+            const rules = TourneyRules.CreateFromWorkbook(context);
 
-            const tourneyDef = TourneyDef.CreateFromGrid(grid, appContext.SelectedBracket);
+            const tourneyDef = TourneyDef.CreateFromGrid(grid, appContext.SelectedBracket, rules);
 
             const newGame: TourneyGameDef = tourneyDef.GetNextGameToSchedule();
 
@@ -337,7 +339,9 @@ export class StructureEditor
 
             let succeeded = true;
 
-            const existingTourney = TourneyDef.CreateFromGrid(grid, bracketName);
+            const rules = TourneyRules.CreateFromWorkbook(context);
+
+            const existingTourney = TourneyDef.CreateFromGrid(grid, appContext.SelectedBracket, rules);
             const tourneyDef = TourneyRanker.BuildBestRankedScheduleFromExisting(existingTourney);
 
             tourneyDef.ScheduleAllRemainingGames();

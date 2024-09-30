@@ -56,6 +56,11 @@ export class RangeInfo
         return new RangeInfo(range.FirstRow, range.RowCount, range.FirstColumn, range.ColumnCount);
     }
 
+    static createForArrayOfValues(firstRow: number, firstColumn: number, ary: any[][]): RangeInfo
+    {
+        return new RangeInfo(firstRow, ary.length, firstColumn, ary[0].length);
+    }
+
     static createFromCornersSafe(rangeTopLeft: RangeInfo, rangeBottomRight: RangeInfo): RangeInfo
     {
         if (rangeTopLeft == null)
@@ -152,6 +157,16 @@ export class RangeInfo
         return new RangeInfo(this.FirstRow, 1, this.FirstColumn, 1);
     }
 
+    topLeftCoords(): [number, number]
+    {
+        return [this.FirstRow, this.FirstColumn];
+    }
+
+    bottomRightCoords(): [number, number]
+    {
+        return [this.LastRow, this.LastColumn];
+    }
+
     bottomRight(): RangeInfo
     {
         return new RangeInfo(this.LastRow, 1, this.LastColumn, 1);
@@ -185,6 +200,20 @@ export class RangeInfo
         this.m_rowCount += delta;
         if (this.m_rowCount < 0)
             this.m_rowCount = 0;
+    }
+
+    newSetColumnResize(column: number)
+    {
+        const newRange: RangeInfo = RangeInfo.createFromRangeInfo(this);
+
+        const delta: number = newRange.m_columnStart - column;
+
+        newRange.m_columnStart = column;
+        newRange.m_columnCount += delta;
+        if (newRange.m_columnCount < 0)
+            newRange.m_columnCount = 0;
+
+        return newRange;
     }
 
     setLastRow(row: number)
@@ -724,5 +753,18 @@ export class Ranges
         const rowEnd = rowRef2 ? rowRef2 - 1 : rowStart;
 
         return new RangeInfo(rowStart, rowEnd - rowStart + 1, colStart, colEnd - colStart + 1);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Ranges.getTableRangeFromTableName
+
+        NOTE: you will eventually need to do a context.sync...
+    ----------------------------------------------------------------------------*/
+    static getTableDataBodyRangeFromTableName(sheet: Excel.Worksheet, tableName: string): Excel.Range
+    {
+        const table = sheet.tables.getItem(tableName);
+        const range = table.getDataBodyRange();
+
+        return range;
     }
 }

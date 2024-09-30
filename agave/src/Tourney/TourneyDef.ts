@@ -292,18 +292,20 @@ export class TourneyDef implements Iterable<TourneyGameDef>
     /*----------------------------------------------------------------------------
         %%Function: TourneyDef.CreateFromGrid
     ----------------------------------------------------------------------------*/
-    static CreateFromGrid(grid: Grid, bracketName: string): TourneyDef
+    static CreateFromGrid(grid: Grid, bracketName: string, rules?: TourneyRules): TourneyDef
     {
-        const rules = TourneyRules.Create();
+        if (!rules)
+        {
+            rules = TourneyRules.Create();
+
+            for (const fieldName of grid.getAllAvailableFields())
+                rules.AddField(fieldName, false, 180);
+
+            rules.AddDefaultFieldRestrictions();
+        }
 
         const startDate = grid.getDateFromGridColumn(grid.FirstGridPattern.FirstColumn);
-
         rules.SetStart(startDate);
-
-        for (const fieldName of grid.getAllAvailableFields())
-            rules.AddField(fieldName, false, 180);
-
-        rules.AddDefaultFieldRestrictions();
 
         const tourney = new TourneyDef(_bracketManager.GetBracketDefinitionData(bracketName), rules);
 

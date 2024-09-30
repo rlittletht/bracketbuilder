@@ -87,36 +87,30 @@ export class GameDataSources
     {
         const tns = [];
 
-        const rangeTeamsFields = RangeCaches.getCacheByType(RangeCacheItemType.FieldsAndTimesBody);
-        if (rangeTeamsFields)
+        const { range: dataRange, values: dataValues } = RangeCaches.getDataRangeAndValuesFromRangeCacheType(context, RangeCacheItemType.FieldsAndTimesBody);
+
+        if (dataRange)
         {
-            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeTeamsFields.formulaCacheType);
-            if (areas)
+            for (let row = 0; row < dataRange.RowCount; row++)
             {
-                const dataRange = rangeTeamsFields.rangeInfo;
-                const dataValues = areas.getValuesForRangeInfo(dataRange);
-
-                for (let row = 0; row < dataRange.RowCount; row++)
+                if (dataValues[row][0] == gameNum.GameId.Value)
                 {
-                    if (dataValues[row][0] == gameNum.GameId.Value)
-                    {
-                        tns.push(
-                            TnSetValues.Create(
-                                dataRange.offset(row, 1, 0, 4),
+                    tns.push(
+                        TnSetValues.Create(
+                            dataRange.offset(row, 1, 0, 4),
+                            [
                                 [
-                                    [
-                                        gameNum.GameId.Value,
-                                        field[0] == "=" ? dataValues[row][1] : field,
-                                        typeof time !== "number" ? dataValues[row][2] : time,
-                                        typeof swapHomeAway !== "boolean" ? dataValues[row][3] : swapHomeAway
-                                    ]
-                                ],
-                                GameDataSources.SheetName));
-                    }
+                                    gameNum.GameId.Value,
+                                    field[0] == "=" ? dataValues[row][1] : field,
+                                    typeof time !== "number" ? dataValues[row][2] : time,
+                                    typeof swapHomeAway !== "boolean" ? dataValues[row][3] : swapHomeAway
+                                ]
+                            ],
+                            GameDataSources.SheetName));
                 }
-
-                return tns;
             }
+
+            return tns;
         }
 
         if (s_staticConfig.throwOnCacheMisses)

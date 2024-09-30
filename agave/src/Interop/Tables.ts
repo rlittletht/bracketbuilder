@@ -386,7 +386,7 @@ export class Tables
         fastTables: IFastTables,
         sTable: string,
         sShape: string,
-        header: string[]): Promise<Excel.Table>
+        header: string[] | null): Promise<Excel.Table>
     {
         let table: Excel.Table = await this.getTableOrNull(context, sheet, sTable);
 
@@ -397,11 +397,11 @@ export class Tables
             if (fastTables != null)
                 fastTables.abandonTableBinding(sTable);
 
-            table = sheet.tables.add(sShape);
-            await context.sync();
+            table = sheet.tables.add(sShape, header == null);
 
             table.name = sTable;
-            table.getHeaderRowRange().values = [header];
+            if (header != null)
+                table.getHeaderRowRange().values = [header];
 
             await context.sync();
         }

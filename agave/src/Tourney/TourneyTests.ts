@@ -18,11 +18,24 @@ import { GameNum } from "../BracketEditor/GameNum";
 
 export class TourneyTests
 {
+    static buildFromIterator(days: TourneyDaysOfWeek): number[]
+    {
+        const iterated: number[] = [];
+
+        for (const day of days)
+            iterated.push(day);
+
+        return iterated;
+    }
+
     static test_daysOfWeek_Empty(result: TestResult)
     {
         const days: TourneyDaysOfWeek = TourneyDaysOfWeek.Create();
 
         result.assertIsEqual([], days.DaysSet());
+
+        const expected = [];
+        result.assertIsEqual(expected, this.buildFromIterator(days));
     }
 
     static test_daysOfWeek_FirstDayOfWeek(result: TestResult)
@@ -30,6 +43,9 @@ export class TourneyTests
         const days: TourneyDaysOfWeek = TourneyDaysOfWeek.Create().Add(0);
 
         result.assertIsEqual(["sun"], days.DaysSet());
+
+        const expected = [0];
+        result.assertIsEqual(expected, this.buildFromIterator(days));
     }
 
     static test_daysOfWeek_LastDayOfWeek(result: TestResult)
@@ -37,6 +53,9 @@ export class TourneyTests
         const days: TourneyDaysOfWeek = TourneyDaysOfWeek.Create().Add(6);
 
         result.assertIsEqual(["sat"], days.DaysSet());
+
+        const expected = [6];
+        result.assertIsEqual(expected, this.buildFromIterator(days));
     }
 
     static test_daysOfWeek_FirstAndLastDaysOfWeek(result: TestResult)
@@ -44,6 +63,9 @@ export class TourneyTests
         const days: TourneyDaysOfWeek = TourneyDaysOfWeek.Create().Add(0).Add(6);
 
         result.assertIsEqual(["sun", "sat"], days.DaysSet());
+
+        const expected = [0, 6];
+        result.assertIsEqual(expected, this.buildFromIterator(days));
     }
 
 
@@ -53,6 +75,9 @@ export class TourneyTests
         const days: TourneyDaysOfWeek = TourneyDaysOfWeek.Create().Add(6).Add(0);
 
         result.assertIsEqual(["sun", "sat"], days.DaysSet());
+
+        const expected = [0, 6];
+        result.assertIsEqual(expected, this.buildFromIterator(days));
     }
 
     static test_daysOfWeek_AllDaysOfWeek_Isomorphic(result: TestResult)
@@ -60,6 +85,9 @@ export class TourneyTests
         const days: TourneyDaysOfWeek = TourneyDaysOfWeek.Create().Add(6).Add(0).Add(1).Add(2).Add(3).Add(4).Add(5);
 
         result.assertIsEqual(["sun", "mon", "tue", "wed", "thu", "fri", "sat"], days.DaysSet());
+
+        const expected = [0, 1, 2, 3, 4, 5, 6];
+        result.assertIsEqual(expected, this.buildFromIterator(days));
     }
 
     static test_buildSlotListForDate_NoConflicts_DefaultRestrictions(result: TestResult)

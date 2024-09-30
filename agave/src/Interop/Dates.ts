@@ -4,6 +4,7 @@ import { TestResult } from "../Support/TestResult";
 import { TestRunner } from "../Support/TestRunner";
 import { AmPmDecoration, Parser, TrimType } from "./Parser";
 import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { TimeWithoutDate } from "../Support/TimeWithoutDate";
 
 export class OADate
 {
@@ -26,6 +27,11 @@ export class OADate
         date = new Date(date.valueOf() + (1000.0 * 60 * date.getTimezoneOffset()));
 
         return date;
+    }
+
+    static TimeWithoutDateFromOADate(oaDate: number): TimeWithoutDate
+    {
+        return TimeWithoutDate.CreateForDate(this.FromOADate(oaDate));
     }
 
     static DateWithoutTimeFromOADate(oaDate: number): DateWithoutTime

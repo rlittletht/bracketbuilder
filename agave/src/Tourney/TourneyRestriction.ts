@@ -25,24 +25,114 @@ export class TourneyRestriction
     private m_earliestStart?: TimeWithoutDate;
     private m_latestStart?: TimeWithoutDate;
 
+    get Fields(): TourneyField[] | null
+    {
+        return this.m_fields;
+    }
+
+    get Earliest(): TimeWithoutDate | null
+    {
+        return this.m_earliestStart;
+    }
+
+    get Latest(): TimeWithoutDate | null
+    {
+        return this.m_latestStart;
+    }
+
+    get Days(): TourneyDaysOfWeek | null
+    {
+        return this.m_daysOfWeek;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: TourneyRestriction.CreateForFieldDays
     ----------------------------------------------------------------------------*/
-    static CreateForFieldDays(field: TourneyField, daysOfWeek: TourneyDaysOfWeek, earliest?: TimeWithoutDate, latestStart?: TimeWithoutDate): TourneyRestriction
+    static CreateForFieldDays(fields: TourneyField[], daysOfWeek: TourneyDaysOfWeek, earliest?: TimeWithoutDate, latestStart?: TimeWithoutDate): TourneyRestriction
     {
         const restriction: TourneyRestriction = new TourneyRestriction();
 
         restriction.m_daysOfWeek = daysOfWeek;
-        restriction.m_fields = [field];
+        restriction.m_fields = [...fields];
         restriction.m_earliestStart = earliest;
         restriction.m_latestStart = latestStart;
 
         return restriction;
     }
 
+    set EarliestStart(value: TimeWithoutDate)
+    {
+        this.m_earliestStart = value;
+    }
+
     get EarliestStart(): TimeWithoutDate
     {
         return this.m_earliestStart;
+    }
+
+    set LatestStart(value: TimeWithoutDate)
+    {
+        this.m_latestStart = value;
+    }
+
+    get LatestStart(): TimeWithoutDate
+    {
+        return this.m_latestStart;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyRestriction.MatchRestrictionFieldDay
+
+        Return true if this restriction applies specifically to this
+        field and dayOfWeek
+    ----------------------------------------------------------------------------*/
+    MatchRestrictionFieldDay(field: TourneyField, days: TourneyDaysOfWeek)
+    {
+        if (this.m_fields.length != 1)
+            return false;
+
+        if (this.m_fields[0].Name != field.Name)
+            return false;
+
+        return days.Value == this.m_daysOfWeek.Value;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyRestriction.MatchRestriction
+
+        check if these earliest and latest restrictions match
+    ----------------------------------------------------------------------------*/
+    MatchRestriction(earliest?: TimeWithoutDate, latest?: TimeWithoutDate): boolean
+    {
+        if (!earliest !== !this.m_earliestStart)
+            return false;
+
+        if (earliest)
+        {
+            if (!earliest.Equals(this.m_earliestStart))
+                return false;
+        }
+
+        if (!latest !== !this.m_latestStart)
+            return false;
+
+        if (latest)
+        {
+            if (!latest.Equals(this.m_latestStart))
+                return false;
+        }
+
+        return true;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: TourneyRestriction.AddDays
+
+        The given days to the set of days this applies to
+    ----------------------------------------------------------------------------*/
+    AddDays(days: TourneyDaysOfWeek)
+    {
+        this.m_daysOfWeek.AddDays(days);
     }
 
     /*----------------------------------------------------------------------------
@@ -77,7 +167,7 @@ export class TourneyRestriction
         if (this.m_date != null)
         {
             if (!this.m_date.Equals(date))
-                // this restriction doesn't refer to this date
+            // this restriction doesn't refer to this date
                 return false;
         }
 
@@ -85,7 +175,7 @@ export class TourneyRestriction
         if (this.m_daysOfWeek != null)
         {
             if (!this.m_daysOfWeek.Has(date.GetDay()))
-                // doesn't apply to us
+            // doesn't apply to us
                 return false;
         }
 

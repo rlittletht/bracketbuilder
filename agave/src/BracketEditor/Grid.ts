@@ -681,7 +681,8 @@ export class Grid
         }
 
         grid.m_firstGridPattern = this.m_firstGridPattern;
-        grid.m_datesForGrid = [...this.m_datesForGrid];
+        if (this.m_datesForGrid)
+            grid.m_datesForGrid = [...this.m_datesForGrid];
         grid.m_fieldsToUse = this.m_fieldsToUse;
 
         return grid;

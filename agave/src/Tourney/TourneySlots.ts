@@ -17,11 +17,15 @@ export class TourneySlots
 
         Return all the slots that overlap the given slot.  Uses the slot length
         from the field
+
+        BE CAREFUL - if the slot rolls over the end of the day, then shorten the
+        overlap checks to just be for the remainder of the day...
     ----------------------------------------------------------------------------*/
     static FindOverlappingSlots(slot: TourneyFieldSlot, slots: TourneyFieldSlot[]): TourneyFieldSlot[]
     {
         const start: TimeWithoutDate = slot.Start;
-        const end: TimeWithoutDate = slot.End;
+        const end: TimeWithoutDate = slot.Start.CompareTo(slot.End) < 0 ? slot.End : TimeWithoutDate.CreateForTime(23, 59, 59);
+
         const overlapping: TourneyFieldSlot[] = [];
 
         for (const check of slots)
@@ -102,6 +106,10 @@ export class TourneySlots
                     break;
 
                 slots.push(firstSlot);
+                // if we wrapped around to the next day, break
+                if (firstSlot.End.CompareTo(firstSlot.Start) <= 0)
+                    break;
+
                 firstSlot = tourney.Rules.GetFirstSlotForFieldDateAfterTime(field, date, firstSlot.End);
             }
 
