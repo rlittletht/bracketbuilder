@@ -1,7 +1,7 @@
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources } from "../../Brackets/GameDataSources";
 import { OADate } from "../../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { JsCtx } from "../../Interop/JsCtx";
@@ -19,6 +19,7 @@ import { ObjectType } from "../../Interop/TrackingCache";
 import { RangeCaches } from "../../Interop/RangeCaches";
 import { TnSelect } from "../../Interop/Intentions/TnSelect";
 import { GridBuilder } from "../../Brackets/GridBuilder";
+import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 export class ApplyGridChange
 {

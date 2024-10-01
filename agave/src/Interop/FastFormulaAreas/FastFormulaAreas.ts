@@ -7,81 +7,8 @@ import { JsCtx } from "../JsCtx";
 import { RangeInfo, Ranges } from "../Ranges";
 import { CacheObject, ObjectType } from "../TrackingCache";
 import { RangeCacheItemType, RangeCaches } from "../RangeCaches";
-
-export class FastFormulaAreasItems
-{
-    static GameGrid = "gamegrid";
-    static GameData = "gameData";
-    static BracketDefs = "bracket-defs";
-    static BracketInfo = "bracket-info";
-    static RulesData = "rulesData";
-    static GlobalNames = "workbookNamesItems";
-}
-
-class FormulaAreasItem
-{
-    m_rangeAreas: Excel.RangeAreas;
-    m_rangeInfo: RangeInfo;
-
-    constructor(rangeAreas: Excel.RangeAreas, rangeInfo: RangeInfo)
-    {
-        this.m_rangeAreas = rangeAreas;
-        this.m_rangeInfo = rangeInfo;
-    }
-
-    // there's no way to get a range from this RangeInfo -- we have a single Excel.RangeAreas for this FormulaAreasItem
-    // instead, you have to request the items you want specifically
-
-    getRowColOffsetsIntoAreasItem(range: RangeInfo): { dRow: number, dCol: number }
-    {
-        const dRow = range.FirstRow - this.m_rangeInfo.FirstRow;
-        const dCol = range.FirstColumn - this.m_rangeInfo.FirstColumn;
-
-        if (dRow < 0
-            || dCol < 0
-            || range.LastRow > this.m_rangeInfo.LastRow
-            || range.LastColumn > this.m_rangeInfo.LastColumn)
-            throw new Error(`requested range out of range for FormulaAreasItem (this.range: ${this.m_rangeInfo.toFriendlyString}, requested: ${range.toFriendlyString()})`);
-
-        return { dRow: dRow, dCol: dCol };
-    }
-
-    getFormulasForRangeInfo(range: RangeInfo): any[][]
-    {
-        const { dRow, dCol } = this.getRowColOffsetsIntoAreasItem(range);
-        const fmlas = [];
-
-        for (let iRow = 0; iRow < range.RowCount; iRow++)
-        {
-            const row = [];
-
-            for (let iCol = 0; iCol < range.ColumnCount; iCol++)
-                row.push(this.m_rangeAreas.areas.items[0].formulas[iRow + dRow][iCol + dCol]);
-
-            fmlas.push(row);
-        }
-
-        return fmlas;
-    }
-
-    getValuesForRangeInfo(range: RangeInfo): any[][]
-    {
-        const { dRow, dCol } = this.getRowColOffsetsIntoAreasItem(range);
-        const vals = [];
-
-        for (let iRow = 0; iRow < range.RowCount; iRow++)
-        {
-            const row = [];
-
-            for (let iCol = 0; iCol < range.ColumnCount; iCol++)
-                row.push(this.m_rangeAreas.areas.items[0].values[iRow + dRow][iCol + dCol]);
-
-            vals.push(row);
-        }
-
-        return vals;
-    }
-}
+import { FastFormulaAreasItems } from "./FastFormulaAreasItems";
+import { FastFormulaAreasItem } from "./FastFormulaAreasItem";
 
 export class FastFormulaAreas
 {
@@ -134,10 +61,10 @@ export class FastFormulaAreas
     );
     static itemMax: number = 1000; // only 2000 items per rangearea...
 
-    m_areasItems: FormulaAreasItem[] = [];
+    m_areasItems: FastFormulaAreasItem[] = [];
     m_sheetName: string;
 
-    getAreasItemForRangeInfo(range: RangeInfo): FormulaAreasItem | null
+    getAreasItemForRangeInfo(range: RangeInfo): FastFormulaAreasItem | null
     {
         for (let item of this.m_areasItems)
         {
@@ -278,7 +205,7 @@ export class FastFormulaAreas
         //at this point we have a 1:1 mapping of rangeInfo to areas. still need to teach the rest of the code that there isn't
         // and array of rangeAreas that we have to map to, but rather a single rangeArea we have to just index into. get rid of the 
         // formatting returns as we didn't cache it.
-        this.m_areasItems.push(new FormulaAreasItem(areas, range));
+        this.m_areasItems.push(new FastFormulaAreasItem(areas, range));
     }
 
     static getGridFastFormulaAreaCache(context: JsCtx): FastFormulaAreas
@@ -401,7 +328,7 @@ export class FastFormulaAreas
                     const rangeAreas = this.loadRangeAreasFromRangeInfo(context, range, sheetName);
                     context.addCacheObject(`${name}-rangeAreas`, { type: ObjectType.JsObject, o: rangeAreas });
 
-                    areas.m_areasItems.push(new FormulaAreasItem(rangeAreas, range));
+                    areas.m_areasItems.push(new FastFormulaAreasItem(rangeAreas, range));
 
                     collection.add(type, areas);
                 }

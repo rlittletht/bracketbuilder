@@ -5,7 +5,7 @@ import { BracketDefBuilder, BracketOption } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
-import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas/FastFormulaAreas";
+import { FastFormulaAreas } from "./Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastTables } from "./Interop/FastTables";
 import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";
@@ -16,6 +16,7 @@ import { Dispatcher, DispatchWithCatchDelegate } from "./BracketEditor/Dispatche
 import { GridBuilder } from "./Brackets/GridBuilder";
 import { IBracketDefinitionData } from "./Brackets/IBracketDefinitionData";
 import { RulesBuilder } from "./Brackets/RulesBuilder";
+import { FastFormulaAreasItems } from "./Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 export class SetupState
 {

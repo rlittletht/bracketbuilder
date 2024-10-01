@@ -4,7 +4,7 @@ import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
 import { GridBuilder } from "../../Brackets/GridBuilder";
 import { CoachTransition } from "../../Coaching/CoachTransition";
 import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
@@ -38,6 +38,7 @@ import { TourneyDef } from "../../Tourney/TourneyDef";
 import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
 import { TourneyRanker } from "../../Tourney/TourneyRanker";
 import { TourneyRules } from "../../Tourney/TourneyRules";
+import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 let _moveSelection: RangeInfo = null;
 

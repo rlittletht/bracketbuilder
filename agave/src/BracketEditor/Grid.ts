@@ -3,7 +3,7 @@ import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
 import { OADate } from "../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
@@ -25,6 +25,7 @@ import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { HelpTopic } from "../Coaching/HelpInfo";
 import { IBracketDefinitionData } from "../Brackets/IBracketDefinitionData";
 import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)

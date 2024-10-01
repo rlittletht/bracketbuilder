@@ -7,7 +7,7 @@ import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { OADate } from "../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
@@ -16,6 +16,7 @@ import { _TimerStack } from "../PerfTimer";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
+import { FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 export interface IBracketGame
 {

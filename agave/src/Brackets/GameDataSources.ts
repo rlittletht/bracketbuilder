@@ -11,7 +11,7 @@ import { UndoGameDataItem } from "../BracketEditor/Undo";
 import { JsCtx } from "../Interop/JsCtx";
 import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnSetValues } from "../Interop/Intentions/TnSetValue";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 import { BracketManager } from "./BracketManager";
 import { BracketDefBuilder } from "./BracketDefBuilder";
