@@ -8,7 +8,7 @@ import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { StructureEditor } from "./StructureEditor";
 import { RangeCaches, RangeCacheItemType } from "../../Interop/RangeCaches";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { s_staticConfig } from "../../StaticConfig";
 
 /* 

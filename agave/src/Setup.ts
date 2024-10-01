@@ -5,7 +5,7 @@ import { BracketDefBuilder, BracketOption } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
-import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastTables } from "./Interop/FastTables";
 import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";

@@ -3,7 +3,7 @@ import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
 import { OADate } from "../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";

@@ -4,7 +4,7 @@ import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
 import { GridBuilder } from "../../Brackets/GridBuilder";
 import { CoachTransition } from "../../Coaching/CoachTransition";
 import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";

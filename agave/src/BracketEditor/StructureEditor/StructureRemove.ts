@@ -1,7 +1,7 @@
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources, TeamNameMap } from "../../Brackets/GameDataSources";
 import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnDeleteGlobalName } from "../../Interop/Intentions/TnDeleteGlobalName";
 import { TnUnmergeRange } from "../../Interop/Intentions/TnUmergeRange";

@@ -4,7 +4,7 @@ import { GameResultType, TeamPlacement } from "./BracketDefinitions";
 import { JsCtx } from "../Interop/JsCtx";
 import { BracketDefBuilder } from "./BracketDefBuilder";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
-import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { TableIO } from "../Interop/TableIO";
 import { _TimerStack } from "../PerfTimer";
 import { HelpTopic } from "../Coaching/HelpInfo";

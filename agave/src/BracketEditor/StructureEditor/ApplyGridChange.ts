@@ -1,7 +1,7 @@
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources } from "../../Brackets/GameDataSources";
 import { OADate } from "../../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { JsCtx } from "../../Interop/JsCtx";

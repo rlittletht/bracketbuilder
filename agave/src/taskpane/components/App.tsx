@@ -16,7 +16,7 @@ import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEd
 import { _bracketManager } from "../../Brackets/BracketManager";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { CoachTransition } from "../../Coaching/CoachTransition";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeCaches, RangeCacheItemType } from "../../Interop/RangeCaches";

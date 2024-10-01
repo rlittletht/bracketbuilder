@@ -9,7 +9,7 @@ import { GridRankerTests } from "../BracketEditor/GridRankerTests";
 import { GridTests } from "../BracketEditor/GridTests";
 import { StructureInsertTests } from "../BracketEditor/StructureEditor/StrutureInsertTests";
 import { OADateTests } from "../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasTest } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasTest } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastRangeAreasTest } from "../Interop/FastRangeAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { ParserTests } from "../Interop/Parser";

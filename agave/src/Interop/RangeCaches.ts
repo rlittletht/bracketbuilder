@@ -5,7 +5,7 @@
 // this cache can be setup when we load (and are refreshed), and referenced to get the ranges
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
-import { FastFormulaAreasItems, FastFormulaAreas } from "./FastFormulaAreas";
+import { FastFormulaAreasItems, FastFormulaAreas } from "./FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "./JsCtx";
 import { RangeInfo, Ranges } from "./Ranges";
 import { RulesBuilder } from "../Brackets/RulesBuilder";

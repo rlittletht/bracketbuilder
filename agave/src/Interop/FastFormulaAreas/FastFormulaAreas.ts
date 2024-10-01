@@ -1,12 +1,12 @@
-import { IAppContext } from "../AppContext/AppContext";
-import { _TimerStack } from "../PerfTimer";
-import { StreamWriter } from "../Support/StreamWriter";
-import { TestResult } from "../Support/TestResult";
-import { TestRunner } from "../Support/TestRunner";
-import { JsCtx } from "./JsCtx";
-import { RangeInfo, Ranges } from "./Ranges";
-import { CacheObject, ObjectType } from "./TrackingCache";
-import { RangeCacheItemType, RangeCaches } from "./RangeCaches";
+import { IAppContext } from "../../AppContext/AppContext";
+import { _TimerStack } from "../../PerfTimer";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { JsCtx } from "../JsCtx";
+import { RangeInfo, Ranges } from "../Ranges";
+import { CacheObject, ObjectType } from "../TrackingCache";
+import { RangeCacheItemType, RangeCaches } from "../RangeCaches";
 
 export class FastFormulaAreasItems
 {
