@@ -65,6 +65,7 @@ export interface AppState
     aboutShowing: boolean;
     heroListDirty: boolean;
     bracketMayHaveDirectEdits: boolean;
+    rulesMayHaveEdits: boolean;
     sheetsHidden: boolean;
     panesFrozen: boolean;
 }
@@ -102,6 +103,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
             aboutShowing: false,
             heroListDirty: false,
             bracketMayHaveDirectEdits: false,
+            rulesMayHaveEdits: false,
             sheetsHidden: false,
             panesFrozen: false
         };
@@ -129,6 +131,16 @@ export default class App extends React.Component<AppProps, AppState> implements 
     get BracketDirtyForBracketEdit(): boolean
     {
         return this.state?.bracketMayHaveDirectEdits ?? false;
+    }
+
+    set RulesDirtyForRulesEdit(dirty: boolean)
+    {
+        this.setState({ rulesMayHaveEdits: dirty });
+    }
+
+    get RulesDirtyForRulesEdit(): boolean
+    {
+        return this.state?.rulesMayHaveEdits;
     }
 
     set SheetsHidden(hidden: boolean)
@@ -531,6 +543,15 @@ export default class App extends React.Component<AppProps, AppState> implements 
             && !(prevState.bracketMayHaveDirectEdits || prevState.heroListDirty))
         {
             this.postHeroListRebuild();
+        }
+
+        if (this.state.rulesMayHaveEdits && !prevState.rulesMayHaveEdits)
+        {
+            RangeCaches.SetDirty(true);
+            this.setState(
+                {
+                    rulesMayHaveEdits: false
+                });
         }
 
         if ((this.state.panesFrozen != prevState.panesFrozen)

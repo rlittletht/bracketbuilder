@@ -15,6 +15,7 @@ import { _bracketManager } from "./Brackets/BracketManager";
 import { Dispatcher, DispatchWithCatchDelegate } from "./BracketEditor/Dispatcher";
 import { GridBuilder } from "./Brackets/GridBuilder";
 import { IBracketDefinitionData } from "./Brackets/IBracketDefinitionData";
+import { RulesBuilder } from "./Brackets/RulesBuilder";
 
 export class SetupState
 {
@@ -332,10 +333,17 @@ export class SetupBook
         if (appContext.WorkbookSetupState != SetupState.Ready)
             return;
 
-        const sheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+        const gridSheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
         context.Ctx.workbook.bindings.add(
-            sheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
+            gridSheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
                 () => { appContext.AppStateAccess.BracketDirtyForBracketEdit = true; });
+
+        const rulesSheet = context.Ctx.workbook.worksheets.getItem(RulesBuilder.SheetName);
+        context.Ctx.workbook.bindings.add(
+            gridSheet.getRangeByIndexes(0, 0, 30, 10),
+            Excel.BindingType.range,
+            "gameGrid").onDataChanged.add(
+            () => { appContext.AppStateAccess.RulesDirtyForRulesEdit = true; });
 
         await context.sync();
     }
