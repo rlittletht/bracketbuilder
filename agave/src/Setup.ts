@@ -340,9 +340,9 @@ export class SetupBook
 
         const rulesSheet = context.Ctx.workbook.worksheets.getItem(RulesBuilder.SheetName);
         context.Ctx.workbook.bindings.add(
-            gridSheet.getRangeByIndexes(0, 0, 30, 10),
+            rulesSheet.getRangeByIndexes(0, 0, 30, 10),
             Excel.BindingType.range,
-            "gameGrid").onDataChanged.add(
+            "rulesData").onDataChanged.add(
             () => { appContext.AppStateAccess.RulesDirtyForRulesEdit = true; });
 
         await context.sync();

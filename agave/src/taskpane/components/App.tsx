@@ -539,19 +539,13 @@ export default class App extends React.Component<AppProps, AppState> implements 
     {
         prevProps;
 
-        if ((this.state.bracketMayHaveDirectEdits || this.state.heroListDirty)
-            && !(prevState.bracketMayHaveDirectEdits || prevState.heroListDirty))
+        if ((this.state.bracketMayHaveDirectEdits || this.state.rulesMayHaveEdits || this.state.heroListDirty)
+            && !(prevState.bracketMayHaveDirectEdits || prevState.rulesMayHaveEdits || prevState.heroListDirty))
         {
-            this.postHeroListRebuild();
-        }
+            if (this.state.rulesMayHaveEdits)
+                RangeCaches.SetDirty(true);
 
-        if (this.state.rulesMayHaveEdits && !prevState.rulesMayHaveEdits)
-        {
-            RangeCaches.SetDirty(true);
-            this.setState(
-                {
-                    rulesMayHaveEdits: false
-                });
+            this.postHeroListRebuild();
         }
 
         if ((this.state.panesFrozen != prevState.panesFrozen)
@@ -608,6 +602,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
             this.setState(
                 {
                     bracketMayHaveDirectEdits: false,
+                    rulesMayHaveEdits: false,
                     heroListDirty: false
                 });
 
