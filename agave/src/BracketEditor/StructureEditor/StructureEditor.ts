@@ -304,7 +304,7 @@ export class StructureEditor
             {
                 appContext.Messages.error(
                     ["Could not determine next game to schedule"],
-                    { topic: HelpTopic.Commands_PickupGame });
+                    { topic: HelpTopic.Commands_LuckyOneGame});
 
                 return;
             }
@@ -318,6 +318,8 @@ export class StructureEditor
                 newGame.GameDate,
                 newGame.Slot.Start.GetMinutesSinceMidnight(),
                 newGame.Slot.Field.Name);
+
+            appContext.Teaching.transitionState(CoachTransition.LuckyNext);
         }
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -344,6 +346,14 @@ export class StructureEditor
 
             const existingTourney = TourneyDef.CreateFromGrid(grid, appContext.SelectedBracket, rules);
             const tourneyDef = TourneyRanker.BuildBestRankedScheduleFromExisting(existingTourney);
+
+            if (tourneyDef == null)
+            {
+                appContext.Messages.error(
+                    ["Could not automatically build the rest of the schedule - there are too many permutations. This is usually caused by an insufficient number of usable field slots per day. Either automatically schedule one game at a time, or change the field rules to allow more fields and/or more field slots in a day (usually earlier in the tournament)"],
+                    { topic: HelpTopic.Commands_LuckyRestGames });
+                return;
+            }
 
             tourneyDef.ScheduleAllRemainingGames();
 

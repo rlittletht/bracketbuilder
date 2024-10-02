@@ -9,56 +9,12 @@ import { CacheObject, ObjectType } from "../TrackingCache";
 import { RangeCacheItemType, RangeCaches } from "../RangeCaches";
 import { FastFormulaAreasItems } from "./FastFormulaAreasItems";
 import { FastFormulaAreasItem } from "./FastFormulaAreasItem";
+import { FastFormulaAreaDefinitions } from "./FastFormulaAreaDefinitions";
 
 export class FastFormulaAreas
 {
-    static s_gridCacheName = "gamegrid-FastFormulaAreas";
-    static s_gameDataSheetCacheName = "gameData-FastFormulaAreas";
-    static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
-    static s_bracketInfoCacheName = "bracketInfo-FastFormulaAreas";
-    static s_rulesSheetCacheName = "rules-FastFormulaAreas";
-
     static s_allSheetsCache = "allsheets-FastFormulaAreasCollection";
 
-    static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, FastFormulaAreas.s_gridCacheName],
-            [FastFormulaAreasItems.GameData, FastFormulaAreas.s_gameDataSheetCacheName],
-            [FastFormulaAreasItems.BracketDefs, FastFormulaAreas.s_bracketDefCacheName],
-            [FastFormulaAreasItems.BracketInfo, FastFormulaAreas.s_bracketInfoCacheName],
-            [FastFormulaAreasItems.RulesData, FastFormulaAreas.s_rulesSheetCacheName]
-        ]
-    );
-
-    static s_mapTypeSheet = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, "Games"],
-            [FastFormulaAreasItems.GameData, "TeamsAndFields"],
-            [FastFormulaAreasItems.BracketDefs, "BracketDefs"],
-            [FastFormulaAreasItems.BracketInfo, "BracketInfo"],
-            [FastFormulaAreasItems.RulesData, "Rules"]
-        ]
-    );
-
-    static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
-        [
-            [FastFormulaAreasItems.GameGrid, new RangeInfo(0, 250, 0, 60)],
-            [FastFormulaAreasItems.GameData, new RangeInfo(0, 150, 0, 7)],
-            [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 200, 0, 15)],
-            [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],
-            [FastFormulaAreasItems.RulesData, new RangeInfo(0, 50, 0, 10)]
-        ]
-    );
-
-    static s_mapTypeCacheNameRoot = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, "Games"],
-            [FastFormulaAreasItems.GameData, "Data"],
-            [FastFormulaAreasItems.BracketDefs, "Defs"],
-            [FastFormulaAreasItems.BracketInfo, "Info"],
-            [FastFormulaAreasItems.RulesData, "Rules"],
-        ]
-    );
     static itemMax: number = 1000; // only 2000 items per rangearea...
 
     m_areasItems: FastFormulaAreasItem[] = [];
@@ -220,7 +176,7 @@ export class FastFormulaAreas
 
     static getFastFormulaAreaCacheForType(context: JsCtx, type: FastFormulaAreasItems): FastFormulaAreas
     {
-        const name = this.s_mapTypeName.get(type);
+        const name = FastFormulaAreaDefinitions.getMapTypeNameFromType(type);
 
         // first see if we have this item cached
         const areas = context.getTrackedItemOrNull(name);
@@ -274,15 +230,10 @@ export class FastFormulaAreas
             });
     }
 
-    static getCacheNameFromType(type: FastFormulaAreasItems, cacheName: string)
-    {
-        return `${cacheName}-${this.s_mapTypeCacheNameRoot.get(type)}`;
-    }
-
     static requestMergedAreasType(context: JsCtx, type: FastFormulaAreasItems): Excel.RangeAreas
     {
-        const rangeInfoForMerges = FastFormulaAreas.s_mapTypeRange.get(type);
-        const sheetForMerges = context.Ctx.workbook.worksheets.getItem(FastFormulaAreas.s_mapTypeSheet.get(type));;
+        const rangeInfoForMerges = FastFormulaAreaDefinitions.getRangeFromType(type);
+        const sheetForMerges = context.Ctx.workbook.worksheets.getItem(FastFormulaAreaDefinitions.getSheetNameFromType(type));;
         const rangeForMerges = Ranges.rangeFromRangeInfo(sheetForMerges, rangeInfoForMerges);
         const areasMerges = rangeForMerges.getMergedAreasOrNullObject();
 
@@ -318,9 +269,9 @@ export class FastFormulaAreas
 
                 for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.GameData, FastFormulaAreasItems.BracketDefs, FastFormulaAreasItems.RulesData])
                 {
-                    const sheetName = FastFormulaAreas.s_mapTypeSheet.get(type);
-                    const range = FastFormulaAreas.s_mapTypeRange.get(type);
-                    const name = FastFormulaAreas.s_mapTypeName.get(type);
+                    const sheetName = FastFormulaAreaDefinitions.getSheetNameFromType(type);
+                    const range = FastFormulaAreaDefinitions.getRangeFromType(type);
+                    const name = FastFormulaAreaDefinitions.getMapTypeNameFromType(type);
 
                     const areas = new FastFormulaAreas();
                     areas.m_sheetName = sheetName;
@@ -346,7 +297,7 @@ export class FastFormulaAreas
                     if (areasMerges)
                     {
                         context.addCacheObject(
-                            this.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+                            FastFormulaAreaDefinitions.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
                             { type: ObjectType.JsObject, o: areasMerges });
                     }
                 }
@@ -368,7 +319,11 @@ export class FastFormulaAreas
         if (cached != null)
             return cached;
 
-        return await this.populateFastFormulaAreaCache(context, this.s_mapTypeRange.get(type), this.s_mapTypeSheet.get(type), this.s_mapTypeName.get(type));
+        return await this.populateFastFormulaAreaCache(
+            context,
+            FastFormulaAreaDefinitions.getRangeFromType(type),
+            FastFormulaAreaDefinitions.getSheetNameFromType(type),
+            FastFormulaAreaDefinitions.getMapTypeNameFromType(type));
     }
 }
 

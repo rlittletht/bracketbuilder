@@ -434,27 +434,47 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
         listItems.push(
             {
-                icon: "Play",
-                primaryText: "Lucky One Game",
+                icon: "Next",
+                primaryText: "Automatically place the next game",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
                     await StructureEditor.luckyOneGame(appContext);
                     return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.LuckyNext,
+                    title: "Automatically Place",
+                    text:
+                        "Place the next game in the best slot available",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomLeftEdge,
+                    isWide: false
                 }
             });
 
         listItems.push(
             {
                 icon: "FastForward",
-                primaryText: "Lucky Whole Schedule",
+                primaryText: "Automatically schedule the rest of the tournament",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
                     await StructureEditor.luckyWholeSchedule(appContext);
                     return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.LuckyRemaining,
+                    title: "Place Remaining",
+                    text:
+                        "Place the rest of the games in the best possible slots",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomLeftEdge,
+                    isWide: false
                 }
             });
 

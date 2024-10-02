@@ -8,6 +8,7 @@ export class HelpTopic
     static Commands = "commands";
     static Commands_PickupGame = "commands#pickup";
     static Commands_LuckyOneGame = "faq#luckyOneGame";
+    static Commands_LuckyRestGames = "faq#luckyRestGames";
     static Commands_RepairGame = "commands#repair";
     static Commands_ConvertBracket = "commands#convertBracket";
     static FAQ = "faq";
@@ -36,6 +37,8 @@ export class HelpInfo
             [HelpTopic.Starting, "BracketBuilder.html"],
             [HelpTopic.Editing, "SheetEditing.html"],
             [HelpTopic.Commands, "Commands.html"],
+            [HelpTopic.Commands_LuckyOneGame, "Commands.html#LuckyOneGame"],
+            [HelpTopic.Commands_LuckyRestGames, "Commands.html#LuckyRestOfGames"],
             [HelpTopic.Commands_PickupGame, "Commands.html#PickUpGame"],
             [HelpTopic.Commands_RepairGame, "Commands.html#RepairGame"],
             [HelpTopic.Commands_ConvertBracket, "Commands.html#RemoveWhatIf"],
@@ -47,7 +50,7 @@ export class HelpInfo
             [HelpTopic.FAQ_Exceptions, "FAQ.html#exceptions"],
             [HelpTopic.FAQ_InsertFailed, "FAQ.html#insertFailed"],
             [HelpTopic.FAQ_BracketNotReady, "FAQ.html#bracketNotReady"],
-            [HelpTopic.FAQ_CustomBrackets, "FAQ.html#customBrackets"]
+            [HelpTopic.FAQ_CustomBrackets, "FAQ.html#customBrackets"],
         ]
     );
 

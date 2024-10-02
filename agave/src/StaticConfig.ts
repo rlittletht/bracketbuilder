@@ -45,7 +45,7 @@ export const s_staticConfig: StaticConfig =
     topLevelStateName: "traynrex-red",
     logCheckpoints: false,
     isLocalHost: isLocalHost,
-    cdnRoot: isLocalHost ? "https://localhost" : "https://addin.red.traynrex.com",
+    cdnRoot: isLocalHost ? "https://localhost:3000" : "https://addin.red.traynrex.com",
     bodyFont: "Aptos Narrow",
     bodySize: 9,
     blackFont: "Aptos Black",

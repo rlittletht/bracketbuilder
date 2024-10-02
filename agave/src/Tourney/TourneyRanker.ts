@@ -61,6 +61,11 @@ export class TourneyRanker
             }
             if (highest < working.length)
                 highest = working.length;
+
+            if (working.length > 10000)
+            {
+                return null;
+            }
         }
 
         console.log(`found ${finalOptions.length} options. high water mark: ${highest}`);

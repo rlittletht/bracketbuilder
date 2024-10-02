@@ -26,6 +26,7 @@ import { HelpTopic } from "../Coaching/HelpInfo";
 import { IBracketDefinitionData } from "../Brackets/IBracketDefinitionData";
 import { DateWithoutTime } from "../Support/DateWithoutTime";
 import { FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreasItems";
+import { FastFormulaAreaDefinitions } from "../Interop/FastFormulaAreas/FastFormulaAreaDefinitions";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -884,7 +885,7 @@ export class Grid
     {
         const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         const areasMerges: Excel.RangeAreas = await context.getTrackedItemOrPopulate(
-            FastFormulaAreas.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+            FastFormulaAreaDefinitions.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
             async (context: JsCtx): Promise<CacheObject> =>
             {
                 if (s_staticConfig.throwOnCacheMisses)
