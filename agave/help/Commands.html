@@ -321,9 +321,58 @@
 <section id="BracketTools">
     <heading>Bracket Tools</heading>
     <content>
-        <br clear="all"/>
-        <floatRight style="width: 20vw;padding-top: 2rem">
-            <img class="whiteBack" src="Images/PickUpGame.png"/>
+        <section id="LuckyOneGame">
+            <br clear="all" />
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/PlaceNext.png" />
+            </floatRight>
+            <heading>Place Next</heading>
+            <content>
+                <p>
+                    Building a bracket often requires a human to make sure the tournament has the right balance between being
+                    packed as tightly as possible while still having time for teams to prepare for the next game, etc.
+                    But sometimes you just want to know where the "best" next place would be for a game (is it today? tomorrow?).
+                    <prod>BracketBuilder</prod> can place the next game for you when you click <em>Place Next</em>game
+                </p>
+                <p>
+                    In order to figure out how to place games, there are rules about the tournament you can customize. By default,
+                    the tournament has 2 fields. Both fields can start games between 9am and 6pm on Saturday, 10am and 6pm on Sunday,
+                    and can start games only at 6pm on weekdays.
+                </p>
+                <p>
+                    You can customize all of this on the <a href="./SheetEditing.html#Rules">Rules</a> sheet
+                </p>
+            </content>
+        </section>
+        <section id="LuckyRestOfGames">
+            <br clear="all"/>
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/PlaceRemaining.png"/>
+            </floatRight>
+            <heading>Place Remaining</heading>
+            <content>
+                <p>
+                    When you automatically place a game with <em>Place Next</em>, the only thing that is considered is where the
+                    <em>next</em> game is best placed. <prodRef>BracketBuilder</prodRef> doesn't consider how the rest of the
+                    tournament is affected by that game placement. For example, if the best place to put game 2 is on Tuesday,
+                    but by putting game 2 on Tuesday, we now can't play games 3 or 4 on Tuesday, causing a bunch of games to slip
+                    a day, then clearly game 2 should have waited.
+                </p>
+                <p>
+                    The only way to know this is going to happen is to schedule the whole tournament and compare that
+                    with other full tournaments -- how long are the tournaments, how evenly placed are the games, etc.
+                    When you click <em>Place Remaining</em>, <prodRef>BracketBuilder</prodRef> tries out every combination of
+                    game placements and chooses the best overall outcome. This usually results in a better progression of
+                    games in the tournament.
+                </p>
+                <p>
+                    You can customize all of this on the <a href="./SheetEditing.html#Rules">Rules</a> sheet.
+                </p>
+            </content>
+        </section>
+        <br clear="all" />
+        <floatRight style="width: 20vw; padding-top: 2rem">
+            <img class="whiteBack" src="Images/PickUpGame.png" />
         </floatRight>
         <section id="PickUpGame">
             <heading>Pick up Game</heading>
@@ -339,9 +388,9 @@
                     in or on the game on the bracket, and click the <em>Pick Up Game</em> button. When you do this, the entire
                     game will get selected.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/DropGame.png"/>
+                <br clear="all" />
+                <floatRight style="width: 20vw; padding-top: 2rem">
+                    <img class="whiteBack" src="Images/DropGame.png" />
                 </floatRight>
             </content>
         </section>
@@ -354,9 +403,9 @@
                     select the entire range you want the game to go to. You should only select one column (don't include
                     the score or line columns). Once you have made your selection, click the <em>Drop Game</em> button.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/RemoveGame.png"/>
+                <br clear="all" />
+                <floatRight style="width: 20vw; padding-top: 2rem">
+                    <img class="whiteBack" src="Images/RemoveGame.png" />
                 </floatRight>
             </content>
         </section>
@@ -373,9 +422,9 @@
                     remove parts of a game that have been left behind, or to remove a broken game complete, select all of the
                     cells you want to clear and click the <em>remove game</em> button.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/RepairGame.png"/>
+                <br clear="all" />
+                <floatRight style="width: 20vw; padding-top: 2rem">
+                    <img class="whiteBack" src="Images/RepairGame.png" />
                 </floatRight>
             </content>
         </section>
@@ -387,9 +436,9 @@
                     happens, you can just Repair the game by clicking the <em>Repair Game</em> button. This will delete and
                     add the game back to the bracket, inserting all of the formulas and formatting to make things work again.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/GameCommands.png"/>
+                <br clear="all" />
+                <floatRight style="width: 20vw; padding-top: 2rem">
+                    <img class="whiteBack" src="Images/GameCommands.png" />
                 </floatRight>
             </content>
         </section>

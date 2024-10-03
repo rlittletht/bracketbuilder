@@ -100,7 +100,7 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
             <div>
                 <Stack horizontal tokens={
                        {
-                        childrenGap: 10,
+                        childrenGap: 5,
                        }} horizontalAlign={this.props.alignment} className="toolbar">
                     {ribbonItems}
                 </Stack>

@@ -27,13 +27,18 @@ export class RulesBuilder
         ["If a rule value is empty, then that part of the rule will not be applied"]
     ];
 
+    static s_staticDayInstructions =
+        [
+            ["These day rules apply to all fields. If a field has a specific rule above AND a day has a specific rule below, the field rule will prevail."]
+        ];
+
     static s_staticInstructionsRange = RangeInfo.createForArrayOfValues(0, 0, RulesBuilder.s_staticInstructions);
 
     static s_initialFieldRules =
     [
-        ["Field", "Has Lights", "EarliestSaturday", "LatestSaturday", "EarliestSunday", "LatestSunday", "EarliestWeekday", "LatestWeekday"],
-        ["Field #1", false, null, null, null, null, null, null],
-        ["Field #2", false, null, null, null, null, null, null],
+        ["Field", "Has Lights", "SlotLengthInMinutes", "EarliestSaturday", "LatestSaturday", "EarliestSunday", "LatestSunday", "EarliestWeekday", "LatestWeekday"],
+        ["Field #1", false, 180, null, null, null, null, null, null],
+        ["Field #2", false, 180, null, null, null, null, null, null],
     ];
 
     static s_initialFieldRulesRange = RangeInfo.createForArrayOfValues(
@@ -55,9 +60,15 @@ export class RulesBuilder
         ["Friday", null, null]
     ];
 
-    static s_initialDayRulesRange =
+    static s_initialDayRulesInstructionsRange =
         RangeInfo.createForArrayOfValues(
             RulesBuilder.s_initialFieldRulesRange.LastRow + 8,
+            0,
+            RulesBuilder.s_staticDayInstructions);
+
+    static s_initialDayRulesRange =
+        RangeInfo.createForArrayOfValues(
+            RulesBuilder.s_initialDayRulesInstructionsRange.LastRow + 2,
             0,
             RulesBuilder.s_initialDayRules);
 
@@ -69,7 +80,7 @@ export class RulesBuilder
     ----------------------------------------------------------------------------*/
     static async buildRulesSheet(context: JsCtx, fastTables: IFastTables)
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, RulesBuilder.SheetName, GlobalDataBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, RulesBuilder.SheetName, null, EnsureSheetPlacement.First);
 
         let rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, this.s_staticInstructionsRange);
         rng.values = this.s_staticInstructions;
@@ -85,8 +96,11 @@ export class RulesBuilder
         // set date formatting
         rng = Ranges.rangeFromRangeInfo(
             sheet,
-            this.s_initialFieldRulesRange.offset(1, this.s_initialFieldRulesRange.RowCount - 1, 2, this.s_initialFieldRulesRange.ColumnCount - 2));
+            this.s_initialFieldRulesRange.offset(1, this.s_initialFieldRulesRange.RowCount - 1, 3, this.s_initialFieldRulesRange.ColumnCount - 3));
         rng.numberFormat = [["HH:mm"]];
+
+        rng = Ranges.rangeFromRangeInfo(sheet, this.s_initialDayRulesInstructionsRange);
+        rng.values = this.s_staticDayInstructions;
 
         rng = Ranges.rangeFromRangeInfo(sheet, this.s_initialDayRulesRange);
         rng.values = this.s_initialDayRules;
