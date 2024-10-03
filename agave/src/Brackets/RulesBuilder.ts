@@ -49,10 +49,10 @@ export class RulesBuilder
     static s_initialDayRules =
     [
         ["Day", "EarliestStart", "LatestStart"],
-        ["Saturday", OADate.OATimeFromMinutes(9 * 60), OADate.OATimeFromMinutes(18 * 60)],
-        ["Sunday", OADate.OATimeFromMinutes(10 * 60), OADate.OATimeFromMinutes(18 * 60)],
         ["Weekday", OADate.OATimeFromMinutes(18 * 60), OADate.OATimeFromMinutes(18 * 60)],
         ["Weekend", null, null],
+        ["Saturday", OADate.OATimeFromMinutes(9 * 60), OADate.OATimeFromMinutes(18 * 60)],
+        ["Sunday", OADate.OATimeFromMinutes(10 * 60), OADate.OATimeFromMinutes(18 * 60)],
         ["Monday", null, null],
         ["Tuesday", null, null],
         ["Wednesday", null, null],
