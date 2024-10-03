@@ -1,5 +1,4 @@
 
-import { BracketDefinition } from "./BracketDefinitions";
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
 import { Ranges, RangeInfo } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
@@ -12,7 +11,7 @@ import { UndoGameDataItem } from "../BracketEditor/Undo";
 import { JsCtx } from "../Interop/JsCtx";
 import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnSetValues } from "../Interop/Intentions/TnSetValue";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { RangeCaches, RangeCacheItemType } from "../Interop/RangeCaches";
 import { BracketManager } from "./BracketManager";
 import { BracketDefBuilder } from "./BracketDefBuilder";
@@ -21,6 +20,7 @@ import { TestRunner } from "../Support/TestRunner";
 import { IAppContext } from "../AppContext/AppContext";
 import { StreamWriter } from "../Support/StreamWriter";
 import { s_staticConfig } from "../StaticConfig";
+import { IBracketDefinitionData } from "./IBracketDefinitionData";
 
 export interface TeamNameMap
 {
@@ -87,36 +87,30 @@ export class GameDataSources
     {
         const tns = [];
 
-        const rangeTeamsFields = RangeCaches.getCacheByType(RangeCacheItemType.FieldsAndTimesBody);
-        if (rangeTeamsFields)
+        const { range: dataRange, values: dataValues } = RangeCaches.getDataRangeAndValuesFromRangeCacheType(context, RangeCacheItemType.FieldsAndTimesBody);
+
+        if (dataRange)
         {
-            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeTeamsFields.formulaCacheType);
-            if (areas)
+            for (let row = 0; row < dataRange.RowCount; row++)
             {
-                const dataRange = rangeTeamsFields.rangeInfo;
-                const dataValues = areas.getValuesForRangeInfo(dataRange);
-
-                for (let row = 0; row < dataRange.RowCount; row++)
+                if (dataValues[row][0] == gameNum.GameId.Value)
                 {
-                    if (dataValues[row][0] == gameNum.GameId.Value)
-                    {
-                        tns.push(
-                            TnSetValues.Create(
-                                dataRange.offset(row, 1, 0, 4),
+                    tns.push(
+                        TnSetValues.Create(
+                            dataRange.offset(row, 1, 0, 4),
+                            [
                                 [
-                                    [
-                                        gameNum.GameId.Value,
-                                        field[0] == "=" ? dataValues[row][1] : field,
-                                        typeof time !== "number" ? dataValues[row][2] : time,
-                                        typeof swapHomeAway !== "boolean" ? dataValues[row][3] : swapHomeAway
-                                    ]
-                                ],
-                                GameDataSources.SheetName));
-                    }
+                                    gameNum.GameId.Value,
+                                    field[0] == "=" ? dataValues[row][1] : field,
+                                    typeof time !== "number" ? dataValues[row][2] : time,
+                                    typeof swapHomeAway !== "boolean" ? dataValues[row][3] : swapHomeAway
+                                ]
+                            ],
+                            GameDataSources.SheetName));
                 }
-
-                return tns;
             }
+
+            return tns;
         }
 
         if (s_staticConfig.throwOnCacheMisses)
@@ -287,11 +281,26 @@ export class GameDataSources
             }
             else
             {
-                newValues.push([values[i][0], values[i][1], values[i][2], values[i][3]])
+                newValues.push(null);
             }
         }
 
-        return { undoItem: undoGameDataItem, tns: [TnSetValues.Create(rangeCache.rangeInfo, newValues, rangeCache.sheetName)] };
+        // now create tns for just the range we really want to set
+
+        const tns: IIntention[] = [];
+
+        for (let row = rangeCache.rangeInfo.FirstRow; row <= rangeCache.rangeInfo.LastRow; row++)
+        {
+            const iValue = row - rangeCache.rangeInfo.FirstRow;
+
+            if (newValues[iValue] !== null)
+            {
+                const valueRange = rangeCache.rangeInfo.offset(iValue, 1, 0, rangeCache.rangeInfo.ColumnCount);
+                tns.push(TnSetValues.Create(valueRange, [newValues[iValue]], rangeCache.sheetName));
+            }
+        }
+
+        return { undoItem: undoGameDataItem, tns: tns };
     }
 
     /*----------------------------------------------------------------------------
@@ -413,7 +422,7 @@ export class GameDataSources
         most up-to-date info, even if it hasn't been pushed back to this bracket
         source sheet.
     ----------------------------------------------------------------------------*/
-    static async buildGameDataSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: BracketDefinition)
+    static async buildGameDataSourcesSheet(context: JsCtx, fastTables: IFastTables, bracketDefinition: IBracketDefinitionData)
     {
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GameDataSources.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 

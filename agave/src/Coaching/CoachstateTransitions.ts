@@ -21,7 +21,8 @@ export class CoachstateTransitions
                     [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                     [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                     [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                    [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                    [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                    [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                 ]
             )],
             [
@@ -39,7 +40,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                     ]
                 )
             ],
@@ -58,7 +60,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                     ]
                 )
             ],
@@ -77,7 +80,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                     ]
                 )
             ],
@@ -96,7 +100,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                     ]
                 )
             ],
@@ -115,7 +120,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                     ]
                 )
             ],
@@ -134,7 +140,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.Unknown]
                     ]
                 )
             ],
@@ -153,7 +160,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.DuringConstruction]
                     ]
                 )
             ],
@@ -172,7 +180,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.Unknown]
                     ]
                 )
             ],
@@ -191,7 +200,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.Unknown]
                     ]
                 )
             ],
@@ -210,7 +220,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.Unknown]
                     ]
                 )
             ],
@@ -229,7 +240,8 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.Unknown]
                     ]
                 )
             ],
@@ -248,7 +260,48 @@ export class CoachstateTransitions
                         [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
                         [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
                         [CoachTransition.NoGamesLinked, Coachstate.AddFirstGame],
-                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd]
+                        [CoachTransition.OneGameLinked, Coachstate.AfterFirstAdd],
+                        [CoachTransition.LuckyNext, Coachstate.Unknown]
+                    ]
+                )
+            ],
+            [
+                Coachstate.AfterLuckyNext,
+                new Map<CoachTransition, Coachstate>(
+                    [
+                        [CoachTransition.AddGame, Coachstate.AfterLuckyNext],
+                        [CoachTransition.BuildBracket, Coachstate.Unknown],
+                        [CoachTransition.RemoveGame, Coachstate.BeforeLuckyNext],
+                        [CoachTransition.FinishTouches, Coachstate.Unknown],
+                        [CoachTransition.Undo, Coachstate.BeforeLuckyNext],
+                        [CoachTransition.Redo, Coachstate.AfterLuckyNext],
+                        [CoachTransition.PullChanges, Coachstate.DuringConstruction],
+                        [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
+                        [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
+                        [CoachTransition.NoGamesLinked, Coachstate.BeforeLuckyNext],
+                        [CoachTransition.OneGameLinked, Coachstate.AfterLuckyNext],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
+                    ]
+                )
+            ],
+            [
+                Coachstate.BeforeLuckyNext,
+                new Map<CoachTransition, Coachstate>(
+                    [
+                        [CoachTransition.AddGame, Coachstate.AfterLuckyNext],
+                        [CoachTransition.BuildBracket, Coachstate.Unknown],
+                        [CoachTransition.RemoveGame, Coachstate.BeforeLuckyNext],
+                        [CoachTransition.FinishTouches, Coachstate.Unknown],
+                        [CoachTransition.Undo, Coachstate.BeforeLuckyNext],
+                        [CoachTransition.Redo, Coachstate.AfterLuckyNext],
+                        [CoachTransition.PullChanges, Coachstate.DuringConstruction],
+                        [CoachTransition.DirtyGameFound, Coachstate.GameDirty],
+                        [CoachTransition.BrokenGameFound, Coachstate.BrokenGame],
+                        [CoachTransition.AllGamesLinked, Coachstate.AllGamesPlaced],
+                        [CoachTransition.NoGamesLinked, Coachstate.BeforeLuckyNext],
+                        [CoachTransition.OneGameLinked, Coachstate.AfterLuckyNext],
+                        [CoachTransition.LuckyNext, Coachstate.AfterLuckyNext]
                     ]
                 )
             ],

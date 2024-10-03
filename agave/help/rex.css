@@ -252,6 +252,11 @@ nav {
         font-size: .9rem;
     }
 
+    nav > ul > ul > ul > ul > ul > li > a {
+        font-variant: normal;
+        font-size: .9rem;
+    }
+
     nav ul li a {
         font-weight: bold;
         text-decoration: none;

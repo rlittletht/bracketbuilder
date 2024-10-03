@@ -11,10 +11,13 @@ import { EnsureSheetPlacement, Sheets } from "../Interop/Sheets";
 import { Tables } from "../Interop/Tables";
 import { SetupBook } from "../Setup";
 import { StatusBox } from "../taskpane/components/StatusBox";
-import { BracketDefinition, GameDefinition, s_brackets, TeamPlacement } from "./BracketDefinitions";
+import { s_brackets, TeamPlacement } from "./BracketDefinitions";
 import { BracketInfoBuilder } from "./BracketInfoBuilder";
 import { GameDataSources } from "./GameDataSources";
 import { GridBuilder } from "./GridBuilder";
+import { IBracketDefinitionData } from "./IBracketDefinitionData";
+import { IBracketGameDefinition } from "./IBracketGameDefinition";
+import { RulesBuilder } from "./RulesBuilder";
 
 export interface BracketOption
 {
@@ -30,12 +33,12 @@ export class BracketDefBuilder
         %%Function: BracketDefBuilder.getArrayValuesFromBracketDefinition
     ----------------------------------------------------------------------------*/
     static getArrayValuesFromBracketDefinition(
-        bracketDefinition: BracketDefinition): any[][]
+        bracketDefinition: IBracketDefinitionData): any[][]
     {
         let values: any[][] = [];
 
         bracketDefinition.games.forEach(
-            (gameDef: GameDefinition, gameNum: number) =>
+            (gameDef: IBracketGameDefinition, gameNum: number) =>
             {
                 values.push([gameNum + 1, gameDef.winner, gameDef.loser, gameDef.topSource, gameDef.bottomSource, gameDef.topSeed ?? "", gameDef.bottomSeed ?? ""]);
             });
@@ -43,7 +46,7 @@ export class BracketDefBuilder
         return values;
     }
 
-    static getTeamSeedNames(bracket: BracketDefinition): { team: string, seed: string }[]
+    static getTeamSeedNames(bracket: IBracketDefinitionData): { team: string, seed: string }[]
     {
         const teams: { team: string, seed: string }[] = [];
 
@@ -61,7 +64,7 @@ export class BracketDefBuilder
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getTeamNames
     ----------------------------------------------------------------------------*/
-    static getTeamNames(bracket: BracketDefinition): string[]
+    static getTeamNames(bracket: IBracketDefinitionData): string[]
     {
         const teams: string[] = [];
 
@@ -76,7 +79,7 @@ export class BracketDefBuilder
         return teams;
     }
 
-    static getSeedNames(bracket: BracketDefinition): string[]
+    static getSeedNames(bracket: IBracketDefinitionData): string[]
     {
         const seeds: string[] = [];
 
@@ -90,6 +93,7 @@ export class BracketDefBuilder
 
         return seeds;
     }
+
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getStaticAvailableBrackets
 
@@ -100,7 +104,7 @@ export class BracketDefBuilder
         let brackets: BracketOption[] = [];
 
         s_brackets.forEach(
-            (bracket: BracketDefinition) =>
+            (bracket: IBracketDefinitionData) =>
             {
                 BracketDefBuilder.verifyBracketConsistency(bracket);
 
@@ -114,7 +118,7 @@ export class BracketDefBuilder
         return brackets;
     }
 
-    static verifyAdvanceSourceCorrect(games: GameDefinition[], sourceExpected: string, advance: string)
+    static verifyAdvanceSourceCorrect(games: IBracketGameDefinition[], sourceExpected: string, advance: string)
     {
         const advanceNum = BracketManager.GameIdFromWinnerLoser(advance).GameNum;
         const placement = BracketManager.GetTeamPlacementFromAdvance(advance);
@@ -129,7 +133,7 @@ export class BracketDefBuilder
             throw new Error(`advance to game G${advanceNum.GameId.Value} has wrong source: sourceExpected(${sourceExpected}) != actual(${actualSource}))`);
     }
 
-    static verifySourceAdvanceCorrect(games: GameDefinition[], advanceExpected: string, source: string)
+    static verifySourceAdvanceCorrect(games: IBracketGameDefinition[], advanceExpected: string, source: string)
     {
         const sourceId = BracketManager.GameIdFromWinnerLoser(source);
         const sourceNum = sourceId.GameNum;
@@ -146,9 +150,7 @@ export class BracketDefBuilder
         // one of the results (winner or loser) has to go to the expected
         if (sourceGame.winner != advanceExpected
             && sourceGame.loser != advanceExpected)
-        {
             throw new Error(`source information for game (${advanceExpected}) doesn't match winner or loser in G${sourceId.Value} -- corrupt bracket`);
-        }
     }
 
     static verifyAndRecordSeed(mapSeeds: Map<string, number>, source: string, seed: string | undefined)
@@ -179,7 +181,7 @@ export class BracketDefBuilder
 
         Verify that the bracket is internally consistent
     ----------------------------------------------------------------------------*/
-    static verifyBracketConsistency(def: BracketDefinition)
+    static verifyBracketConsistency(def: IBracketDefinitionData)
     {
         // if there are seeds, they have to be complete
         const mapSeeds = new Map<string, number>();
@@ -197,9 +199,7 @@ export class BracketDefBuilder
                 let isChampionship = false;
 
                 if (gameDef.winner && gameDef.winner != "")
-                {
                     this.verifyAdvanceSourceCorrect(def.games, `W${new GameNum(num).GameId.Value}`, gameDef.winner);
-                }
                 else
                 {
                     if (gameDef.loser && gameDef.loser != "")
@@ -250,12 +250,12 @@ export class BracketDefBuilder
     /*----------------------------------------------------------------------------
         %%Function: BracketDefBuilder.getBracketDefinition
     ----------------------------------------------------------------------------*/
-    static getStaticBracketDefinition(bracketTableName: string): BracketDefinition
+    static getStaticBracketDefinition(bracketTableName: string): IBracketDefinitionData
     {
-        let match: BracketDefinition = null;
+        let match: IBracketDefinitionData = null;
 
         s_brackets.forEach(
-            (bracket: BracketDefinition) =>
+            (bracket: IBracketDefinitionData) =>
             {
                 if (bracket.tableName === bracketTableName)
                     match = bracket;
@@ -266,7 +266,7 @@ export class BracketDefBuilder
         return match;
     }
 
-    static getStaticBrackets(): BracketDefinition[]
+    static getStaticBrackets(): IBracketDefinitionData[]
     {
         return s_brackets;
     }
@@ -282,7 +282,7 @@ export class BracketDefBuilder
         sheet: Excel.Worksheet,
         fastTables: IFastTables,
         row: number,
-        bracketDefinition: BracketDefinition): Promise<number>
+        bracketDefinition: IBracketDefinitionData): Promise<number>
     {
         const rowFirstTable: number = row + 1;
         const rowFirstTableData: number = rowFirstTable + 1;
@@ -369,9 +369,7 @@ export class BracketDefBuilder
             let row: number = 1;
 
             for (const bracketNum in s_brackets)
-            {
                 row = await this.insertBracketDefinitionAtRow(context, sheetBrackets, fastTables, row, s_brackets[bracketNum]);
-            }
         }
         catch (error)
         {
@@ -393,7 +391,7 @@ export class BracketDefBuilder
     {
         const bracketChoice: string = appContext.SelectedBracket;
 
-        let bracketDefinition: BracketDefinition = _bracketManager.getBracket(bracketChoice);
+        let bracketDefinition: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracketChoice);
 
         if (bracketDefinition == null)
         {
@@ -423,6 +421,7 @@ export class BracketDefBuilder
             await _bracketManager.populateBracketsIfNecessary(context, bracketChoice);
         }
 
+        await RulesBuilder.buildRulesSheet(context, fastTables);
         await GridBuilder.buildGridSheet(context);
         await BracketInfoBuilder.buildBracketInfoSheet(context, bracketChoice, bracketDefinition);
         await GameDataSources.buildGameDataSourcesSheet(context, fastTables, bracketDefinition);

@@ -9,13 +9,17 @@ import { GridRankerTests } from "../BracketEditor/GridRankerTests";
 import { GridTests } from "../BracketEditor/GridTests";
 import { StructureInsertTests } from "../BracketEditor/StructureEditor/StrutureInsertTests";
 import { OADateTests } from "../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasTest } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas, FastFormulaAreasTest } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastRangeAreasTest } from "../Interop/FastRangeAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { ParserTests } from "../Interop/Parser";
 import { StreamWriter } from "../Support/StreamWriter";
 import { _bracketManager } from "../Brackets/BracketManager";
 import { GameDataSourcesTests } from "../Brackets/GameDataSources";
+import { TourneyTests } from "../Tourney/TourneyTests";
+import { TimeWithoutDateTests } from "../Support/TimeWithoutDateTests";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { DateWithoutTimeTests } from "../Support/DateWithoutTimeTests";
 
 export class UnitTests
 {
@@ -42,6 +46,9 @@ export class UnitTests
                     context.releaseAllCacheObjects();
                 });
 
+            TimeWithoutDateTests.runAllTests(appContext, outStream);
+            DateWithoutTimeTests.runAllTests(appContext, outStream);
+            TourneyTests.runAllTests(appContext, outStream);
             GameDataSourcesTests.runAllTests(appContext, outStream);
             StructureInsertTests.runAllTests(appContext, outStream);
             FastFormulaAreasTest.runAllTests(appContext, outStream);

@@ -167,8 +167,6 @@
 <section id="ShowHide">
     <heading>Show/Hide Sheets</heading>
     <content>
-        <br clear="all"/>
-
         <floatRight style="width: 20vw; margin-top: -3rem">
             <img class="whiteBack" src="Images/ShowHideSheets.png"/>
         </floatRight>
@@ -184,8 +182,6 @@
 <section id="LockDays">
     <heading>Lock Days</heading>
     <content>
-        <br clear="all"/>
-
         <floatRight style="width: 20vw; margin-top: -3rem">
             <img class="whiteBack" src="Images/LockDays.png"/>
         </floatRight>
@@ -205,8 +201,6 @@
 <section id="RainoutDay">
     <heading>Rainout Entire Day</heading>
     <content>
-        <br clear="all"/>
-
         <floatRight style="width: 20vw; margin-top: -3rem">
             <img class="whiteBack" src="Images/RainoutDay.png"/>
         </floatRight>
@@ -229,8 +223,6 @@
 <section id="RemoveWhatIf">
     <heading>Convert Bracket to Modified Double Elimination</heading>
     <content>
-        <br clear="all"/>
-
         <floatRight style="width: 20vw; margin-top: -3rem">
             <img class="whiteBack" src="Images/RemoveWhatIf.png"/>
         </floatRight>
@@ -252,7 +244,6 @@
 <section id="ResetTeaching">
     <heading>Reset Teaching</heading>
     <content>
-        <br clear="all"/>
         <floatRight style="width: 20vw; margin-top: -3rem">
             <img class="whiteBack" src="Images/ResetTeaching.png"/>
         </floatRight>
@@ -275,7 +266,6 @@
 <section id="FinishingTouches">
     <heading>Finishing Touches</heading>
     <content>
-        <br clear="all"/>
         <floatRight style="width: 20vw; margin-top: -3rem">
             <img class="whiteBack" src="Images/FinishingTouches.png"/>
         </floatRight>
@@ -308,7 +298,6 @@
 <section id="Help">
     <heading>Help</heading>
     <content>
-        <br clear="all"/>
         <floatRight style="width: 20vw; margin-top: -4rem">
             <img class="whiteBack" src="Images/Help.png"/>
         </floatRight>
@@ -321,12 +310,58 @@
 <section id="BracketTools">
     <heading>Bracket Tools</heading>
     <content>
-        <br clear="all"/>
-        <floatRight style="width: 20vw;padding-top: 2rem">
-            <img class="whiteBack" src="Images/PickUpGame.png"/>
-        </floatRight>
+        <section id="LuckyOneGame">
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/PlaceNext.png" />
+            </floatRight>
+            <heading>Place Next</heading>
+            <content>
+                <p>
+                    Building a bracket often requires a human to make sure the tournament has the right balance between being
+                    packed as tightly as possible while still having time for teams to prepare for the next game, etc.
+                    But sometimes you just want to know where the "best" next place would be for a game (is it today? tomorrow?).
+                    <prod>BracketBuilder</prod> can place the next game for you when you click <em>Place Next</em>game
+                </p>
+                <p>
+                    In order to figure out how to place games, there are rules about the tournament you can customize. By default,
+                    the tournament has 2 fields. Both fields can start games between 9am and 6pm on Saturday, 10am and 6pm on Sunday,
+                    and can start games only at 6pm on weekdays.
+                </p>
+                <p>
+                    You can customize all of this on the <a href="./SheetEditing.html#Rules">Rules</a> sheet
+                </p>
+            </content>
+        </section>
+        <section id="LuckyRestOfGames">
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/PlaceRemaining.png"/>
+            </floatRight>
+            <heading>Place Remaining</heading>
+            <content>
+                <p>
+                    When you automatically place a game with <em>Place Next</em>, the only thing that is considered is where the
+                    <em>next</em> game is best placed. <prodRef>BracketBuilder</prodRef> doesn't consider how the rest of the
+                    tournament is affected by that game placement. For example, if the best place to put game 2 is on Tuesday,
+                    but by putting game 2 on Tuesday, we now can't play games 3 or 4 on Tuesday, causing a bunch of games to slip
+                    a day, then clearly game 2 should have waited.
+                </p>
+                <p>
+                    The only way to know this is going to happen is to schedule the whole tournament and compare that
+                    with other full tournaments -- how long are the tournaments, how evenly placed are the games, etc.
+                    When you click <em>Place Remaining</em>, <prodRef>BracketBuilder</prodRef> tries out every combination of
+                    game placements and chooses the best overall outcome. This usually results in a better progression of
+                    games in the tournament.
+                </p>
+                <p>
+                    You can customize all of this on the <a href="./SheetEditing.html#Rules">Rules</a> sheet.
+                </p>
+            </content>
+        </section>
         <section id="PickUpGame">
             <heading>Pick up Game</heading>
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/PickUpGame.png"/>
+            </floatRight>
             <content>
                 <p>
                     If you want to move a game on the bracket, you can remove the game (and all of the games after it), and then
@@ -339,14 +374,13 @@
                     in or on the game on the bracket, and click the <em>Pick Up Game</em> button. When you do this, the entire
                     game will get selected.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/DropGame.png"/>
-                </floatRight>
             </content>
         </section>
         <section id="DropGame">
             <heading>Drop Game</heading>
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/DropGame.png"/>
+            </floatRight>
             <content>
                 <p>
                     After you have picked up the game, you should select where you want the game to go. If you just select
@@ -354,49 +388,46 @@
                     select the entire range you want the game to go to. You should only select one column (don't include
                     the score or line columns). Once you have made your selection, click the <em>Drop Game</em> button.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/RemoveGame.png"/>
-                </floatRight>
             </content>
         </section>
         <section id="RemoveGame">
-            <heading>Remove Game</heading>
+            <heading>Erase Game</heading>
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/RemoveGame.png"/>
+            </floatRight>
             <content>
                 <p>
                     If you want to remove a game from the bracket, you can find the game in the list of games and
                     press the - sign to remove it. The other way to do it is to just select any cell in or on the game
-                    in the bracket and click the <em>remove game</em> button.
+                    in the bracket and click the <em>erase game</em> button.
                 </p>
                 <p>
                     Sometimes pieces of games get left behind, especially when the bracket is manually edited. If you want to
                     remove parts of a game that have been left behind, or to remove a broken game complete, select all of the
-                    cells you want to clear and click the <em>remove game</em> button.
+                    cells you want to clear and click the <em>erase game</em> button.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/RepairGame.png"/>
-                </floatRight>
             </content>
         </section>
         <section id="RepairGame">
             <heading>Repair Game</heading>
+            <floatRight style="width: 20vw; padding-top: 2rem">
+                <img class="whiteBack" src="Images/RepairGame.png"/>
+            </floatRight>
             <content>
                 <p>
                     Sometimes you can make formatting changes to the bracket, or even delete parts of the gaem. If this
                     happens, you can just Repair the game by clicking the <em>Repair Game</em> button. This will delete and
                     add the game back to the bracket, inserting all of the formulas and formatting to make things work again.
                 </p>
-                <br clear="all"/>
-                <floatRight style="width: 20vw;padding-top: 2rem">
-                    <img class="whiteBack" src="Images/GameCommands.png"/>
-                </floatRight>
             </content>
         </section>
     </content>
 </section>
 <section id="GameCommands">
     <heading>Game Commands</heading>
+    <floatRight style="width: 20vw; padding-top: 2rem">
+        <img class="whiteBack" src="Images/GameCommands.png"/>
+    </floatRight>
     <content>
         <p>Each game in the game list will be shaded according to whether or not its already in the bracket. </p>
         <p>

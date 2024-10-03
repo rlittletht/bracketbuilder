@@ -2,8 +2,9 @@
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { EnsureSheetPlacement, Sheets } from "../Interop/Sheets";
-import { BracketDefinition, GameDefinition } from "./BracketDefinitions";
 import { GridBuilder } from "./GridBuilder";
+import { IBracketDefinitionData } from "./IBracketDefinitionData";
+import { IBracketGameDefinition } from "./IBracketGameDefinition";
 
 export class BracketInfoBuilder
 {
@@ -16,7 +17,7 @@ export class BracketInfoBuilder
         Build the Bracket Data sheet (which has results and field schedule times
         in it)
     ----------------------------------------------------------------------------*/
-    static async buildBracketInfoSheet(context: JsCtx, bracketChoice: string, bracketDefinition: BracketDefinition)
+    static async buildBracketInfoSheet(context: JsCtx, bracketChoice: string, bracketDefinition: IBracketDefinitionData)
     {
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, BracketInfoBuilder.SheetName, GridBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
         let rng: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 2);
@@ -41,7 +42,7 @@ export class BracketInfoBuilder
         formulasFields.push(["Field Schedule", null, null, null]);
 
         bracketDefinition.games.forEach(
-            (_bracket: GameDefinition, gameNum: number) =>
+            (_bracket: IBracketGameDefinition, gameNum: number) =>
             {
                 let addressResultGameKey: string = Ranges.addressFromCoordinates([rowResultsFirst + 1 + gameNum, 0], null);
                 let addressFieldGameKey: string = Ranges.addressFromCoordinates([rowFieldScheduleFirst + 1 + gameNum, 0], null);

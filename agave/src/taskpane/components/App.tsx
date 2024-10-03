@@ -13,11 +13,10 @@ import { GameNum } from "../../BracketEditor/GameNum";
 import { Grid } from "../../BracketEditor/Grid";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
-import { BracketDefinition } from "../../Brackets/BracketDefinitions";
 import { _bracketManager } from "../../Brackets/BracketManager";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { CoachTransition } from "../../Coaching/CoachTransition";
-import { FastFormulaAreas } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { IntentionsTest } from "../../Interop/Intentions/IntentionsTest";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeCaches, RangeCacheItemType } from "../../Interop/RangeCaches";
@@ -40,6 +39,7 @@ import { Teachable, TeachableId } from "./Teachable";
 import { Toolbar, ToolbarItem } from "./Toolbar";
 import { Dispatcher } from "../../BracketEditor/Dispatcher";
 import { FreezeDays } from "../../commands/FreezeDays";
+import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
 
 /* global console, Excel, require  */
 
@@ -65,6 +65,7 @@ export interface AppState
     aboutShowing: boolean;
     heroListDirty: boolean;
     bracketMayHaveDirectEdits: boolean;
+    rulesMayHaveEdits: boolean;
     sheetsHidden: boolean;
     panesFrozen: boolean;
 }
@@ -102,6 +103,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
             aboutShowing: false,
             heroListDirty: false,
             bracketMayHaveDirectEdits: false,
+            rulesMayHaveEdits: false,
             sheetsHidden: false,
             panesFrozen: false
         };
@@ -129,6 +131,16 @@ export default class App extends React.Component<AppProps, AppState> implements 
     get BracketDirtyForBracketEdit(): boolean
     {
         return this.state?.bracketMayHaveDirectEdits ?? false;
+    }
+
+    set RulesDirtyForRulesEdit(dirty: boolean)
+    {
+        this.setState({ rulesMayHaveEdits: dirty });
+    }
+
+    get RulesDirtyForRulesEdit(): boolean
+    {
+        return this.state?.rulesMayHaveEdits;
     }
 
     set SheetsHidden(hidden: boolean)
@@ -422,6 +434,52 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
         listItems.push(
             {
+                icon: "Next",
+                primaryText: "Automatically place the next game",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.luckyOneGame(appContext);
+                    return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.LuckyNext,
+                    title: "Automatically Place",
+                    text:
+                        "Place the next game in the best slot available",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomLeftEdge,
+                    isWide: false
+                }
+            });
+
+        listItems.push(
+            {
+                icon: "FastForward",
+                primaryText: "Automatically schedule the rest of the tournament",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await StructureEditor.luckyWholeSchedule(appContext);
+                    return true;
+                },
+                teachableProps:
+                {
+                    id: TeachableId.LuckyRemaining,
+                    title: "Place Remaining",
+                    text:
+                        "Place the rest of the games in the best possible slots",
+                    visibleDelay: 500,
+                    directionalHint: DirectionalHint.bottomLeftEdge,
+                    isWide: false
+                }
+            });
+
+        listItems.push(
+            {
                 icon: "Upload",
                 primaryText: "Pick up game for move",
                 cursor: "cursorPointer",
@@ -501,9 +559,12 @@ export default class App extends React.Component<AppProps, AppState> implements 
     {
         prevProps;
 
-        if ((this.state.bracketMayHaveDirectEdits || this.state.heroListDirty)
-            && !(prevState.bracketMayHaveDirectEdits || prevState.heroListDirty))
+        if ((this.state.bracketMayHaveDirectEdits || this.state.rulesMayHaveEdits || this.state.heroListDirty)
+            && !(prevState.bracketMayHaveDirectEdits || prevState.rulesMayHaveEdits || prevState.heroListDirty))
         {
+            if (this.state.rulesMayHaveEdits)
+                RangeCaches.SetDirty(true);
+
             this.postHeroListRebuild();
         }
 
@@ -561,6 +622,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
             this.setState(
                 {
                     bracketMayHaveDirectEdits: false,
+                    rulesMayHaveEdits: false,
                     heroListDirty: false
                 });
 
@@ -678,8 +740,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
     // now have to have the hero list get the games from here as a param, and use that in populating the games.
     async getGamesList(context: JsCtx, appContext: IAppContext, bracket: string): Promise<IBracketGame[]>
     {
-        _TimerStack.pushTimer("getGamesList.getBracket");
-        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracket);
+        _TimerStack.pushTimer("getGamesList.GetBracketDefinitionData");
+        let bracketDef: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracket);
 
         if (bracketDef == null)
             return [];

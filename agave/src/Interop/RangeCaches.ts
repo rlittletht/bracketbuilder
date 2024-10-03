@@ -5,9 +5,12 @@
 // this cache can be setup when we load (and are refreshed), and referenced to get the ranges
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { GameDataSources } from "../Brackets/GameDataSources";
-import { FastFormulaAreasItems } from "./FastFormulaAreas";
+import { FastFormulaAreas } from "./FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "./JsCtx";
-import { RangeInfo } from "./Ranges";
+import { RangeInfo, Ranges } from "./Ranges";
+import { RulesBuilder } from "../Brackets/RulesBuilder";
+import { s_staticConfig } from "../StaticConfig";
+import { FastFormulaAreasItems } from "./FastFormulaAreas/FastFormulaAreasItems";
 
 export class RangeCacheItemType
 {
@@ -17,6 +20,10 @@ export class RangeCacheItemType
     static TeamNamesHeader = "TN#Header";
     static BracketDefBody = "BD#Body";
     static BracketDefHeader = "BD#Header";
+    static FieldRulesBody = "FR#Body";
+    static FieldRulesHeader = "FR#Header";
+    static DayRulesBody = "DR#Body";
+    static DayRulesHeader = "DR#Header";
 }
 
 export class RangeCacheItem
@@ -112,6 +119,26 @@ export class RangeCaches
         return { bracketBodyRange: fieldsTimesRange, teamNamesBodyRange: teamsRange };
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: RangeCaches.getRulesRanges
+
+        Get the ranges for the field rules and the day rules, preload
+        rowCount, columnCount, rowIndex, and columnIndex
+    ----------------------------------------------------------------------------*/
+    static getRulesRanges(context: JsCtx): { fieldRulesBodyRange: Excel.Range, dayRulesBodyRange: Excel.Range }
+    {
+        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(RulesBuilder.SheetName);
+
+        const fieldRulesRange = Ranges.getTableDataBodyRangeFromTableName(sheetGet, "FieldRules");
+        const dayRulesRange = Ranges.getTableDataBodyRangeFromTableName(sheetGet, "DayRules");
+
+        fieldRulesRange.load("rowCount, columnCount, rowIndex, columnIndex");
+        dayRulesRange.load("rowCount, columnCount, rowIndex, columnIndex");
+
+        // don't sync yet...we might have more to get
+        return { fieldRulesBodyRange: fieldRulesRange, dayRulesBodyRange: dayRulesRange };
+    }
+
     static getBracketDefRange(context: JsCtx, bracketChoice: string): Excel.Range
     {
 //        if ((bracketChoice ?? "") === "")
@@ -127,6 +154,29 @@ export class RangeCaches
         return defRange;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: RangeCaches.getDataValuesFromRangeCacheType
+
+        Get all the values for the dataBodyRange for the given cacheType
+    ----------------------------------------------------------------------------*/
+    static getDataRangeAndValuesFromRangeCacheType(context: JsCtx, type: string): { range: RangeInfo, values: any[][] }
+    {
+        const range: RangeCachedItem = RangeCaches.getCacheByType(type);
+
+        if (!range)
+            return { range: null, values: null };
+
+        const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, range.formulaCacheType);
+
+        if (!areas)
+            return { range: null, values: null };
+
+        const dataRange = range.rangeInfo;
+        const dataValues = areas.getValuesForRangeInfo(dataRange);
+
+        return { range: dataRange, values: dataValues };
+    }
+    
     static async PopulateIfNeeded(context: JsCtx, bracketChoice: string)
     {
         if (!this.s_isDirty && this.s_lastBracket == bracketChoice)
@@ -138,6 +188,8 @@ export class RangeCaches
         let bracketBodyRange: RangeInfo = null;
         let teamNamesBodyRange: RangeInfo = null;
         let bracketDefRange: RangeInfo = null;
+        let fieldRulesBodyRange: RangeInfo = null;
+        let dayRulesBodyRange: RangeInfo = null;
 
         // first, try to get all the ranges together (in one batch). if this throws an exception, then we'll
         // try to get them separately
@@ -145,10 +197,12 @@ export class RangeCaches
             await this.GetRange(context, async (context) =>
             {
                 const { bracketBodyRange, teamNamesBodyRange } = this.getBracketBodyAndTeamNamesBodyRange(context);
+                const { fieldRulesBodyRange, dayRulesBodyRange } = this.getRulesRanges(context);
+
                 const bracketDefRange = this.getBracketDefRange(context, bracketChoice);
                 await context.sync();
 
-                return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: bracketDefRange };
+                return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: bracketDefRange, fieldRulesBodyRange: fieldRulesBodyRange, dayRulesBodyRange: dayRulesBodyRange };
             });
 
         if (!allRanges)
@@ -161,13 +215,17 @@ export class RangeCaches
                     async (context) =>
                     {
                         const { bracketBodyRange, teamNamesBodyRange } = this.getBracketBodyAndTeamNamesBodyRange(context);
+                        const { fieldRulesBodyRange, dayRulesBodyRange } = this.getRulesRanges(context);
+
                         await context.sync();
 
-                        return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: null };
+                        return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: null, fieldRulesBodyRange: fieldRulesBodyRange, dayRulesBodyRange: dayRulesBodyRange };
                     });
 
             allRanges.bracketBodyRange = rangesPart1?.bracketBodyRange ?? null;
             allRanges.teamNamesBodyRange = rangesPart1?.teamNamesBodyRange ?? null;
+            allRanges.fieldRulesBodyRange = rangesPart1?.fieldRulesBodyRange ?? null;
+            allRanges.dayRulesBodyRange = rangesPart1?.dayRulesBodyRange ?? null;
 
             const rangesPart2 =
                 await this.GetRange(
@@ -186,6 +244,8 @@ export class RangeCaches
         bracketBodyRange = RangeInfo.createFromRange(allRanges.bracketBodyRange);
         teamNamesBodyRange = RangeInfo.createFromRange(allRanges.teamNamesBodyRange);
         bracketDefRange = RangeInfo.createFromRange(allRanges.bracketDefRange);
+        fieldRulesBodyRange = RangeInfo.createFromRange(allRanges.fieldRulesBodyRange);
+        dayRulesBodyRange = RangeInfo.createFromRange(allRanges.dayRulesBodyRange);
 
         if (bracketBodyRange)
         {
@@ -203,6 +263,18 @@ export class RangeCaches
         {
             this.add(RangeCacheItemType.BracketDefBody, BracketDefBuilder.SheetName, bracketDefRange, FastFormulaAreasItems.BracketDefs);
             this.add(RangeCacheItemType.BracketDefHeader, BracketDefBuilder.SheetName, bracketDefRange.offset(-1, 1), FastFormulaAreasItems.BracketDefs);
+        }
+
+        if (fieldRulesBodyRange)
+        {
+            this.add(RangeCacheItemType.FieldRulesBody, RulesBuilder.SheetName, fieldRulesBodyRange, FastFormulaAreasItems.RulesData);
+            this.add(RangeCacheItemType.FieldRulesHeader, RulesBuilder.SheetName, fieldRulesBodyRange.offset(-1, 1), FastFormulaAreasItems.RulesData);
+        }
+
+        if (dayRulesBodyRange)
+        {
+            this.add(RangeCacheItemType.DayRulesBody, RulesBuilder.SheetName, dayRulesBodyRange, FastFormulaAreasItems.RulesData);
+            this.add(RangeCacheItemType.DayRulesHeader, RulesBuilder.SheetName, dayRulesBodyRange.offset(-1, 1), FastFormulaAreasItems.RulesData);
         }
     }
 }

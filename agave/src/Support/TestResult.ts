@@ -77,7 +77,7 @@ export class TestResult
 
         try
         {
-            for (let key of left.keys())
+            for (let key of Object.keys(left))
             {
                 if (right[key] === undefined)
                 {
@@ -119,9 +119,16 @@ export class TestResult
                 succeeded &&= TestResult.leftHasRight(actual, expected, `${prefix}-actualHasExpected`, testResult);
 
                 // compare the parts of the object
-                for (let key of expected.keys())
+                for (let key of Object.keys(expected))
                 {
                     succeeded &&= TestResult.isEqual(expected[key], actual[key], `${prefix}[${key}]`, testResult);
+                }
+
+                if (expected.valueOf !== undefined
+                    && actual.valueOf !== undefined
+                    && typeof expected.valueOf() !== "object")
+                {
+                    succeeded &&= TestResult.isEqual(expected.valueOf(), actual.valueOf(), `${prefix}.valueOf()`, testResult);
                 }
             }
             else

@@ -33,7 +33,7 @@ const isLocalHost = window.location.host.indexOf('localhost') > -1;
 
 export const s_staticConfig: StaticConfig =
 {
-    version: "1.9.0.0",
+    version: "2.0.0.0",
     maxGameMoves: 6000,
     globalLogging: true && isLocalHost,
     logGridChanges: false && isLocalHost,
@@ -45,7 +45,7 @@ export const s_staticConfig: StaticConfig =
     topLevelStateName: "traynrex-red",
     logCheckpoints: false,
     isLocalHost: isLocalHost,
-    cdnRoot: isLocalHost ? "https://localhost" : "https://addin.red.traynrex.com",
+    cdnRoot: isLocalHost ? "https://localhost:3000" : "https://addin.red.traynrex.com",
     bodyFont: "Aptos Narrow",
     bodySize: 9,
     blackFont: "Aptos Black",
@@ -54,7 +54,7 @@ export const s_staticConfig: StaticConfig =
     championSize: 12,
     advanceSize: 8,
     logMoveKeySetting: false && isLocalHost,
-    perfTimers: true,
+    perfTimers: isLocalHost,
     logTrackingCache: isLocalHost && false,
     logMoveTree: true && isLocalHost,
     appLogging: true && isLocalHost,

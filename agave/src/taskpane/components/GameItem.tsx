@@ -123,8 +123,8 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
             : "Add another";
 
         const text = this.context.Teaching.Coachstate == Coachstate.AddFirstGame
-            ? "Click on the + sign to add this game to the bracket"
-            : "Keep adding games to fill the bracket";
+            ? "Click on the + sign to add this game to the bracket. If you're feeling lucky, click the Place Next button!"
+            : "Keep adding games to fill the bracket. If you're feeling lucky, click the Schedule Tournament button!";
 
         const teachableId = this.context.Teaching.Coachstate == Coachstate.AddFirstGame
             ? TeachableId.AddFirstGame

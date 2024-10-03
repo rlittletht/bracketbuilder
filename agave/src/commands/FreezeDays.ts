@@ -1,6 +1,6 @@
 import { IAppContext } from "../AppContext/AppContext";
 import { Dispatcher, DispatchWithCatchDelegate } from "../BracketEditor/Dispatcher";
-import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../Interop/TrackingCache";
 import { RangeInfo } from "../Interop/Ranges";

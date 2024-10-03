@@ -1,10 +1,9 @@
 import { AppContext } from "../AppContext/AppContext";
-import { BracketDefinition } from "../Brackets/BracketDefinitions";
 import { BracketManager, _bracketManager } from "../Brackets/BracketManager";
 import { BracketDefBuilder } from "../Brackets/BracketDefBuilder";
 import { TrError } from "../Exceptions";
 import { OADate } from "../Interop/Dates";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../Interop/Ranges";
@@ -24,6 +23,10 @@ import { GridItem } from "./GridItem";
 import { Prioritizer } from "./StructureEditor/Prioritizer";
 import { StructureEditor } from "./StructureEditor/StructureEditor";
 import { HelpTopic } from "../Coaching/HelpInfo";
+import { IBracketDefinitionData } from "../Brackets/IBracketDefinitionData";
+import { DateWithoutTime } from "../Support/DateWithoutTime";
+import { FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreasItems";
+import { FastFormulaAreaDefinitions } from "../Interop/FastFormulaAreas/FastFormulaAreaDefinitions";
 
 // We like to have an extra blank row at the top of the game body
 // (because the "advance to" line is often blank at the bottom)
@@ -66,7 +69,7 @@ export class Grid
 {
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
-    m_datesForGrid: Date[];
+    m_datesForGrid: DateWithoutTime[];
     m_fieldsToUse: number = 2;
     m_fLogChanges: boolean = s_staticConfig.logGridChanges;
     m_fLogGrid: boolean = s_staticConfig.logGrid;
@@ -110,22 +113,33 @@ export class Grid
     get FieldsToUse(): number { return this.m_fieldsToUse; }
     get AreDatesLoaded(): boolean { return this.m_datesForGrid ? true : false; }
 
-    getFirstSlotForDate(date: Date): number
+    getFirstSlotForDate(date: DateWithoutTime): number
     {
-        return this.m_startingSlots[date.getDay()];
+        return this.m_startingSlots[date.GetDay()];
     }
 
-    getDateFromGridColumn(column: number): Date
+    getGridColumnFromDate(date: DateWithoutTime): number
+    {
+        for (let i = 0; i < this.m_datesForGrid.length; i++)
+        {
+            if (date.Equals(this.m_datesForGrid[i]))
+                return i + this.m_firstGridPattern.FirstColumn;
+        }
+
+        return 0;
+    }
+
+    getDateFromGridColumn(column: number): DateWithoutTime
     {
         column = column - this.m_firstGridPattern.FirstColumn;
 
         if (column < 0 || column >= this.m_datesForGrid.length || this.m_datesForGrid[column] == null)
-            return new Date();
+            return new DateWithoutTime(Date.now());
 
         return this.m_datesForGrid[column];
     }
 
-    getDateFromGridItem(item: GridItem): Date
+    getDateFromGridItem(item: GridItem): DateWithoutTime
     {
         return this.getDateFromGridColumn(item.Range.FirstColumn);
     }
@@ -198,6 +212,61 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: Grid.getAllAvailableFields
+
+        try to infer the names for the fields we should use for this grid
+    ----------------------------------------------------------------------------*/
+    getAllAvailableFields(): string[]
+    {
+        const fields: string[] = [];
+        const inUse = this.getAllFieldsInUse();
+
+        for (const field of inUse)
+            fields.push(field);
+
+        let remaining = this.FieldsToUse - fields.length;
+
+        if (remaining < 0)
+        {
+            fields.splice(this.FieldsToUse);
+            return fields;
+        }
+
+        while (remaining-- > 0)
+        {
+            fields.push(StructureEditor.getNextFieldName(fields, this.FieldsToUse));
+        }
+
+        return fields;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: Grid.getAllFieldsInUse
+    ----------------------------------------------------------------------------*/
+    getAllFieldsInUse(): string[]
+    {
+        const hash: Set<string> = new Set<string>();
+
+        this.enumerateMatching(
+            (item: GridItem) =>
+            {
+                hash.add(item.Field);
+                return true;
+            },
+            (item: GridItem) =>
+            {
+                return !item.isLineRange;
+            });
+
+        const inUse: string[] = [];
+
+        for (const field of hash)
+            inUse.push(field);
+
+        return inUse;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: Grid.getLatestTimeForDate
 
         get the latest time used on this date (and how many times it is used) and
@@ -205,7 +274,7 @@ export class Grid
 
         time is returned in minutes since 00:00
     ----------------------------------------------------------------------------*/
-    getLatestTimeForDate(date: Date): [number, number, string[]]
+    getLatestTimeForDate(date: DateWithoutTime): [number, number, string[]]
     {
         let maxTime: number = 0;
         let count: number = 0;
@@ -234,7 +303,7 @@ export class Grid
 
                 const itemDate = this.getDateFromGridItem(item);
 
-                return itemDate.valueOf() == date.valueOf();
+                return itemDate.Equals(date);
             });
 
         return [maxTime, count, fields];
@@ -614,6 +683,10 @@ export class Grid
         }
 
         grid.m_firstGridPattern = this.m_firstGridPattern;
+        if (this.m_datesForGrid)
+            grid.m_datesForGrid = [...this.m_datesForGrid];
+        grid.m_fieldsToUse = this.m_fieldsToUse;
+
         return grid;
     }
 
@@ -808,11 +881,11 @@ export class Grid
         This requires thet m_firstGridPattern is already loaded (we will use the
         first repeating column as the first column we need a date for)
     ----------------------------------------------------------------------------*/
-    async getGridColumnDateValues(context: JsCtx): Promise<Date[]>
+    async getGridColumnDateValues(context: JsCtx): Promise<DateWithoutTime[]>
     {
         const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, FastFormulaAreasItems.GameGrid);
         const areasMerges: Excel.RangeAreas = await context.getTrackedItemOrPopulate(
-            FastFormulaAreas.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+            FastFormulaAreaDefinitions.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
             async (context: JsCtx): Promise<CacheObject> =>
             {
                 if (s_staticConfig.throwOnCacheMisses)
@@ -883,12 +956,17 @@ export class Grid
         // build an array of merged area mappings
         let merges: number[] = Array.from({ length: dateValues[0].length }, () => 0);
 
+        // these are the merge areas for the whole worksheet!  we have to make sure
+        // to limit this to just the correct row!
         if (!areasMerges.isNullObject)
         {
             for (let i = 0; i < areasMerges.areaCount; i++)
             {
                 const rangeAreas: Excel.RangeCollection = areasMerges.areas;
                 const rangeArea: Excel.Range = rangeAreas.items[i];
+
+                if (rangeArea.rowIndex != rowDates)
+                    continue;
 
                 let iMerge = rangeArea.columnIndex - range.FirstColumn;
 
@@ -901,7 +979,7 @@ export class Grid
             }
         }
 
-        let dates: Date[] = [];
+        let dates: DateWithoutTime[] = [];
 
         let i = 0;
         while (i < dateValues[0].length)
@@ -914,7 +992,7 @@ export class Grid
                 continue;
             }
 
-            const date: Date = OADate.FromOADate(item);
+            const date: DateWithoutTime = DateWithoutTime.CreateForDateType(OADate.FromOADate(item));
             dates.push(date);
             const mergeCount = merges[i];
             i++;
@@ -1113,7 +1191,7 @@ export class Grid
         _TimerStack.popTimer();
 
         // go through all the game definitions and try to add them to the grid
-        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracketName);
+        let bracketDef: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracketName);
         if (!bracketDef)
             throw new Error("bracket not cached in loadGridFromBracket");
 

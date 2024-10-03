@@ -61,11 +61,11 @@
                                 in your workbook. The <em>Games</em> sheet is the one with the real bracket on it, and its what you
                                 will be working with most of the time. The other sheets have data for and about your bracket.
                             </p>
-                            <br clear="all" />
-                            <zoomable>
-                                <floatRight style="width: 30vw;padding-top: 2rem"><img class="whiteBack" src="Images/GamesSheet.png" /></floatRight>
-                            </zoomable>
                             <section id="Games">
+                                <br clear="all"/>
+                                <zoomable>
+                                    <floatRight style="width: 30vw; padding-top: 2rem"><img class="whiteBack" src="Images/GamesSheet.png"/></floatRight>
+                                </zoomable>
                                 <heading>Games Sheet</heading>
                                 <content>
                                     <p> The <em>Games sheet</em> has the actual bracket grid on it and is what you will be building and eventually publishing</p>
@@ -106,7 +106,7 @@
                                             </p>
                                         </content>
                                     </section>
-                                    <section>
+                                    <section id="TournamentStartDate">
                                         <heading>Start Date</heading>
                                         <content>
                                             <p>
@@ -114,16 +114,16 @@
                                                 for the first day. If you change the date in the first day, then all of the other days will update and your bracket
                                                 will get a new start date.
                                             </p>
-                                            <br clear="all" />
-                                            <zoomableTall>
-                                                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/TeamAndFields.png" /></floatRight>
-                                            </zoomableTall>
                                         </content>
                                     </section>
                                 </content>
                             </section>
-                            <section>
-                                <heading><a name="TeamsAndFields">TeamsAndFields Sheet</a></heading>
+                            <section id="TeamsAndFields">
+                                <br clear="all"/>
+                                <zoomableTall>
+                                    <floatRight style="width: 20vw; padding-top: 2rem"><img class="whiteBack" src="Images/TeamAndFields.png"/></floatRight>
+                                </zoomableTall>
+                                <heading>TeamsAndFields Sheet</heading>
                                 <content>
                                     <p>
                                         The <eltRef>TeamsAndFields</eltRef> sheet has two tables on it -- <eltRef>BracketSourceData</eltRef> and <eltRef>TeamNames</eltRef>.
@@ -157,16 +157,114 @@
                                                 the names of the teams and the Priority (if you are going to use Priority shading). The Team ID corresponds
                                                 to the draw, so the first team drawn is Team 1 and so on.
                                             </p>
-                                            <br clear="all" />
-                                            <zoomableTall>
-                                                <floatRight style="width: 20vw;padding-top: 2rem"><img class="whiteBack" src="Images/BracketInfo.png" /></floatRight>
-                                            </zoomableTall>
                                         </content>
                                     </section>
                                 </content>
                             </section>
-                            <section>
-                                <heading><a name="BracketInfo">BracketInfo Sheet</a></heading>
+                            <section id="Rules">
+                                <br clear="all"/>
+                                <zoomable>
+                                    <floatRight style="width: 20vw; padding-top: 2rem"><img class="whiteBack" src="Images/RulesSheet.png"/></floatRight>
+                                </zoomable>
+                                <heading>Scheduling Rules</heading>
+                                <content>
+                                    <p>
+                                        This sheet defines the fields you have in your tournament as well as scheduling rules for each field and day. This
+                                        information is used as you add games on the grid (to figure out which field name to use), and when you automatically
+                                        place games using <em>Place Name</em> and <em>Place Remaining</em>.
+                                    </p>
+                                    <section id="FieldDefinitions">
+                                        <heading>Field Definitions and Rules</heading>
+                                        <content>
+                                            <p>
+                                                This table defines all of the fields that are available in the tournament as well as information about each field.
+                                                NOTE that if you are not planning on using the automatically scheduling features (<em>Place Next</em> or
+                                                <em>Place Remaining</em>), then you only need to add the names of the fields here.  In reality, you don't even
+                                                have to add the field names, but if you dont', then as you add games, it won't automatically choose the right field
+                                                name or time.
+                                            </p>
+                                            <section id="FieldDefNameName">
+                                                <heading>Field</heading>
+                                                <content>
+                                                    <p>
+                                                        This is the name of the field that will be used as the bracket is being built. There should be a line
+                                                        for every field you will be using.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section id="FieldHasLights">
+                                                <heading>Has Lights</heading>
+                                                <content>
+                                                    <p>
+                                                        This TRUE/FALSE value will determine if the field has lights or not. This is only used if we need to
+                                                        automatically determine when the last game of the day can start. Fields without lights will not start a
+                                                        game after 6:00 PM, and fields with lights will not start a game after 8:00 PM
+                                                    </p>
+                                                    <p>
+                                                        If you want to override the default Latest start for a field, change the Latest values
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section id="FieldEarliest">
+                                                <heading>Earliest Start Times</heading>
+                                                <content>
+                                                    <p>
+                                                        There are several columns in the table that define the earliest time a game can start. If the value is
+                                                        left blank, then the earliest start will either be automatically calculated (8:00 am) or a more general
+                                                        rule (from the Day Rule definitions) will be used
+                                                    </p>
+                                                    <p>
+                                                        By default, there are columns added for "EarliestSaturday", "EarliestSunday", and "EarliestWeekday". These
+                                                        values are all empty by default.
+                                                    </p>
+                                                    <p>
+                                                        <prodRef>BracketBuilder</prodRef> also understands <em>EarliestWeekend</em> as well as <em>EarliestMonday</em>
+                                                        and the rest of the weekday names), so you can add those columns if you want.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                            <section id="FieldLatest">
+                                                <heading>Latest Start Times</heading>
+                                                <content>
+                                                    <p>
+                                                        Just like the Earliest Start Times, you can define the latest time that a game can start. Since we cannot
+                                                        predict how long a game will actually last, we use the Start Time and not the End Time.
+                                                    </p>
+                                                    <p>
+                                                        By default, there are columns added for "LatestSaturday", "LatestSunday", and "LatestWeekday". These
+                                                        values are all empty by default.
+                                                    </p>
+                                                    <p>
+                                                        <prodRef>BracketBuilder</prodRef> also understands <em>LatestWeekend</em> as well as <em>LatestMonday</em>
+                                                        and the rest of the weekday names), so you can add those columns if you want.
+                                                    </p>
+                                                </content>
+                                            </section>
+                                        </content>
+                                    </section>
+                                    <section id="DayRules">
+                                        <heading>Day Rules</heading>
+                                        <content>
+                                            <p>
+                                                This table defines rules for specific days of the week in the tournament. This is very useful for defining specific
+                                                Earliest and Latest start times for specific days.
+                                            </p>
+                                            <p>
+                                                There is a row Weekday and Weekend, and for each day of the week. Like the Field Rules, any value left blank will not be applied.
+                                            </p>
+                                            <p>
+                                                By default, Saturday, Sunday, and Weekday have been filled in with default values.
+                                            </p>
+                                        </content>
+                                    </section>
+                                    </content>
+                            </section>
+                            <section id="BracketInfo">
+                                <br clear="all"/>
+                                <zoomableTall>
+                                    <floatRight style="width: 20vw; padding-top: 2rem"><img class="whiteBack" src="Images/BracketInfo.png"/></floatRight>
+                                </zoomableTall>
+                                <heading>BracketInfo Sheet</heading>
                                 <content>
                                     <p>
                                         The <em>BracketInfo</em> sheet has two tables on it that summarize your tournament bracket.

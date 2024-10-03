@@ -1,7 +1,7 @@
 import { AppContext, IAppContext } from "../../AppContext/AppContext";
 import { GameDataSources, TeamNameMap } from "../../Brackets/GameDataSources";
 import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnDeleteGlobalName } from "../../Interop/Intentions/TnDeleteGlobalName";
 import { TnUnmergeRange } from "../../Interop/Intentions/TnUmergeRange";
@@ -22,6 +22,7 @@ import { GridChange, GridChangeOperation } from "../GridChange";
 import { StructureEditor } from "./StructureEditor";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { GameId } from "../GameId";
+import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 export class RemovedGameValues
 {

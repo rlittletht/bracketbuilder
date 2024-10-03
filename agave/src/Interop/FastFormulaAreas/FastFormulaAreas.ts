@@ -1,138 +1,26 @@
-import { IAppContext } from "../AppContext/AppContext";
-import { _TimerStack } from "../PerfTimer";
-import { StreamWriter } from "../Support/StreamWriter";
-import { TestResult } from "../Support/TestResult";
-import { TestRunner } from "../Support/TestRunner";
-import { JsCtx } from "./JsCtx";
-import { RangeInfo, Ranges } from "./Ranges";
-import { CacheObject, ObjectType } from "./TrackingCache";
-
-export class FastFormulaAreasItems
-{
-    static GameGrid = "gamegrid";
-    static GameData = "gameData";
-    static BracketDefs = "bracket-defs";
-    static BracketInfo = "bracket-info";
-    static GlobalNames = "workbookNamesItems";
-}
-
-class FormulaAreasItem
-{
-    m_rangeAreas: Excel.RangeAreas;
-    m_rangeInfo: RangeInfo;
-
-    constructor(rangeAreas: Excel.RangeAreas, rangeInfo: RangeInfo)
-    {
-        this.m_rangeAreas = rangeAreas;
-        this.m_rangeInfo = rangeInfo;
-    }
-
-    // there's no way to get a range from this RangeInfo -- we have a single Excel.RangeAreas for this FormulaAreasItem
-    // instead, you have to request the items you want specifically
-
-    getRowColOffsetsIntoAreasItem(range: RangeInfo): { dRow: number, dCol: number }
-    {
-        const dRow = range.FirstRow - this.m_rangeInfo.FirstRow;
-        const dCol = range.FirstColumn - this.m_rangeInfo.FirstColumn;
-
-        if (dRow < 0
-            || dCol < 0
-            || range.LastRow > this.m_rangeInfo.LastRow
-            || range.LastColumn > this.m_rangeInfo.LastColumn)
-        {
-            throw new Error(`requested range out of range for FormulaAreasItem (this.range: ${this.m_rangeInfo.toFriendlyString}, requested: ${range.toFriendlyString()})`);
-        }
-
-        return { dRow: dRow, dCol: dCol };
-    }
-
-    getFormulasForRangeInfo(range: RangeInfo): any[][]
-    {
-        const { dRow, dCol } = this.getRowColOffsetsIntoAreasItem(range);
-        const fmlas = [];
-
-        for (let iRow = 0; iRow < range.RowCount; iRow++)
-        {
-            const row = [];
-
-            for (let iCol = 0; iCol < range.ColumnCount; iCol++)
-                row.push(this.m_rangeAreas.areas.items[0].formulas[iRow + dRow][iCol + dCol]);
-
-            fmlas.push(row);
-        }
-
-        return fmlas;
-    }
-
-    getValuesForRangeInfo(range: RangeInfo): any[][]
-    {
-        const { dRow, dCol } = this.getRowColOffsetsIntoAreasItem(range);
-        const vals = [];
-
-        for (let iRow = 0; iRow < range.RowCount; iRow++)
-        {
-            const row = [];
-
-            for (let iCol = 0; iCol < range.ColumnCount; iCol++)
-                row.push(this.m_rangeAreas.areas.items[0].values[iRow + dRow][iCol + dCol]);
-
-            vals.push(row);
-        }
-
-        return vals;
-    }
-}
+import { IAppContext } from "../../AppContext/AppContext";
+import { _TimerStack } from "../../PerfTimer";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { JsCtx } from "../JsCtx";
+import { RangeInfo, Ranges } from "../Ranges";
+import { CacheObject, ObjectType } from "../TrackingCache";
+import { RangeCacheItemType, RangeCaches } from "../RangeCaches";
+import { FastFormulaAreasItems } from "./FastFormulaAreasItems";
+import { FastFormulaAreasItem } from "./FastFormulaAreasItem";
+import { FastFormulaAreaDefinitions } from "./FastFormulaAreaDefinitions";
 
 export class FastFormulaAreas
 {
-    static s_gridCacheName = "gamegrid-FastFormulaAreas";
-    static s_gameDataSheetCacheName = "gameData-FastFormulaAreas";
-    static s_bracketDefCacheName = "bracketDefs-FastFormulaAreas";
-    static s_bracketInfoCacheName = "bracketInfo-FastFormulaAreas";
-    
     static s_allSheetsCache = "allsheets-FastFormulaAreasCollection";
 
-    static s_mapTypeName = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, FastFormulaAreas.s_gridCacheName],
-            [FastFormulaAreasItems.GameData, FastFormulaAreas.s_gameDataSheetCacheName],
-            [FastFormulaAreasItems.BracketDefs, FastFormulaAreas.s_bracketDefCacheName],
-            [FastFormulaAreasItems.BracketInfo, FastFormulaAreas.s_bracketInfoCacheName],
-        ]
-    );
-
-    static s_mapTypeSheet = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, "Games"],
-            [FastFormulaAreasItems.GameData, "TeamsAndFields"],
-            [FastFormulaAreasItems.BracketDefs, "BracketDefs"],
-            [FastFormulaAreasItems.BracketInfo, "BracketInfo"],
-        ]
-    );
-
-    static s_mapTypeRange = new Map<FastFormulaAreasItems, RangeInfo>(
-        [
-            [FastFormulaAreasItems.GameGrid, new RangeInfo(0, 250, 0, 60)],
-            [FastFormulaAreasItems.GameData, new RangeInfo(0, 150, 0, 7)],
-            [FastFormulaAreasItems.BracketDefs, new RangeInfo(0, 200, 0, 15)],
-            [FastFormulaAreasItems.BracketInfo, new RangeInfo(0, 100, 0, 15)],
-        ]
-    )
-
-    static s_mapTypeCacheNameRoot = new Map<FastFormulaAreasItems, string>(
-        [
-            [FastFormulaAreasItems.GameGrid, "Games"],
-            [FastFormulaAreasItems.GameData,"Data"],
-            [FastFormulaAreasItems.BracketDefs, "Defs"],
-            [FastFormulaAreasItems.BracketInfo, "Info"],
-        ]
-    );
     static itemMax: number = 1000; // only 2000 items per rangearea...
 
-    m_areasItems: FormulaAreasItem[] = [];
+    m_areasItems: FastFormulaAreasItem[] = [];
     m_sheetName: string;
 
-    getAreasItemForRangeInfo(range: RangeInfo): FormulaAreasItem | null
+    getAreasItemForRangeInfo(range: RangeInfo): FastFormulaAreasItem | null
     {
         for (let item of this.m_areasItems)
         {
@@ -155,7 +43,6 @@ export class FastFormulaAreas
 
         return lastRow;
     }
-
 
 
     private static nearestMultiple(num: number, multiple: number): number
@@ -219,7 +106,7 @@ export class FastFormulaAreas
     /*----------------------------------------------------------------------------
         %%Function: FastFormulaAreas.loadRangeAreasFromRangeInfo
 
-        load the range areas for the given range and sheetName. don't sync -- 
+        load the range areas for the given range and sheetName. don't sync --
         the caller may want to load multiple of these
     ----------------------------------------------------------------------------*/
     static loadRangeAreasFromRangeInfo(context: JsCtx, range: RangeInfo, sheetName: string): Excel.RangeAreas
@@ -236,7 +123,7 @@ export class FastFormulaAreas
 
     /*----------------------------------------------------------------------------
         %%Function: FastFormulaAreas.addMoreRows
-        
+
         Add more rows (rowCount) to the current RangeAreas grid. If there isn't
         a current grid (which is true if this is the first call ever for this
         FastRangeAreas), then caller MUST supply a range to start the grid at.
@@ -254,21 +141,19 @@ export class FastFormulaAreas
             range = rangeGridStart.offset(0, rangeGridStart.RowCount, 0, rangeGridStart.ColumnCount);
         }
         else
-        {
             range = new RangeInfo(lastRow.LastRow + 1, rowCount, lastRow.FirstColumn, lastRow.ColumnCount);
-        }
 
         const areas = await context.getTrackedItemOrPopulate(
-                key,
-                async (context) =>
-                {
-                    _TimerStack.pushTimer(`addMoreRows ${this.m_sheetName}`);
+            key,
+            async (context) =>
+            {
+                _TimerStack.pushTimer(`addMoreRows ${this.m_sheetName}`);
 
-                    const rangeAreas = FastFormulaAreas.loadRangeAreasFromRangeInfo(context, range, this.m_sheetName);
-                    await context.sync("addMoreRows");
-                    _TimerStack.popTimer();
-                    return { type: ObjectType.JsObject, o: rangeAreas};
-                });
+                const rangeAreas = FastFormulaAreas.loadRangeAreasFromRangeInfo(context, range, this.m_sheetName);
+                await context.sync("addMoreRows");
+                _TimerStack.popTimer();
+                return { type: ObjectType.JsObject, o: rangeAreas };
+            });
 
         if (!areas)
             throw new Error("could not get areas from worksheet");
@@ -276,7 +161,7 @@ export class FastFormulaAreas
         //at this point we have a 1:1 mapping of rangeInfo to areas. still need to teach the rest of the code that there isn't
         // and array of rangeAreas that we have to map to, but rather a single rangeArea we have to just index into. get rid of the 
         // formatting returns as we didn't cache it.
-        this.m_areasItems.push(new FormulaAreasItem(areas, range));
+        this.m_areasItems.push(new FastFormulaAreasItem(areas, range));
     }
 
     static getGridFastFormulaAreaCache(context: JsCtx): FastFormulaAreas
@@ -291,7 +176,7 @@ export class FastFormulaAreas
 
     static getFastFormulaAreaCacheForType(context: JsCtx, type: FastFormulaAreasItems): FastFormulaAreas
     {
-        const name = this.s_mapTypeName.get(type);
+        const name = FastFormulaAreaDefinitions.getMapTypeNameFromType(type);
 
         // first see if we have this item cached
         const areas = context.getTrackedItemOrNull(name);
@@ -325,39 +210,34 @@ export class FastFormulaAreas
     static async populateFastFormulaAreaCache(context: JsCtx, range: RangeInfo, sheetName: string, name: string): Promise<FastFormulaAreas>
     {
         return await context.getTrackedItemOrPopulate(
-                name,
-                async (context): Promise<CacheObject> =>
+            name,
+            async (context): Promise<CacheObject> =>
+            {
+                try
                 {
-                    try
-                    {
-                        const areas = await FastFormulaAreas.createFastFormulaItemsForRangeInfo(
-                            context,
-                            `${name}-rangeAreas`,
-                            sheetName,
-                            range);
+                    const areas = await FastFormulaAreas.createFastFormulaItemsForRangeInfo(
+                        context,
+                        `${name}-rangeAreas`,
+                        sheetName,
+                        range);
 
-                        return { type: ObjectType.TrObject, o: areas };
-                    }
-                    catch (e)
-                    {
-                        return null;
-                    }
-                });
-    }
-
-    static getCacheNameFromType(type: FastFormulaAreasItems, cacheName: string)
-    {
-        return `${cacheName}-${this.s_mapTypeCacheNameRoot.get(type)}`;
+                    return { type: ObjectType.TrObject, o: areas };
+                }
+                catch (e)
+                {
+                    return null;
+                }
+            });
     }
 
     static requestMergedAreasType(context: JsCtx, type: FastFormulaAreasItems): Excel.RangeAreas
     {
-        const rangeInfoForMerges = FastFormulaAreas.s_mapTypeRange.get(type);
-        const sheetForMerges = context.Ctx.workbook.worksheets.getItem(FastFormulaAreas.s_mapTypeSheet.get(type));;
+        const rangeInfoForMerges = FastFormulaAreaDefinitions.getRangeFromType(type);
+        const sheetForMerges = context.Ctx.workbook.worksheets.getItem(FastFormulaAreaDefinitions.getSheetNameFromType(type));;
         const rangeForMerges = Ranges.rangeFromRangeInfo(sheetForMerges, rangeInfoForMerges);
         const areasMerges = rangeForMerges.getMergedAreasOrNullObject();
 
-        areasMerges.load("areaCount, areas")
+        areasMerges.load("areaCount, areas");
 
         return areasMerges;
     }
@@ -367,6 +247,12 @@ export class FastFormulaAreas
 
         Populate all the caches we know about, including all of the formula areas
         as well as the workbook names items.
+
+        There are two parts to fast cache access:
+            * The values/formulas cache (this cache)
+            * The range caches (RangeCaches.ts)
+
+        Both of these need to be populated to be effectively used.
     ----------------------------------------------------------------------------*/
     static async populateAllCaches(context: JsCtx, dontPopulateMergeAreas?: boolean): Promise<FastFormulaAreaCachesCollection>
     {
@@ -381,11 +267,11 @@ export class FastFormulaAreas
 
                 context.pushTrackingBookmark(bkmk);
 
-                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.GameData, FastFormulaAreasItems.BracketDefs])
+                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.GameData, FastFormulaAreasItems.BracketDefs, FastFormulaAreasItems.RulesData])
                 {
-                    const sheetName = FastFormulaAreas.s_mapTypeSheet.get(type);
-                    const range = FastFormulaAreas.s_mapTypeRange.get(type);
-                    const name = FastFormulaAreas.s_mapTypeName.get(type);
+                    const sheetName = FastFormulaAreaDefinitions.getSheetNameFromType(type);
+                    const range = FastFormulaAreaDefinitions.getRangeFromType(type);
+                    const name = FastFormulaAreaDefinitions.getMapTypeNameFromType(type);
 
                     const areas = new FastFormulaAreas();
                     areas.m_sheetName = sheetName;
@@ -393,7 +279,7 @@ export class FastFormulaAreas
                     const rangeAreas = this.loadRangeAreasFromRangeInfo(context, range, sheetName);
                     context.addCacheObject(`${name}-rangeAreas`, { type: ObjectType.JsObject, o: rangeAreas });
 
-                    areas.m_areasItems.push(new FormulaAreasItem(rangeAreas, range));
+                    areas.m_areasItems.push(new FastFormulaAreasItem(rangeAreas, range));
 
                     collection.add(type, areas);
                 }
@@ -411,7 +297,7 @@ export class FastFormulaAreas
                     if (areasMerges)
                     {
                         context.addCacheObject(
-                            this.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
+                            FastFormulaAreaDefinitions.getCacheNameFromType(FastFormulaAreasItems.GameGrid, "mergeAreas"),
                             { type: ObjectType.JsObject, o: areasMerges });
                     }
                 }
@@ -422,7 +308,7 @@ export class FastFormulaAreas
                     return null;
                 }
 
-                return { type: ObjectType.TrObject, o: collection};
+                return { type: ObjectType.TrObject, o: collection };
             });
     }
 
@@ -433,7 +319,11 @@ export class FastFormulaAreas
         if (cached != null)
             return cached;
 
-        return await this.populateFastFormulaAreaCache(context, this.s_mapTypeRange.get(type), this.s_mapTypeSheet.get(type), this.s_mapTypeName.get(type));
+        return await this.populateFastFormulaAreaCache(
+            context,
+            FastFormulaAreaDefinitions.getRangeFromType(type),
+            FastFormulaAreaDefinitions.getSheetNameFromType(type),
+            FastFormulaAreaDefinitions.getMapTypeNameFromType(type));
     }
 }
 
@@ -446,7 +336,7 @@ export class FastFormulaAreaCachesCollection
         this.m_mapTypeAreas.set(type, item);
     }
 
-    get(type: FastFormulaAreasItems) : FastFormulaAreas
+    get(type: FastFormulaAreasItems): FastFormulaAreas
     {
         return this.m_mapTypeAreas.get(type);
     }

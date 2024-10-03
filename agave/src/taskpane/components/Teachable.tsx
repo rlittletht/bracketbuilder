@@ -12,6 +12,8 @@ export class TeachableId
     static Undo = "u";
     static StatusBox = "s";
     static FinishingTouches = "f";
+    static LuckyNext = "l";
+    static LuckyRemaining = "L";
     static Redo = "y";
     static Help = "h";
     static ErrorMessage = "e";
@@ -192,7 +194,16 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
             [
                 TeachableId.BrokenGame,
                 { coachStates: [Coachstate.BrokenGame], othersToHide: [TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 5, globalCountLimit: 10 }
+            ],
+            [
+                TeachableId.LuckyNext,
+                { coachStates: [Coachstate.BeforeLuckyNext], othersToHide: [TeachableId.LuckyRemaining, TeachableId.AddGame, TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 5, globalCountLimit: 10 }
+            ],
+            [
+                TeachableId.LuckyRemaining,
+                { coachStates: [Coachstate.AfterLuckyNext], othersToHide: [TeachableId.LuckyNext, TeachableId.AddGame, TeachableId.AddFirstGame], firstViewDelay: TeachableViewDelay.Short, viewDelay: TeachableViewDelay.LongIdle, sessionCountLimit: 5, globalCountLimit: 10 }
             ]
+
         ]);
 
     static getConfig(type: TeachableId): TeachableConfig
@@ -227,7 +238,7 @@ export class Teachable extends React.Component<TeachableProps, TeachableState>
     static logit(s: string): boolean
     {
         s;
-//        console.log(s);
+        console.log(s);
         return true;
     }
 

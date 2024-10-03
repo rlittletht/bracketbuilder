@@ -15,4 +15,7 @@ export class Coachstate
     static GameDirty = 8;
     static BrokenGame = 9;
     static Done = 10;
+    static AfterLuckyNext = 11;
+    // this is a state where we *think* the user wants to be get the LuckyNext advertisement
+    static BeforeLuckyNext = 12;
 }

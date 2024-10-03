@@ -1,6 +1,6 @@
 import { AppContext } from "../AppContext/AppContext";
 import { BracketManager } from "../Brackets/BracketManager";
-import { FastFormulaAreas } from "../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";

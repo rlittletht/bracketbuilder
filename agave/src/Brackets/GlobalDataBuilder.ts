@@ -14,7 +14,7 @@ export class GlobalDataBuilder
     static async addGlobalDataToSheet(context: JsCtx, sheet: Excel.Worksheet, rowStart: number)
     {
         let rng: Excel.Range = sheet.getRangeByIndexes(rowStart, 0, 15, 2);
-        rng.values =
+        rng.formulas =
         [
             ["", "FILL IN TOURNAMENT INFORMATION BELOW"],
             ["", ""],
@@ -30,7 +30,7 @@ export class GlobalDataBuilder
             ["", ""],
             ["Last Update:", OADate.ToOADate(new Date())], // adjust for UTC
             ["", ""],
-            ["FieldCount:", 2]
+            ["FieldCount:", "=COUNTA(FieldRules[Field])"]
         ];
         rng.format.horizontalAlignment = Excel.HorizontalAlignment.left;
         await context.sync();

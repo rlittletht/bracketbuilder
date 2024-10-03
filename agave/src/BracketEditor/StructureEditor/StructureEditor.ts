@@ -4,7 +4,7 @@ import { GlobalDataBuilder } from "../../Brackets/GlobalDataBuilder";
 import { GridBuilder } from "../../Brackets/GridBuilder";
 import { CoachTransition } from "../../Coaching/CoachTransition";
 import { HelpTopic } from "../../Coaching/HelpInfo";
-import { FastFormulaAreas, FastFormulaAreasItems } from "../../Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "../../Interop/FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
@@ -17,7 +17,7 @@ import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
-import { _undoManager } from "../Undo";
+import { _undoManager, UndoGameDataItem } from "../Undo";
 import { ApplyGridChange } from "./ApplyGridChange";
 import { StructureInsert } from "./StructureInsert";
 import { StructureRemove } from "./StructureRemove";
@@ -25,7 +25,6 @@ import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { BracketInfoBuilder } from "../../Brackets/BracketInfoBuilder";
 import { RangeCaches } from "../../Interop/RangeCaches";
-import { BracketDefinition, GameDefinition } from "../../Brackets/BracketDefinitions";
 import { _bracketManager } from "../../Brackets/BracketManager";
 import { BracketManager } from "../../Brackets/BracketManager";
 import { SetupBook } from "../../Setup";
@@ -33,6 +32,13 @@ import { Sheets, EnsureSheetPlacement } from "../../Interop/Sheets";
 import { BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
 import { GameId } from "../GameId";
 import { GameNum } from "../GameNum";
+import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
+import { IBracketGameDefinition } from "../../Brackets/IBracketGameDefinition";
+import { TourneyDef } from "../../Tourney/TourneyDef";
+import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
+import { TourneyRanker } from "../../Tourney/TourneyRanker";
+import { TourneyRules } from "../../Tourney/TourneyRules";
+import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 let _moveSelection: RangeInfo = null;
 
@@ -218,7 +224,7 @@ export class StructureEditor
         Insert the given bracket game into the current bracket, using the current
         selection (.cells(0,0)) as the top left of the game.
 
-        this does not assume 
+        this does not assume
     ----------------------------------------------------------------------------*/
     static async insertGameAtSelectionClick(appContext: IAppContext, game: IBracketGame)
     {
@@ -277,6 +283,138 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
+    static async luckyOneGame(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            // try to extend the selection
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
+            const rules = TourneyRules.CreateFromWorkbook(context);
+
+            const tourneyDef = TourneyDef.CreateFromGrid(grid, appContext.SelectedBracket, rules);
+
+            const newGame: TourneyGameDef = tourneyDef.GetNextGameToSchedule();
+
+            if (newGame == null)
+            {
+                appContext.Messages.error(
+                    ["Could not determine next game to schedule"],
+                    { topic: HelpTopic.Commands_LuckyOneGame});
+
+                return;
+            }
+
+            const bracketGame: IBracketGame = appContext.getGames()[newGame.GameNum.Value];
+            // and now place it
+            await StructureInsert.insertGameAtSelection(
+                appContext,
+                context,
+                bracketGame,
+                newGame.GameDate,
+                newGame.Slot.Start.GetMinutesSinceMidnight(),
+                newGame.Slot.Field.Name);
+
+            appContext.Teaching.transitionState(CoachTransition.LuckyNext);
+        }
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async luckyWholeSchedule(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+            const bracketName = appContext.SelectedBracket;
+
+            const gridStart: Grid = await this.gridBuildFromBracket(context, bracketName);
+            let finalSelectRange: RangeInfo;
+
+            let grid: Grid = gridStart;
+
+            let succeeded = true;
+
+            const rules = TourneyRules.CreateFromWorkbook(context);
+
+            const existingTourney = TourneyDef.CreateFromGrid(grid, appContext.SelectedBracket, rules);
+            const tourneyDef = TourneyRanker.BuildBestRankedScheduleFromExisting(existingTourney);
+
+            if (tourneyDef == null)
+            {
+                appContext.Messages.error(
+                    ["Could not automatically build the rest of the schedule - there are too many permutations. This is usually caused by an insufficient number of usable field slots per day. Either automatically schedule one game at a time, or change the field rules to allow more fields and/or more field slots in a day (usually earlier in the tournament)"],
+                    { topic: HelpTopic.Commands_LuckyRestGames });
+                return;
+            }
+
+            tourneyDef.ScheduleAllRemainingGames();
+
+            const bookmark: string = "luckyWholeSchedule";
+            context.pushTrackingBookmark(bookmark);
+
+            for(const newGame of tourneyDef)
+            {
+                // don't schedule games already on the grid...
+                if (grid.getItemForGameId(newGame.GameNum.GameId) != null)
+                    continue;
+
+                const date = newGame.GameDate;
+                const time = newGame.Slot.Start.GetMinutesSinceMidnight();
+                const field = newGame.Slot.Field.Name;
+
+                const bracketGame: IBracketGame = appContext.getGames()[newGame.GameNum.Value];
+
+                if (await StructureInsert.ensureInsertingGameIsNotPresent(appContext, context, bracketGame))
+                {
+                    // we had to remove the game?!
+                    context.releaseCacheObjectsUntil(bookmark);
+                    context.pushTrackingBookmark(bookmark);
+                }
+
+                const insertRange = new RangeInfo(0, 1, grid.getGridColumnFromDate(date), 1);
+
+                const { gridNew, failReason, coachState, topic, selectRange } =
+                    StructureInsert.buildNewGridForGameInsertAtSelection(insertRange, grid, bracketGame, time, field);
+
+                grid = gridNew;
+                finalSelectRange = selectRange;
+
+                if (failReason)
+                {
+                    appContext.Messages.error(
+                        failReason,
+                        { topic: topic });
+
+                    if (coachState)
+                        appContext.Teaching.pushTempCoachstate(coachState);
+
+                    succeeded = false;
+                    break;
+                }
+            }
+            if (succeeded)
+            {
+                _TimerStack.pushTimer("insertGameAtSelection:diffAndApplyChanges");
+
+                let undoGameDataItems: UndoGameDataItem[] =
+                    await ApplyGridChange.diffAndApplyChanges(appContext, context, gridStart, grid, bracketName, finalSelectRange, true);
+
+                _TimerStack.popTimer();
+
+                _undoManager.setUndoGrid(gridStart, undoGameDataItems);
+            }
+        }
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
 
     static async captureSelectionForMove(appContext: IAppContext)
     {
@@ -410,9 +548,9 @@ export class StructureEditor
         const bracketName: string = appContext.SelectedBracket;
 
         // first, confirm that the current loaded bracked is standard double elimination
-        let bracketDef: BracketDefinition = _bracketManager.getBracket(bracketName);
+        let bracketDef: IBracketDefinitionData = _bracketManager.GetBracketDefinitionData(bracketName);
 
-        if (!BracketManager.isBracketDoubleEliminination(bracketDef))
+        if (!BracketManager.IsBracketDefinitionDataDoubleEliminination(bracketDef))
         {
             appContext.Messages.error(
                 [
@@ -423,7 +561,7 @@ export class StructureEditor
             return;
         }
 
-        const whatifGame: GameDefinition = bracketDef.games[bracketDef.games.length - 2];
+        const whatifGame: IBracketGameDefinition = bracketDef.games[bracketDef.games.length - 2];
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 
@@ -501,7 +639,7 @@ export class StructureEditor
     {
         const selection: RangeInfo = await Ranges.createRangeInfoForSelection(context);
         const bracketName: string = appContext.SelectedBracket;
-        
+
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 
         if (!StructureInsert.adjustRangeInfoForGameInfoColumn(selection, grid))
@@ -554,7 +692,7 @@ export class StructureEditor
         // now for every game that just transited through this day, just extend the
         // line. for every game that should have played on this day, move the game
         // also add a line, but add text about the suspension
-        
+
         const gridNewOriginal = await Grid.createGridFromBracket(context, bracketName);
         const gridNew = gridNewOriginal.clone();
 
@@ -584,7 +722,7 @@ export class StructureEditor
             }
         }
 
-            // move isn't going to change any field/times
+        // move isn't going to change any field/times
         _undoManager.setUndoGrid(grid, []);
         await ApplyGridChange.diffAndApplyChanges(appContext, context, gridNewOriginal, gridNew, bracketName);
     }
@@ -818,7 +956,7 @@ export class StructureEditor
         {
             // move isn't going to change any field/times
             _undoManager.setUndoGrid(grid, []);
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName, null, false/*forceGameData*/);
             if (mover.Warning != "")
                 appContext.Messages.error([mover.Warning], null, 8000);
         }
@@ -833,7 +971,7 @@ export class StructureEditor
             let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
 
             grid.logGrid();
-            
+
             console.log(`rank: ${GridRanker.getGridRank(grid, appContext.SelectedBracket)}`)
         };
 
@@ -929,8 +1067,8 @@ export class StructureEditor
             1,
             1);
 
-        rangeChampionDayTop.formulas = [[ "" ]];
-        rangeChampionDayBottom.formulas = [[ "" ]];
+        rangeChampionDayTop.formulas = [[""]];
+        rangeChampionDayBottom.formulas = [[""]];
 
         const rangeWholeChampionDayTop: Excel.Range = sheet.getRangeByIndexes(
             4,

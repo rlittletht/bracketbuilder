@@ -5,16 +5,18 @@ import { BracketDefBuilder, BracketOption } from "./Brackets/BracketDefBuilder";
 import { CoachTransition } from "./Coaching/CoachTransition";
 import { HelpTopic } from "./Coaching/HelpInfo";
 import { TrError } from "./Exceptions";
-import { FastFormulaAreas, FastFormulaAreasItems } from "./Interop/FastFormulaAreas";
+import { FastFormulaAreas } from "./Interop/FastFormulaAreas/FastFormulaAreas";
 import { FastTables } from "./Interop/FastTables";
 import { JsCtx } from "./Interop/JsCtx";
 import { StatusBox } from "./taskpane/components/StatusBox";
 import { RangeInfo } from "./Interop/Ranges";
 import { RangeCaches, RangeCacheItemType } from "./Interop/RangeCaches";
-import { BracketDefinition } from "./Brackets/BracketDefinitions";
 import { _bracketManager } from "./Brackets/BracketManager";
 import { Dispatcher, DispatchWithCatchDelegate } from "./BracketEditor/Dispatcher";
 import { GridBuilder } from "./Brackets/GridBuilder";
+import { IBracketDefinitionData } from "./Brackets/IBracketDefinitionData";
+import { RulesBuilder } from "./Brackets/RulesBuilder";
+import { FastFormulaAreasItems } from "./Interop/FastFormulaAreas/FastFormulaAreasItems";
 
 export class SetupState
 {
@@ -224,9 +226,9 @@ export class SetupBook
         return [setupState, bracketChoice];
     }
 
-    static async loadCustomBracketsAsync(context: JsCtx, appContext: IAppContext, reportMissingBrackets?: boolean): Promise<BracketDefinition[]>
+    static async loadCustomBracketsAsync(context: JsCtx, appContext: IAppContext, reportMissingBrackets?: boolean): Promise<IBracketDefinitionData[]>
     {
-        const brackets: BracketDefinition[] = [];
+        const brackets: IBracketDefinitionData[] = [];
 
         _bracketManager.setDirty(true);
 
@@ -234,7 +236,7 @@ export class SetupBook
         try
         {
             await _bracketManager.populateBracketsIfNecessary(context);
-            brackets.push(..._bracketManager.getBrackets());
+            brackets.push(..._bracketManager.GetBracketDefinitionsData());
         }
         catch (error)
         {
@@ -258,9 +260,9 @@ export class SetupBook
         return brackets;
     }
 
-    static async loadCustomBrackets(appContext: IAppContext): Promise<BracketDefinition[]>
+    static async loadCustomBrackets(appContext: IAppContext): Promise<IBracketDefinitionData[]>
     {
-        const brackets: BracketDefinition[] = [];
+        const brackets: IBracketDefinitionData[] = [];
 
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
@@ -332,10 +334,17 @@ export class SetupBook
         if (appContext.WorkbookSetupState != SetupState.Ready)
             return;
 
-        const sheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+        const gridSheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
         context.Ctx.workbook.bindings.add(
-            sheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
+            gridSheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
                 () => { appContext.AppStateAccess.BracketDirtyForBracketEdit = true; });
+
+        const rulesSheet = context.Ctx.workbook.worksheets.getItem(RulesBuilder.SheetName);
+        context.Ctx.workbook.bindings.add(
+            rulesSheet.getRangeByIndexes(0, 0, 30, 10),
+            Excel.BindingType.range,
+            "rulesData").onDataChanged.add(
+            () => { appContext.AppStateAccess.RulesDirtyForRulesEdit = true; });
 
         await context.sync();
     }
