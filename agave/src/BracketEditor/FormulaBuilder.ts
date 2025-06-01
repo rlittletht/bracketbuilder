@@ -3,9 +3,20 @@ import { BracketManager } from "../Brackets/BracketManager";
 import { BracketGame } from "./BracketGame";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
+import { IAppContext } from "../AppContext/AppContext";
+import { StreamWriter } from "../Support/StreamWriter";
+import { TestRunner } from "../Support/TestRunner";
+import { TestResult } from "../Support/TestResult";
 
 export class FormulaBuilder
 {
+    static isTeamRefForBracket(check: string): boolean
+    {
+        const regex = /^T\d+_G\d+_[12]$/;
+
+        return regex.test(check);
+    }
+
     static getScoreRefFromTeamRef(teamRef: string): string
     {
         return `OFFSET(${teamRef}, 0, 1)`;
@@ -135,5 +146,32 @@ export class FormulaBuilder
     static getTeamNameLookup(id: string): string
     {
         return `=INDEX(TeamNames[Name],MATCH("${id}", TeamNames[ID],0))`;
+    }
+}
+
+
+export class FormulaBuilderTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
+
+    static runTest(result: TestResult, input: string, expected: boolean)
+    {
+        const actual = FormulaBuilder.isTeamRefForBracket(input);
+        result.assertIsEqual(expected, actual, `isTeamRefForBracket(${input})`);
+    }
+
+    static test_IsTeamRefForBracket(result: TestResult)
+    {
+        this.runTest(result, "T1_G2_1", true);
+        this.runTest(result, "T1_G2_2", true);
+        this.runTest(result, "T11_G2_2", true);
+        this.runTest(result, "T11_G12_2", true);
+        this.runTest(result, "T11_G2_3", false);
+        this.runTest(result, "T11_Game1", false);
+        this.runTest(result, "T11_Ga2_1", false);
+        this.runTest(result, "T11_G_2_1", false);
     }
 }

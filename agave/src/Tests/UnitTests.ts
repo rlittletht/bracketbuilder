@@ -20,6 +20,7 @@ import { TourneyTests } from "../Tourney/TourneyTests";
 import { TimeWithoutDateTests } from "../Support/TimeWithoutDateTests";
 import { DateWithoutTime } from "../Support/DateWithoutTime";
 import { DateWithoutTimeTests } from "../Support/DateWithoutTimeTests";
+import { FormulaBuilderTests } from "../BracketEditor/FormulaBuilder";
 
 export class UnitTests
 {
@@ -46,6 +47,7 @@ export class UnitTests
                     context.releaseAllCacheObjects();
                 });
 
+            FormulaBuilderTests.runAllTests(appContext, outStream);
             TimeWithoutDateTests.runAllTests(appContext, outStream);
             DateWithoutTimeTests.runAllTests(appContext, outStream);
             TourneyTests.runAllTests(appContext, outStream);

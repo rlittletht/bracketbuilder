@@ -39,6 +39,7 @@ import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
 import { TourneyRanker } from "../../Tourney/TourneyRanker";
 import { TourneyRules } from "../../Tourney/TourneyRules";
 import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
+import { FormulaBuilder } from "../FormulaBuilder";
 
 let _moveSelection: RangeInfo = null;
 
@@ -304,7 +305,7 @@ export class StructureEditor
             {
                 appContext.Messages.error(
                     ["Could not determine next game to schedule"],
-                    { topic: HelpTopic.Commands_LuckyOneGame});
+                    { topic: HelpTopic.Commands_LuckyOneGame });
 
                 return;
             }
@@ -350,7 +351,9 @@ export class StructureEditor
             if (tourneyDef == null)
             {
                 appContext.Messages.error(
-                    ["Could not automatically build the rest of the schedule - there are too many permutations. This is usually caused by an insufficient number of usable field slots per day. Either automatically schedule one game at a time, or change the field rules to allow more fields and/or more field slots in a day (usually earlier in the tournament)"],
+                    [
+                        "Could not automatically build the rest of the schedule - there are too many permutations. This is usually caused by an insufficient number of usable field slots per day. Either automatically schedule one game at a time, or change the field rules to allow more fields and/or more field slots in a day (usually earlier in the tournament)"
+                    ],
                     { topic: HelpTopic.Commands_LuckyRestGames });
                 return;
             }
@@ -360,7 +363,7 @@ export class StructureEditor
             const bookmark: string = "luckyWholeSchedule";
             context.pushTrackingBookmark(bookmark);
 
-            for(const newGame of tourneyDef)
+            for (const newGame of tourneyDef)
             {
                 // don't schedule games already on the grid...
                 if (grid.getItemForGameId(newGame.GameNum.GameId) != null)
@@ -775,6 +778,27 @@ export class StructureEditor
     }
 
 
+    static async unprotectAllSheets(appContext: IAppContext, context: JsCtx)
+    {
+        appContext!;
+        context!;
+    }
+
+    static setupGameSheetProtectedItems(namedItems: Excel.NamedItemCollection)
+    {
+        // find all the named ranges for our games
+        namedItems.items.forEach(
+            (namedRange: Excel.NamedItem) =>
+            {
+                if (FormulaBuilder.isTeamRefForBracket(namedRange.name))
+                {
+                    // this is a game range, so we need to unprotect it
+                    const range: Excel.Range = namedRange.getRange();
+                    range.getOffsetRange(0, 1).format.protection.locked = false;
+                }
+            });
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.toggleShowDataSheets
 
@@ -789,20 +813,46 @@ export class StructureEditor
         dataSheet.load("visibility");
         await context.sync();
 
+        const showingSheets: boolean =
+            dataSheet.visibility == Excel.SheetVisibility.hidden;
+
         const visibility: Excel.SheetVisibility =
-            dataSheet.visibility == Excel.SheetVisibility.hidden
+            showingSheets
                 ? Excel.SheetVisibility.visible
                 : Excel.SheetVisibility.hidden;
 
-        context.Ctx.workbook.worksheets.load("items");
+        context.Ctx.workbook.names.load("items/name, items/value");
+        context.Ctx.workbook.worksheets.load("items/name");
         await context.sync();
+
+        if (!showingSheets)
+            this.setupGameSheetProtectedItems(context.Ctx.workbook.names);
+
         context.Ctx.workbook.worksheets.items.forEach(
-            async sheet =>
+            sheet =>
             {
-                sheet.load("name");
-                await context.sync();
-                if (sheet.name != GridBuilder.SheetName && sheet.name != BracketInfoBuilder.SheetName)
+                if (sheet.name == GridBuilder.SheetName)
+                {
+                    if (showingSheets)
+                        sheet.protection.unprotect();
+                    else
+                        sheet.protection.protect();
+                }
+                else if (sheet.name == BracketInfoBuilder.SheetName)
+                {
+                    if (showingSheets)
+                        sheet.protection.unprotect();
+                    else
+                        sheet.protection.protect();
+                }
+                else
+                {
                     sheet.visibility = visibility;
+                    if (showingSheets)
+                        sheet.protection.unprotect();
+                    else
+                        sheet.protection.protect();
+                }
             });
 
         await context.sync();
@@ -956,7 +1006,7 @@ export class StructureEditor
         {
             // move isn't going to change any field/times
             _undoManager.setUndoGrid(grid, []);
-            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName, null, false/*forceGameData*/);
+            await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, gridNew, bracketName, null, false /*forceGameData*/);
             if (mover.Warning != "")
                 appContext.Messages.error([mover.Warning], null, 8000);
         }

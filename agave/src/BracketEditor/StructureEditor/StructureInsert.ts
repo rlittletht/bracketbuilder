@@ -17,6 +17,7 @@ import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnSetFormulas } from "../../Interop/Intentions/TnSetFormula";
 import { TnCreateGlobalName } from "../../Interop/Intentions/TnCreateGlobalName";
 import { DateWithoutTime } from "../../Support/DateWithoutTime";
+import { TnMergeRange } from "../../Interop/Intentions/TnMergeRange";
 
 export class StructureInsert
 {
@@ -78,6 +79,10 @@ export class StructureInsert
         tns.push(...GameFormatting.tnsFormatChampionshipText(new RangeInfo(insertRangeInfo.LastRow, 1, insertRangeInfo.FirstColumn, 2)));
 
         tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(insertRangeInfo.offset(1, 1, 0, 1)));
+
+        tns.push(TnMergeRange.Create(insertRangeInfo.offset(0, 1, 0, 2), false));
+        tns.push(TnMergeRange.Create(insertRangeInfo.offset(1, 1, 0, 2), false));
+        tns.push(TnMergeRange.Create(insertRangeInfo.offset(2, 1, 0, 2), false));
 
         context.releaseCacheObjectsUntil(bookmark);
 
