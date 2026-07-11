@@ -4,6 +4,13 @@ import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { ActionButton } from "./ActionButton";
 import { Teachable, TeachableProps } from "./Teachable";
 
+export interface ToolbarMenuItem
+{
+    icon: string;
+    text: string;
+    delegate: (appContext: IAppContext) => Promise<boolean>;
+}
+
 export interface ToolbarItem
 {
     icon: string;
@@ -11,7 +18,8 @@ export interface ToolbarItem
     cursor: string;
     delegate: (appContext: IAppContext) => Promise<boolean>;
     stateChecker: string;
-    teachableProps?: TeachableProps
+    teachableProps?: TeachableProps;
+    menuItems?: ToolbarMenuItem[];
 }
 
 export interface ToolbarProps
@@ -58,11 +66,32 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
         for (let index = 0; index < items.length; index++)
         {
             const item = items[index];
+            const menuItems = [];
+
+            for (let idx = 0; item.menuItems && idx < item.menuItems.length; idx++)
+            {
+                const menuItem = item.menuItems[idx];
+                menuItems.push(
+                    {
+                        text: menuItem.text,
+                        icon: menuItem.icon,
+                        delegate: menuItem.delegate
+                    });
+            }
+
+            const actionButton = (<ActionButton
+                                      icon={item.icon}
+                                      tooltip={item.primaryText}
+                                      tooltipId={`rid-${i++}`}
+                                      menuItems={menuItems}
+                                      disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
+                                      bracketGame={null} delegate={() => item.delegate(this.context)}/>);
+
             if (item.teachableProps)
             {
                 ribbonItems.push(
                     (
-                        <Stack.Item align="center" key={index} styles={stackItemStyles} >
+                        <Stack.Item align="center" key={index} styles={stackItemStyles}>
                             <Teachable
                                 id={item.teachableProps.id}
                                 title={item.teachableProps.title}
@@ -70,12 +99,7 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
                                 visibleDelay={item.teachableProps.visibleDelay}
                                 directionalHint={item.teachableProps.directionalHint}
                                 isWide={item.teachableProps.isWide}>
-                                <ActionButton
-                                    icon={item.icon}
-                                    tooltip={item.primaryText}
-                                    tooltipId={`rid-${i++}`}
-                                    disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                                    bracketGame={null} delegate={() => item.delegate(this.context)} />
+                                {actionButton}
                             </Teachable>
                         </Stack.Item>
                     ));
@@ -84,13 +108,8 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
             {
                 ribbonItems.push(
                     (
-                        <Stack.Item align="center" key={index} styles={stackItemStyles} >
-                            <ActionButton
-                                icon={item.icon}
-                                tooltip={item.primaryText}
-                                tooltipId={`rid-${i++}`}
-                                disabled={item.stateChecker && item.stateChecker != null && this.state[item.stateChecker] && this.state[item.stateChecker] == null}
-                                bracketGame={null} delegate={() => item.delegate(this.context)} />
+                        <Stack.Item align="center" key={index} styles={stackItemStyles}>
+                            {actionButton}
                         </Stack.Item>
                     ));
             }

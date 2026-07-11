@@ -331,6 +331,8 @@ export class SetupBook
 
     static async registerBindingsForEdits(context: JsCtx, appContext: IAppContext)
     {
+        return;
+
         if (appContext.WorkbookSetupState != SetupState.Ready)
             return;
 

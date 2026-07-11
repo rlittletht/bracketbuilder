@@ -450,7 +450,7 @@ export class StructureRemove
         return tns;
     }
 
-    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, rangeSelected: RangeInfo, removedGameValues?: RemovedGameValues): Promise<IIntention[]>
+    static async removeBoundGame(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, removedGameValues?: RemovedGameValues): Promise<IIntention[]>
     {
         const tns: IIntention[] = [];
 
@@ -491,16 +491,15 @@ export class StructureRemove
             if (!setRange)
                 throw new Error(`could not find any range for the broken game ${game.GameId.Value}`);
 
-            rangeSelected = new RangeInfo(topRow, bottomRow - topRow + 1, firstCol, lastCol - firstCol + 1);
+            const rangeSelected = new RangeInfo(topRow, bottomRow - topRow + 1, firstCol, lastCol - firstCol + 1);
             // can't let the normal (undoable) remove happen. need to obliterate the selection
             tns.push(...await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/));
 
             return tns;
         }
 
-        // if we can't bind to the game, and if the selection is a single cell, then
-        // we can't do anything
-        if (!game.IsLinkedToBracket && rangeSelected.RowCount <= 1 && rangeSelected.ColumnCount <= 1 && !game.IsBroken)
+        // if we can't bind to the game we can't do anything
+        if (!game.IsLinkedToBracket)
         {
             appContext.Messages.error(
                 [`Cannot find game ${game.GameId.Value} in the bracket`],
@@ -598,7 +597,7 @@ export class StructureRemove
 
         _TimerStack.pushTimer("removeBoundGames");
         for (let _game of games)
-            tns.AddTns(await this.removeBoundGame(appContext, context, grid, _game, rangeSelected, removedGameValues));
+            tns.AddTns(await this.removeBoundGame(appContext, context, grid, _game, removedGameValues));
         _TimerStack.popTimer();
 
         // last, obliterate the rest of the range

@@ -24,7 +24,7 @@ import { StructureRemove } from "./StructureRemove";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { BracketInfoBuilder } from "../../Brackets/BracketInfoBuilder";
-import { RangeCaches } from "../../Interop/RangeCaches";
+import { RangeCacheItemType, RangeCaches } from "../../Interop/RangeCaches";
 import { _bracketManager } from "../../Brackets/BracketManager";
 import { BracketManager } from "../../Brackets/BracketManager";
 import { SetupBook } from "../../Setup";
@@ -40,6 +40,11 @@ import { TourneyRanker } from "../../Tourney/TourneyRanker";
 import { TourneyRules } from "../../Tourney/TourneyRules";
 import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
 import { FormulaBuilder } from "../FormulaBuilder";
+import { TnSetValues } from "../../Interop/Intentions/TnSetValue";
+import { GameDataSources } from "../../Brackets/GameDataSources";
+import { Intentions } from "../../Interop/Intentions/Intentions";
+import { IIntention } from "../../Interop/Intentions/IIntention";
+import { TnMergeRange } from "../../Interop/Intentions/TnMergeRange";
 
 let _moveSelection: RangeInfo = null;
 
@@ -59,6 +64,20 @@ export class StructureEditor
 
             await this.copySelectionToClipboard(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async doBracketRedrawClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+            await StructureEditor.doBracketRedraw(appContext, context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -564,20 +583,44 @@ export class StructureEditor
             return;
         }
 
-        const whatifGame: IBracketGameDefinition = bracketDef.games[bracketDef.games.length - 2];
+        const whatIfGameNumber = new GameNum(bracketDef.games.length - 2);
+        const championshipGameNumber = new GameNum(bracketDef.games.length - 1);
+
+        const whatifGame: IBracketGameDefinition = bracketDef.games[whatIfGameNumber.Value];
+        const championshipGame: IBracketGameDefinition = bracketDef.games[championshipGameNumber.Value];
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 
-        if (grid.findGameItem(GameId.CreateFromGameNum(new GameNum(bracketDef.games.length - 2))) != null)
-        {
-            appContext.Messages.error(
-                [
-                    "The what-if game is still in the bracket.",
-                    "You cannot convert this bracket to a modified double elimination until the game is removed"
-                ],
-                { topic: HelpTopic.Commands_ConvertBracket });
+        const tns: Intentions = new Intentions();
 
-            return;
+        const championshipGameItem = grid.findGameItem(GameId.CreateFromGameNum(championshipGameNumber));
+        const games = appContext.getGames();
+
+        const championshipGameDef = games[championshipGameNumber.Value];
+        const whatIfGameDef = games[whatIfGameNumber.Value];
+
+        const whatIfGameItem = grid.findGameItem(GameId.CreateFromGameNum(whatIfGameNumber));
+        if (championshipGameItem != null)
+        {
+            if (whatIfGameItem == null)
+            {
+                appContext.Messages.error(
+                    [
+                        "The championship game is in the bracket, but there is no what-if game.",
+                        "This bracket is not consistent. You must repair this bracket manually."
+                    ],
+                    { topic: HelpTopic.Commands_ConvertBracket });
+
+                return;
+            }
+            // the championship is already on the bracket. remember where it was and remove it
+            tns.AddTns(await StructureRemove.removeBoundGame(appContext, context, grid, championshipGameDef));
+        }
+
+        if (whatIfGameItem != null)
+        {
+            // the what-if game is already on the bracket. remember where it was and remove it
+            tns.AddTns(await StructureRemove.removeBoundGame(appContext, context, grid, whatIfGameDef));
         }
 
         // ok, we want to modify the bracket on the sheet to be a modified double elimination
@@ -630,6 +673,85 @@ export class StructureEditor
         await FastFormulaAreas.populateAllCaches(context);
         await RangeCaches.PopulateIfNeeded(context, bracketName);
         await _bracketManager.populateBracketsIfNecessary(context);
+
+        // reload bracketDef since we just changed the bracket definition
+        bracketDef = _bracketManager.GetBracketDefinitionData(bracketName);
+
+        // and now, if we had a championship game already on the bracket, then let's place it again where the what-if was
+        if (championshipGameItem != null)
+        {
+            // reload the game definition since the bracket chagned
+            const newChampionshipGameDef = await BracketGame.CreateFromGameNumber(context, appContext, bracketName, new GameNum(bracketDef.games.length - 1));
+            const targetRange: RangeInfo = new RangeInfo(whatIfGameItem.Range.FirstRow, 3, whatIfGameItem.Range.FirstColumn, 3);
+
+            tns.AddTns(await StructureInsert.insertChampionshipGameAtRange(appContext, context, newChampionshipGameDef, targetRange));
+
+            // and now merge the ranges so the championship takes up both the what-if and championship ranges
+            const tnMerges: IIntention[] = [
+                TnMergeRange.Create(targetRange.offset(0, 1, 0, 6), true),
+                TnMergeRange.Create(targetRange.offset(1, 1, 0, 6), true),
+                TnMergeRange.Create(targetRange.offset(2, 1, 0, 6), true)];
+
+            tns.AddTns(tnMerges);
+        }
+
+        await tns.Execute(context);
+    }
+
+    static tournamentDraw<T>(teams: T[]): T[]
+    {
+        const result = [...teams];
+
+        for (let i = result.length - 1; i > 0; i--)
+        {
+            const j = Math.floor(Math.random() * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+
+        return result;
+    }
+
+    static async doBracketRedraw(appContext: IAppContext, context: JsCtx)
+    {
+        appContext;
+        // get the current team names
+        const tns = [];
+        const rangeTeamNames = RangeCaches.getCacheByType(RangeCacheItemType.TeamNamesBody);
+
+        if (rangeTeamNames)
+        {
+            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeTeamNames.formulaCacheType);
+            const dataRange = rangeTeamNames.rangeInfo;
+            const dataValues = areas.getValuesForRangeInfo(dataRange);
+
+            const teamNames = [];
+
+            for (let row = 0; row < dataRange.RowCount; row++)
+            {
+                teamNames.push(dataValues[row][1]);
+            }
+
+            // now sort the team names
+            const draw = StructureEditor.tournamentDraw(teamNames);
+
+            for (let row = 0; row < dataRange.RowCount; row++)
+            {
+                tns.push(TnSetValues.Create(
+                    dataRange.offset(row, 1, 0, 2),
+                    [
+                        [
+                            dataValues[row][0],
+                            draw[row]
+                        ]
+                    ],
+                    GameDataSources.SheetName));
+            }
+            const intentions: Intentions = new Intentions();
+
+            intentions.AddTns(tns);
+
+            await intentions.Execute(context);
+        }
     }
 
     /*----------------------------------------------------------------------------
