@@ -9,6 +9,7 @@ export interface ActionButtonMenuItemProps
 {
     icon: string;
     text: string;
+    title: string,
     delegate: (appContext: IAppContext, game: IBracketGame) => Promise<boolean>;
 }
 
@@ -63,6 +64,7 @@ export class ActionButton extends React.Component<ActionButtonProps, ActionButto
                 {
                     key: "" + idx,
                     text: menuItem.text,
+                    title: menuItem.title,
                     iconProps: { iconName: menuItem.icon },
                     onClick: () => this.onButtonClick(idx)
                 };

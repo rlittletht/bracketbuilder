@@ -8,6 +8,7 @@ export interface ToolbarMenuItem
 {
     icon: string;
     text: string;
+    title?: string;
     delegate: (appContext: IAppContext) => Promise<boolean>;
 }
 
@@ -75,6 +76,7 @@ export class Toolbar extends React.Component<ToolbarProps, ToolbarState>
                     {
                         text: menuItem.text,
                         icon: menuItem.icon,
+                        title: menuItem.title,
                         delegate: menuItem.delegate
                     });
             }

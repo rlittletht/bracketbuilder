@@ -270,19 +270,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
             });
         listItems.push(
             {
-                icon: "Brush",
-                primaryText: "Shade games by priority",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> =>
-                {
-                    await Prioritizer.shadeGamesByPriorityClick(appContext);
-                    appContext;
-                    return true;
-                }
-            });
-        listItems.push(
-            {
                 icon: this.m_appContext.AppStateAccess.SheetsHidden ? "View" : "Hide3",
                 primaryText: this.m_appContext.AppStateAccess.SheetsHidden ? "Unhide data sheets" : "Hide bracket data sheets",
                 cursor: "cursorPointer",
@@ -307,31 +294,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
             });
         listItems.push(
             {
-                icon: "Rain",
-                primaryText: "Push all games today to the next day (insert a day into the bracket)",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> =>
-                {
-                    await StructureEditor.insertGameDayForSchedulePushClick(appContext);
-                    return true;
-                }
-            });
-
-        listItems.push(
-            {
-                icon: "DeleteRows",
-                primaryText: "Convert this bracket to a modified double elimination bracket",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> =>
-                {
-                    await StructureEditor.convertBracketToModifiedDoubleEliminationClick(appContext);
-                    return true;
-                }
-            });
-        listItems.push(
-            {
                 icon: "ActionCenter",
                 primaryText: "Reset Coaching Tips",
                 cursor: "cursorPointer",
@@ -344,7 +306,61 @@ export default class App extends React.Component<AppProps, AppState> implements 
             });
         listItems.push(
             {
-                icon: "Toolbox",
+                icon: "DeveloperTools",
+                primaryText: "Bracket Tools",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    appContext;
+                    return true;
+                },
+                menuItems: [
+                    {
+                        icon: "Brush",
+                        text: "Shade games by priority",
+                        title: "Shade games by priority",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await Prioritizer.shadeGamesByPriorityClick(appContext);
+                            appContext;
+                            return true;
+                        }
+                    },
+                    {
+                        icon: "Rain",
+                        text: "Rain out a day",
+                        title: "Push all games today to the next day (insert a day into the bracket)",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.insertGameDayForSchedulePushClick(appContext);
+                            return true;
+                        }
+                    },
+                    {
+                        icon: "DeleteRows",
+                        text: "Remove if-needed game",
+                        title: "Convert this bracket to a modified double elimination bracket",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.convertBracketToModifiedDoubleEliminationClick(appContext);
+                            return true;
+                        }
+                    },
+                    {
+                        icon: "NumberedList",
+                        text: "(Re)draw the bracket teams",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.doBracketRedrawClick(appContext);
+                            return true;
+                        }
+                    }
+                ]
+            });
+        listItems.push(
+            {
+                icon: "CompletedSolid",
                 primaryText: "Apply the finishing touches",
                 cursor: "cursorPointer",
                 stateChecker: null,
@@ -365,16 +381,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 },
                 menuItems: [
                     {
-                        icon: "NumberedList",
-                        text: "(Re)draw the bracket teams",
-                        delegate: async (appContext: IAppContext): Promise<boolean> =>
-                        {
-                            await StructureEditor.doBracketRedrawClick(appContext);
-                            return true;
-                        }
-                    },
-                    {
-                        icon: "CompletedSolid",
+                        icon: "AutoEnhanceOff",
                         text: "Apply the finishing touches",
                         delegate: async (appContext: IAppContext): Promise<boolean> =>
                         {
