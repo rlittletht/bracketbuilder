@@ -198,6 +198,9 @@ export class StructureEditor
         a.foo = 1;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: finalizeClick
+    ----------------------------------------------------------------------------*/
     static async finalizeClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -214,6 +217,10 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
+
+    /*----------------------------------------------------------------------------
+        %%Function: normalizeAllColumnsToCurrentColumnClick
+    ----------------------------------------------------------------------------*/
     static async normalizeAllColumnsToCurrentColumnClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -229,6 +236,9 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: autofitTeamColumnsClick
+    ----------------------------------------------------------------------------*/
     static async autofitTeamColumnsClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -1122,6 +1132,14 @@ export class StructureEditor
         await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: doGameMoveToSelection
+
+        move t he given game to the given selected game (previously "picked up")
+        and move it to the current selected location. This will try to reattach
+        incoming and outgoing connections and it will also try to make room
+        for the game/optimize the grid for this drop.
+    ----------------------------------------------------------------------------*/
     static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
     {
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
@@ -1180,6 +1198,13 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: normalizeColumnsToWidth
+
+        Apply the given width to all the team name columns. This isn't async
+        because it doesn't await anything. caller is responsible for awaiting
+        the context sync
+    ----------------------------------------------------------------------------*/
     static normalizeColumnsToWidth(appContext: IAppContext, context: JsCtx, width: number)
     {
         const columnsToSelect: Set<number> = new Set<number>();
@@ -1203,6 +1228,12 @@ export class StructureEditor
         }
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: normalizeAllColumnsToCurrentColumn
+
+        take the width of the current team name column and apply it to all
+        the other team name columns so they are uniform
+    ----------------------------------------------------------------------------*/
     static async normalizeAllColumnsToCurrentColumn(appContext: IAppContext, context: JsCtx, bracketName: string)
     {
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
@@ -1225,6 +1256,13 @@ export class StructureEditor
         await context.sync();
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: autofitTeamColumns
+
+        autofit every column that has a static team name in it, then take the
+        max width and apply it to all the team name columns so they are uniform
+        (and big enough for the longest team name)
+    ----------------------------------------------------------------------------*/
     static async autofitTeamColumns(appContext: IAppContext, context: JsCtx, bracketName: string)
     {
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
