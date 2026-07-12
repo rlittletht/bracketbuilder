@@ -388,7 +388,26 @@ export default class App extends React.Component<AppProps, AppState> implements 
                             await StructureEditor.finalizeClick(appContext);
                             return true;
                         },
+                    },
+                    {
+                        icon: "FitWidth",
+                        text: "Autofit Team Columns",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.autofitTeamColumnsClick(appContext);
+                            return true;
+                        },
+                    },
+                    {
+                        icon: "VerticalDistributeCenter",
+                        text: "Normalize all team columns to current column",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.normalizeAllColumnsToCurrentColumnClick(appContext);
+                            return true;
+                        },
                     }
+
                 ]
             });
 

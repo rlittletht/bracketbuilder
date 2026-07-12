@@ -32,7 +32,7 @@ import { Sheets, EnsureSheetPlacement } from "../../Interop/Sheets";
 import { BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
 import { GameId } from "../GameId";
 import { GameNum } from "../GameNum";
-import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
+import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData"; 
 import { IBracketGameDefinition } from "../../Brackets/IBracketGameDefinition";
 import { TourneyDef } from "../../Tourney/TourneyDef";
 import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
@@ -209,6 +209,36 @@ export class StructureEditor
 
             await this.applyFinalFormatting(appContext, context, appContext.SelectedBracket);
             appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async normalizeAllColumnsToCurrentColumnClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.normalizeAllColumnsToCurrentColumn(appContext, context, appContext.SelectedBracket);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async autofitTeamColumnsClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.autofitTeamColumns(appContext, context, appContext.SelectedBracket);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -1149,6 +1179,113 @@ export class StructureEditor
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
+
+    static normalizeColumnsToWidth(appContext: IAppContext, context: JsCtx, width: number)
+    {
+        const columnsToSelect: Set<number> = new Set<number>();
+
+        for (const game of appContext.getGames())
+        {
+            if (game.IsLinkedToBracket)
+            {
+                const column = game.TopTeamRange.FirstColumn;
+
+                columnsToSelect.add(column);
+            }
+        }
+
+        for (const column of columnsToSelect)
+        {
+            const columns = `${Ranges.getColName(column)}:${Ranges.getColName(column)}`;
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+            const range: Excel.Range = sheet.getRange(columns);
+            range.format.columnWidth = width;
+        }
+    }
+
+    static async normalizeAllColumnsToCurrentColumn(appContext: IAppContext, context: JsCtx, bracketName: string)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        const thisColumn = await Ranges.createRangeInfoForSelection(context);
+
+        if (!StructureInsert.adjustRangeInfoForGameInfoColumn(thisColumn, grid))
+        {
+            throw new Error("failed to adjust range for game info column");
+        }
+
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+        const columns = `${Ranges.getColName(thisColumn.FirstColumn)}:${Ranges.getColName(thisColumn.FirstColumn)}`;
+        const range: Excel.Range = sheet.getRange(columns);
+
+        range.load("format/columnWidth");
+        await context.sync();
+
+        StructureEditor.normalizeColumnsToWidth(appContext, context, range.format.columnWidth);
+        await context.sync();
+    }
+
+    static async autofitTeamColumns(appContext: IAppContext, context: JsCtx, bracketName: string)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        // get all the columns that currently have team names in them (only care about
+        // the games with static team names -- other games will just have "W1", etc for th team name)
+
+        const columnsToAutofit: Set<number> = new Set<number>();
+
+        for (const game of appContext.getGames())
+        {
+            if (game.IsLinkedToBracket)
+            {
+                const column = game.TopTeamRange.FirstColumn;
+
+                if (BracketManager.IsTeamSourceStatic(game.TopTeamName)
+                    || BracketManager.IsTeamSourceStatic(game.BottomTeamName))
+                {
+                    columnsToAutofit.add(column);
+                }
+            }
+        }
+
+        for (const column of columnsToAutofit)
+        {
+            const columns = `${Ranges.getColName(column)}:${Ranges.getColName(column)}`;
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+            const range: Excel.Range = sheet.getRange(columns);
+
+            range.format.autofitColumns();
+        }
+
+        await context.sync();
+
+        const ranges: Excel.Range[] = [];
+
+        // now, collect the results and normalize all the columns to the max autofit width
+        for (const column of columnsToAutofit)
+        {
+            const columns = `${Ranges.getColName(column)}:${Ranges.getColName(column)}`;
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+            const range: Excel.Range = sheet.getRange(columns);
+            range.load("format/columnWidth");
+
+            ranges.push(range);
+        }
+
+        await context.sync();
+
+        let maxWidth: number = 0;
+        for (const range of ranges)
+        {
+            if (range.format.columnWidth > maxWidth)
+                maxWidth = range.format.columnWidth;
+        }
+
+        StructureEditor.normalizeColumnsToWidth(appContext, context, maxWidth);
+
+        await context.sync();
+    }
+
 
     static async applyFinalFormatting(appContext: IAppContext, context: JsCtx, bracketName: string)
     {

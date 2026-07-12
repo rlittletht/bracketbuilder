@@ -29,9 +29,11 @@
   },
   "dependencies": {
     "@fluentui/react": "^8.34.0",
+    "@types/office-js": "^1.0.599",
     "async-mutex": "^0.3.2",
     "core-js": "^3.9.1",
     "es6-promise": "^4.2.8",
+    "office-js": "^0.1.0",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
     "regenerator-runtime": "^0.13.7",
@@ -40,7 +42,6 @@
   "devDependencies": {
     "@babel/core": "^7.13.10",
     "@babel/preset-typescript": "^7.13.0",
-    "@types/office-js": "^1.0.264",
     "@types/office-runtime": "^1.0.17",
     "@types/react": "^16.8.22",
     "@types/react-dom": "^16.8.4",
