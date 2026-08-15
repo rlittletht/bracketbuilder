@@ -767,4 +767,12 @@ export class Ranges
 
         return range;
     }
+
+    static isRangeNotAdjacent(range1?: RangeInfo, range2?: RangeInfo): boolean
+    {
+        if (range1 == null || range2 == null)
+            return false;
+
+        return range1.FirstColumn + 1 !== range2.FirstColumn;
+    }
 }
