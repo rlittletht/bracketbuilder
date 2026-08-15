@@ -301,7 +301,7 @@ export class GameFormatting
 
     static isRangeFormatInGameTitleColumn(format: Excel.RangeFormat): boolean
     {
-        return format.columnWidth > 20;
+        return format.columnWidth > 30;
     }
 
     /*----------------------------------------------------------------------------
@@ -324,7 +324,7 @@ export class GameFormatting
 
     static isRangeFormatInGameScoreColumn(format: Excel.RangeFormat): boolean
     {
-        return format.columnWidth <= 20 && format.columnWidth >= 5;
+        return format.columnWidth <= 30 && format.columnWidth >= 5;
     }
 
     /*----------------------------------------------------------------------------
