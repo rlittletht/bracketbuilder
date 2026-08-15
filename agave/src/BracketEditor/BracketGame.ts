@@ -379,6 +379,16 @@ export class BracketGame implements IBracketGame
             // we will still try to build as much as we can. but very carefully
         }
 
+        if (Ranges.isRangeNotAdjacent(this.m_topTeamLocation, this.m_gameNumberLocation))
+        {
+            this.m_isBroken = true;
+        }
+
+        if (Ranges.isRangeNotAdjacent(this.m_bottomTeamLocation, this.m_gameNumberLocation))
+        {
+            this.m_isBroken = true;
+        }
+
         _TimerStack.pauseAggregatedTimer("namedInner");
 
         if (!this.IsChampionship)
