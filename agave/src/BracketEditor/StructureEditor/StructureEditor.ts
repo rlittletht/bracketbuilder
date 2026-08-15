@@ -9,7 +9,7 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
 import { s_staticConfig } from "../../StaticConfig";
-import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
+import { BracketGame, IBracketGame } from "../BracketGame";
 import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
 import { GameFormatting } from "../GameFormatting";
 import { GameMover } from "../GameMover";
@@ -568,7 +568,7 @@ export class StructureEditor
 
         find the given game in the bracket grid and remove it.
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame1)
+    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
             return;
@@ -580,6 +580,28 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
+            context.releaseCacheObjectsUntil(bookmark);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+
+    static async repairThisGameClick(appContext: IAppContext, game: IBracketGame)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            const bookmark: string = "repairThisGameClick";
+            context.pushTrackingBookmark(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await StructureEditor.repairThisGame(appContext, context, game, game.BracketName);
             context.releaseCacheObjectsUntil(bookmark);
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
@@ -1101,6 +1123,64 @@ export class StructureEditor
         const grid: Grid = await Grid.createGridFromBracket(context, bracketChoice);
 
         return grid;
+    }
+
+    static async repairThisGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
+    {
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName, true/*buildGridForRepair*/);
+
+        if (!grid.canRepairGameNum(game.GameNum))
+        {
+            appContext.Messages.error(
+                [
+                    `Cannot repair Game ${game.GameId.Value} on this bracket. This bracket has overlapping games.`,
+                    `You must repair Game ${grid.MustRepairGameId.Value} first`
+                ],
+                {topic: HelpTopic.Commands_RepairGame});
+
+            return;
+        }
+
+        await game.Bind(context, appContext);
+
+        const tns: Intentions = new Intentions();
+
+        // the range we want to insert at will be the row for the original top team and bottom teams (if we have them)
+        // and then the column will be just before the game number column.
+
+        // if we can't find these ranges, then we have to fail
+        tns.AddTns(await StructureRemove.removeBoundGame(appContext, context, grid, game));
+        await tns.Execute(context);
+
+        RangeCaches.SetDirty(true);
+        // must invalidate all of our caches
+        context.releaseAllCacheObjects();
+
+        // and now do all the adds
+        await FastFormulaAreas.populateAllCaches(context);
+        await RangeCaches.PopulateIfNeeded(context, bracketName);
+
+
+        if (game.TopTeamRange == null || game.BottomTeamRange == null || game.GameIdRange == null)
+        {
+            appContext.Messages.error(
+                [
+                    `Could not find the top and bottom team ranges for game ${game.GameId.Value}.`,
+                    `The game will be removed cleanly, but you will need to manually add the game back`
+                ],
+                {topic: HelpTopic.Commands_RepairGame});
+        }
+        else
+        {
+            const targetRange = new RangeInfo(
+                game.TopTeamRange.FirstRow, game.BottomTeamRange.FirstRow - game.TopTeamRange.FirstRow + 1,
+                game.GameIdRange.FirstColumn - 1,
+                1);
+
+            // reload the grid
+            grid = await Grid.createGridFromBracket(context, bracketName);
+            await StructureInsert.insertGameAtRequestedRange(appContext, context, grid, game, targetRange);
+        }
     }
 
     /*----------------------------------------------------------------------------

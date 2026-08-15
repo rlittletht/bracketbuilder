@@ -65,8 +65,48 @@ export class GridRowType
     static Line = "L";
 }
 
+export class GridDelta
+{
+    OriginalRow: number = 0;
+    RowDelta: number = 0;
+
+    constructor(originalRow: number, rowDelta: number)
+    {
+        this.OriginalRow = originalRow;
+        this.RowDelta = rowDelta;
+    }
+}
+
+export class GridDeltas
+{
+    m_deltas: GridDelta[] = [];
+
+    addDelta(originalRow: number, rowDelta: number)
+    {
+        this.m_deltas.push(new GridDelta(originalRow, rowDelta));
+    }
+
+    getAdjustForRow(row: number): number
+    {
+        let adjust: number = 0;
+
+        for (const gridDelta of this.m_deltas)
+        {
+            if (gridDelta.OriginalRow > row)
+                continue;
+
+            adjust += gridDelta.RowDelta;
+        }
+
+        return adjust;
+    }
+}
+
 export class Grid
 {
+    m_disableOtherRepairs: boolean = false;
+    m_mustRepairGameNum: GameNum = null;
+
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
     m_datesForGrid: DateWithoutTime[];
@@ -84,6 +124,16 @@ export class Grid
 
         return grid;
     }
+
+    canRepairGameNum(gameNum: GameNum): boolean
+    {
+        if (this.m_disableOtherRepairs)
+            return GameNum.compare(this.m_mustRepairGameNum, gameNum);
+
+        return true;
+    }
+
+    get MustRepairGameId(): GameId {return this.m_mustRepairGameNum ? this.m_mustRepairGameNum.GameId : null; }
 
     createFromRange(range: RangeInfo): Grid
     {
@@ -844,12 +894,12 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.createGridFromBracket
     ----------------------------------------------------------------------------*/
-    static async createGridFromBracket(context: JsCtx, bracketName: string): Promise<Grid>
+    static async createGridFromBracket(context: JsCtx, bracketName: string, buildGridForRepair?: boolean): Promise<Grid>
     {
         let grid: Grid = new Grid();
 
         AppContext.checkpoint("cgfb.1");
-        await grid.loadGridFromBracket(context, bracketName);
+        await grid.loadGridFromBracket(context, bracketName, buildGridForRepair);
         return grid;
     }
 
@@ -1150,7 +1200,7 @@ export class Grid
     /*----------------------------------------------------------------------------
         %%Function: Grid.loadGridFromBracket
     ----------------------------------------------------------------------------*/
-    async loadGridFromBracket(context: JsCtx, bracketName: string)
+    async loadGridFromBracket(context: JsCtx, bracketName: string, buildGridForRepair?: boolean)
     {
         const priorityMap: Map<string, number> = await Prioritizer.getTeamPriorityMap(context, null);
 
@@ -1213,7 +1263,15 @@ export class Grid
 
                 // the game can't overlap anything
                 if (overlapKind != RangeOverlapKind.None)
-                    throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value} overlaps with ${item.Range.toFriendlyString()}`);
+                {
+                    if (!buildGridForRepair)
+                        throw new Error(`overlapping detected on loadGridFromBracket: game ${game.GameId.Value} overlaps with ${item.Range.toFriendlyString()}`);
+
+                    // if we're building for repair, we will allow overlap. but we will only allow
+                    // repairing this game
+                    this.m_disableOtherRepairs = true;
+                    this.m_mustRepairGameNum = game.GameNum;
+                }
 
                 const gameItem: GridItem = this.addGameRange(game.FullGameRange, game.GameId, false);
 
@@ -2915,4 +2973,45 @@ export class Grid
         this.adjustRangeForGridAlignment(selected, AdjustRangeGrowExtraRow.None);
     }
 
+
+//    /*----------------------------------------------------------------------------
+//        %%Function: expandAllGamesAndShiftDown
+//
+//        the only games we can control the "height" and position of are games
+//        that aren't connected at both the top and bottom.
+//
+//        find those games and apply the game and gap deltas, then move all of the
+//        connecting lines
+//    ----------------------------------------------------------------------------*/
+//    expandAllGamesAndShiftDown(gameDelta: number, gapDelta: number): Grid
+//    {
+//        const gameRangeDelta = gameDelta * 2 * 3; // each game is 3 lines, and each game grows by 2 empty rows
+//        const grid: Grid = new Grid();
+//
+//        const gridItems: GridItem[] = this.m_gridItems.map((item) => item.clone());
+//
+//        gridItems.sort((a, b) => a.Range.FirstRow - b.Range.FirstRow);
+//
+//        let lastRowAdjusted = 0;
+//        let cumulativeAdjustment = 0;
+//
+//        for (const item of gridItems)
+//        {
+//            if (!item.isLineRange)
+//            {
+//                if (item.)
+//                // this is a game. the top adjusts by the cumulative adjustment + gapDelta
+//                // the bottom will adjust by that adjustment + gameDelta
+//                item.Range.shiftByRows(cumulativeAdjustment);
+//                item.Range.setLastRow(item.Range.LastRow + cumulativeAdjustment + gameRangeDelta);
+//
+//                // find all the connected lines and move them too
+//            }
+//            if (item.isLineRange)
+//            {
+//                // line ranges only 
+//            }
+//        }
+//
+//    }
 }

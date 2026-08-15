@@ -90,7 +90,7 @@ export class ApplyGridChange
                 return tns;
 
             AppContext.checkpoint("appc.8");
-            tns.push(...await StructureRemove.removeGame(appContext, context, null, change.Range, false, false));
+            tns.push(...await StructureRemove.removeGame(appContext, context, null, [change.Range], false, false));
             AppContext.checkpoint("appc.9");
         }
         else
@@ -101,7 +101,7 @@ export class ApplyGridChange
                 removedGameValues?.addGameValues(game.GameId, areas.getValuesForRangeInfo(game.FullGameRange));
 
             AppContext.checkpoint("appc.10");
-            tns.push(...await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite));
+            tns.push(...await StructureRemove.removeGame(appContext, context, game, [change.Range], false, change.ChangeOp == GridChangeOperation.RemoveLite));
             AppContext.checkpoint("appc.11");
         }
 

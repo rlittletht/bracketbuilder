@@ -518,11 +518,13 @@ export class StructureInsert
 
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameAtSelection
+
+        must provide the requested range AND the starting grid
     ----------------------------------------------------------------------------*/
-    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame, dateToUse?: DateWithoutTime, timeToUse?: number, fieldToUse?: string): Promise<boolean>
+    static async insertGameAtRequestedRange(appContext: IAppContext, context: JsCtx, grid: Grid, game: IBracketGame, requested: RangeInfo, timeToUse?: number, fieldToUse?: string): Promise<boolean>
     {
-        const bookmark: string = "insertGameAtSelection";
-        const forceGameData: boolean = dateToUse !== undefined && timeToUse !== undefined && fieldToUse !== undefined;
+        const bookmark: string = "insertGameAtRequestedRange";
+        const forceGameData: boolean = timeToUse !== undefined && fieldToUse !== undefined;
 
         context.pushTrackingBookmark(bookmark);
 
@@ -532,27 +534,7 @@ export class StructureInsert
             context.pushTrackingBookmark(bookmark);
         }
 
-        _TimerStack.pushTimer("insertGameAtSelection:gridBuildFromBracket");
-        // first make sure we have a complete grid for the bracket
-        let grid: Grid = await StructureEditor.gridBuildFromBracket(context, appContext.SelectedBracket);
-        _TimerStack.popTimer();
-
-        _TimerStack.pushTimer("insertGameAtSelection:buildNewGridForGameInsertAtSelection");
-
-        // now let's figure out where we want to insert the game
-        let requested: RangeInfo;
-
-        if (forceGameData)
-        {
-            // get the column for the requested date
-            const col = grid.getGridColumnFromDate(dateToUse);
-
-            requested = new RangeInfo(0, 1, col, 1);
-        }
-        else
-        {
-            requested = await this.getAdjustedRequestRangeFromSelection(appContext, context, grid);
-        }
+        _TimerStack.pushTimer("insertGameAtRequestedRange:buildNewGridForGameInsertAtSelection");
 
         const { gridNew, failReason, coachState, topic, selectRange } = this.buildNewGridForGameInsertAtSelection(requested, grid, game, timeToUse, fieldToUse);
         _TimerStack.popTimer();
@@ -579,5 +561,42 @@ export class StructureInsert
 
         _undoManager.setUndoGrid(grid, undoGameDataItems);
         return true;
+    }
+
+
+    static async insertGameAtSelection(appContext: IAppContext, context: JsCtx, game: IBracketGame, dateToUse?: DateWithoutTime, timeToUse?: number, fieldToUse?: string): Promise<boolean>
+    {
+        const bookmark: string = "insertGameAtSelection";
+        const forceGameData: boolean = dateToUse !== undefined && timeToUse !== undefined && fieldToUse !== undefined;
+
+        context.pushTrackingBookmark(bookmark);
+
+        if (await this.ensureInsertingGameIsNotPresent(appContext, context, game))
+        {
+            context.releaseCacheObjectsUntil(bookmark);
+            context.pushTrackingBookmark(bookmark);
+        }
+
+        _TimerStack.pushTimer("insertGameAtSelection:gridBuildFromBracket");
+        // first make sure we have a complete grid for the bracket
+        let grid: Grid = await StructureEditor.gridBuildFromBracket(context, appContext.SelectedBracket);
+        _TimerStack.popTimer();
+
+        // now let's figure out where we want to insert the game
+        let requested: RangeInfo;
+
+        if (forceGameData)
+        {
+            // get the column for the requested date
+            const col = grid.getGridColumnFromDate(dateToUse);
+
+            requested = new RangeInfo(0, 1, col, 1);
+        }
+        else
+        {
+            requested = await this.getAdjustedRequestRangeFromSelection(appContext, context, grid);
+        }
+
+        return await StructureInsert.insertGameAtRequestedRange(appContext, context, grid, game, requested, timeToUse, fieldToUse);
     }
 }

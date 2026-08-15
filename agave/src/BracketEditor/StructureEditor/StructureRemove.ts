@@ -410,7 +410,7 @@ export class StructureRemove
         If only the rangeinfo is provided, then use that as the range to remove.
         If both are provided, they must be consistent.
     ----------------------------------------------------------------------------*/
-    static async removeGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, range: RangeInfo, removeConnections: boolean, liteRemove: boolean): Promise<IIntention[]>
+    static async removeGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, ranges: RangeInfo[], removeConnections: boolean, liteRemove: boolean): Promise<IIntention[]>
     {
         const tns = [];
 
@@ -425,10 +425,10 @@ export class StructureRemove
                 return { type: ObjectType.JsObject, o: context.Ctx.workbook.names.items };
             });
 
-        if (range != null && game != null && game.IsLinkedToBracket && !game.IsBroken)
+        if (ranges != null && game != null && game.IsLinkedToBracket && !game.IsBroken)
         {
             AppContext.checkpoint("remgm.2");
-            if (!range.isEqual(game.FullGameRange))
+            if (!ranges[0].isEqual(game.FullGameRange))
                 throw new Error("remove game: bound game range != given range");
             AppContext.checkpoint("remgm.3");
         }
@@ -444,7 +444,20 @@ export class StructureRemove
 
         AppContext.checkpoint("remgm.4");
         if (!liteRemove)
-            tns.push(...await this.obliterateGameRangeFromSheet(context, appContext, range == null ? game.FullGameRange : range, removeConnections));
+        {
+            if (ranges == null)
+            {
+                tns.push(...await this.obliterateGameRangeFromSheet(context, appContext, game.FullGameRange, removeConnections));
+            }
+            else
+            {
+                for (const range of ranges)
+                {
+                    tns.push(...await this.obliterateGameRangeFromSheet(context, appContext, range, removeConnections));
+                }
+            }
+        }
+
 
         AppContext.checkpoint("remgm.5");
         return tns;
@@ -456,45 +469,60 @@ export class StructureRemove
 
         if (game.IsBroken)
         {
-            let topRow = Number.MAX_VALUE;
-            let bottomRow = 0;
-            let firstCol = Number.MAX_VALUE;
-            let lastCol = 0;
-            let setRange = false;
+            let overallTopRow = Number.MAX_VALUE;
+            let overallBottomRow = 0;
+            let overallFirstCol = Number.MAX_VALUE;
+            let overallLastCol = 0;
+            const ranges: RangeInfo[] = [];
 
-            // guess at the full range
+            // we have to obliterate several regions.
             if (game.TopTeamRange)
             {
-                topRow = Math.min(topRow, game.TopTeamRange.FirstRow);
-                firstCol = Math.min(firstCol, game.TopTeamRange.FirstColumn);
-                bottomRow = Math.max(bottomRow, game.TopTeamRange.LastRow + 1);
-                lastCol = Math.max(lastCol, game.TopTeamRange.LastColumn + 2);
-                setRange = true;
+                // kill the top lines all the way to the gameId
+                const lastColumn = game.GameIdRange ? game.GameIdRange.LastColumn : game.TopTeamRange.LastColumn + 2;
+                const firstRow = game.TopTeamRange.FirstRow;
+                const firstColumn = game.TopTeamRange.FirstColumn;
+
+                overallTopRow = Math.min(overallTopRow, firstRow);
+                overallFirstCol = Math.min(overallFirstCol, firstColumn);
+                overallBottomRow = Math.max(overallBottomRow, game.TopTeamRange.LastRow + 1);
+                overallLastCol = Math.max(overallLastCol, game.TopTeamRange.LastColumn + 2);
+
+                ranges.push(new RangeInfo(firstRow, 3, firstColumn, lastColumn - firstColumn + 1));
             }
-            if (game.GameIdRange)
-            {
-                topRow = Math.min(topRow, game.GameIdRange.FirstRow - 1);
-                firstCol = Math.min(firstCol, game.GameIdRange.FirstColumn - 1);
-                bottomRow = Math.max(bottomRow, game.GameIdRange.LastRow + 2); // check this
-                lastCol = Math.max(lastCol, game.GameIdRange.LastColumn + 1);
-                setRange = true;
-            }
+
             if (game.BottomTeamRange)
             {
-                topRow = Math.min(topRow, game.BottomTeamRange.FirstRow - 1);
-                firstCol = Math.min(firstCol, game.BottomTeamRange.FirstColumn);
-                bottomRow = Math.max(bottomRow, game.BottomTeamRange.LastRow);
-                lastCol = Math.max(lastCol, game.BottomTeamRange.LastColumn + 2);
-                setRange = true;
+                // kill the bottom lines all the way to the gameId
+                const lastColumn = game.GameIdRange ? game.GameIdRange.LastColumn : game.TopTeamRange.LastColumn + 2;
+                const firstRow = game.BottomTeamRange.FirstRow - 2;
+                const firstColumn = game.BottomTeamRange.FirstColumn;
+
+                overallTopRow = Math.min(overallTopRow, game.BottomTeamRange.FirstRow - 1);
+                overallFirstCol = Math.min(overallFirstCol, game.BottomTeamRange.FirstColumn);
+                overallBottomRow = Math.max(overallBottomRow, game.BottomTeamRange.LastRow);
+                overallLastCol = Math.max(overallLastCol, game.BottomTeamRange.LastColumn + 2);
+
+                ranges.push(new RangeInfo(firstRow, 3, firstColumn, lastColumn - firstColumn + 1));
             }
 
-            if (!setRange)
+            if (game.GameIdRange)
+            {
+                // kill the body of the game
+                overallTopRow = Math.min(overallTopRow, game.GameIdRange.FirstRow - 1);
+                overallFirstCol = game.GameIdRange.FirstColumn - 1;
+                overallBottomRow = Math.max(overallBottomRow, game.GameIdRange.LastRow + 2); // check this
+                overallLastCol = game.GameIdRange.LastColumn + 1;
+
+                ranges.push(new RangeInfo(overallTopRow, overallBottomRow - overallTopRow + 1, overallFirstCol, overallLastCol - overallFirstCol + 1));
+            }
+
+            if (ranges.length == 0)
                 throw new Error(`could not find any range for the broken game ${game.GameId.Value}`);
 
-            const rangeSelected = new RangeInfo(topRow, bottomRow - topRow + 1, firstCol, lastCol - firstCol + 1);
             // can't let the normal (undoable) remove happen. need to obliterate the selection
-            tns.push(...await this.removeGame(appContext, context, game, rangeSelected, false, false /*liteRemove*/));
-
+            tns.push(...await this.removeGame(appContext, context, game, ranges, false, false /*liteRemove*/));
+            
             return tns;
         }
 
@@ -603,7 +631,7 @@ export class StructureRemove
         // last, obliterate the rest of the range
         _TimerStack.pushTimer("obliterate selection");
         if (!rangeSelected.IsSingleCell)
-            tns.AddTns(await this.removeGame(appContext, context, null, rangeSelected, false, false /*liteRemove*/));
+            tns.AddTns(await this.removeGame(appContext, context, null, [rangeSelected], false, false /*liteRemove*/));
         _TimerStack.popTimer();
 
         await tns.Execute(context);
