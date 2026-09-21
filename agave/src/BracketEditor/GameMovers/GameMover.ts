@@ -4,25 +4,13 @@ import {s_staticConfig} from "../../StaticConfig";
 import {StreamWriter} from "../../Support/StreamWriter";
 import { GameId } from "../GameId";
 import { FeederDrag } from "./FeederDrag";
-import { Mover } from "./Mover";
+import { Mover, GridOption } from "./Mover";
 import { PushAway } from "./PushAway";
 import { TopBottomSwapper } from "./TopBottomSwapper";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
 import { IGameMover } from "./IGameMover";
-
-export interface GridOption
-{
-    grid: Grid,
-    rank: number,
-    movedGames: Set<GameId>,
-    name: string,
-    crumbs: string[],
-    logDirty: boolean,
-    clean: boolean,
-    uuid: uuidv4;
-}
 
 export interface gameMoveDisqualifier
 {

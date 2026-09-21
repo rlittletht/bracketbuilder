@@ -1,7 +1,7 @@
 import { GridItem } from "../GridItem";
 import { Grid } from "../Grid";
 import { IBracketGame } from "../BracketGame";
-import { GridOption } from "./GameMover";
+import { GridOption } from "./Mover";
 
 export interface IGameMover
 {

@@ -1,7 +1,6 @@
 import { BracketGame, IBracketGame } from "../BracketGame";
-import { GridOption } from "./GameMover";
 import { GridItem } from "../GridItem";
-import { Mover } from "./Mover";
+import { GridOption, Mover } from "./Mover";
 import { IGameMover } from "./IGameMover";
 
 export class TopBottomSwapper

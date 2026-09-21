@@ -5,11 +5,23 @@
 import { RangeOverlapKind } from "../../Interop/Ranges";
 import { s_staticConfig } from "../../StaticConfig";
 import { GameId } from "../GameId";
-import { GridOption, GameMover } from "./GameMover";
+import { GameMover } from "./GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { IGameMover } from "./IGameMover";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
+
+export interface GridOption
+{
+    grid: Grid,
+    rank: number,
+    movedGames: Set<GameId>,
+    name: string,
+    crumbs: string[],
+    logDirty: boolean,
+    clean: boolean,
+    uuid: uuidv4;
+}
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,
@@ -67,7 +79,7 @@ export class Mover
     /*----------------------------------------------------------------------------
         %%Function: Mover.createNewGridOption
     ----------------------------------------------------------------------------*/
-    static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>, name: string, crumbs: string[]): GridOption
+    public static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>, name: string, crumbs: string[]): GridOption
     {
         return {
             grid: gridWork.clone(),
