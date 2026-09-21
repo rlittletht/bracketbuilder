@@ -1,7 +1,8 @@
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GameMover, GridOption } from "./GameMover";
+import { GridOption, GameMover } from "./GameMover";
 import { GridItem } from "../GridItem";
 import { Mover } from "./Mover";
+import { IGameMover } from "./IGameMover";
 
 export class PushAway
 {
@@ -83,7 +84,7 @@ export class PushAway
         this does not move any connected items -- that's the responsibility of
         the dragging modules
     ----------------------------------------------------------------------------*/
-    static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
+    static checkAndMoveItemsAway(gameMover: IGameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
         let subMove = 0;
         let changes: boolean = false;

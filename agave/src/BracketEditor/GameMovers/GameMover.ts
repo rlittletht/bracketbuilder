@@ -10,6 +10,7 @@ import { TopBottomSwapper } from "./TopBottomSwapper";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
+import { IGameMover } from "./IGameMover";
 
 export interface GridOption
 {
@@ -28,7 +29,7 @@ export interface gameMoveDisqualifier
     (): boolean;
 }
 
-export class GameMover
+export class GameMover implements IGameMover
 {
     m_originalGrid: Grid;
     m_grids: Grid[] = [];
@@ -37,20 +38,6 @@ export class GameMover
     m_warning: string = "";
 
     get ExceededMoveCount(): boolean{ return this.m_moveCount >= this.m_maxMoves; }
-
-    static cloneGridOption(gridOption: GridOption): GridOption
-    {
-        return {
-            grid: gridOption.grid.clone(),
-            rank: gridOption.rank,
-            movedGames: new Set<GameId>(gridOption.movedGames),
-            name: gridOption.name,
-            crumbs: [...gridOption.crumbs],
-            logDirty: gridOption.logDirty,
-            clean: gridOption.clean,
-            uuid: gridOption.uuid
-        };
-    }
 
     RequestExtraMoves()
     {
@@ -69,24 +56,10 @@ export class GameMover
         this.m_originalGrid = grid;
     }
 
-    static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>, name: string, crumbs: string[]): GridOption
-    {
-        return {
-            grid: gridWork.clone(),
-            rank: 0,
-            movedGames: movedGames == null ? new Set<GameId>() : new Set<GameId>(movedGames),
-            name: name,
-            crumbs: [...crumbs],
-            logDirty: true,
-            clean: true,
-            uuid: uuidv4()
-        };
-    }
-
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid
     {
         // first push the original
-        const mainOption = GameMover.createNewGridOption(this.m_originalGrid, null, "s:root", []);
+        const mainOption = Mover.createNewGridOption(this.m_originalGrid, null, "s:root", []);
         const { options, tree } = this.moveGameInternal(
             mainOption,
             itemOld,
@@ -96,7 +69,7 @@ export class GameMover
 
         if (s_staticConfig.logMoveTree)
         {
-            tree.set("s:", GameMover.createNewGridOption(
+            tree.set("s:", Mover.createNewGridOption(
                 this.m_originalGrid,
                 null,
                 "original",
@@ -295,7 +268,7 @@ export class GameMover
             if (mover.Tree.has(key))
                 throw new Error(`tree already has key "${key}"`);
 
-            mover.Tree.set(key, GameMover.cloneGridOption(working));
+            mover.Tree.set(key, Mover.cloneGridOption(working));
         }
 
         mover.logGrids(`${crumb}:orig`, true);

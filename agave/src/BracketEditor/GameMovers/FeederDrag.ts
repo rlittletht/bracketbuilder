@@ -4,6 +4,7 @@ import { GridOption, GameMover } from "./GameMover";
 import { Mover } from "./Mover";
 import { IBracketGame, BracketGame } from "../BracketGame";
 import { GameId } from "../GameId";
+import { IGameMover } from "./IGameMover";
 
 export class FeederDrag
 {
@@ -43,7 +44,7 @@ export class FeederDrag
         if this item is growing and requiring the change, we might have to grow
         the connected item to avoid overlapping
     ----------------------------------------------------------------------------*/
-    static checkAndDragByOutgoingFeeder(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
+    static checkAndDragByOutgoingFeeder(gameMover: IGameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
         if (mover.ItemNew.IsChampionshipGame || mover.ItemOld.IsChampionshipGame)
             return false;

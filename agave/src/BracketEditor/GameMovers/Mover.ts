@@ -5,9 +5,11 @@
 import { RangeOverlapKind } from "../../Interop/Ranges";
 import { s_staticConfig } from "../../StaticConfig";
 import { GameId } from "../GameId";
-import { GameMover, GridOption } from "./GameMover";
+import { GridOption, GameMover } from "./GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
+import { IGameMover } from "./IGameMover";
+import { v4 as uuidv4 } from 'uuid';
 
 // each delegate is responsible for everything related to it
 // for example, if you are going to notice that a connection point has moved,
@@ -17,7 +19,7 @@ import { GridItem } from "../GridItem";
 // get moved)
 export interface GameMoverDelegate
 {
-    (gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean;
+    (gameMover: IGameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean;
 }
 
 let cRecurse = 0;
@@ -61,6 +63,42 @@ export class Mover
         this.m_items.push(gridOption);
     }
 
+
+    /*----------------------------------------------------------------------------
+        %%Function: Mover.createNewGridOption
+    ----------------------------------------------------------------------------*/
+    static createNewGridOption(gridWork: Grid, movedGames: Set<GameId>, name: string, crumbs: string[]): GridOption
+    {
+        return {
+            grid: gridWork.clone(),
+            rank: 0,
+            movedGames: movedGames == null ? new Set<GameId>() : new Set<GameId>(movedGames),
+            name: name,
+            crumbs: [...crumbs],
+            logDirty: true,
+            clean: true,
+            uuid: uuidv4()
+        };
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: Mover.cloneGridOption
+    ----------------------------------------------------------------------------*/
+    static cloneGridOption(gridOption: GridOption): GridOption
+    {
+        return {
+            grid: gridOption.grid.clone(),
+            rank: gridOption.rank,
+            movedGames: new Set<GameId>(gridOption.movedGames),
+            name: gridOption.name,
+            crumbs: [...gridOption.crumbs],
+            logDirty: gridOption.logDirty,
+            clean: gridOption.clean,
+            uuid: gridOption.uuid
+        };
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: Mover.doChange
 
@@ -71,7 +109,7 @@ export class Mover
     {
         const gridOption: GridOption =
             preserveWorking
-                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name, optionWork.crumbs)
+                ? Mover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name, optionWork.crumbs)
                 : optionWork;
 
         gridOption.name = `${gridOption.crumbs.join(":")}:G${itemNew.GameId.Value}:${crumb}:doChange(${name})`;
@@ -110,7 +148,7 @@ export class Mover
             if (this.Tree.has(key))
                 throw new Error(`tree already has key "${key}"`);
 
-            this.Tree.set(key, GameMover.cloneGridOption(gridOption));
+            this.Tree.set(key, Mover.cloneGridOption(gridOption));
         }
 
         return true;
@@ -133,14 +171,14 @@ export class Mover
         }
     }
 
-    moveRecurse(gameMover: GameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumb: string): boolean
+    moveRecurse(gameMover: IGameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumb: string): boolean
     {
         if (optionWork.movedGames.has(itemNew.GameId))
             return false;
 
         const gridOption: GridOption =
             preserveWorking
-                ? GameMover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name, optionWork.crumbs)
+                ? Mover.createNewGridOption(optionWork.grid, optionWork.movedGames, optionWork.name, optionWork.crumbs)
                 : optionWork;
 
         gridOption.name = `${gridOption.crumbs.join(":")}:G${itemNew.GameId.Value}:${crumb}:moveRecurse(${name})`;

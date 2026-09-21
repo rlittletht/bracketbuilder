@@ -1,7 +1,8 @@
 import { BracketGame, IBracketGame } from "../BracketGame";
-import { GameMover, GridOption } from "./GameMover";
+import { GridOption } from "./GameMover";
 import { GridItem } from "../GridItem";
 import { Mover } from "./Mover";
+import { IGameMover } from "./IGameMover";
 
 export class TopBottomSwapper
 {
@@ -13,7 +14,7 @@ export class TopBottomSwapper
 
         this means we have to push our own crumb to the map
     ----------------------------------------------------------------------------*/
-    static checkAndSwapTopBottom(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumb: string): boolean
+    static checkAndSwapTopBottom(gameMover: IGameMover, mover: Mover, optionWork: GridOption, crumb: string): boolean
     {
         gameMover;
 
@@ -65,7 +66,7 @@ export class TopBottomSwapper
         item, check that item to see if we need to swap top/bottom on that item
         to keep it correct
     ----------------------------------------------------------------------------*/
-    static checkOutgoingFeedAndMaybeSwapTopBottomTarget(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumb: string): boolean
+    static checkOutgoingFeedAndMaybeSwapTopBottomTarget(gameMover: IGameMover, mover: Mover, optionWork: GridOption, crumb: string): boolean
     {
         gameMover;
         // check to see if the old and the new linkages work by swapping top and bottom
