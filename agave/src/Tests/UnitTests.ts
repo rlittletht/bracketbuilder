@@ -1,5 +1,5 @@
 import { IAppContext } from "../AppContext/AppContext";
-import { GameMoverTests } from "../BracketEditor/GameMoverTests";
+import { GameMoverTests } from "../BracketEditor/GameMovers/GameMoverTests";
 import { Grid } from "../BracketEditor/Grid";
 import { Adjuster_SwapAdjacentGameRegionsForOverlapTests } from "../BracketEditor/GridAdjusters/Adjuster_SwapAdjacentGameRegionsForOverlap";
 import { Adjuster_SwapGameRegonsForOverlapTests } from "../BracketEditor/GridAdjusters/Adjuster_SwapGameRegonsForOverlap";

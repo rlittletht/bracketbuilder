@@ -5,7 +5,7 @@
 import { RangeOverlapKind } from "../../Interop/Ranges";
 import { s_staticConfig } from "../../StaticConfig";
 import { GameId } from "../GameId";
-import { GameMover, GridOption } from "../GameMover";
+import { GameMover, GridOption } from "./GameMover";
 import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 

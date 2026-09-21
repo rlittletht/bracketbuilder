@@ -12,7 +12,7 @@ import { s_staticConfig } from "../../StaticConfig";
 import { BracketGame, IBracketGame } from "../BracketGame";
 import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
 import { GameFormatting } from "../GameFormatting";
-import { GameMover } from "../GameMover";
+import { GameMover } from "../GameMovers/GameMover";
 import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";

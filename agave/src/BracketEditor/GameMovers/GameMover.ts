@@ -1,15 +1,15 @@
-import { v4 as uuidv4 } from 'uuid';
-import { AppContext } from "../AppContext/AppContext";
-import { s_staticConfig } from "../StaticConfig";
-import { StreamWriter } from "../Support/StreamWriter";
-import { GameId } from "./GameId";
-import { FeederDrag } from "./GameMovers/FeederDrag";
-import { Mover } from "./GameMovers/Mover";
-import { PushAway } from "./GameMovers/PushAway";
-import { TopBottomSwapper } from "./GameMovers/TopBottomSwapper";
-import { Grid } from "./Grid";
-import { GridItem } from "./GridItem";
-import { GridRanker } from "./GridRanker";
+import {v4 as uuidv4} from 'uuid';
+import {AppContext} from "../../AppContext/AppContext";
+import {s_staticConfig} from "../../StaticConfig";
+import {StreamWriter} from "../../Support/StreamWriter";
+import { GameId } from "../GameId";
+import { FeederDrag } from "./FeederDrag";
+import { Mover } from "./Mover";
+import { PushAway } from "./PushAway";
+import { TopBottomSwapper } from "./TopBottomSwapper";
+import { Grid } from "../Grid";
+import { GridItem } from "../GridItem";
+import { GridRanker } from "../GridRanker";
 
 export interface GridOption
 {

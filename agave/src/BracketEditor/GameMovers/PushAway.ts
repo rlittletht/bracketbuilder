@@ -1,5 +1,5 @@
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GameMover, GridOption } from "../GameMover";
+import { GameMover, GridOption } from "./GameMover";
 import { GridItem } from "../GridItem";
 import { Mover } from "./Mover";
 
