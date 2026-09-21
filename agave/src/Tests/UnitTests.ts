@@ -21,6 +21,7 @@ import { TimeWithoutDateTests } from "../Support/TimeWithoutDateTests";
 import { DateWithoutTime } from "../Support/DateWithoutTime";
 import { DateWithoutTimeTests } from "../Support/DateWithoutTimeTests";
 import { FormulaBuilderTests } from "../BracketEditor/FormulaBuilder";
+import { GameMoverSimpleTests } from "../BracketEditor/GameMovers/GameMoverSimpleTests";
 
 export class UnitTests
 {
@@ -58,6 +59,7 @@ export class UnitTests
             ParserTests.runAllTests(appContext, outStream);
             OADateTests.runAllTests(appContext, outStream);
             GameMoverTests.runAllTests(appContext, outStream);
+            GameMoverSimpleTests.runAllTests(appContext, outStream);
             GridRankerTests.runAllTests(appContext, outStream);
             GridTests.runAllTests(appContext, outStream);
             RegionSwapper_BottomGameTests.runAllTests(appContext, outStream);

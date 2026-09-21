@@ -171,6 +171,7 @@ export class Mover
         }
     }
 
+    // preserveWorking shouldn't be true for GameMoverSimple -- we aren't accumulating options there
     moveRecurse(gameMover: IGameMover, optionWork: GridOption, preserveWorking: boolean, itemOld: GridItem, itemNew: GridItem, name: string, crumb: string): boolean
     {
         if (optionWork.movedGames.has(itemNew.GameId))
