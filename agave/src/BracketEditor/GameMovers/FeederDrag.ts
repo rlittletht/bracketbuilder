@@ -124,7 +124,7 @@ export class FeederDrag
         if ((connectedAtTop && outgoingPointNew.FirstRow == shifted.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
             || (!connectedAtTop && outgoingPointNew.FirstRow == shifted.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
         {
-            changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, shifted, "checkAndDragByOutgoingFeeder_shift", `${crumbs}.1`) || changed;
+            changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, shifted, "checkAndDragByOutgoingFeeder_shift", `${crumbs}.1`) || changed;
 
             if (!overMoves && gameMover.ExceededMoveCount)
                 gameMover.RequestExtraMoves();
@@ -162,7 +162,7 @@ export class FeederDrag
             if ((connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
                 || (!connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
             {
-                changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, grownShrunk, "checkAndDragByOutgoingFeeder_growShrink", `${crumbs}.2`) || changed;
+                changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, grownShrunk, "checkAndDragByOutgoingFeeder_growShrink", `${crumbs}.2`) || changed;
             }
         }
 
@@ -216,9 +216,9 @@ export class FeederDrag
         // just accept our line (or our connection point) overlapping any part of the connected game
 
         // we have several options for the connected game. Grow the game down, or move the game
-        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByTopIncomingFeed_shiftDown", `${crumbs}.1`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByTopIncomingFeed_growShrinkFromTop", `${crumbs}.2`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByTopIncomingFeed_growShrink", `${crumbs}.3`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByTopIncomingFeed_shiftDown", `${crumbs}.1`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByTopIncomingFeed_growShrinkFromTop", `${crumbs}.2`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByTopIncomingFeed_growShrink", `${crumbs}.3`) || changed;
 
         return changed;
     }
@@ -287,9 +287,9 @@ export class FeederDrag
         // just accept our line (or our connection point) overlapping any part of the connected game
 
         // we have several options for the connected game. Grow the game down, or move the game
-        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByBottomIncomingFeed_shift", `${crumbs}.1`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByBottomIncomingFeed_growShrinkFromTop", `${crumbs}.2`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, true, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByBottomIncomingFeed_growShrink", `${crumbs}.3`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByBottomIncomingFeed_shift", `${crumbs}.1`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByBottomIncomingFeed_growShrinkFromTop", `${crumbs}.2`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByBottomIncomingFeed_growShrink", `${crumbs}.3`) || changed;
 
         return changed;
     }

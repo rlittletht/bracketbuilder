@@ -7,6 +7,7 @@ export interface IGameMover
 {
     ExceededMoveCount: boolean;
     Warning: string;
+    OneOptionToRuleThemAll: boolean;
 
     /*----------------------------------------------------------------------------
         %%Function: moveGame

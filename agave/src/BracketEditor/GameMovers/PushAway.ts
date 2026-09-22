@@ -132,7 +132,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveItemsAway_shift", `${crumbs}.${subMove++}`);
+                    changes = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, item, newItem, "checkAndMoveItemsAway_shift", `${crumbs}.${subMove++}`);
                 }
             }
 
@@ -204,7 +204,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveLinesAway_shift", crumbs);
+                    changes = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, item, newItem, "checkAndMoveLinesAway_shift", crumbs);
                 }
             }
 
@@ -283,7 +283,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(rangeRealToAvoid, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveAdjacentItemsAway_shift", `${crumbs}.${subMove++}`);
+                    changes = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, item, newItem, "checkAndMoveAdjacentItemsAway_shift", `${crumbs}.${subMove++}`);
                 }
             }
 

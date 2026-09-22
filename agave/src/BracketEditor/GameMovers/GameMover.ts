@@ -27,6 +27,8 @@ export class GameMover implements IGameMover
 
     get ExceededMoveCount(): boolean{ return this.m_moveCount >= this.m_maxMoves; }
 
+    get OneOptionToRuleThemAll(): boolean { return false; }
+
     RequestExtraMoves()
     {
         this.m_maxMoves += s_staticConfig.maxGameMoves / 10;

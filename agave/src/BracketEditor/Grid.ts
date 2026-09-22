@@ -2638,7 +2638,7 @@ export class Grid
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: Grid.getGridItemConnectedToFeederRange
+        %%Function: Grid.getGridItemConnectedToOutgoingRange
 
         return the grid item that connects to this feeder range. if that's a game,
         also make sure it lines up with the outgoing item location on the game

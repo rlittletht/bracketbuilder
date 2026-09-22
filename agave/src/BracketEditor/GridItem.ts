@@ -5,6 +5,7 @@ import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { Grid } from "./Grid";
 
+
 export class GridItem
 {
     m_range: RangeInfo;
