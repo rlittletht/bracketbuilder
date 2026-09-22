@@ -4,7 +4,7 @@ import { HelpTopic } from "../../Coaching/HelpInfo";
 import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
-import { IBracketGame } from "../BracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { FormulaBuilder } from "../FormulaBuilder";
 import { GameFormatting } from "../GameFormatting";
 import { Grid } from "../Grid";

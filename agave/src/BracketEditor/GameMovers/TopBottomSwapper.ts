@@ -1,4 +1,5 @@
-import { BracketGame, IBracketGame } from "../BracketGame";
+import { BracketGame} from "../BracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { GridItem } from "../GridItem";
 import { GridOption, Mover } from "./Mover";
 import { IGameMover } from "./IGameMover";

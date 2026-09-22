@@ -1,5 +1,5 @@
 import { RangeInfo } from "../../Interop/Ranges";
-import { IBracketGame } from "../BracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { Grid } from "../Grid";
 import { GridGameInsert } from "../GridGameInsert";
 import { Adjuster2_InsertRowForSeparation } from "./Adjuster2_InsertRowForSeparation";

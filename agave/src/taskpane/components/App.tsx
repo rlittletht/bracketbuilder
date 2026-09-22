@@ -8,7 +8,8 @@ import { DirectionalHint } from "@fluentui/react";
 import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
 import { AppContext, IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { IAppStateAccess } from "../../AppContext/IAppStateAccess";
-import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
+import { BracketGame } from "../../BracketEditor/BracketGame";
+import { IBracketGame } from "../../BracketEditor/IBracketGame";
 import { GameNum } from "../../BracketEditor/GameNum";
 import { Grid } from "../../BracketEditor/Grid";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
@@ -407,7 +408,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
                             return true;
                         },
                     }
-
                 ]
             });
 

@@ -3,7 +3,8 @@ import { BracketManager } from "../Brackets/BracketManager";
 import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo, Ranges } from "../Interop/Ranges";
-import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "./BracketGame";
+import { BracketGame } from "./BracketGame";
+import { IBracketGame } from "./IBracketGame";
 import { GameFormatting } from "./GameFormatting";
 import { GridColumnType } from "./Grid";
 
@@ -81,7 +82,7 @@ export class GameLines
 
         This is the uncached version (not used by anyone currently)
     ----------------------------------------------------------------------------*/
-    static async getInAndOutLinesForGameNoCache(context: JsCtx, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    static async getInAndOutLinesForGameNoCache(context: JsCtx, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]>
     {
         let feederTop: RangeInfo = null;
         let feederBottom: RangeInfo = null;
@@ -124,7 +125,7 @@ export class GameLines
         Simiar tofindMatchingGameConnections, but this function finds the already
         existing lines feeding into and out of this game
     ----------------------------------------------------------------------------*/
-    static async getInAndOutLinesForGame(context: JsCtx, fastFormulaAreas: FastFormulaAreas, game: IBracketGame1): Promise<[RangeInfo, RangeInfo, RangeInfo]>
+    static async getInAndOutLinesForGame(context: JsCtx, fastFormulaAreas: FastFormulaAreas, game: IBracketGame): Promise<[RangeInfo, RangeInfo, RangeInfo]>
     {
         let feederTop: RangeInfo = null;
         let feederBottom: RangeInfo = null;

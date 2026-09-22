@@ -1,6 +1,6 @@
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
-import { IBracketGame } from "./BracketGame";
+import { IBracketGame } from "./IBracketGame";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { Grid } from "./Grid";

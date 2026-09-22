@@ -3,7 +3,7 @@ import { FontIcon } from '@fluentui/react/lib/Icon';
 import { mergeStyles, mergeStyleSets } from '@fluentui/react/lib/Styling';
 import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { IBracketGame } from "../../BracketEditor/IBracketGame";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { _TimerStack } from "../../PerfTimer";

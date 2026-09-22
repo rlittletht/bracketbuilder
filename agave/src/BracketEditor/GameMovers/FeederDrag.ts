@@ -2,7 +2,8 @@ import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
 import { GridItem } from "../GridItem";
 import { GameMover } from "./GameMover";
 import {GridOption, Mover } from "./Mover";
-import { IBracketGame, BracketGame } from "../BracketGame";
+import { BracketGame } from "../BracketGame";
+import { IBracketGame} from "../IBracketGame";
 import { GameId } from "../GameId";
 import { IGameMover } from "./IGameMover";
 

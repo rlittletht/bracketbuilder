@@ -1,4 +1,4 @@
-import { IBracketGame } from "../BracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { Grid } from "../Grid";
 
 export interface IGridAdjuster

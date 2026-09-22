@@ -1,5 +1,5 @@
 import { IAppContext } from "./AppContext/AppContext";
-import { IBracketGame } from "./BracketEditor/BracketGame";
+import { IBracketGame } from "./BracketEditor/IBracketGame";
 
 export interface CommandDelegate
 {

@@ -2,7 +2,7 @@ import {IconButton, IContextualMenuProps, IContextualMenuItem } from "@fluentui/
 import { TooltipHost } from "@fluentui/react/lib/Tooltip";
 import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { IBracketGame } from "../../BracketEditor/IBracketGame";
 import { _TimerStack } from "../../PerfTimer";
 
 export interface ActionButtonMenuItemProps
