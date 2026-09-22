@@ -8,11 +8,11 @@ import { RangeInfo } from "../Interop/Ranges";
 export interface IBracketGame
 {
     // these are the static definitions
-    get BracketGameDefinition(): IBracketGameDefinition;
-    get SwapTopBottom(): boolean;
-    get BracketName(): string; // "T2" for 2 team bracket, etc. Can derive table name from it
-    get GameId(): GameId; // this is the game id (1 based) in the overall static bracket definition
-    get GameNum(): GameNum;
+    BracketGameDefinition: IBracketGameDefinition;
+    SwapTopBottom: boolean;
+    BracketName: string; // "T2" for 2 team bracket, etc. Can derive table name from it
+    GameId: GameId; // this is the game id (1 based) in the overall static bracket definition
+    GameNum: GameNum;
 
     // the following properties are volatile -- we want editors of the bracket
     // to be able to be able to easily edit them without understanding
@@ -27,14 +27,14 @@ export interface IBracketGame
     // edit and when the game is later inserted with the formula, it will get
     // the new value that they updated.
 
-    get TopTeamName(): string; // if this is the first game, this is the team name
-    get BottomTeamName(): string; // if this is the bottom game, this is the team name
-    get StartTime(): number; // this is the number of minutes since the start of the day
-    get IsChampionship(): boolean;
-    get IsIfNecessaryGame(): boolean; // this is true if this game is the 'what-if' game before the championship
-    get WinningTeamAdvancesToGameId(): GameId;
-    get NeedsDataPull(): boolean; // has this game been manually edited? (and thus needs repair?
-    get IsBroken(): boolean; // is this game broken (and needs to be deleted)
+    TopTeamName: string; // if this is the first game, this is the team name
+    BottomTeamName: string; // if this is the bottom game, this is the team name
+    StartTime: number; // this is the number of minutes since the start of the day
+    IsChampionship: boolean;
+    IsIfNecessaryGame: boolean; // this is true if this game is the 'what-if' game before the championship
+    WinningTeamAdvancesToGameId: GameId;
+    NeedsDataPull: boolean; // has this game been manually edited? (and thus needs repair?
+    IsBroken: boolean; // is this game broken (and needs to be deleted)
 
     FormatTime(): string;
     FormatLoser(): string;
@@ -44,18 +44,18 @@ export interface IBracketGame
     SetStartTime(time: number);
     SetField(field: string);
 
-    get Field(): string;
+    Field: string;
 
-    get TopTeamCellName(): string;
-    get BottomTeamCellName(): string;
-    get GameNumberCellName(): string;
-    get IsLinkedToBracket(): boolean;
-    get FullGameRange(): RangeInfo;
-    get TopTeamRange(): RangeInfo;
-    get BottomTeamRange(): RangeInfo;
-    get GameIdRange(): RangeInfo;
-    get TopSource(): string;
-    get BottomSource(): string;
-    get TopTeamNameValue(): string;
-    get BottomTeamNameValue(): string;
+    TopTeamCellName: string;
+    BottomTeamCellName: string;
+    GameNumberCellName: string;
+    IsLinkedToBracket: boolean;
+    FullGameRange: RangeInfo;
+    TopTeamRange: RangeInfo;
+    BottomTeamRange: RangeInfo;
+    GameIdRange: RangeInfo;
+    TopSource: string;
+    BottomSource: string;
+    TopTeamNameValue: string;
+    BottomTeamNameValue: string;
 }
