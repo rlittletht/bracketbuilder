@@ -18,22 +18,11 @@ import { GameNum } from "./GameNum";
 import { StructureRemove } from "./StructureEditor/StructureRemove";
 import { FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreasItems";
 import { IBracketGame } from "./IBracketGame";
+import { BracketGameBase } from "./BracketGameBase";
 
 
-export class BracketGame implements IBracketGame
+export class BracketGame extends BracketGameBase implements IBracketGame
 {
-    m_bracketGameDefinition: IBracketGameDefinition;
-    m_swapTopBottom: boolean;
-    m_bracketName: string;
-    m_gameNum: GameNum;
-    m_teamNameTop: string = null;
-    m_teamNameBottom: string = null;
-    m_startTime: number = GlobalDataBuilder.DefaultStartTime;
-    m_field: string = GlobalDataBuilder.DefaultField;
-    m_topTeamLocation: RangeInfo;
-    m_bottomTeamLocation: RangeInfo;
-    m_gameNumberLocation: RangeInfo;
-    m_isIfNecessaryGame: boolean;
     m_topTeamOverride: string;
     m_bottomTeamOverride: string;
     m_fieldOverride: string;
@@ -42,6 +31,7 @@ export class BracketGame implements IBracketGame
     m_bottomTeamNameValue: string;
     m_isBroken: boolean = false;
 
+    // getters
     get IsBroken(): boolean
     {
         return this.m_isBroken;
@@ -61,16 +51,6 @@ export class BracketGame implements IBracketGame
         }
 
         return false;
-    }
-
-    SetStartTime(time: number)
-    {
-        this.m_startTime = time;
-    }
-
-    SetField(field: string)
-    {
-        this.m_field = field;
     }
 
     get IsIfNecessaryGame(): boolean
@@ -96,13 +76,9 @@ export class BracketGame implements IBracketGame
         return false;
     }
 
-    get IsChampionship(): boolean
-    {
-        return (!this.m_bracketGameDefinition.loser
-                || this.m_bracketGameDefinition.loser == "")
-            && (!this.m_bracketGameDefinition.winner
-                || this.m_bracketGameDefinition.winner == "");
-    }
+    get TopTeamNameValue(): string { return this.m_topTeamNameValue }
+
+    get BottomTeamNameValue(): string {return this.m_bottomTeamNameValue}
 
     static CreateFromGameSync(bracket: string, gameNumber: GameNum): IBracketGame
     {
@@ -110,7 +86,9 @@ export class BracketGame implements IBracketGame
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("cfg.2");
-        return game.LoadSync(bracket, gameNumber);
+        game.LoadSync(bracket, gameNumber);
+
+        return game;
     }
 
     static async CreateFromGameNumber(context: JsCtx, appContext: IAppContext, bracket: string, gameNumber: GameNum): Promise<IBracketGame>
@@ -119,182 +97,14 @@ export class BracketGame implements IBracketGame
         let game: BracketGame = new BracketGame();
 
         AppContext.checkpoint("cfg.2");
-        return await game.Load(context, appContext, bracket, gameNumber);
+        await game.Load(context, appContext, bracket, gameNumber);
+        return game;
     }
 
 
     static async CreateFromGameId(context: JsCtx, bracket: string, gameId: GameId): Promise<IBracketGame>
     {
         return await this.CreateFromGameNumber(context, null, bracket, gameId.GameNum);
-    }
-
-    // getters
-    get BracketGameDefinition(): IBracketGameDefinition { return this.m_bracketGameDefinition; }
-    get SwapTopBottom(): boolean { return this.m_swapTopBottom; }
-    get BracketName(): string { return this.m_bracketName;  }
-    get GameId(): GameId { return this.m_gameNum.GameId; }
-    get GameNum(): GameNum { return this.m_gameNum; }
-
-    get TopTeamNameValue(): string { return this.m_topTeamNameValue }
-    get BottomTeamNameValue(): string { return this.m_bottomTeamNameValue }
-
-    get FullGameRange(): RangeInfo
-    {
-        if (!this.IsLinkedToBracket)
-            return null;
-
-        if (this.IsChampionship)
-        {
-            return new RangeInfo(
-                this.m_topTeamLocation.FirstRow,
-                3,
-                this.m_topTeamLocation.FirstColumn,
-                3);
-        }
-        return new RangeInfo(
-            this.m_topTeamLocation.FirstRow,
-            this.m_bottomTeamLocation.LastRow - this.m_topTeamLocation.FirstRow + 1,
-            this.m_topTeamLocation.FirstColumn,
-            3);
-    }
-
-    get WinningTeamAdvancesToGameId(): GameId
-    {
-        // we know what game we want to have
-        if (this.BracketGameDefinition.winner == "")
-            return null; // winner goes nowhere
-
-        return BracketManager.GameIdFromWinnerLoser(this.BracketGameDefinition.winner);
-    }
-
-    get TopTeamRange(): RangeInfo
-    {
-        return this.m_topTeamLocation;
-    }
-
-    get BottomTeamRange(): RangeInfo
-    {
-        return this.m_bottomTeamLocation;
-    }
-
-    get GameIdRange(): RangeInfo
-    {
-        return this.m_gameNumberLocation;
-    }
-
-    SetSwapTopBottom(swapped: boolean)
-    {
-        this.m_swapTopBottom = swapped;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.IsTeamSourceStatic
-    ----------------------------------------------------------------------------*/
-    static IsTeamSourceStatic(source: string): boolean
-    {
-        if (source.length > 3 || source.length == 1)
-            return true;
-
-        if (source[0] === "W" || source[0] === "L")
-            return isNaN(+source.substring(1, source.length - 1));
-
-        return false;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.TopTeamNameInvariant
-    ----------------------------------------------------------------------------*/
-    get TopTeamNameInvariant(): string
-    {
-        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.topSource) || this.m_teamNameTop == null)
-                   ? this.BracketGameDefinition.topSource
-                   : this.m_teamNameTop;
-    }
-
-    get TopSource(): string
-    {
-        return this.m_swapTopBottom ? this.BracketGameDefinition.bottomSource : this.BracketGameDefinition.topSource;
-    }
-
-    get BottomSource(): string
-    {
-        return !this.m_swapTopBottom ? this.BracketGameDefinition.bottomSource : this.BracketGameDefinition.topSource;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.TopTeamName
-    ----------------------------------------------------------------------------*/
-    get TopTeamName(): string
-    {
-        return this.m_swapTopBottom ? this.BottomTeamNameInvariant : this.TopTeamNameInvariant;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.BottomTeamNameInvariant
-    ----------------------------------------------------------------------------*/
-    get BottomTeamNameInvariant(): string
-    {
-        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.bottomSource)
-                       || this.m_teamNameBottom == null)
-                   ? this.BracketGameDefinition.bottomSource
-                   : this.m_teamNameBottom;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.BottomTeamName
-    ----------------------------------------------------------------------------*/
-    get BottomTeamName(): string
-    {
-        return this.m_swapTopBottom ? this.TopTeamNameInvariant : this.BottomTeamNameInvariant;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.StartTime
-    ----------------------------------------------------------------------------*/
-    get StartTime(): number { return this.m_startTime; }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.FormatTime
-    ----------------------------------------------------------------------------*/
-    FormatTime(): string
-    {
-        let hours: number = Math.floor(this.m_startTime / 60);
-        const mins: number = this.m_startTime - hours * 60;
-        const ampm: string = hours >= 12 ? "PM" : "AM";
-
-        hours = hours >= 12 ? hours - 12 : hours;
-
-        return `${hours}:${mins < 10 ? "0" : ""}${mins} ${ampm}`;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.FormatLoser
-    ----------------------------------------------------------------------------*/
-    FormatLoser(): string
-    {
-        if (this.m_bracketGameDefinition.loser == "")
-        {
-            return "";
-        }
-        else
-        {
-            return `L to ${this.m_bracketGameDefinition.loser.substring(1)}`;
-        }
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.Field
-    ----------------------------------------------------------------------------*/
-    get Field(): string { return this.m_field; }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.Unbind
-    ----------------------------------------------------------------------------*/
-    async Unbind()
-    {
-        this.m_bottomTeamLocation = null
-        this.m_topTeamLocation = null;
-        this.m_gameNumberLocation = null;
     }
 
     /*----------------------------------------------------------------------------
@@ -512,86 +322,5 @@ export class BracketGame implements IBracketGame
 
         AppContext.checkpoint("l.4");
         return await this.Bind(context, appContext);
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.Load
-
-        Load the static portions of this game, and if possible, load its linkage
-        into the current bracket schedule
-    ----------------------------------------------------------------------------*/
-    LoadSync(bracketChoice: string, gameNum: GameNum): IBracketGame
-    {
-        AppContext.checkpoint("l.1");
-
-        const bracketDefinition = _bracketManager.GetBracketDefinitionData(bracketChoice);
-
-        if (!bracketDefinition)
-            throw new Error("bracket not cached in LoadSync");
-
-        AppContext.checkpoint("l.2");
-        this.m_gameNum = gameNum;
-        this.m_bracketName = bracketChoice;
-
-        this.m_bracketGameDefinition = bracketDefinition.games[gameNum.Value];
-        this.m_swapTopBottom = false;
-        this.m_teamNameTop = null;
-        this.m_teamNameBottom = null;
-        this.m_startTime = 18 * 60;
-        this.m_field = "Field #1";
-
-        AppContext.checkpoint("l.3");
-        return this;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.IsLinkedToBracket
-    ----------------------------------------------------------------------------*/
-    get IsLinkedToBracket(): boolean
-    {
-        return this.m_topTeamLocation != null
-            && (this.IsChampionship
-                || (this.m_bottomTeamLocation != null
-                    && this.m_gameNumberLocation != null));
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.TopTeamCellNameInvariant
-    ----------------------------------------------------------------------------*/
-    get TopTeamCellNameInvariant(): string
-    {
-        return `${this.m_bracketName}_G${this.GameId.Value}_1`;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.TopTeamCellName
-    ----------------------------------------------------------------------------*/
-    get TopTeamCellName(): string
-    {
-        return this.m_swapTopBottom ? this.BottomTeamCellNameInvariant : this.TopTeamCellNameInvariant;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.BottomTeamCellNameInvariant
-    ----------------------------------------------------------------------------*/
-    get BottomTeamCellNameInvariant(): string
-    {
-        return `${this.m_bracketName}_G${this.GameId.Value}_2`;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.BottomTeamCellName
-    ----------------------------------------------------------------------------*/
-    get BottomTeamCellName(): string
-    {
-        return this.m_swapTopBottom ? this.TopTeamCellNameInvariant : this.BottomTeamCellNameInvariant;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: BracketGame.GameNumberCellName
-    ----------------------------------------------------------------------------*/
-    get GameNumberCellName(): string
-    {
-        return `${this.m_bracketName}_Game${this.GameId.Value}`;
     }
 }
