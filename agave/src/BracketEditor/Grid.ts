@@ -1250,7 +1250,7 @@ export class Grid
         _TimerStack.pushTimer("loadGridFromBracket::loop");
         for (let i: number = 0; i < bracketDef.games.length; i++)
         {
-            let game: BracketGame = new BracketGame()
+            let game: BracketGame = new BracketGame();
             let feederTop: RangeInfo = null;
             let feederBottom: RangeInfo = null;
             let feederWinner: RangeInfo = null;

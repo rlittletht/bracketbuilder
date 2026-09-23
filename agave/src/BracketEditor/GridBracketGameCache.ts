@@ -91,6 +91,38 @@ export class GridBracketGameCache extends BracketGameBase
         return gameCache;
     }
 
+    public static createFromInferedGridItem(gridItem: GridItem, bracketName: string): GridBracketGameCache
+    {
+        const gameCache: GridBracketGameCache = new GridBracketGameCache();
+
+        gameCache.LoadSync(bracketName, gridItem.GameNumber);
+
+        gameCache.m_swapTopBottom = gridItem.SwapTopBottom;
+        gameCache.m_startTime = gridItem.StartTime;
+        gameCache.m_field = gridItem.Field;
+
+        // now populate what we can from the inferrred item
+        gameCache.m_bottomTeamLocation = gridItem.BottomTeamRange?.clone();
+        gameCache.m_topTeamLocation = gridItem.TopTeamRange?.clone();
+        gameCache.m_gameNumberLocation = gridItem.GameNumberRange?.clone();
+
+        if (gameCache.SwapTopBottom)
+        {
+            gameCache.m_topTeamNameValue = gameCache.BracketGameDefinition.bottomSource;
+            gameCache.m_bottomTeamNameValue = gameCache.BracketGameDefinition.topSource;
+        }
+        else
+        {
+            gameCache.m_topTeamNameValue = gameCache.BracketGameDefinition.topSource;
+            gameCache.m_bottomTeamNameValue = gameCache.BracketGameDefinition.bottomSource;
+        }
+
+        // we don't match the workbook, so we can't be clean
+        gameCache.m_state = GridBracketGameCacheState.Dirty;
+        return gameCache;
+    }
+
+
     public invalidateForGameInternalChange()
     {
         this.m_state = GridBracketGameCacheState.Unknown;

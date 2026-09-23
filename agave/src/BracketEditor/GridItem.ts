@@ -346,6 +346,25 @@ export class GridItem
         this.m_bracketGameCache.invalidateForGameInternalChange();
     }
 
+    inferGameInternalsWithCache(bracketName: string)
+    {
+        this.m_topTeamRange = this.m_range.topLeft();
+        if (this.m_range.RowCount == 3)
+        // this is the championship game
+        {
+            this.m_bottomTeamRange = null;
+            this.m_gameNumberRange = null;
+        }
+        else
+        {
+            this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
+            if (this.m_range.RowCount > 7)
+                this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        }
+
+        this.m_bracketGameCache = GridBracketGameCache.createFromInferedGridItem(this, bracketName);
+    }
+
     inferGameInternalsIfNecessary()
     {
         if (this.m_topTeamRange == null && this.m_bottomTeamRange == null && this.m_gameNumberRange == null)
