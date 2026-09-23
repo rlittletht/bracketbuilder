@@ -12,29 +12,13 @@ import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
 import { IGameMover } from "./IGameMover";
 import { RangeInfo } from "../../Interop/Ranges";
+import { OpenFeedRelativeMeasure } from "./OpenFeedRelativeMeasure";
 
 export interface gameMoveDisqualifier
 {
     (): boolean;
 }
 
-/*----------------------------------------------------------------------------
-    %%Interface LoserFeedRelativeMeasure
-
-    if a game has this recorded, then it tells us how the loser feed (which
-    is a disconnected source by definition) is positioned relative to a
-    *following* game to the left of us. This lets us try to maintain that
-    relative positioning.
-
-    since we are moving DOWN always, we cannot rely on games ABOVE us since
-    we are moving away from them.
-----------------------------------------------------------------------------*/
-export interface LoserFeedRelativeMeasure
-{
-    gameIdRelativeTo: GameId;
-    isLoserTopFeed: boolean;
-    delta: number;
-}
 
 export class GameMoverSimple implements IGameMover
 {
@@ -44,7 +28,7 @@ export class GameMoverSimple implements IGameMover
     m_maxMoves: number = s_staticConfig.maxGameMoves;
     m_warning: string = "";
 
-    m_LoserFeedRelativeMeasures: Map<GameId, LoserFeedRelativeMeasure> = new Map<GameId, LoserFeedRelativeMeasure>();
+    m_LoserFeedRelativeMeasures: Map<GameId, OpenFeedRelativeMeasure> = new Map<GameId, OpenFeedRelativeMeasure>();
 
     get ExceededMoveCount(): boolean { return false; }
 
@@ -80,47 +64,9 @@ export class GameMoverSimple implements IGameMover
         grid.enumerateMatching(
             (item: GridItem) =>
             {
-                // no need to figure out of it this is a loser feed or not -- just figure out if the
-                // top and/or bottom ranges are connected to the left. if they are not connected, then figure out the
-                // relative position to the next overlapping item below and to the left...
-
-                const [topFeedItem, bottomFeedItem] = grid.getConnectedGridItemsForGameFeeders(item, item.BracketGameCache);
-
-                // if there are no feeder items, we can't capture relative positioning
-                if (topFeedItem == null && bottomFeedItem == null)
-                    return true;
-
-                let rangeCheck: RangeInfo;
-                let relativeMeasure: LoserFeedRelativeMeasure = {
-                    gameIdRelativeTo: item.BracketGameCache.GameId,
-                    isLoserTopFeed: false,
-                    delta: 0
-                };
-
-                if (topFeedItem == null)
+                const relativeMeasure: OpenFeedRelativeMeasure = OpenFeedRelativeMeasure.createFromGridItem(grid, item);
+                if (relativeMeasure != null)
                 {
-                    rangeCheck = new RangeInfo(item.TopTeamRange.FirstRow, 15, item.TopTeamRange.FirstColumn - 3, 1);
-                    relativeMeasure.isLoserTopFeed = true;
-                }
-                else if (bottomFeedItem == null && !item.IsChampionshipGame)
-                {
-                    rangeCheck = new RangeInfo(item.BottomTeamRange.FirstRow, 15, item.BottomTeamRange.FirstColumn - 3, 1);
-                    relativeMeasure.isLoserTopFeed = false;
-                }
-                else
-                {
-                    // neither are null -- no relative measure
-                    return true;
-                }
-
-                // now find the first overlapping item
-                const [overlappingItem, overlapKind] = grid.getFirstOverlappingItem(rangeCheck);
-
-                if (overlappingItem != null && !overlappingItem.isLineRange)
-                {
-                    relativeMeasure.delta = overlappingItem.Range.FirstRow - rangeCheck.FirstRow;
-                    relativeMeasure.gameIdRelativeTo = overlappingItem.BracketGameCache.GameId;
-
                     this.m_LoserFeedRelativeMeasures.set(item.BracketGameCache.GameId, relativeMeasure);
                 }
 
