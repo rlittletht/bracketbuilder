@@ -9,7 +9,7 @@ import { GridBracketGameCache } from "./GridBracketGameCache";
 
 export class GridItem
 {
-    m_bracketGameCache: GridBracketGameCache;
+    m_bracketGameCache: GridBracketGameCache = null;
     m_range: RangeInfo;
     m_topTeamRange: RangeInfo = null;
     m_bottomTeamRange: RangeInfo = null;
@@ -32,6 +32,11 @@ export class GridItem
             return `line: ${this.m_range.toString()}${this.m_ephemeral ? "ephemeral" : ""}`;
         else
             return `game ${this.GameId.Value}: ${this.m_range.toString()} ${this.m_ephemeral ? "ephemeral" : ""} ${this.IsChampionshipGame ? "Championship" : ""}`;
+    }
+
+    get BracketGameCache(): IBracketGame
+    {
+        return this.m_bracketGameCache;
     }
 
     set IsEphemeral(f: boolean)
@@ -137,7 +142,7 @@ export class GridItem
     doSwapTopBottom(): GridItem
     {
         this.m_swapTopBottom = !this.m_swapTopBottom;
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_swapTopBottom = this.m_swapTopBottom;
@@ -149,7 +154,7 @@ export class GridItem
     changeTopTeamRange(fun: (range: RangeInfo) => void)
     {
         fun(this.m_topTeamRange);
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_topTeamLocation = this.m_topTeamRange.clone();
@@ -159,7 +164,7 @@ export class GridItem
     changeBottomTeamRange(fun: (range: RangeInfo) => void)
     {
         fun(this.m_bottomTeamRange);
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_bottomTeamLocation = this.m_bottomTeamRange.clone();
@@ -169,7 +174,7 @@ export class GridItem
     changeGameNumberRange(fun: (range: RangeInfo) => void)
     {
         fun(this.m_gameNumberRange);
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_gameNumberLocation = this.m_gameNumberRange.clone();
@@ -179,7 +184,7 @@ export class GridItem
     changeGameNumberRangeToNull()
     {
         this.m_gameNumberRange = null;
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_gameNumberLocation = null;
@@ -238,6 +243,9 @@ export class GridItem
 
         if (this.m_range.RowCount > 7)
         {
+            // we want to set it completely, so create a new range we can set
+            this.m_gameNumberRange = new RangeInfo(0, 0, 0, 0);
+
             this.changeGameNumberRange(
                 (range) =>
                 {
@@ -267,6 +275,9 @@ export class GridItem
         }
         if (this.m_range.RowCount > 7)
         {
+            // we want to set it completely, so create a new range we can set
+            this.m_gameNumberRange = new RangeInfo(0, 0, 0, 0);
+
             this.changeGameNumberRange(
                 (range) =>
                 {
@@ -343,7 +354,7 @@ export class GridItem
             if (this.m_range.RowCount > 7)
                 this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
         }
-        this.m_bracketGameCache.invalidateForGameInternalChange();
+        this.m_bracketGameCache?.invalidateForGameInternalChange();
     }
 
     inferGameInternalsWithCache(bracketName: string)
@@ -362,7 +373,8 @@ export class GridItem
                 this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
         }
 
-        this.m_bracketGameCache = GridBracketGameCache.createFromInferedGridItem(this, bracketName);
+        if (!this.isLineRange)
+            this.m_bracketGameCache = GridBracketGameCache.createFromInferedGridItem(this, bracketName);
     }
 
     inferGameInternalsIfNecessary()
@@ -395,7 +407,7 @@ export class GridItem
             this.m_gameNumberRange = RangeInfo.createFromRangeInfo(gameNumberRange);
             this.m_swapTopBottom = swapTopBottom;
 
-            this.m_bracketGameCache.updateForEdit(
+            this.m_bracketGameCache?.updateForEdit(
                 (cache) =>
                 {
                     cache.m_topTeamLocation = this.m_topTeamRange?.clone();
@@ -409,7 +421,7 @@ export class GridItem
     setStartTime(time: number)
     {
         this.m_startTime = time;
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_startTime = time;
@@ -419,7 +431,7 @@ export class GridItem
     setField(field: string)
     {
         this.m_field = field;
-        this.m_bracketGameCache.updateForEdit(
+        this.m_bracketGameCache?.updateForEdit(
             (cache) =>
             {
                 cache.m_field = field;

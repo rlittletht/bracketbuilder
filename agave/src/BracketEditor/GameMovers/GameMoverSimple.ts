@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import {AppContext} from "../../AppContext/AppContext";
-import {s_staticConfig} from "../../StaticConfig";
-import {StreamWriter} from "../../Support/StreamWriter";
+import { AppContext } from "../../AppContext/AppContext";
+import { s_staticConfig } from "../../StaticConfig";
+import { StreamWriter } from "../../Support/StreamWriter";
 import { GameId } from "../GameId";
-import { FeederDrag } from "./FeederDrag";
+import { FeederDragSimple } from "./FeederDragSimple";
 import { Mover, GridOption } from "./Mover";
 import { PushAway } from "./PushAway";
 import { TopBottomSwapper } from "./TopBottomSwapper";
@@ -11,10 +11,29 @@ import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
 import { IGameMover } from "./IGameMover";
+import { RangeInfo } from "../../Interop/Ranges";
 
 export interface gameMoveDisqualifier
 {
     (): boolean;
+}
+
+/*----------------------------------------------------------------------------
+    %%Interface LoserFeedRelativeMeasure
+
+    if a game has this recorded, then it tells us how the loser feed (which
+    is a disconnected source by definition) is positioned relative to a
+    *following* game to the left of us. This lets us try to maintain that
+    relative positioning.
+
+    since we are moving DOWN always, we cannot rely on games ABOVE us since
+    we are moving away from them.
+----------------------------------------------------------------------------*/
+export interface LoserFeedRelativeMeasure
+{
+    gameIdRelativeTo: GameId;
+    isLoserTopFeed: boolean;
+    delta: number;
 }
 
 export class GameMoverSimple implements IGameMover
@@ -25,7 +44,11 @@ export class GameMoverSimple implements IGameMover
     m_maxMoves: number = s_staticConfig.maxGameMoves;
     m_warning: string = "";
 
-    get ExceededMoveCount(): boolean {return false; }
+    m_LoserFeedRelativeMeasures: Map<GameId, LoserFeedRelativeMeasure> = new Map<GameId, LoserFeedRelativeMeasure>();
+
+    get ExceededMoveCount(): boolean { return false; }
+
+    get OneOptionToRuleThemAll(): boolean { return true; }
 
     RequestExtraMoves()
     {
@@ -42,6 +65,72 @@ export class GameMoverSimple implements IGameMover
     constructor(grid: Grid)
     {
         this.m_originalGrid = grid;
+        this.recordLoserRelativeMeasures(grid);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: recordLoserRelativeMeasures
+        %%Qualified: GameMoverSimple.recordLoserRelativeMeasures
+
+        find all the loser feeds and try to record their positions relative to
+        a game to the left and below them
+    ----------------------------------------------------------------------------*/
+    recordLoserRelativeMeasures(grid: Grid)
+    {
+        grid.enumerateMatching(
+            (item: GridItem) =>
+            {
+                // no need to figure out of it this is a loser feed or not -- just figure out if the
+                // top and/or bottom ranges are connected to the left. if they are not connected, then figure out the
+                // relative position to the next overlapping item below and to the left...
+
+                const [topFeedItem, bottomFeedItem] = grid.getConnectedGridItemsForGameFeeders(item, item.BracketGameCache);
+
+                // if there are no feeder items, we can't capture relative positioning
+                if (topFeedItem == null && bottomFeedItem == null)
+                    return true;
+
+                let rangeCheck: RangeInfo;
+                let relativeMeasure: LoserFeedRelativeMeasure = {
+                    gameIdRelativeTo: item.BracketGameCache.GameId,
+                    isLoserTopFeed: false,
+                    delta: 0
+                };
+
+                if (topFeedItem == null)
+                {
+                    rangeCheck = new RangeInfo(item.TopTeamRange.FirstRow, 15, item.TopTeamRange.FirstColumn - 3, 1);
+                    relativeMeasure.isLoserTopFeed = true;
+                }
+                else if (bottomFeedItem == null && !item.IsChampionshipGame)
+                {
+                    rangeCheck = new RangeInfo(item.BottomTeamRange.FirstRow, 15, item.BottomTeamRange.FirstColumn - 3, 1);
+                    relativeMeasure.isLoserTopFeed = false;
+                }
+                else
+                {
+                    // neither are null -- no relative measure
+                    return true;
+                }
+
+                // now find the first overlapping item
+                const [overlappingItem, overlapKind] = grid.getFirstOverlappingItem(rangeCheck);
+
+                if (overlappingItem != null && !overlappingItem.isLineRange)
+                {
+                    relativeMeasure.delta = overlappingItem.Range.FirstRow - rangeCheck.FirstRow;
+                    relativeMeasure.gameIdRelativeTo = overlappingItem.BracketGameCache.GameId;
+
+                    this.m_LoserFeedRelativeMeasures.set(item.BracketGameCache.GameId, relativeMeasure);
+                }
+
+                return true;
+            },
+            (item: GridItem) =>
+            {
+                return !item.isLineRange;
+            }
+        );
     }
 
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid
@@ -57,11 +146,13 @@ export class GameMoverSimple implements IGameMover
 
         if (s_staticConfig.logMoveTree)
         {
-            tree.set("s:", Mover.createNewGridOption(
-                this.m_originalGrid,
-                null,
-                "original",
-                ["s"]));
+            tree.set(
+                "s:",
+                Mover.createNewGridOption(
+                    this.m_originalGrid,
+                    null,
+                    "original",
+                    ["s"]));
         }
 
         if (this.Warning != "")
@@ -71,9 +162,7 @@ export class GameMoverSimple implements IGameMover
         {
             const keys: string[] = [];
             for (let key of tree.keys())
-            {
                 keys.push(key);
-            }
 
             keys.sort((a, b) => a.localeCompare(b));
 
@@ -163,7 +252,7 @@ export class GameMoverSimple implements IGameMover
         If the move is unambiguous, return [grid]
         If the move has possible branches, return [grid, ...]
 
-        for now, this cannot break any incoming connections -- only 
+        for now, this cannot break any incoming connections -- only
 
         NOTE on Branch Creation.  This routine will do the requested move in the
         grid provided. Sometimes we have to make a choice that may or may not
@@ -191,7 +280,9 @@ export class GameMoverSimple implements IGameMover
 
         if (this.m_moveCount > this.m_maxMoves)
         {
-            this.SetWarning(`I tried over ${this.m_moveCount} different combinations, but I had to stop trying. I hope I was able to come up with something good, but if not, use Undo and try moving a different game to help me make a better decision.`);
+            this.SetWarning(
+                `I tried over ${this.m_moveCount
+                } different combinations, but I had to stop trying. I hope I was able to come up with something good, but if not, use Undo and try moving a different game to help me make a better decision.`);
             return { options: [] };
         }
 
@@ -235,8 +326,8 @@ export class GameMoverSimple implements IGameMover
         // we had to let it actually move the game, but now if the game is not valid, then invalidate
         // this option
         if ((!itemNew.isLineRange
-            && !itemNew.IsChampionshipGame 
-            && itemNew.Range.RowCount <= 7)
+                && !itemNew.IsChampionshipGame
+                && itemNew.Range.RowCount <= 7)
             || itemNew.Range.FirstRow < working.grid.FirstGridPattern.FirstRow)
         {
             working.rank = -1;
@@ -259,31 +350,31 @@ export class GameMoverSimple implements IGameMover
             mover.Tree.set(key, Mover.cloneGridOption(working));
         }
 
-//        mover.logGrids(`${crumb}:orig`, true);
-//        mover.invokeSingleMover(this, TopBottomSwapper.checkAndSwapTopBottom, `CP.1`);
-//        mover.logGrids(`${crumb}:CP.1`, true);
+        //        mover.logGrids(`${crumb}:orig`, true);
+        //        mover.invokeSingleMover(this, TopBottomSwapper.checkAndSwapTopBottom, `CP.1`);
+        //        mover.logGrids(`${crumb}:CP.1`, true);
 
-//        mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway, `CP.2`);
-//        mover.logGrids(`${crumb}:CP.2`, true);
+        //        mover.invokeSingleMover(this, PushAway.checkAndMoveItemsAway, `CP.2`);
+        //        mover.logGrids(`${crumb}:CP.2`, true);
 
-//        mover.invokeSingleMover(this, PushAway.checkAndMoveAdjacentItemsAway, `CP.3`);
-//        mover.logGrids(`${crumb}:CP.3`, true);
+        //        mover.invokeSingleMover(this, PushAway.checkAndMoveAdjacentItemsAway, `CP.3`);
+        //        mover.logGrids(`${crumb}:CP.3`, true);
 
         // NYI: mover.invokeSingleMover(this, PushAway.checkAndMoveLinesAway);
 
         // now, check and apply the "outgoing feeder moved so it will drag the attached game with it")
         // apply this rule to grid and every grid in items
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByOutgoingFeeder, `CP.4`);
+        mover.invokeSingleMover(this, FeederDragSimple.checkAndDragByOutgoingFeeder, `CP.4`);
         mover.logGrids(`${crumb}:CP.4`, true);
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByTopIncomingFeed, `CP.5`);
+        mover.invokeSingleMover(this, FeederDragSimple.checkAndDragByTopIncomingFeed, `CP.5`);
         mover.logGrids(`${crumb}:CP.5`, true);
-        mover.invokeSingleMover(this, FeederDrag.checkAndDragByBottomIncomingFeed, `CP.6`);
+        mover.invokeSingleMover(this, FeederDragSimple.checkAndDragByBottomIncomingFeed, `CP.6`);
         mover.logGrids(`${crumb}:CP.6`, true);
 
         // still not sure how to make this work when the feeder's above kill the main option before it has a chance
         // to get here...
-//        mover.invokeSingleMover(this, TopBottomSwapper.checkOutgoingFeedAndMaybeSwapTopBottomTarget, `CP.1S`);
-//        mover.logGrids(`${crumb}:CP.`, true);
+        //        mover.invokeSingleMover(this, TopBottomSwapper.checkOutgoingFeedAndMaybeSwapTopBottomTarget, `CP.1S`);
+        //        mover.logGrids(`${crumb}:CP.`, true);
 
         // we have another case where we want to check the outgoing feeder to see if our old location
         // fed into a game, but our new location would like to not DRAG the connected game but rather

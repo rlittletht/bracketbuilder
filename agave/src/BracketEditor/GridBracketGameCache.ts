@@ -2,6 +2,8 @@ import { IBracketGame } from "./IBracketGame";
 import { BracketGame } from "./BracketGame";
 import { GridItem } from "./GridItem";
 import { BracketGameBase } from "./BracketGameBase";
+import { JsCtx } from "../Interop/JsCtx";
+import { IAppContext } from "../AppContext/AppContext";
 
 export enum GridBracketGameCacheState
 {
@@ -16,13 +18,24 @@ export enum GridBracketGameCacheState
 // we try to keep it up to date when we edit the grid, but once any edit is done
 // it no longer matches the workbook so it will be marked dirty.
 
-export class GridBracketGameCache extends BracketGameBase
+export class GridBracketGameCache extends BracketGameBase implements IBracketGame
 {
     m_state: GridBracketGameCacheState = GridBracketGameCacheState.Unknown;
 
+    public get IsBroken(): boolean
+    {
+        return false;
+    }
+
+    public Bind(context: JsCtx, appContext: IAppContext): Promise<IBracketGame>
+    {
+        context;
+        appContext;
+        throw new Error("GridBracketGameCache.Bind() should never be called.");
+    }
+
     public get State(): GridBracketGameCacheState
     {
-
         return this.m_state;
     }
 
@@ -64,6 +77,9 @@ export class GridBracketGameCache extends BracketGameBase
 
     public static createFromGridItem(gridItem: GridItem): GridBracketGameCache
     {
+        if (gridItem.BracketGameCache == null)
+            return null;
+
         const gameCache: GridBracketGameCache = new GridBracketGameCache();
 
         // populate the static portions of the game (this is what LoadSync populated)
