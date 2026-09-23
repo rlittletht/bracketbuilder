@@ -223,6 +223,14 @@ export class RangeInfo
             this.m_rowCount = 0;
     }
 
+    setFromRange(range: RangeInfo)
+    {
+        this.m_rowStart = range.FirstRow;
+        this.m_rowCount = range.RowCount;
+        this.m_columnStart = range.FirstColumn;
+        this.m_columnCount = range.ColumnCount;
+    }
+
     setLastColumn(column: number)
     {
         this.m_columnCount = column - this.FirstColumn + 1;

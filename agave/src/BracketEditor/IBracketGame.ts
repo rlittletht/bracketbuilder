@@ -56,6 +56,10 @@ export interface IBracketGame
     GameIdRange: RangeInfo;
     TopSource: string;
     BottomSource: string;
+    TopTeamOverride: string;
     TopTeamNameValue: string;
     BottomTeamNameValue: string;
+    BottomTeamOverride: string;
+    FieldOverride: string;
+    TimeOverride: number;
 }

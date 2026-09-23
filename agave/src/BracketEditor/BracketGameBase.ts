@@ -23,14 +23,19 @@ export class BracketGameBase
     m_swapTopBottom: boolean;
     m_bracketName: string;
     m_gameNum: GameNum;
-    m_teamNameTop: string = null;
-    m_teamNameBottom: string = null;
     m_startTime: number = GlobalDataBuilder.DefaultStartTime;
     m_field: string = GlobalDataBuilder.DefaultField;
     m_topTeamLocation: RangeInfo;
     m_bottomTeamLocation: RangeInfo;
     m_gameNumberLocation: RangeInfo;
     m_isIfNecessaryGame: boolean;
+
+    m_topTeamOverride: string;
+    m_bottomTeamOverride: string;
+    m_fieldOverride: string;
+    m_timeOverride: number;
+    m_topTeamNameValue: string;
+    m_bottomTeamNameValue: string;
 
     SetStartTime(time: number)
     {
@@ -49,6 +54,54 @@ export class BracketGameBase
             && (!this.m_bracketGameDefinition.winner
                 || this.m_bracketGameDefinition.winner == "");
     }
+
+    get NeedsDataPull(): boolean
+    {
+        if (this.IsChampionship)
+            return false;
+
+        if ((this.m_bottomTeamOverride != null && this.m_bottomTeamOverride != "")
+            || (this.m_topTeamOverride != null && this.m_topTeamOverride != "")
+            || (this.m_fieldOverride != null && this.m_fieldOverride != "" && this.m_fieldOverride[0] != "=")
+            || this.m_timeOverride != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    get IsIfNecessaryGame(): boolean
+    {
+        if (this.m_bracketGameDefinition == null)
+            throw new Error("no BracketGameDefinition available for IsIfNecessaryGame()");
+
+        if (this.m_bracketGameDefinition.topSource.length <= 1
+            || this.m_bracketGameDefinition.bottomSource.length <= 1)
+        {
+            return false;
+        }
+
+        if (this.m_bracketGameDefinition.topSource.substring(1) == this.m_bracketGameDefinition.bottomSource.substring(1))
+        {
+            // a two team bracket can fool our logic here since game 2's sources are both game 1...
+            if (this.m_bracketName == "T2" && this.GameId.equals(new GameId(2)))
+                return false;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    get TopTeamOverride(): string {return this.m_topTeamOverride}
+    get TopTeamNameValue(): string { return this.m_topTeamNameValue }
+
+    get BottomTeamOverride(): string {return this.m_bottomTeamOverride}
+    get BottomTeamNameValue(): string { return this.m_bottomTeamNameValue }
+
+    get FieldOverride(): string {return this.m_fieldOverride}
+    get TimeOverride(): number {return this.m_timeOverride}
 
     // getters
     get BracketGameDefinition(): IBracketGameDefinition {return this.m_bracketGameDefinition;}
@@ -125,9 +178,7 @@ export class BracketGameBase
     ----------------------------------------------------------------------------*/
     get TopTeamNameInvariant(): string
     {
-        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.topSource) || this.m_teamNameTop == null)
-            ? this.BracketGameDefinition.topSource
-            : this.m_teamNameTop;
+        return this.BracketGameDefinition.topSource;
     }
 
     get TopSource(): string
@@ -153,10 +204,7 @@ export class BracketGameBase
     ----------------------------------------------------------------------------*/
     get BottomTeamNameInvariant(): string
     {
-        return (BracketGame.IsTeamSourceStatic(this.BracketGameDefinition.bottomSource)
-            || this.m_teamNameBottom == null)
-            ? this.BracketGameDefinition.bottomSource
-            : this.m_teamNameBottom;
+        return this.BracketGameDefinition.bottomSource;
     }
 
     /*----------------------------------------------------------------------------
@@ -237,8 +285,6 @@ export class BracketGameBase
 
         this.m_bracketGameDefinition = bracketDefinition.games[gameNum.Value];
         this.m_swapTopBottom = false;
-        this.m_teamNameTop = null;
-        this.m_teamNameBottom = null;
         this.m_startTime = 18 * 60;
         this.m_field = "Field #1";
 

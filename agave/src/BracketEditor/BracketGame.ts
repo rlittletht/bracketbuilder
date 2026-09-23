@@ -23,12 +23,6 @@ import { BracketGameBase } from "./BracketGameBase";
 
 export class BracketGame extends BracketGameBase implements IBracketGame
 {
-    m_topTeamOverride: string;
-    m_bottomTeamOverride: string;
-    m_fieldOverride: string;
-    m_timeOverride: number;
-    m_topTeamNameValue: string;
-    m_bottomTeamNameValue: string;
     m_isBroken: boolean = false;
 
     // getters
@@ -36,49 +30,6 @@ export class BracketGame extends BracketGameBase implements IBracketGame
     {
         return this.m_isBroken;
     }
-
-    get NeedsDataPull(): boolean
-    {
-        if (this.IsChampionship)
-            return false;
-
-        if ((this.m_bottomTeamOverride != null && this.m_bottomTeamOverride != "")
-            || (this.m_topTeamOverride != null && this.m_topTeamOverride != "")
-            || (this.m_fieldOverride != null && this.m_fieldOverride != "" && this.m_fieldOverride[0] != "=")
-            || this.m_timeOverride != 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    get IsIfNecessaryGame(): boolean
-    {
-        if (this.m_bracketGameDefinition == null)
-            throw new Error("no BracketGameDefinition available for IsIfNecessaryGame()");
-
-        if (this.m_bracketGameDefinition.topSource.length <= 1
-            || this.m_bracketGameDefinition.bottomSource.length <= 1)
-        {
-            return false;
-        }
-
-        if (this.m_bracketGameDefinition.topSource.substring(1) == this.m_bracketGameDefinition.bottomSource.substring(1))
-        {
-            // a two team bracket can fool our logic here since game 2's sources are both game 1...
-            if (this.m_bracketName == "T2" && this.GameId.equals(new GameId(2)))
-                return false;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    get TopTeamNameValue(): string { return this.m_topTeamNameValue }
-
-    get BottomTeamNameValue(): string {return this.m_bottomTeamNameValue}
 
     static CreateFromGameSync(bracket: string, gameNumber: GameNum): IBracketGame
     {
