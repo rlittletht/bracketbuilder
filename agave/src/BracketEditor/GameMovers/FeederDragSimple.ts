@@ -1,11 +1,12 @@
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
 import { GridItem } from "../GridItem";
 import { GameMover } from "./GameMover";
-import {GridOption, Mover } from "./Mover";
+import { GridOption, Mover } from "./Mover";
 import { BracketGame } from "../BracketGame";
-import { IBracketGame} from "../IBracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { GameId } from "../GameId";
 import { IGameMover } from "./IGameMover";
+import { OpenFeedRelativeMeasure } from "./OpenFeedRelativeMeasure";
 
 /*----------------------------------------------------------------------------
     %%Class: FeederDragSimple
@@ -70,13 +71,17 @@ export class FeederDragSimple
         const outgoingPointNew: RangeInfo = mover.ItemNew.OutgoingFeederPoint;
         const dRows: number = outgoingPointNew.FirstRow - outgoingPointOld.FirstRow;
 
-        if (dRows == 0)
-            return changed;
+        // even if the outgoing feeder didn't change, we might still have an adjustment to make
+        // (the previous move might have shifted the game down but rounding makes the outgoing
+        // feeder point the same. HOWEVER we might need to grow this item in order to keep the
+        // bottom team range relative to the (now shifted) connected game.  allow this to go through
+        // and check the relative measure and grow as necessary
 
         // see if we actually are connected to anyone
         let [connectedItem, kindConnected] = optionWork.grid.getFirstOverlappingItem(outgoingPointOld);
         let connectedAtTop = false;
 
+        // if we're not connected, then we can't be relative to a connected item
         if (!connectedItem)
             return changed;
 
@@ -96,9 +101,7 @@ export class FeederDragSimple
 
         // make sure we are actually connected to one of the feeders on the game
         if (connectedGame.TopTeamRange.offset(1, 1, 0, 1).FirstRow == outgoingPointOld.FirstRow)
-        {
             connectedAtTop = true;
-        }
         else
         {
             if (connectedGame.IsChampionshipGame
@@ -128,6 +131,26 @@ export class FeederDragSimple
             const overMoves: boolean = gameMover.ExceededMoveCount;
             const shifted = connectedGame.clone().shiftByRows(dRows);
 
+            // see if we have a relative measure to work with
+            const relativeMeasure: OpenFeedRelativeMeasure = gameMover.getOpenFeedRelativeMeasureForGameId(connectedGame.GameId);
+            if (relativeMeasure)
+            {
+                if (relativeMeasure.IsOpenTopFeed)
+                    throw new Error("unexpected open top feed for relative measure");
+
+                const growShrink = (mover.ItemNew.BottomTeamRange.FirstRow + relativeMeasure.Delta) - shifted.BottomTeamRange.FirstRow;
+                if (growShrink != 0)
+                    shifted.growShrink(growShrink);
+            }
+            else if (!connectedGame.IsChampionshipGame)
+            {
+                if (connectedGame.BottomTeamRange.FirstRow >= shifted.TopTeamRange.FirstRow + 10)
+                {
+                    const growShrink = connectedGame.BottomTeamRange.FirstRow - shifted.BottomTeamRange.FirstRow;
+                    shifted.growShrink(growShrink);
+                }
+            }
+
             if (growing)
                 FeederDragSimple.adjustItemForOverlappingGrowth(connectedAtTop, mover.ItemNew, shifted);
 
@@ -147,42 +170,47 @@ export class FeederDragSimple
             if (!connectedGame.IsChampionshipGame)
             {
                 let grownShrunk: GridItem;
+                const maybeShifted = connectedGame.clone();
 
-                if (connectedAtTop)
+                let dRowsAdjusted = dRows;
+
+                // see if we have a relative measure to work with
+                const relativeMeasure: OpenFeedRelativeMeasure = gameMover.getOpenFeedRelativeMeasureForGameId(connectedGame.GameId);
+                if (relativeMeasure)
                 {
-                    if (dRows > 0)
+                    if (!relativeMeasure.IsOpenTopFeed)
+                        throw new Error("unexpected open bottom feed for relative measure");
+
+                    const rowsToShift = (mover.ItemNew.TopTeamRange.FirstRow + relativeMeasure.Delta) - connectedGame.TopTeamRange.FirstRow;
+
+                    if (rowsToShift < 0)
+                        throw new Error("simple feeder drag should only move down");
+
+                    if (rowsToShift > 0)
                     {
-                        // if dRows > 0, then we need to shrink this game and shift it by dRows
-                        grownShrunk = connectedGame.clone().growShrink(-dRows).shiftByRows(dRows);
+                        maybeShifted.shiftByRows(rowsToShift);
+                        dRowsAdjusted -= rowsToShift;
                     }
-                    else
-                    {
-                        // else, we have to grow and shift up by dRows
-                        grownShrunk = connectedGame.clone().growShrink(-dRows).shiftByRows(dRows);
-                    }
+                }
+
+                // if we are connected at the bottom...
+                if (dRowsAdjusted > 0)
+                {
+                    // we have to grow the game...
+                    grownShrunk = maybeShifted.growShrink(dRowsAdjusted);
                 }
                 else
                 {
-                    // if we are connected at the bottom...
-                    if (dRows > 0)
-                    {
-                        // we have to grow the game...
-                        grownShrunk = connectedGame.clone().growShrink(dRows);
-                    }
-                    else
-                    {
-                        // we have to shrink the game
-                        grownShrunk = connectedGame.clone().growShrink(dRows);
-                    }
+                    // we have to shrink the game
+                    grownShrunk = maybeShifted.growShrink(dRowsAdjusted);
                 }
+
                 if (growing)
                     FeederDragSimple.adjustItemForOverlappingGrowth(connectedAtTop, mover.ItemNew, grownShrunk);
 
                 if ((connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.TopTeamRange.offset(1, 1, 0, 1).FirstRow)
                     || (!connectedAtTop && outgoingPointNew.FirstRow == grownShrunk.BottomTeamRange.offset(-1, 1, 0, 1).FirstRow))
-                {
                     changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, grownShrunk, "checkAndDragByOutgoingFeeder_growShrink", `${crumbs}.2`) || changed;
-                }
             }
         }
         return changed;
@@ -235,9 +263,19 @@ export class FeederDragSimple
         // just accept our line (or our connection point) overlapping any part of the connected game
 
         // we have several options for the connected game. Grow the game down, or move the game
-        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByTopIncomingFeed_shiftDown", `${crumbs}.1`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByTopIncomingFeed_growShrinkFromTop", `${crumbs}.2`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByTopIncomingFeed_growShrink", `${crumbs}.3`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByTopIncomingFeed_shiftDown", `${crumbs}.1`)
+            || changed;
+        changed = mover.moveRecurse(
+                gameMover,
+                optionWork,
+                !gameMover.OneOptionToRuleThemAll,
+                connectedGame,
+                connectedGame.clone().growShrinkFromTop(-dRows * 2),
+                "checkAndDragByTopIncomingFeed_growShrinkFromTop",
+                `${crumbs}.2`)
+            || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByTopIncomingFeed_growShrink", `${crumbs}.3`)
+            || changed;
 
         return changed;
     }
@@ -306,9 +344,26 @@ export class FeederDragSimple
         // just accept our line (or our connection point) overlapping any part of the connected game
 
         // we have several options for the connected game. Grow the game down, or move the game
-        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByBottomIncomingFeed_shift", `${crumbs}.1`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrinkFromTop(-dRows * 2), "checkAndDragByBottomIncomingFeed_growShrinkFromTop", `${crumbs}.2`) || changed;
-        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().growShrink(dRows * 2), "checkAndDragByBottomIncomingFeed_growShrink", `${crumbs}.3`) || changed;
+        changed = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, connectedGame, connectedGame.clone().shiftByRows(dRows), "checkAndDragByBottomIncomingFeed_shift", `${crumbs}.1`)
+            || changed;
+        changed = mover.moveRecurse(
+                gameMover,
+                optionWork,
+                !gameMover.OneOptionToRuleThemAll,
+                connectedGame,
+                connectedGame.clone().growShrinkFromTop(-dRows * 2),
+                "checkAndDragByBottomIncomingFeed_growShrinkFromTop",
+                `${crumbs}.2`)
+            || changed;
+        changed = mover.moveRecurse(
+                gameMover,
+                optionWork,
+                !gameMover.OneOptionToRuleThemAll,
+                connectedGame,
+                connectedGame.clone().growShrink(dRows * 2),
+                "checkAndDragByBottomIncomingFeed_growShrink",
+                `${crumbs}.3`)
+            || changed;
 
         return changed;
     }

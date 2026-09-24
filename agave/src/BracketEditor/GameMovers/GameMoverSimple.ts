@@ -28,7 +28,7 @@ export class GameMoverSimple implements IGameMover
     m_maxMoves: number = s_staticConfig.maxGameMoves;
     m_warning: string = "";
 
-    m_LoserFeedRelativeMeasures: Map<GameId, OpenFeedRelativeMeasure> = new Map<GameId, OpenFeedRelativeMeasure>();
+    m_openFeedRelativeMeasures: Map<number, OpenFeedRelativeMeasure> = new Map<number, OpenFeedRelativeMeasure>();
 
     get ExceededMoveCount(): boolean { return false; }
 
@@ -49,17 +49,17 @@ export class GameMoverSimple implements IGameMover
     constructor(grid: Grid)
     {
         this.m_originalGrid = grid;
-        this.recordLoserRelativeMeasures(grid);
+        this.recordOpenFeedRelativeMeasures(grid);
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: recordLoserRelativeMeasures
-        %%Qualified: GameMoverSimple.recordLoserRelativeMeasures
+        %%Function: recordOpenFeedRelativeMeasures
+        %%Qualified: GameMoverSimple.recordOpenFeedRelativeMeasures
 
         find all the loser feeds and try to record their positions relative to
         a game to the left and below them
     ----------------------------------------------------------------------------*/
-    recordLoserRelativeMeasures(grid: Grid)
+    recordOpenFeedRelativeMeasures(grid: Grid)
     {
         grid.enumerateMatching(
             (item: GridItem) =>
@@ -67,7 +67,7 @@ export class GameMoverSimple implements IGameMover
                 const relativeMeasure: OpenFeedRelativeMeasure = OpenFeedRelativeMeasure.createFromGridItem(grid, item);
                 if (relativeMeasure != null)
                 {
-                    this.m_LoserFeedRelativeMeasures.set(item.BracketGameCache.GameId, relativeMeasure);
+                    this.m_openFeedRelativeMeasures.set(item.BracketGameCache.GameId.Value, relativeMeasure);
                 }
 
                 return true;
@@ -77,6 +77,15 @@ export class GameMoverSimple implements IGameMover
                 return !item.isLineRange;
             }
         );
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: getOpenFeedRelativeMeasureForGameId
+        %%Qualified: GameMoverSimple.getOpenFeedRelativeMeasureForGameId
+    ----------------------------------------------------------------------------*/
+    public getOpenFeedRelativeMeasureForGameId(gameId: GameId): OpenFeedRelativeMeasure
+    {
+        return this.m_openFeedRelativeMeasures.get(gameId.Value);
     }
 
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid

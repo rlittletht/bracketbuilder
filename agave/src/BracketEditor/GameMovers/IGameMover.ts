@@ -2,6 +2,8 @@ import { GridItem } from "../GridItem";
 import { Grid } from "../Grid";
 import { IBracketGame } from "../IBracketGame";
 import { GridOption } from "./Mover";
+import { GameId } from "../GameId";
+import { OpenFeedRelativeMeasure } from "./OpenFeedRelativeMeasure";
 
 export interface IGameMover
 {
@@ -34,4 +36,6 @@ export interface IGameMover
 
     RequestExtraMoves(): void;
     SetWarning(warning: string): void;
+
+    getOpenFeedRelativeMeasureForGameId(gameId: GameId): OpenFeedRelativeMeasure
 }

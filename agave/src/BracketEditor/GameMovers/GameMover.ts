@@ -11,6 +11,7 @@ import { Grid } from "../Grid";
 import { GridItem } from "../GridItem";
 import { GridRanker } from "../GridRanker";
 import { IGameMover } from "./IGameMover";
+import { OpenFeedRelativeMeasure } from "./OpenFeedRelativeMeasure";
 
 export interface gameMoveDisqualifier
 {
@@ -44,6 +45,12 @@ export class GameMover implements IGameMover
     constructor(grid: Grid)
     {
         this.m_originalGrid = grid;
+    }
+
+    public getOpenFeedRelativeMeasureForGameId(gameId: GameId): OpenFeedRelativeMeasure
+    {
+        gameId;
+        throw new Error("regular game mover does not have open feed relative measures")
     }
 
     moveGame(itemOld: GridItem, itemNew: GridItem, bracket: string): Grid

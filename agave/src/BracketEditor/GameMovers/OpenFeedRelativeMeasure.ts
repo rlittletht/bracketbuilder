@@ -26,7 +26,7 @@ export class OpenFeedRelativeMeasure
     }
 
 
-    get IsLoserTopFeed(): boolean
+    get IsOpenTopFeed(): boolean
     {
         return this.m_isOpenTopFeed;
     }
