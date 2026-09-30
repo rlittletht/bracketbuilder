@@ -52,6 +52,15 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
         return true; // we don't get an error back...
     }
 
+    static async DoRemoveDescendants(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        _TimerStack.pushTimer("DoRemoveDescendants", true);
+        appContext.Teaching.clearCoachmark();
+        await StructureEditor.findAndRemoveDescendantsClick(appContext, bracketGame);
+        _TimerStack.popTimer();
+        return true; // we don't get an error back...
+    }
+
     static async DoRepairGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
     {
         _TimerStack.pushTimer("DoRepairGame", true);
@@ -178,6 +187,29 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 </Teachable>
             );
 
+        const removeDescendantsButton = (
+            <ActionButton
+                tooltip="Remove Descendants"
+                tooltipId={`gid-${this.props.game.GameId.Value}`}
+                bracketGame={this.props.game}
+                delegate={GameItem.DoRemoveDescendants.bind(this)}
+                disabled={false}
+                icon="DependencyRemove"/>
+        );
+
+        const removeDescendantsWrapped = (
+            <Teachable
+                id={TeachableId.RemoveGame}
+                isWide={true}
+                isActiveEx={this.props.teachableRemove}
+                title="Start adding games"
+                text="Click on the X sign to remove this game and all its descendants"
+                visibleDelay={1000}
+                directionalHint={DirectionalHint.bottomRightEdge}>
+                {removeDescendantsButton}
+            </Teachable>
+        );
+
         const repairButton = (
             <ActionButton
                 tooltip="Repair Game"
@@ -226,7 +258,10 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                                 {!isPlaced && addWrapped}
                             </Stack.Item>
                             <Stack.Item grow={0}>
-                                {isPlaced && removeWrapped}
+                                {isPlaced && removeWrapped && removeWrapped}
+                            </Stack.Item>
+                            <Stack.Item grow={0}>
+                                {isPlaced && removeWrapped && removeDescendantsWrapped}
                             </Stack.Item>
                         </Stack>
                     </Stack.Item>

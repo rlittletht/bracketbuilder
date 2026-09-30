@@ -248,6 +248,24 @@ export class BracketManager
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: GetWinnerGameIdFromGameId
+    ----------------------------------------------------------------------------*/
+    static GetWinnerGameIdFromGameId(bracket: IBracketDefinitionData, gameId: GameId): GameId
+    {
+        const gameNum = gameId.GameNum;
+
+        if (gameNum.Value < 0 || gameNum.Value >= bracket.games.length)
+            throw new Error(`invalid game id ${gameId.Value} for bracket ${bracket.name}`);
+
+        const game: IBracketGameDefinition = bracket.games[gameNum.Value];
+
+        if (game.winner == "")
+            return null;
+
+        return BracketManager.GameIdFromWinnerLoser(game.winner);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: BracketManager.GameIdFromWinnerLoser
 
         Get the GameId from the Winner or Loser string ("W1" or "L2", etc)

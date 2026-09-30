@@ -9,7 +9,7 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
 import { s_staticConfig } from "../../StaticConfig";
-import { BracketGame} from "../BracketGame";
+import { BracketGame } from "../BracketGame";
 import { IBracketGame } from "../IBracketGame";
 import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
 import { GameFormatting } from "../GameFormatting";
@@ -33,7 +33,7 @@ import { Sheets, EnsureSheetPlacement } from "../../Interop/Sheets";
 import { BracketDefBuilder } from "../../Brackets/BracketDefBuilder";
 import { GameId } from "../GameId";
 import { GameNum } from "../GameNum";
-import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData"; 
+import { IBracketDefinitionData } from "../../Brackets/IBracketDefinitionData";
 import { IBracketGameDefinition } from "../../Brackets/IBracketGameDefinition";
 import { TourneyDef } from "../../Tourney/TourneyDef";
 import { TourneyGameDef } from "../../Tourney/TourneyGameDef";
@@ -590,6 +590,41 @@ export class StructureEditor
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
 
+    static async findAndRemoveDescendantsClick(appContext: IAppContext, game: IBracketGame)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            const bookmark: string = "removeDescendantsAtSelectionClick";
+            context.pushTrackingBookmark(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            const bracketName = game.BracketName;
+
+            const bracketDefinition = _bracketManager.GetBracketDefinitionData(bracketName);
+
+            const grid = await Grid.createGridFromBracket(context, bracketName);
+            while (game)
+            {
+                const nextGameId = BracketManager.GetWinnerGameIdFromGameId(bracketDefinition, game.GameId);
+
+                if (game.IsLinkedToBracket)
+                    await StructureRemove.findAndRemoveGame(appContext, context, game, bracketName);
+
+                game = nextGameId ? await BracketGame.CreateFromGameId(context, bracketName, nextGameId) : null;
+            }
+
+            context.releaseCacheObjectsUntil(bookmark);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
 
     static async repairThisGameClick(appContext: IAppContext, game: IBracketGame)
     {
@@ -753,7 +788,8 @@ export class StructureEditor
             const tnMerges: IIntention[] = [
                 TnMergeRange.Create(targetRange.offset(0, 1, 0, 6), true),
                 TnMergeRange.Create(targetRange.offset(1, 1, 0, 6), true),
-                TnMergeRange.Create(targetRange.offset(2, 1, 0, 6), true)];
+                TnMergeRange.Create(targetRange.offset(2, 1, 0, 6), true)
+            ];
 
             tns.AddTns(tnMerges);
         }
@@ -790,24 +826,23 @@ export class StructureEditor
             const teamNames = [];
 
             for (let row = 0; row < dataRange.RowCount; row++)
-            {
                 teamNames.push(dataValues[row][1]);
-            }
 
             // now sort the team names
             const draw = StructureEditor.tournamentDraw(teamNames);
 
             for (let row = 0; row < dataRange.RowCount; row++)
             {
-                tns.push(TnSetValues.Create(
-                    dataRange.offset(row, 1, 0, 2),
-                    [
+                tns.push(
+                    TnSetValues.Create(
+                        dataRange.offset(row, 1, 0, 2),
                         [
-                            dataValues[row][0],
-                            draw[row]
-                        ]
-                    ],
-                    GameDataSources.SheetName));
+                            [
+                                dataValues[row][0],
+                                draw[row]
+                            ]
+                        ],
+                        GameDataSources.SheetName));
             }
             const intentions: Intentions = new Intentions();
 
@@ -1128,7 +1163,7 @@ export class StructureEditor
 
     static async repairThisGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
     {
-        let grid: Grid = await Grid.createGridFromBracket(context, bracketName, true/*buildGridForRepair*/);
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName, true /*buildGridForRepair*/);
 
         if (!grid.canRepairGameNum(game.GameNum))
         {
@@ -1137,7 +1172,7 @@ export class StructureEditor
                     `Cannot repair Game ${game.GameId.Value} on this bracket. This bracket has overlapping games.`,
                     `You must repair Game ${grid.MustRepairGameId.Value} first`
                 ],
-                {topic: HelpTopic.Commands_RepairGame});
+                { topic: HelpTopic.Commands_RepairGame });
 
             return;
         }
@@ -1169,12 +1204,13 @@ export class StructureEditor
                     `Could not find the top and bottom team ranges for game ${game.GameId.Value}.`,
                     `The game will be removed cleanly, but you will need to manually add the game back`
                 ],
-                {topic: HelpTopic.Commands_RepairGame});
+                { topic: HelpTopic.Commands_RepairGame });
         }
         else
         {
             const targetRange = new RangeInfo(
-                game.TopTeamRange.FirstRow, game.BottomTeamRange.FirstRow - game.TopTeamRange.FirstRow + 1,
+                game.TopTeamRange.FirstRow,
+                game.BottomTeamRange.FirstRow - game.TopTeamRange.FirstRow + 1,
                 game.GameIdRange.FirstColumn - 1,
                 1);
 
@@ -1322,9 +1358,7 @@ export class StructureEditor
         const thisColumn = await Ranges.createRangeInfoForSelection(context);
 
         if (!StructureInsert.adjustRangeInfoForGameInfoColumn(thisColumn, grid))
-        {
             throw new Error("failed to adjust range for game info column");
-        }
 
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
         const columns = `${Ranges.getColName(thisColumn.FirstColumn)}:${Ranges.getColName(thisColumn.FirstColumn)}`;
@@ -1361,9 +1395,7 @@ export class StructureEditor
 
                 if (BracketManager.IsTeamSourceStatic(game.TopTeamName)
                     || BracketManager.IsTeamSourceStatic(game.BottomTeamName))
-                {
                     columnsToAutofit.add(column);
-                }
             }
         }
 

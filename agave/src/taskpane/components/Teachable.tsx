@@ -9,6 +9,7 @@ export class TeachableId
     static BracketBuilder = "b";
     static AddFirstGame = "a";
     static RemoveGame = "r";
+    static RemoveDescendants = "d";
     static Undo = "u";
     static StatusBox = "s";
     static FinishingTouches = "f";
