@@ -1,29 +1,31 @@
 
 const parseState =
 {
-    LookingForGame: 0,
+    LookingForGame: 0, // LFG
     LFG_AfterHyphen: 1,
     LFG_ParsingNumber: 2,
     LFG_ParsingNumber_WS: 3, // trailing whitespace after game number
     LookingForTopLeft: 4,
-    LFTL_AfterOpen: 5,
+    LFTL_AfterOpen: 5, // LFTL
     LFTL_FirstNum: 6,
     LFTL_AfterComma: 7,
     LFTL_SecondNum: 8,
     LFTL_AfterSecondNum: 9,
-    LookingForBottomRight: 10,
+    LookingForBottomRight: 10, // LFBR
     LFBR_AfterOpen: 11,
     LFBR_FirstNum: 12,
     LFBR_AfterComma: 13,
     LFBR_SecondNum: 14,
     LookingForSwapChars: 15,
-    LookingForPriorities: 16,
+    LookingForPriorities: 16, // LFP
     LFP_AfterOpen: 17,
     LFP_FirstNum: 18,
     LFP_AfterFirstComma: 19,
     LFP_SecondNum: 20,
     LFP_AfterSecondComma: 21,
     LFP_ThirdNum: 22,
+    LookingForTitleOrGame: 23, // LFTOG
+    LFTOG_ParsingTitle: 24
 };
 
 const parseStateCode =
@@ -100,6 +102,7 @@ const transitionsCode =
         /* WS       */ null,
         /* [tf]     */ null,
         /* [rueals] */ null,
+        /* ~        */ null,
     ],
     /*LFC_AfterParensOpen*/
     [
@@ -114,6 +117,7 @@ const transitionsCode =
         /* [NS]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+        /* ~        */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
     ],
     /*LFC_ParsingNumber*/
     [
@@ -128,6 +132,7 @@ const transitionsCode =
         /* [NS]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+        /* ~        */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
     ],
     /*LookingForGameNum*/
     [
@@ -142,6 +147,7 @@ const transitionsCode =
         /* [NS]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+        /* ~        */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
     ],
     /*LFGN_ParsingNumber*/
     [
@@ -156,6 +162,7 @@ const transitionsCode =
         /* [NS]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
+        /* ~        */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
     ],
     /*LookingForSwapHomeAway*/
     [
@@ -170,11 +177,13 @@ const transitionsCode =
         /* [NS]     */ { psNext: parseStateCode.LookingForCoords, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseStateCode.LookingForSwapHomeAway, term: false, production: prodCaptureStart },
         /* [rueals] */ { psNext: parseStateCode.LookingForSwapHomeAway, term: false },
+        /* ~        */ { psNext: parseStateCode.LFT_ParsingChars, term: false, production: prodTotalReset },
     ],
 ];
 
 const transitionsDump =
 [
+    /*lookingForGame*/
     [
         /* other    */ null,
         /* hypen    */ { psNext: parseState.LFG_AfterHyphen, term: false, production: prodCaptureStart },
@@ -187,7 +196,9 @@ const transitionsDump =
         /* [NS]     */ null,
         /* [tf]     */ null,
         /* [rueals] */ null,
-    ], /*lookingForGame*/
+        /* ~        */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
+    ],
+    /*LFG_AfterHyphen*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -200,7 +211,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFG_AfterHyphen*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFG_ParsingNumber*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -213,7 +226,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFG_ParsingNumber*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFG_ParsingNumber_WS*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset, unget: true },
@@ -226,7 +241,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFG_ParsingNumber_WS*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LookingForTopLeft*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -239,7 +256,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LookingForTopLeft*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFTL_AfterOpen*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -252,7 +271,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFTL_AfterOpen*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFTL_FirstNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -265,7 +286,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFTL_FirstNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFTL_AfterComma*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -278,7 +301,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFTL_AfterComma*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFTL_SecondNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -291,7 +316,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFTL_SecondNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFTL_AfterSecondNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForBottomRight, term: false },
@@ -304,7 +331,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFTL_AfterSecondNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LookingForBottomRight*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -317,7 +346,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LookingForBottomRight*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFBR_AfterOpen*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -330,7 +361,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFBR_AfterOpen*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFBR_FirstNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -343,7 +376,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFBR_FirstNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFBR_AfterComma*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -356,7 +391,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFBR_AfterComma*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFBR_SecondNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -369,7 +406,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFBR_SecondNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LookingForSwapChars*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -382,7 +421,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForSwapChars, term: false, production: prodCaptureStart },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LookingForSwapChars*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LookingForPriorities*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: true, unget: true },
         /* hypen    */ { psNext: parseState.LookingForGame, term: true, unget: true },
@@ -395,7 +436,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: true, unget: true },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: true, unget: true },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: true, unget: true },
-    ], /*LookingForPriorities*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFP_AfterOpen*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LFP_FirstNum, term: false, production: prodCaptureStart },
@@ -408,7 +451,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFP_AfterOpen*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFP_FirstNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -421,7 +466,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFP_FirstNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFP_AfterFirstComma*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LFP_SecondNum, term: false, production: prodCaptureStart },
@@ -434,7 +481,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFP_AfterFirstComma*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFP_SecondNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -447,7 +496,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFP_SecondNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFP_AfterSecondComma*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LFP_ThirdNum, term: false, production: prodCaptureStart },
@@ -460,7 +511,9 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFP_AfterSecondComma*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LFP_ThirdNum*/
     [
         /* other    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* hypen    */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
@@ -473,7 +526,38 @@ const transitionsDump =
         /* [NS]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [tf]     */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
         /* [rueals] */ { psNext: parseState.LookingForGame, term: false, production: prodTotalReset },
-    ], /*LFP_ThirdNum*/
+        /* ~        */ { psNext: parseState.LookingForCoords, term: false, production: prodTotalReset },
+    ],
+    /*LookingForTitleOrGame*/
+    [
+        /* other    */ null,
+        /* hypen    */ { psNext: parseState.LFG_AfterHyphen, term: false, production: prodCaptureStart },
+        /* digit    */ { psNext: parseState.LFG_ParsingNumber, term: false, production: prodCaptureStart },
+        /* [(       */ null,
+        /* ])       */ null,
+        /* ,        */ null,
+        /* :        */ null,
+        /* WS       */ null,
+        /* [NS]     */ null,
+        /* [tf]     */ null,
+        /* [rueals] */ null,
+        /* ~        */ { psNext: parseState.LFTOG_ParsingTitle, term: false, production: prodCaptureStart },
+    ],
+    /*LFTOG_ParsingTitle*/
+    [
+        /* other    */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* hypen    */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* digit    */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* [(       */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* ])       */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* ,        */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* :        */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* WS       */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* [NS]     */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* [tf]     */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* [rueals] */ { psNext: parseState.LFTOG_ParsingTitle, term: false },
+        /* ~        */ { psNext: parseState.LFTOG_ParsingTitle, term: true, production: prodCaptureEndNotInclusive, key: "Title" },
+    ],
 ];
 
 function prodTotalReset(source, ichCur, ichFirstMatch, ichLastMatch, tokenBuilding, key)
