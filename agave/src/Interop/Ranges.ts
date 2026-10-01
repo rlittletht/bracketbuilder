@@ -580,7 +580,9 @@ export class Ranges
 
         for (let _item of names)
         {
-            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+            // opportunistically delete any named ranges that are broken (REF errors, etc).
+            // but do not remove things like _xlfn.IFERROR since those are internal to excel
+            if ((_item.type == Excel.NamedItemType.error && !_item.name.startsWith("_xlfn.")) || _item.name == name)
                 tns.push(TnDeleteGlobalName.Create(_item.name));
         }
 
@@ -610,7 +612,7 @@ export class Ranges
 
         for (let _item of names)
         {
-            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+            if ((_item.type == Excel.NamedItemType.error && !_item.name.startsWith("_xlfn.")) || _item.name == name)
                 tns.push(TnDeleteGlobalName.Create(_item.name));
             else if (_item.type == Excel.NamedItemType.range)
             {
