@@ -72,6 +72,28 @@ const minZoom = 0.25;
 const maxZoom = 4.0;
 let canvasZoom = 1.0;
 
+function setCanvasZoom(zoom)
+{
+    canvasZoom = Math.min(maxZoom, Math.max(minZoom, zoom));
+    applyCanvasZoom();
+}
+
+function parseCanvasZoom(zoomValue)
+{
+    if (!zoomValue)
+        return 1.0;
+
+    const normalizedZoom = decodeURIComponent(zoomValue).trim();
+    const isPercent = normalizedZoom.endsWith("%");
+    const parsedZoom = parseFloat(normalizedZoom.replace("%", ""));
+
+    if (Number.isNaN(parsedZoom) || parsedZoom <= 0)
+        return 1.0;
+
+    const zoom = isPercent || parsedZoom >= 10 ? parsedZoom / 100.0 : parsedZoom;
+    return Math.min(maxZoom, Math.max(minZoom, zoom));
+}
+
 function updateZoomUi()
 {
     document.getElementById("zoomLabel").innerText = Math.round(canvasZoom * 100) + "%";
@@ -87,20 +109,23 @@ function applyCanvasZoom()
 
 function zoomIn()
 {
-    canvasZoom = Math.min(maxZoom, canvasZoom * zoomStep);
-    applyCanvasZoom();
+    setCanvasZoom(canvasZoom * zoomStep);
 }
 
 function zoomOut()
 {
-    canvasZoom = Math.max(minZoom, canvasZoom / zoomStep);
-    applyCanvasZoom();
+    setCanvasZoom(canvasZoom / zoomStep);
 }
 
 function zoom100()
 {
-    canvasZoom = 1.0;
-    applyCanvasZoom();
+    setCanvasZoom(1.0);
+}
+
+function setZoom()
+{
+    let zoomText = document.getElementById("zoomText").value;
+    setCanvasZoom(parseCanvasZoom(zoomText));
 }
 
 function drawVertLine(ctx, col, maxRow)

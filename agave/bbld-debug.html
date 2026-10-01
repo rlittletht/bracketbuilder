@@ -1,7 +1,8 @@
 <html>
 <head>
     <style>
-        textarea.code {
+        textarea.code
+        {
             overflow-x: scroll;
             white-space: pre
         }
@@ -13,9 +14,10 @@
         {
             var log = getUrlVars()["log"];
             var title = getUrlVars()["title"];
+            var zoom = getUrlVars()["zoom"];
 
             setPageTitle("");
-            zoom100();
+            setCanvasZoom(parseCanvasZoom(zoom));
 
             if (title)
                 setPageTitle(decodeURIComponent(title));
@@ -87,6 +89,8 @@ grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 12, 43, 14), 9, 
         <button onclick="zoomIn()">Zoom In</button>
         <button onclick="zoomOut()">Zoom Out</button>
         <button onclick="zoom100()">Zoom100</button>
+        <textarea id="zoomText" rows="1" cols="5">100</textarea>
+        <button onclick="setZoom()">Set Zoom</button>
         <span id="zoomLabel">100%</span><br/>
         <canvas id="canViz" width="1600" height="2400">
         </canvas>
