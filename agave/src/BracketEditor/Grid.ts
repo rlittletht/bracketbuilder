@@ -169,6 +169,18 @@ export class Grid
         return this.m_startingSlots[date.GetDay()];
     }
 
+    getGridColumnRangeInfoOrNull(date: DateWithoutTime): RangeInfo
+    {
+        try
+        {
+            return new RangeInfo(0, 1, this.getGridColumnFromDate(date), 1);
+        }
+        catch (e)
+        {
+            return null;
+        }
+    }
+
     getGridColumnFromDate(date: DateWithoutTime): number
     {
         for (let i = 0; i < this.m_datesForGrid.length; i++)

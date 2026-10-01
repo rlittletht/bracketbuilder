@@ -370,6 +370,17 @@ export class StructureEditor
                 return;
             }
 
+            const insertRange = grid.getGridColumnRangeInfoOrNull(newGame.GameDate);
+
+            if (insertRange == null)
+            {
+                appContext.Messages.error(
+                    ["Could not determine the column to use for the game"],
+                    { topic: HelpTopic.Commands_LuckyOneGame });
+
+                return;
+            }
+
             const bracketGame: IBracketGame = appContext.getGames()[newGame.GameNum.Value];
             // and now place it
             await StructureInsert.insertGameAtSelection(
@@ -442,7 +453,14 @@ export class StructureEditor
                     context.pushTrackingBookmark(bookmark);
                 }
 
-                const insertRange = new RangeInfo(0, 1, grid.getGridColumnFromDate(date), 1);
+                const insertRange = grid.getGridColumnRangeInfoOrNull(date);
+
+                if (insertRange == null && bracketGame.IsChampionship)
+                {
+                    // this is OK, we'll just not place the championship
+                    succeeded = true;
+                    break;
+                }
 
                 const { gridNew, failReason, coachState, topic, selectRange } =
                     StructureInsert.buildNewGridForGameInsertAtSelection(insertRange, grid, bracketGame, time, field);
@@ -660,7 +678,11 @@ export class StructureEditor
         const gridSelection = grid.createFromRange(selection);
 
         const selString = gridSelection.logGridCondensedString();
-        navigator.clipboard.writeText(selString);
+        context.Ctx.workbook.load("name");
+        await context.sync();
+
+        const wbName = context.Ctx.workbook.name;
+        navigator.clipboard.writeText(`~${wbName}~ ${selString}`);
     }
 
     static async convertBracketToModifiedDoubleElimination(appContext: IAppContext, context: JsCtx)
