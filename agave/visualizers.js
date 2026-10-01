@@ -64,7 +64,7 @@ function parseDump(dump)
 
 const dxSize = 40;
 const dySize = 10;
-const gameFontSize = 4;
+const gameFontSize = 8;
 const nonGameFontSize = 10;
 
 const zoomStep = 1.25;
@@ -140,7 +140,7 @@ function drawItem(ctx, item)
         ctx.fillText(
             text1,
             item.topLeft[1] * dxSize + dxSize / 8,
-            item.topLeft[0] * dySize + dySize);
+            item.topLeft[0] * dySize + dySize * 0.8);
     }
     else
     {
@@ -159,7 +159,7 @@ function drawItem(ctx, item)
         const text2 = priBottom + item.bottomRight[0] + "," + item.bottomRight[1];
         ctx.fillText(
             text2,
-            priGame == "" ? item.bottomRight[1] * dxSize - dxSize / 4 : item.bottomRight[1] * dxSize - dxSize,
+            priGame == "" ? item.bottomRight[1] * dxSize - dxSize / 8 : item.bottomRight[1] * dxSize - dxSize/4,
             item.bottomRight[0] * dySize);
 
         const game = "" + item.gameNumber + ((item.swapped && item.swapped == true) ? " (S)" : "") + priGame;
