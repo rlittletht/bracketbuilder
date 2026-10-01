@@ -314,7 +314,8 @@ export class TourneyDef implements Iterable<TourneyGameDef>
             {
                 const num = item.GameNumber;
                 const date = grid.getDateFromGridItem(item);
-                const field = tourney.m_rules.GetMatchingField(item.Field);
+                const field = tourney.m_rules.GetMatchingField(item.Field) ?? tourney.m_rules.CreateFieldForUnmatchedField(item.Field);
+
                 const slot = new TourneyFieldSlot(TimeWithoutDate.CreateForMinutesSinceMidnight(item.StartTime), field);
 
                 const tourneyGame = TourneyGameDef.Create(num, date, slot);

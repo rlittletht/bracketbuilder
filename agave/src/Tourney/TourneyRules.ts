@@ -301,6 +301,19 @@ export class TourneyRules
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: CreateFieldForUnmatchedField
+        
+        if we can't find the field definition, then make one on the fly so we
+        can at least schedule the game with defaults.
+    ----------------------------------------------------------------------------*/
+    CreateFieldForUnmatchedField(name: string): TourneyField
+    {
+        const field = new TourneyField(name, false, 180);
+
+        return field;
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: TourneyRules.SetStart
     ----------------------------------------------------------------------------*/
     SetStart(date:
