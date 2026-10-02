@@ -46,6 +46,8 @@ import { GameDataSources } from "../../Brackets/GameDataSources";
 import { Intentions } from "../../Interop/Intentions/Intentions";
 import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnMergeRange } from "../../Interop/Intentions/TnMergeRange";
+import { GameExpander } from "./GameExpander";
+import { GameMoverSimple } from "../GameMovers/GameMoverSimple";
 
 let _moveSelection: RangeInfo = null;
 
@@ -65,6 +67,20 @@ export class StructureEditor
 
             await this.copySelectionToClipboard(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async doExpandAndSpaceOutClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+            await StructureEditor.doExpandAndSpaceOut(appContext, context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -1181,6 +1197,45 @@ export class StructureEditor
         const grid: Grid = await Grid.createGridFromBracket(context, bracketChoice);
 
         return grid;
+    }
+
+ 
+    /*----------------------------------------------------------------------------
+        %%Function: doExpandAndSpaceOut
+        %%Qualified: StructureEditor.doExpandAndSpaceOut
+    ----------------------------------------------------------------------------*/
+    static async doExpandAndSpaceOut(appContext: IAppContext, context: JsCtx)
+    {
+        const bracketName = appContext.SelectedBracket;
+
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        const expandSteps = GameExpander.generateStepsToExpandAndSpaceOutGames(appContext, bracketName, grid, 4, 2);
+
+        let newGrid = grid;
+
+        const gameIdsBeingAdjusted = [];
+        for (const step of expandSteps)
+            gameIdsBeingAdjusted.push(step.gameId);
+
+        let stepNum = 0;
+
+        grid.logGridCondensed(`step${stepNum++}`);
+
+        // and now lets execute these steps
+        for (const step of expandSteps)
+{
+            const itemOld = newGrid.findGameItem(step.gameId);
+            const itemNew = itemOld.clone().shiftByRows(step.positionDelta).growShrink(step.sizeDelta);
+
+            const mover: GameMoverSimple = new GameMoverSimple(newGrid);
+            mover.removeOpenFeedRelativeMeasureForGameIds(gameIdsBeingAdjusted);
+
+            newGrid = mover.moveGame(itemOld.clone(), itemNew, bracketName);
+            newGrid.logGridCondensed(`step${stepNum++}`);
+        }
+
+        await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, newGrid, bracketName);
     }
 
     static async repairThisGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)

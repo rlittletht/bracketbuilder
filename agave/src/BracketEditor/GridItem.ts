@@ -498,4 +498,19 @@ export class GridItem
     {
         return GridItem.createFromItem(this);
     }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: unswap
+        %%Qualified: GridItem.unswap
+
+        take top and bottm and return the appropriate value based on swapTopBottom
+    ----------------------------------------------------------------------------*/
+    public unswap<T>(top: T, bottom: T): T
+    {
+        if (this.m_swapTopBottom)
+            return bottom;
+        else
+            return top;
+    }
 }

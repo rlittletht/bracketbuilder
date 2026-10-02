@@ -407,7 +407,16 @@ export default class App extends React.Component<AppProps, AppState> implements 
                             await StructureEditor.normalizeAllColumnsToCurrentColumnClick(appContext);
                             return true;
                         },
-                    }
+                    },
+                    {
+                        icon: "Padding",
+                        text: "Inflate game sizes and spacing",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.doExpandAndSpaceOutClick(appContext);
+                            return true;
+                        }
+                    },
                 ]
             });
 

@@ -377,6 +377,35 @@ export class Grid
         this.m_gridItems = items;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: getGameIdsTopToBottom
+    ----------------------------------------------------------------------------*/
+    public getGameIdsTopToBottom(): GameId[]
+    {
+        const sortedItems = this.getItemsTopToBottom();
+
+        const gameIds: GameId[] = [];
+        for (const item of sortedItems)
+        {
+            if (!item.isLineRange)
+                gameIds.push(item.GameId);
+        }
+
+        return gameIds;
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: getItemsTopToBottom
+    ----------------------------------------------------------------------------*/
+    public getItemsTopToBottom(): GridItem[]
+    {
+        const sortedItems: GridItem[] = this.m_gridItems.map((item) => item.clone());
+
+        sortedItems.sort((a, b) => a.Range.FirstRow - b.Range.FirstRow);
+
+        return sortedItems;
+    }
+
     enumerate(fun: (item: GridItem) => boolean): boolean
     {
         for (let item of this.m_gridItems)
@@ -2765,7 +2794,7 @@ export class Grid
 
         return the gridItem for the result of the given gridGame
     ----------------------------------------------------------------------------*/
-    getConnectedGridItemForGameResult(game: IBracketGame): GridItem
+    public getConnectedGridItemForGameResult(game: IBracketGame): GridItem
     {
         let [source1, source2, outgoing] = this.getRangeInfoForGameFeederItemConnectionPoints(game);
         let fSwap: boolean = false;
@@ -2986,7 +3015,6 @@ export class Grid
 
         this.adjustRangeForGridAlignment(selected, AdjustRangeGrowExtraRow.None);
     }
-
 
 //    /*----------------------------------------------------------------------------
 //        %%Function: expandAllGamesAndShiftDown

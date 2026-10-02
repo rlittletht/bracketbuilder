@@ -79,9 +79,30 @@ export class GameMoverSimple implements IGameMover
         );
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: removeOpenFeedRelativeMeasureForGameId
+        %%Qualified: GameMoverSimple.removeOpenFeedRelativeMeasureForGameId
+
+        for games that we are adjusting, we don't want to automatically restore
+        their relative positions.
+    ----------------------------------------------------------------------------*/
     public removeOpenFeedRelativeMeasureForGameId(gameId: GameId)
     {
         this.m_openFeedRelativeMeasures.delete(gameId.Value);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: removeOpenFeedRelativeMeasureForGameIds
+        %%Qualified: GameMoverSimple.removeOpenFeedRelativeMeasureForGameIds
+
+        remove all the gameids from the captured relative measures
+    ----------------------------------------------------------------------------*/
+    public removeOpenFeedRelativeMeasureForGameIds(gameIds: GameId[])
+    {
+        for (const gameId of gameIds)
+        {
+            this.m_openFeedRelativeMeasures.delete(gameId.Value);
+        }
     }
 
     /*----------------------------------------------------------------------------
