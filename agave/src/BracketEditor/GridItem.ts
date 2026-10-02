@@ -193,6 +193,9 @@ export class GridItem
 
     shiftByRows(rowAdjust: number): GridItem
     {
+        if (rowAdjust == 0)
+            return this;
+
         if (this.m_topTeamRange != null)
         {
             this.changeTopTeamRange(
@@ -228,6 +231,8 @@ export class GridItem
 
     growShrink(rowAdjust: number): GridItem
     {
+        if (rowAdjust == 0)
+            return this;
 
         if (this.m_bottomTeamRange != null)
         {

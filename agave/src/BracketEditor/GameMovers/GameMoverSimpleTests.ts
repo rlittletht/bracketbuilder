@@ -10,6 +10,7 @@ import { Grid } from "../Grid";
 import { GridChange } from "../GridChange";
 import { GridItem } from "../GridItem";
 import * as GridRanker from "../GridRanker";
+import { GameExpanderStep } from "../StructureEditor/GameExpander";
 
 interface SetupTestDelegate
 {
@@ -22,6 +23,22 @@ export class GameMoverSimpleTests
     {
         TestRunner.runAllTests(this, TestResult, appContext, outStream);
     }
+
+    static steps: GameExpanderStep[] =
+    [
+        { gameId: new GameId(13), positionDelta: 52, sizeDelta: 4 },
+        { gameId: new GameId(12), positionDelta: 46, sizeDelta: 4 },
+        { gameId: new GameId(14), positionDelta: 0, sizeDelta: 4 },
+        { gameId: new GameId(10), positionDelta: 38, sizeDelta: 4 },
+        { gameId: new GameId(11), positionDelta: 32, sizeDelta: 4 },
+        { gameId: new GameId(9), positionDelta: 0, sizeDelta: 4 },
+        { gameId: new GameId(5), positionDelta: 26, sizeDelta: 4 },
+        { gameId: new GameId(4), positionDelta: 20, sizeDelta: 4 },
+        { gameId: new GameId(3), positionDelta: 14, sizeDelta: 4 },
+        { gameId: new GameId(7), positionDelta: 0, sizeDelta: 4 },
+        { gameId: new GameId(2), positionDelta: 8, sizeDelta: 4 },
+        { gameId: new GameId(1), positionDelta: 2, sizeDelta: 4 }
+    ];
 
     static doGameMoverTest(
         testName: string,
@@ -122,7 +139,7 @@ export class GameMoverSimpleTests
 
     static SetupGridForStep1Result(grid: Grid, bracketName: string)
     {
-        // move down 52, expand by 4
+        // move game 13 down 52, expand by 4
         grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
         grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
         grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
@@ -589,13 +606,18 @@ export class GameMoverSimpleTests
     ----------------------------------------------------------------------------*/
     static test_Step1_Game13_Down52_Grow4(result: TestResult)
     {
+        const stepIndex = 0;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForInitialState(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(13));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(52).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep1Result(gridExpected, bracketName);
 
@@ -612,13 +634,18 @@ export class GameMoverSimpleTests
 
     static test_Step2_Game12_Down46_Grow4(result: TestResult)
     {
+        const stepIndex = 1;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep1Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(12));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(46).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep2Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -634,13 +661,18 @@ export class GameMoverSimpleTests
 
     static test_Step3_Game14_Grow4(result: TestResult)
     {
+        const stepIndex = 2;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep2Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(14));
-                const itemNew: GridItem = itemOld.clone().growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep3Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -656,13 +688,18 @@ export class GameMoverSimpleTests
 
     static test_Step4_Game10_Down38_Grow4(result: TestResult)
     {
+        const stepIndex = 3;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep3Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(10));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(38).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep4Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -678,13 +715,18 @@ export class GameMoverSimpleTests
 
     static test_Step5_Game11_Down32_Grow4(result: TestResult)
     {
+        const stepIndex = 4;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep4Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(11));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(32).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep5Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -700,13 +742,18 @@ export class GameMoverSimpleTests
 
     static test_Step6_Game9_Grow4(result: TestResult)
     {
+        const stepIndex = 5;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep5Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(9));
-                const itemNew: GridItem = itemOld.clone().growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep6Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -722,13 +769,18 @@ export class GameMoverSimpleTests
 
     static test_Step7_Game5_Down26_Grow4(result: TestResult)
     {
+        const stepIndex = 6;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep6Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(5));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(26).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep7Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -744,13 +796,18 @@ export class GameMoverSimpleTests
 
     static test_Step8_Game10_Down38_Grow4(result: TestResult)
     {
+        const stepIndex = 7;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep7Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(4));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(20).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep8Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -766,13 +823,18 @@ export class GameMoverSimpleTests
 
     static test_Step9_Game3_Down14_Grow4(result: TestResult)
     {
+        const stepIndex = 8;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep8Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(3));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(14).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep9Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -788,13 +850,18 @@ export class GameMoverSimpleTests
 
     static test_Step10_Game7_Grow4(result: TestResult)
     {
+        const stepIndex = 9;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep9Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(7));
-                const itemNew: GridItem = itemOld.clone().growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep10Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -810,13 +877,18 @@ export class GameMoverSimpleTests
 
     static test_Step11_Game2_Down8_Grow4(result: TestResult)
     {
+        const stepIndex = 10;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep10Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(2));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(8).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep11Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
@@ -832,13 +904,18 @@ export class GameMoverSimpleTests
 
     static test_Step12_Game1_Down2_Grow4(result: TestResult)
     {
+        const stepIndex = 11;
+
         const setup: SetupTestDelegate =
             (grid, gridExpected, bracketName): [GridItem, GridItem] =>
             {
                 this.SetupGridForStep11Result(grid, bracketName);
 
-                const itemOld: GridItem = grid.findGameItem(new GameId(1));
-                const itemNew: GridItem = itemOld.clone().shiftByRows(2).growShrink(4);
+                const itemOld: GridItem = grid.findGameItem(this.steps[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.steps[stepIndex].positionDelta)
+                        .growShrink(this.steps[stepIndex].sizeDelta);
 
                 this.SetupGridForStep12Result(gridExpected, bracketName);
                 return [itemOld, itemNew];
