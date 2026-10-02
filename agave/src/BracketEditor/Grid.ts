@@ -2900,9 +2900,10 @@ export class Grid
         return s;
     }
 
-    logGridCondensed()
+    logGridCondensed(title?: string)
     {
-        console.log(this.logGridCondensedString());
+        const titleString = title != null ? `~${title}~` : "";
+        console.log(titleString + this.logGridCondensedString());
     }
 
     logGrid()

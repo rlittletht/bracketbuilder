@@ -79,6 +79,11 @@ export class GameMoverSimple implements IGameMover
         );
     }
 
+    public removeOpenFeedRelativeMeasureForGameId(gameId: GameId)
+    {
+        this.m_openFeedRelativeMeasures.delete(gameId.Value);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: getOpenFeedRelativeMeasureForGameId
         %%Qualified: GameMoverSimple.getOpenFeedRelativeMeasureForGameId
