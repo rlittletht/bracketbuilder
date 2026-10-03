@@ -1,7 +1,8 @@
 import { RangeInfo, RangeOverlapKind } from "../../Interop/Ranges";
-import { GameMover, GridOption } from "../GameMover";
+import { GameMover } from "./GameMover";
 import { GridItem } from "../GridItem";
-import { Mover } from "./Mover";
+import { GridOption, Mover } from "./Mover";
+import { IGameMover } from "./IGameMover";
 
 export class PushAway
 {
@@ -83,7 +84,7 @@ export class PushAway
         this does not move any connected items -- that's the responsibility of
         the dragging modules
     ----------------------------------------------------------------------------*/
-    static checkAndMoveItemsAway(gameMover: GameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
+    static checkAndMoveItemsAway(gameMover: IGameMover, mover: Mover, optionWork: GridOption, crumbs: string): boolean
     {
         let subMove = 0;
         let changes: boolean = false;
@@ -131,7 +132,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveItemsAway_shift", `${crumbs}.${subMove++}`);
+                    changes = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, item, newItem, "checkAndMoveItemsAway_shift", `${crumbs}.${subMove++}`);
                 }
             }
 
@@ -203,7 +204,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(range, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveLinesAway_shift", crumbs);
+                    changes = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, item, newItem, "checkAndMoveLinesAway_shift", crumbs);
                 }
             }
 
@@ -282,7 +283,7 @@ export class PushAway
                 // don't make an adjustment if its still going to fail.
                 if (RangeInfo.isOverlapping(rangeRealToAvoid, newItem.Range) == RangeOverlapKind.None)
                 {
-                    changes = mover.moveRecurse(gameMover, optionWork, true, item, newItem, "checkAndMoveAdjacentItemsAway_shift", `${crumbs}.${subMove++}`);
+                    changes = mover.moveRecurse(gameMover, optionWork, !gameMover.OneOptionToRuleThemAll, item, newItem, "checkAndMoveAdjacentItemsAway_shift", `${crumbs}.${subMove++}`);
                 }
             }
 

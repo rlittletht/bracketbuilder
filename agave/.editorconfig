@@ -1,0 +1,11 @@
+# Remove the line below if you want to inherit .editorconfig settings from higher directories
+root = false
+
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 4
+tab_width = 4
+indent_braces = true
+
+# Put opening brace on a new line
+brace_style = bsd

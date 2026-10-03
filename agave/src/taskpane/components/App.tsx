@@ -8,7 +8,8 @@ import { DirectionalHint } from "@fluentui/react";
 import { IStackItemStyles, IStackStyles, Stack } from '@fluentui/react';
 import { AppContext, IAppContext, TheAppContext } from "../../AppContext/AppContext";
 import { IAppStateAccess } from "../../AppContext/IAppStateAccess";
-import { BracketGame, IBracketGame } from "../../BracketEditor/BracketGame";
+import { BracketGame } from "../../BracketEditor/BracketGame";
+import { IBracketGame } from "../../BracketEditor/IBracketGame";
 import { GameNum } from "../../BracketEditor/GameNum";
 import { Grid } from "../../BracketEditor/Grid";
 import { Prioritizer } from "../../BracketEditor/StructureEditor/Prioritizer";
@@ -195,16 +196,18 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
     setSheetsHidden(hidden: boolean)
     {
-        this.setState({
-            sheetsHidden: hidden
-        });
+        this.setState(
+            {
+                sheetsHidden: hidden
+            });
     }
 
     setPanesFrozen(frozen: boolean)
     {
-        this.setState({
-            panesFrozen: frozen
-        });
+        this.setState(
+            {
+                panesFrozen: frozen
+            });
     }
 
     buildTopToolbar(): ToolbarItem[]
@@ -256,28 +259,15 @@ export default class App extends React.Component<AppProps, AppState> implements 
                     appContext;
                     return true;
                 },
-//                teachableProps:
-//                {
-//                    id: TeachableId.DirtyGame,
-//                    isWide: true,
-//                    title: "Needs updated",
-//                    text: "Some part of this game was directly edited, like team name, field, or time. Update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar.",
-//                    visibleDelay: 1000,
-//                    directionalHint: DirectionalHint.bottomAutoEdge,
-//                }
-            });
-        listItems.push(
-            {
-                icon: "Brush",
-                primaryText: "Shade games by priority",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> =>
-                {
-                    await Prioritizer.shadeGamesByPriorityClick(appContext);
-                    appContext;
-                    return true;
-                }
+                //                teachableProps:
+                //                {
+                //                    id: TeachableId.DirtyGame,
+                //                    isWide: true,
+                //                    title: "Needs updated",
+                //                    text: "Some part of this game was directly edited, like team name, field, or time. Update the bracket data by clicking on the \"Update Brackets\" button on the top toolbar.",
+                //                    visibleDelay: 1000,
+                //                    directionalHint: DirectionalHint.bottomAutoEdge,
+                //                }
             });
         listItems.push(
             {
@@ -305,31 +295,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
             });
         listItems.push(
             {
-                icon: "Rain",
-                primaryText: "Push all games today to the next day (insert a day into the bracket)",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> =>
-                {
-                    await StructureEditor.insertGameDayForSchedulePushClick(appContext);
-                    return true;
-                }
-            });
-
-        listItems.push(
-            {
-                icon: "DeleteRows",
-                primaryText: "Convert this bracket to a modified double elimination bracket",
-                cursor: "cursorPointer",
-                stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> =>
-                {
-                    await StructureEditor.convertBracketToModifiedDoubleEliminationClick(appContext);
-                    return true;
-                }
-            });
-        listItems.push(
-            {
                 icon: "ActionCenter",
                 primaryText: "Reset Coaching Tips",
                 cursor: "cursorPointer",
@@ -342,13 +307,67 @@ export default class App extends React.Component<AppProps, AppState> implements 
             });
         listItems.push(
             {
+                icon: "DeveloperTools",
+                primaryText: "Bracket Tools",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    appContext;
+                    return true;
+                },
+                menuItems: [
+                    {
+                        icon: "Brush",
+                        text: "Shade games by priority",
+                        title: "Shade games by priority",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await Prioritizer.shadeGamesByPriorityClick(appContext);
+                            appContext;
+                            return true;
+                        }
+                    },
+                    {
+                        icon: "Rain",
+                        text: "Rain out a day",
+                        title: "Push all games today to the next day (insert a day into the bracket)",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.insertGameDayForSchedulePushClick(appContext);
+                            return true;
+                        }
+                    },
+                    {
+                        icon: "DeleteRows",
+                        text: "Remove if-needed game",
+                        title: "Convert this bracket to a modified double elimination bracket",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.convertBracketToModifiedDoubleEliminationClick(appContext);
+                            return true;
+                        }
+                    },
+                    {
+                        icon: "NumberedList",
+                        text: "(Re)draw the bracket teams",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.doBracketRedrawClick(appContext);
+                            return true;
+                        }
+                    }
+                ]
+            });
+        listItems.push(
+            {
                 icon: "CompletedSolid",
                 primaryText: "Apply the finishing touches",
                 cursor: "cursorPointer",
                 stateChecker: null,
                 delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    await StructureEditor.finalizeClick(appContext);
+                    appContext;
                     return true;
                 },
                 teachableProps:
@@ -356,11 +375,49 @@ export default class App extends React.Component<AppProps, AppState> implements 
                     id: TeachableId.FinishingTouches,
                     title: "Finish Up",
                     text:
-                        "Congratulations! All your games are in the bracket. Now its time to apply the finishing touches. This will set the print area, format the titles to appear above the bracket, and hide the bracket sheets. The tournament data will still be on the left of the bracket, but don't worry, it won't print or show up on a PDF you create.",
+                        "Congratulations! All your games are in the bracket. If you haven't done the draw, now's the time! Drawing the bracket will randomly assign teams to their slots. Now is also the time to apply the finishing touches. This will set the print area, format the titles to appear above the bracket, and hide the bracket sheets. The tournament data will still be on the left of the bracket, but don't worry, it won't print or show up on a PDF you create.",
                     visibleDelay: 500,
                     directionalHint: DirectionalHint.bottomRightEdge,
                     isWide: true
-                }
+                },
+                menuItems: [
+                    {
+                        icon: "AutoEnhanceOff",
+                        text: "Apply the finishing touches",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.finalizeClick(appContext);
+                            return true;
+                        },
+                    },
+                    {
+                        icon: "FitWidth",
+                        text: "Autofit Team Columns",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.autofitTeamColumnsClick(appContext);
+                            return true;
+                        },
+                    },
+                    {
+                        icon: "VerticalDistributeCenter",
+                        text: "Normalize all team columns to current column",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.normalizeAllColumnsToCurrentColumnClick(appContext);
+                            return true;
+                        },
+                    },
+                    {
+                        icon: "Padding",
+                        text: "Inflate game sizes and spacing",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.doExpandAndSpaceOutClick(appContext);
+                            return true;
+                        }
+                    },
+                ]
             });
 
         listItems.push(
@@ -386,44 +443,44 @@ export default class App extends React.Component<AppProps, AppState> implements 
         if (!s_staticConfig.isLocalHost)
             return listItems;
 
-            listItems.push(
+        listItems.push(
+            {
+                icon: "LadybugSolid",
+                primaryText: "Run Unit Tests",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    icon: "LadybugSolid",
-                    primaryText: "Run Unit Tests",
-                    cursor: "cursorPointer",
-                    stateChecker: null,
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await UnitTests.doUnitTests(appContext);
-                        return true;
-                    }
-                });
+                    await UnitTests.doUnitTests(appContext);
+                    return true;
+                }
+            });
 
-            listItems.push(
+        listItems.push(
+            {
+                icon: "Bug",
+                primaryText: "Run Integration Tests",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    icon: "Bug",
-                    primaryText: "Run Integration Tests",
-                    cursor: "cursorPointer",
-                    stateChecker: null,
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await App.doIntegrationTests(appContext);
-                        return true;
-                    }
-                });
+                    await App.doIntegrationTests(appContext);
+                    return true;
+                }
+            });
 
-            listItems.push(
+        listItems.push(
+            {
+                icon: "Copy",
+                primaryText: "Copy selected area",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
                 {
-                    icon: "Copy",
-                    primaryText: "Copy selected area",
-                    cursor: "cursorPointer",
-                    stateChecker: null,
-                    delegate: async (appContext: IAppContext): Promise<boolean> =>
-                    {
-                        await StructureEditor.copySelectionToClipboardClick(appContext);
-                        return true;
-                    }
-                });
+                    await StructureEditor.copySelectionToClipboardClick(appContext);
+                    return true;
+                }
+            });
 
         return listItems;
     }
@@ -484,7 +541,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 primaryText: "Pick up game for move",
                 cursor: "cursorPointer",
                 stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
                     await StructureEditor.captureSelectionForMove(appContext);
                     return true;
                 }
@@ -495,7 +553,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 primaryText: "Drop game for move",
                 cursor: "cursorPointer",
                 stateChecker: "rangeForMove",
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
                     await StructureEditor.moveGameAtSelectionClick(appContext);
                     return true;
                 }
@@ -506,7 +565,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 primaryText: "Remove Game from bracket",
                 cursor: "cursorPointer",
                 stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
                     await StructureEditor.removeGameAtSelectionClick(appContext);
                     return true;
                 }
@@ -517,7 +577,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 primaryText: "Repair the current game",
                 cursor: "cursorPointer",
                 stateChecker: null,
-                delegate: async (appContext: IAppContext): Promise<boolean> => {
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
                     await StructureEditor.repairGameAtSelectionClick(appContext);
                     return true;
                 }
@@ -570,9 +631,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
         if ((this.state.panesFrozen != prevState.panesFrozen)
             || (this.state.sheetsHidden != prevState.sheetsHidden))
-        {
             this.postUpdateTopToolbar();
-        }
     }
 
     postUpdateTopToolbar()
@@ -585,12 +644,13 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
     async postHeroListRebuild()
     {
-        await Excel.run(async (ctx) =>
-        {
-            const context: JsCtx = new JsCtx(ctx);
+        await Excel.run(
+            async (ctx) =>
+            {
+                const context: JsCtx = new JsCtx(ctx);
 
-            await this.rebuildHeroList(context);
-        });
+                await this.rebuildHeroList(context);
+            });
     }
 
     /*----------------------------------------------------------------------------
@@ -602,7 +662,8 @@ export default class App extends React.Component<AppProps, AppState> implements 
     async rebuildHeroList(context: JsCtx)
     {
         await Dispatcher.ExclusiveDispatchSilent(
-            async (ctx) => { await this.rebuildHeroListWork(ctx) }, context);
+            async (ctx) => { await this.rebuildHeroListWork(ctx) },
+            context);
     }
 
     /*----------------------------------------------------------------------------
@@ -681,17 +742,11 @@ export default class App extends React.Component<AppProps, AppState> implements 
                         for (let game of games)
                         {
                             if (game.IsLinkedToBracket)
-                            {
                                 countGamesLinked++;
-                            }
                             if (game.NeedsDataPull)
-                            {
                                 countGamesNeedRepair++;
-                            }
                             if (game.IsBroken)
-                            {
                                 countGamesBroken++;
-                            }
                         }
                         if (countGamesBroken > 0)
                             this.m_appContext.Teaching.transitionState(CoachTransition.BrokenGameFound);
@@ -810,7 +865,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 let format: HeroListFormat;
                 let list: HeroListItem[];
                 let title: string;
-        
+
                 [format, title, list] = HeroList.buildHeroList(setupState, this.mergeBracketOptions.bind(this), customBracketOptions.length > 0);
                 // figure out our top level menu.... Setup, or bracket editing
                 this.setState(
@@ -835,7 +890,6 @@ export default class App extends React.Component<AppProps, AppState> implements 
                 }
                 catch (e)
                 {
-
                 }
                 await SetupBook.registerBindingsForEdits(context, this.m_appContext);
                 this.m_appContext.setProgressVisible(false);
@@ -906,7 +960,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
         }
 
         const games = this.m_appContext.WorkbookSetupState == SetupState.Ready
-                          ? (<Games />)
+                          ? (<Games/>)
                           : "";
 
         const maybeToolbar =
@@ -918,9 +972,9 @@ export default class App extends React.Component<AppProps, AppState> implements 
             textAlign: 'right'
         };
 
-        const gamesStyle: CSS.Properties = { };
-        const headerItemStyle: IStackItemStyles = { };
-        const bodyHeaderItemStyle: IStackItemStyles = { };
+        const gamesStyle: CSS.Properties = {};
+        const headerItemStyle: IStackItemStyles = {};
+        const bodyHeaderItemStyle: IStackItemStyles = {};
         const footerItemStyle: IStackItemStyles =
         {
             root: { textAlign: 'start' }
@@ -935,27 +989,29 @@ export default class App extends React.Component<AppProps, AppState> implements 
         };
 
 
-
         const customOptionText =
             this.state.customBracketOptions.length > 0
                 ? (<p>If you want to use a custom-built bracket, you can load the bracket by clicking on <em>Load Custom Brackets</em></p>)
-                : (<span />);
+                : (<span/>);
 
         const welcome = this.m_appContext.WorkbookSetupState == SetupState.Ready || this.m_appContext.WorkbookSetupState == "U"
-            ? ""
-            : (
-                <Stack.Item styles={welcomeItemStyle}>
-                    <h1>Welcome!</h1>
-                    <p>
-                    </p>
-                    <p>To get started, choose the size of your bracket above and then click
-                        the <em>Build This Bracket!</em> button!</p>
-                    {customOptionText}
-                    <p>For help, click on the ? button on the toolbar, or just hover over a button to get
-                        a tip about what it does.
-                    </p>
-                </Stack.Item>
-            );
+                            ? ""
+                            : (
+                                <Stack.Item styles={welcomeItemStyle}>
+                                    <h1>Welcome!</h1>
+                                    <p>
+                                    </p>
+                                    <p>
+                                        To get started, choose the size of your bracket above and then click
+                                        the <em>Build This Bracket!</em> button!
+                                    </p>
+                                    {customOptionText}
+                                    <p>
+                                        For help, click on the ? button on the toolbar, or just hover over a button to get
+                                        a tip about what it does.
+                                    </p>
+                                </Stack.Item>
+                            );
         const stackStyles: IStackStyles =
         {
             root:
@@ -965,17 +1021,17 @@ export default class App extends React.Component<AppProps, AppState> implements 
         };
 
         const debugToolbar = s_staticConfig.isLocalHost
-            ? (<Toolbar alignment="start" message={""} items={this.state.debugToolbar} />)
-            : (<span />);
+                                 ? (<Toolbar alignment="start" message={""} items={this.state.debugToolbar}/>)
+                                 : (<span/>);
 
         return (
             <div>
                 <TheAppContext.Provider value={this.m_appContext}>
-                    <About closeDelegate={this.hideAboutDialog.bind(this)} showDialog={this.state.aboutShowing} />
+                    <About closeDelegate={this.hideAboutDialog.bind(this)} showDialog={this.state.aboutShowing}/>
                     <Stack styles={stackStyles}>
                         <Stack.Item styles={headerItemStyle}>
                             <LogoHeader/>
-                            <Toolbar alignment="start" message={""} items={this.state.topToolbar} />
+                            <Toolbar alignment="start" message={""} items={this.state.topToolbar}/>
                             {debugToolbar}
                         </Stack.Item>
                         <Progress

@@ -1,12 +1,15 @@
 import { GlobalDataBuilder } from "../Brackets/GlobalDataBuilder";
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
-import { IBracketGame } from "./BracketGame";
+import { IBracketGame } from "./IBracketGame";
 import { GameId } from "./GameId";
 import { GameNum } from "./GameNum";
 import { Grid } from "./Grid";
+import { GridBracketGameCache } from "./GridBracketGameCache";
+
 
 export class GridItem
 {
+    m_bracketGameCache: GridBracketGameCache = null;
     m_range: RangeInfo;
     m_topTeamRange: RangeInfo = null;
     m_bottomTeamRange: RangeInfo = null;
@@ -26,14 +29,16 @@ export class GridItem
     toString(): string
     {
         if (this.isLineRange)
-        {
             return `line: ${this.m_range.toString()}${this.m_ephemeral ? "ephemeral" : ""}`;
-        }
         else
-        {
             return `game ${this.GameId.Value}: ${this.m_range.toString()} ${this.m_ephemeral ? "ephemeral" : ""} ${this.IsChampionshipGame ? "Championship" : ""}`;
-        }
     }
+
+    get BracketGameCache(): IBracketGame
+    {
+        return this.m_bracketGameCache;
+    }
+
     set IsEphemeral(f: boolean)
     {
         this.m_ephemeral = f;
@@ -49,6 +54,7 @@ export class GridItem
     {
         return (this.m_range.RowCount == 3 && this.m_bottomTeamRange == null);
     }
+
     get TopPriority(): number
     {
         return this.m_topPriority;
@@ -136,17 +142,87 @@ export class GridItem
     doSwapTopBottom(): GridItem
     {
         this.m_swapTopBottom = !this.m_swapTopBottom;
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_swapTopBottom = this.m_swapTopBottom;
+            });
+
         return this;
+    }
+
+    changeTopTeamRange(fun: (range: RangeInfo) => void)
+    {
+        fun(this.m_topTeamRange);
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_topTeamLocation = this.m_topTeamRange.clone();
+            });
+    }
+
+    changeBottomTeamRange(fun: (range: RangeInfo) => void)
+    {
+        fun(this.m_bottomTeamRange);
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_bottomTeamLocation = this.m_bottomTeamRange.clone();
+            });
+    }
+
+    changeGameNumberRange(fun: (range: RangeInfo) => void)
+    {
+        fun(this.m_gameNumberRange);
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_gameNumberLocation = this.m_gameNumberRange.clone();
+            });
+    }
+
+    changeGameNumberRangeToNull()
+    {
+        this.m_gameNumberRange = null;
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_gameNumberLocation = null;
+            });
     }
 
     shiftByRows(rowAdjust: number): GridItem
     {
+        if (rowAdjust == 0)
+            return this;
+
         if (this.m_topTeamRange != null)
-            this.m_topTeamRange.setRow(this.m_topTeamRange.FirstRow + rowAdjust);
+        {
+            this.changeTopTeamRange(
+                (range) =>
+                {
+                    range.setRow(range.FirstRow + rowAdjust);
+                });
+        }
+
         if (this.m_bottomTeamRange != null)
-            this.m_bottomTeamRange.setRow(this.m_bottomTeamRange.FirstRow + rowAdjust);
+        {
+            this.changeBottomTeamRange(
+                (range) =>
+                {
+                    range.setRow(range.FirstRow + rowAdjust);
+                });
+        }
+
         if (this.m_gameNumberRange != null)
-            this.m_gameNumberRange.setRow(this.m_gameNumberRange.FirstRow + rowAdjust);
+        {
+            this.changeGameNumberRange(
+                (range) =>
+                {
+                    range.setRow(range.FirstRow + rowAdjust);
+                });
+        }
+
         if (this.m_range != null)
             this.m_range.setRow(this.m_range.FirstRow + rowAdjust);
 
@@ -155,28 +231,68 @@ export class GridItem
 
     growShrink(rowAdjust: number): GridItem
     {
+        if (rowAdjust == 0)
+            return this;
+
         if (this.m_bottomTeamRange != null)
-            this.m_bottomTeamRange.setRow(this.m_bottomTeamRange.FirstRow + rowAdjust);
+        {
+            this.changeBottomTeamRange(
+                (range) =>
+                {
+                    range.setRow(range.FirstRow + rowAdjust);
+                });
+        }
+
         if (this.m_range != null)
             this.m_range.setLastRow(this.m_range.LastRow + rowAdjust);
-        if (this.m_range.RowCount > 7)
-            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
-        else
-            this.m_gameNumberRange = null;
 
+        if (this.m_range.RowCount > 7)
+        {
+            // we want to set it completely, so create a new range we can set
+            this.m_gameNumberRange = new RangeInfo(0, 0, 0, 0);
+
+            this.changeGameNumberRange(
+                (range) =>
+                {
+                    range.setFromRange(Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1));
+                });
+        }
+        else
+        {
+            this.changeGameNumberRangeToNull();
+        }
         return this;
     }
 
     growShrinkFromTop(rowAdjust: number): GridItem
     {
         if (this.m_topTeamRange != null)
-            this.m_topTeamRange.setRow(this.m_topTeamRange.FirstRow - rowAdjust);
+        {
+            this.changeTopTeamRange(
+                (range) =>
+                {
+                    range.setRow(range.FirstRow - rowAdjust);
+                });
+        }
         if (this.m_range != null)
+        {
             this.m_range.setRowResize(this.m_range.FirstRow - rowAdjust);
+        }
         if (this.m_range.RowCount > 7)
-            this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        {
+            // we want to set it completely, so create a new range we can set
+            this.m_gameNumberRange = new RangeInfo(0, 0, 0, 0);
+
+            this.changeGameNumberRange(
+                (range) =>
+                {
+                    range.setFromRange(Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1));
+                });
+        }
         else
-            this.m_gameNumberRange = null;
+        {
+            this.changeGameNumberRangeToNull();
+        }
 
         return this;
     }
@@ -184,13 +300,33 @@ export class GridItem
     rebase(oldTopRow: number, newTopRow: number)
     {
         if (this.m_topTeamRange != null)
-            this.m_topTeamRange.rebase(oldTopRow, newTopRow);
+        {
+            this.changeTopTeamRange(
+                (range) =>
+                {
+                    range.rebase(oldTopRow, newTopRow);
+                });
+        }
         if (this.m_bottomTeamRange != null)
-            this.m_bottomTeamRange.rebase(oldTopRow, newTopRow);
+        {
+            this.changeBottomTeamRange(
+                (range) =>
+                {
+                    range.rebase(oldTopRow, newTopRow);
+                });
+        }
         if (this.m_gameNumberRange != null)
-            this.m_gameNumberRange.rebase(oldTopRow, newTopRow);
+        {
+            this.changeGameNumberRange(
+                (range) =>
+                {
+                    range.rebase(oldTopRow, newTopRow);
+                });
+        }
         if (this.m_range != null)
+        {
             this.m_range.rebase(oldTopRow, newTopRow);
+        }
     }
 
     constructor(range: RangeInfo, gameId: GameId, isLine: boolean)
@@ -223,6 +359,27 @@ export class GridItem
             if (this.m_range.RowCount > 7)
                 this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
         }
+        this.m_bracketGameCache?.invalidateForGameInternalChange();
+    }
+
+    inferGameInternalsWithCache(bracketName: string)
+    {
+        this.m_topTeamRange = this.m_range.topLeft();
+        if (this.m_range.RowCount == 3)
+        // this is the championship game
+        {
+            this.m_bottomTeamRange = null;
+            this.m_gameNumberRange = null;
+        }
+        else
+        {
+            this.m_bottomTeamRange = this.m_range.bottomRight().newSetColumn(this.m_range.FirstColumn);
+            if (this.m_range.RowCount > 7)
+                this.m_gameNumberRange = Grid.getRangeInfoForGameInfo(this.m_range).offset(0, 3, 1, 1);
+        }
+
+        if (!this.isLineRange)
+            this.m_bracketGameCache = GridBracketGameCache.createFromInferedGridItem(this, bracketName);
     }
 
     inferGameInternalsIfNecessary()
@@ -247,23 +404,43 @@ export class GridItem
         swapTopBottom: boolean)
     {
         this.m_range = RangeInfo.createFromRangeInfo(range);
+
         if (!this.isLineRange)
         {
             this.m_topTeamRange = RangeInfo.createFromRangeInfo(topTeamRange);
             this.m_bottomTeamRange = RangeInfo.createFromRangeInfo(bottomTeamRange);
             this.m_gameNumberRange = RangeInfo.createFromRangeInfo(gameNumberRange);
             this.m_swapTopBottom = swapTopBottom;
+
+            this.m_bracketGameCache?.updateForEdit(
+                (cache) =>
+                {
+                    cache.m_topTeamLocation = this.m_topTeamRange?.clone();
+                    cache.m_bottomTeamLocation = this.m_bottomTeamRange?.clone();
+                    cache.m_gameNumberLocation = this.m_gameNumberRange?.clone();
+                    cache.m_swapTopBottom = this.m_swapTopBottom;
+                });
         }
     }
 
     setStartTime(time: number)
     {
         this.m_startTime = time;
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_startTime = time;
+            });
     }
 
     setField(field: string)
     {
         this.m_field = field;
+        this.m_bracketGameCache?.updateForEdit(
+            (cache) =>
+            {
+                cache.m_field = field;
+            });
     }
 
     attachGame(game: IBracketGame)
@@ -277,6 +454,8 @@ export class GridItem
         this.m_swapTopBottom = game.SwapTopBottom;
         this.m_startTime = game.StartTime;
         this.m_field = game.Field;
+
+        this.m_bracketGameCache = GridBracketGameCache.createFromBracketGame(game);
     }
 
     isEqual(item: GridItem): boolean
@@ -311,11 +490,27 @@ export class GridItem
         itemNew.m_field = item.m_field;
         itemNew.m_startTime = item.m_startTime;
 
+        itemNew.m_bracketGameCache = GridBracketGameCache.createFromGridItem(item);
         return itemNew;
     }
 
     clone(): GridItem
     {
         return GridItem.createFromItem(this);
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: unswap
+        %%Qualified: GridItem.unswap
+
+        take top and bottm and return the appropriate value based on swapTopBottom
+    ----------------------------------------------------------------------------*/
+    public unswap<T>(top: T, bottom: T): T
+    {
+        if (this.m_swapTopBottom)
+            return bottom;
+        else
+            return top;
     }
 }

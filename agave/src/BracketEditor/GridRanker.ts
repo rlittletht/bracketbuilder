@@ -1,5 +1,6 @@
 import { RangeInfo, RangeOverlapKind } from "../Interop/Ranges";
-import { BracketGame, IBracketGame } from "./BracketGame";
+import { BracketGame} from "./BracketGame";
+import { IBracketGame } from "./IBracketGame";
 import { Grid, RangeOverlapDelegate, RangeOverlapMatch } from "./Grid";
 import { GridItem } from "./GridItem";
 

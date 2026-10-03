@@ -223,6 +223,14 @@ export class RangeInfo
             this.m_rowCount = 0;
     }
 
+    setFromRange(range: RangeInfo)
+    {
+        this.m_rowStart = range.FirstRow;
+        this.m_rowCount = range.RowCount;
+        this.m_columnStart = range.FirstColumn;
+        this.m_columnCount = range.ColumnCount;
+    }
+
     setLastColumn(column: number)
     {
         this.m_columnCount = column - this.FirstColumn + 1;
@@ -572,7 +580,9 @@ export class Ranges
 
         for (let _item of names)
         {
-            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+            // opportunistically delete any named ranges that are broken (REF errors, etc).
+            // but do not remove things like _xlfn.IFERROR since those are internal to excel
+            if ((_item.type == Excel.NamedItemType.error && !_item.name.startsWith("_xlfn.")) || _item.name == name)
                 tns.push(TnDeleteGlobalName.Create(_item.name));
         }
 
@@ -602,7 +612,7 @@ export class Ranges
 
         for (let _item of names)
         {
-            if (_item.type == Excel.NamedItemType.error || _item.name == name)
+            if ((_item.type == Excel.NamedItemType.error && !_item.name.startsWith("_xlfn.")) || _item.name == name)
                 tns.push(TnDeleteGlobalName.Create(_item.name));
             else if (_item.type == Excel.NamedItemType.range)
             {
@@ -766,5 +776,13 @@ export class Ranges
         const range = table.getDataBodyRange();
 
         return range;
+    }
+
+    static isRangeNotAdjacent(range1?: RangeInfo, range2?: RangeInfo): boolean
+    {
+        if (range1 == null || range2 == null)
+            return false;
+
+        return range1.FirstColumn + 1 !== range2.FirstColumn;
     }
 }

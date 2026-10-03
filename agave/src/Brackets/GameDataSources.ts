@@ -33,6 +33,11 @@ export class GameDataSources
 {
     static SheetName: string = "TeamsAndFields";
 
+    static s_seedInstructions =
+    [
+        ["Use either a blind draw OR seeding. For the Little League international tournament, a blind draw is always used and the Seed values should be ignored."]
+    ];
+
     static async getTeamNameTable(context: JsCtx): Promise<Excel.Table>
     {
         return await Tables.getTableOrNull(context, null, "TeamNames");
@@ -139,9 +144,7 @@ export class GameDataSources
                     ]);
             }
             else
-            {
                 newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
-            }
         }
 
         tns.push(TnSetValues.Create(RangeInfo.createFromRange(range), newValues, range.worksheet.name));
@@ -180,9 +183,7 @@ export class GameDataSources
                     undoGameDataItem.fieldOriginal = range.values[i][1];
                 }
                 else
-                {
                     newField = range.values[i][1];
-                }
 
                 if ((alwaysOverwriteIfGiven || range.values[i][2] == GlobalDataBuilder.DefaultStartTime)
                     && typeof time === "number")
@@ -192,9 +193,7 @@ export class GameDataSources
                     undoGameDataItem.startTimeOriginal = range.values[i][2];
                 }
                 else
-                {
                     newTime = range.values[i][2];
-                }
 
                 newValues.push(
                     [
@@ -207,9 +206,7 @@ export class GameDataSources
                 // other non-matching values
             }
             else
-            {
                 newValues.push([range.values[i][0], range.values[i][1], range.values[i][2], range.values[i][3]])
-            }
         }
 
         range.values = newValues;
@@ -253,9 +250,7 @@ export class GameDataSources
                     undoGameDataItem.fieldOriginal = values[i][1];
                 }
                 else
-                {
                     newField = values[i][1];
-                }
 
                 if ((alwaysOverwriteIfGiven || values[i][2] == GlobalDataBuilder.DefaultStartTime)
                     && typeof time === "number")
@@ -265,9 +260,7 @@ export class GameDataSources
                     undoGameDataItem.startTimeOriginal = values[i][2];
                 }
                 else
-                {
                     newTime = values[i][2];
-                }
 
                 newValues.push(
                     [
@@ -280,9 +273,7 @@ export class GameDataSources
                 // other non-matching values
             }
             else
-            {
                 newValues.push(null);
-            }
         }
 
         // now create tns for just the range we really want to set
@@ -334,15 +325,16 @@ export class GameDataSources
                     {
                         if (dataValues[row][0].toUpperCase() == comp)
                         {
-                            tns.push(TnSetValues.Create(
-                                dataRange.offset(row, 1, 0, 2),
-                                [
+                            tns.push(
+                                TnSetValues.Create(
+                                    dataRange.offset(row, 1, 0, 2),
                                     [
-                                        dataValues[row][0],
-                                        nameMap.name
-                                    ]
-                                ],
-                                GameDataSources.SheetName));
+                                        [
+                                            dataValues[row][0],
+                                            nameMap.name
+                                        ]
+                                    ],
+                                    GameDataSources.SheetName));
                         }
                     }
                 }
@@ -375,9 +367,7 @@ export class GameDataSources
             for (let i = 0; i < range.rowCount; i++)
             {
                 if (range.values[i][0].toUpperCase() == comp)
-                {
                     range.values[i][1] = nameMap.name;
-                }
             }
         }
 
@@ -470,11 +460,9 @@ export class GameDataSources
             {
                 return GameDataSources.compareNumberedItems(left.team, right.team);
             });
-        
+
         for (let i: number = 0; i < teamNames.length; i++)
-        {
             formulasTeamNames.push([`${teamNames[i].team}`, `Team ${i + 1}`, 0, `${teamNames[i].seed}`]);
-        }
 
         range = sheet.getRangeByIndexes(formulasGameInfo.length + 3, 0, formulasTeamNames.length, 4);
         range.formulas = formulasTeamNames;
@@ -486,6 +474,14 @@ export class GameDataSources
         const rangeSecondColumn = sheet.getRanges("B:B");
         rangeSecondColumn.format.columnWidth = 128;
 
+        const seedInstructionsRange = RangeInfo.createForArrayOfValues(
+            formulasGameInfo.length + 3,
+            5,
+            GameDataSources.s_seedInstructions);
+
+        let rng: Excel.Range = Ranges.rangeFromRangeInfo(sheet, seedInstructionsRange);
+        rng.values = GameDataSources.s_seedInstructions;
+
         await context.sync("BBS set colwidth");
 
         await Tables.ensureTableExists(
@@ -495,6 +491,7 @@ export class GameDataSources
             "TeamNames",
             Ranges.addressFromCoordinates([formulasGameInfo.length + 3, 0], [formulasGameInfo.length + 3 + formulasTeamNames.length - 1, 3]),
             teamNameHeader);
+
     }
 }
 

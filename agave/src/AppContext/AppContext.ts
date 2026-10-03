@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IBracketGame } from "../BracketEditor/BracketGame";
+import { IBracketGame } from "../BracketEditor/IBracketGame";
 import { PerfTimer } from "../PerfTimer";
 import { JsCtx } from "../Interop/JsCtx";
 import { DurableState } from "../DurableState";

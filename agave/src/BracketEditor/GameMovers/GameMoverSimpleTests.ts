@@ -1,0 +1,944 @@
+import { AppContext, IAppContext } from "../../AppContext/AppContext";
+import { RangeInfo } from "../../Interop/Ranges";
+import { StreamWriter } from "../../Support/StreamWriter";
+import { TestResult } from "../../Support/TestResult";
+import { TestRunner } from "../../Support/TestRunner";
+import { GameId } from "../GameId";
+import { GameMover } from "./GameMover";
+import { GameMoverSimple } from "./GameMoverSimple";
+import { Grid } from "../Grid";
+import { GridChange } from "../GridChange";
+import { GridItem } from "../GridItem";
+import * as GridRanker from "../GridRanker";
+import { GameExpanderStep, GameExpander } from "../StructureEditor/GameExpander";
+
+interface SetupTestDelegate
+{
+    (grid: Grid, gridExpected: Grid, bracketName: string): [GridItem, GridItem];
+}
+
+export class GameMoverSimpleTests
+{
+    static runAllTests(appContext: IAppContext, outStream: StreamWriter)
+    {
+        TestRunner.runAllTests(this, TestResult, appContext, outStream);
+    }
+
+    static expanderStepsForT13: GameExpanderStep[] =
+    [
+        { gameId: new GameId(13), positionDelta: 56, sizeDelta: 4 },
+        { gameId: new GameId(12), positionDelta: 50, sizeDelta: 4 },
+        { gameId: new GameId(14), positionDelta: 0, sizeDelta: 4 },
+        { gameId: new GameId(10), positionDelta: 42, sizeDelta: 4 },
+        { gameId: new GameId(11), positionDelta: 36, sizeDelta: 4 },
+        { gameId: new GameId(9), positionDelta: 0, sizeDelta: 4 },
+        { gameId: new GameId(5), positionDelta: 28, sizeDelta: 4 },
+        { gameId: new GameId(4), positionDelta: 22, sizeDelta: 4 },
+        { gameId: new GameId(3), positionDelta: 16, sizeDelta: 4 },
+        { gameId: new GameId(7), positionDelta: 0, sizeDelta: 4 },
+        { gameId: new GameId(2), positionDelta: 8, sizeDelta: 4 },
+        { gameId: new GameId(1), positionDelta: 2, sizeDelta: 4 },
+        { gameId: new GameId(6), positionDelta: 0, sizeDelta: 0 }
+    ];
+
+    static doGameMoverTest(
+        testName: string,
+        result: TestResult,
+        bracket: string,
+        delegate: SetupTestDelegate,
+        firstGridPattern?: RangeInfo)
+    {
+        let grid: Grid = new Grid();
+        if (firstGridPattern)
+            grid.m_firstGridPattern = firstGridPattern;
+        else
+            grid.m_firstGridPattern = new RangeInfo(9, 1, 6, 1);
+
+        let gridExpected: Grid = grid.clone(); // clone so we get the same first grid pattern
+
+        const [itemOld, itemNew] = delegate(grid, gridExpected, bracket);
+
+        let mover: GameMoverSimple = new GameMoverSimple(grid);
+
+        const adjustedGames = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+
+        for (let gameId of adjustedGames)
+            mover.removeOpenFeedRelativeMeasureForGameId(new GameId(gameId));
+
+        // first, make sure the starting grid is valid
+        const rank: number = GridRanker.GridRanker.getGridRank(grid, bracket);
+
+        if (rank == -1)
+        {
+            result.addError("starting grid invalid. bad test");
+            return;
+        }
+
+        console.log(
+            `original (rank=${rank
+            })|`);
+        grid.logGridCondensed();
+        // clone the old item to make sure we are disconnected from the grid we are
+        // about to change
+        let gridResult: Grid = mover.moveGame(itemOld.clone(), itemNew, bracket);
+
+        if (!gridResult)
+        {
+            result.addError("no gridResult returned");
+            return;
+        }
+
+        const changes: GridChange[] = gridResult.diff(gridExpected, bracket);
+        if (changes.length != 0)
+        {
+            gridResult.logGridCondensed(testName);
+
+            grid.logChanges(changes);
+            result.addError(
+                `${grid.logChangesToString(changes)
+                }`);
+            return;
+        }
+    }
+
+    static SetupGridForInitialState(grid: Grid, bracketName: string)
+    {
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 85, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(80, 9, 80, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(101, 6, 111, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 9, 99, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(117, 9, 127, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(129, 9, 139, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 9, 115, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 81, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 15, 66, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(93, 12, 111, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(121, 12, 135, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 67, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(44, 21, 44, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(117, 15, 129, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 15, 103, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(95, 18, 123, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(107, 21, 127, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 24, 117, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 27, 121, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 30, 101, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep1Result(grid: Grid, bracketName: string)
+    {
+        //move game 13 down 56, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 85, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(80, 9, 80, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(101, 6, 111, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 9, 99, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(117, 9, 127, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 9, 115, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 81, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 15, 66, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(93, 12, 111, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(121, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 67, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(44, 21, 44, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(117, 15, 157, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 15, 103, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(95, 18, 137, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(115, 21, 141, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 24, 129, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(85, 27, 133, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(107, 30, 109, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep2Result(grid: Grid, bracketName: string)
+    {
+        //move game 12 down 50, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 85, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(80, 9, 80, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(101, 6, 111, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 9, 99, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 9, 115, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 81, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 15, 66, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(93, 12, 111, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 67, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(44, 21, 44, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 15, 103, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(95, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 24, 159, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 27, 163, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(129, 30, 131, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep3Result(grid: Grid, bracketName: string)
+    {
+        //move game 14 down 44, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 85, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(80, 9, 80, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(101, 6, 111, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 9, 99, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 9, 119, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 81, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 15, 66, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(93, 12, 113, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 67, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(44, 21, 44, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 15, 103, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(95, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 24, 159, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 27, 163, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(129, 30, 131, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep4Result(grid: Grid, bracketName: string)
+    {
+        //move game 10 down 42, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 85, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(80, 9, 80, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 9, 99, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 81, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 15, 66, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(93, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 67, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(44, 21, 44, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(89, 15, 125, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(139, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 24, 161, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(101, 27, 165, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 30, 133, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep5Result(grid: Grid, bracketName: string)
+    {
+        //move game 11 down 36, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 85, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(80, 9, 80, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 81, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 15, 66, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 67, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(44, 21, 44, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(137, 30, 139, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep6Result(grid: Grid, bracketName: string)
+    {
+        //move game 9 down 30, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(71, 3, 81, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 6, 89, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(82, 9, 82, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 83, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(68, 15, 68, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 69, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(46, 21, 46, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(45, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(137, 30, 139, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep7Result(grid: Grid, bracketName: string)
+    {
+        //move game 5 down 28, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 3, 67, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 3, 113, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 63, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(54, 9, 54, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 6, 119, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(112, 9, 112, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(53, 12, 113, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(82, 15, 82, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 83, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(52, 21, 52, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(51, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(109, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(139, 30, 141, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep8Result(grid: Grid, bracketName: string)
+    {
+        //move game 4 down 22, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(43, 3, 53, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 3, 93, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 3, 113, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(47, 6, 87, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(66, 9, 66, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 6, 119, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(112, 9, 112, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(65, 12, 113, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(88, 15, 88, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 89, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(56, 21, 56, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(55, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(111, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(141, 30, 143, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep9Result(grid: Grid, bracketName: string)
+    {
+        //move game 3 down 16, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 3, 73, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 3, 93, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 3, 113, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 41, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(36, 9, 36, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(65, 6, 87, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(76, 9, 76, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 6, 119, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(112, 9, 112, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 37, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(24, 15, 24, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 12, 113, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(94, 15, 94, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(23, 18, 95, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(58, 21, 58, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(57, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(111, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(141, 30, 143, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep10Result(grid: Grid, bracketName: string)
+    {
+        //move game 7 down 10, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(27, 3, 37, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 3, 73, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 3, 93, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 3, 113, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 6, 45, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(38, 9, 38, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(65, 6, 87, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(76, 9, 76, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 6, 119, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(112, 9, 112, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 39, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(26, 15, 26, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 12, 113, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(94, 15, 94, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(25, 18, 95, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(60, 21, 60, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(113, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(141, 30, 143, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep11Result(grid: Grid, bracketName: string)
+    {
+        //move game 2 down 8, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 3, 23, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(35, 3, 49, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 3, 73, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 3, 93, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 3, 113, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 19, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(14, 9, 14, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 6, 55, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(48, 9, 48, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(65, 6, 87, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(76, 9, 76, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 6, 119, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(112, 9, 112, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(13, 12, 49, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(30, 15, 30, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 12, 113, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(94, 15, 94, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(29, 18, 95, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(62, 21, 62, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(61, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(113, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(141, 30, 143, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+    static SetupGridForStep12Result(grid: Grid, bracketName: string)
+    {
+        //move game 1 down 2, expand by 4
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 3, 29, 5,), 1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(35, 3, 49, 5,), 2, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(59, 3, 73, 5,), 3, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(79, 3, 93, 5,), 4, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(99, 3, 113, 5,), 5, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(9, 6, 23, 8,), 6, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(16, 9, 16, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(41, 6, 55, 8,), 7, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(48, 9, 48, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(65, 6, 87, 8,), 8, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(76, 9, 76, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(105, 6, 119, 8,), 9, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(112, 9, 112, 11,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(143, 6, 157, 8,), 10, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(125, 9, 139, 11,), 11, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(167, 9, 181, 11,), 12, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(185, 9, 199, 11,), 13, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(149, 9, 163, 11,), 14, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(15, 12, 49, 14,), 15, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(32, 15, 32, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(75, 12, 113, 14,), 16, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(94, 15, 94, 17,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(131, 12, 157, 14,), 17, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(173, 12, 193, 14,), 18, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(31, 18, 95, 20,), 19, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(62, 21, 62, 23,), -1, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(169, 15, 183, 17,), 20, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(127, 15, 145, 17,), 21, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(135, 18, 177, 20,), 22, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(155, 21, 181, 23,), 23, true).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(61, 24, 169, 26,), 24, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(113, 27, 173, 29,), 25, false).inferGameInternalsWithCache(bracketName);
+        grid.addGameRangeByIdValue(RangeInfo.createFromCornersCoord(141, 30, 143, 32,), 26, false).inferGameInternalsWithCache(bracketName);
+    }
+
+
+    /*----------------------------------------------------------------------------
+        all these tests should pull all the attached games
+        down and keep the loser feeds in the same place relative to the adjacent
+        game. (must always be relative to the adjacent BELOW game since the above
+        game just got farther away)
+    ----------------------------------------------------------------------------*/
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameMoverSimpleTests.test_Step1_Game13_Down52_Grow4
+    ----------------------------------------------------------------------------*/
+    static test_Step1_Game13_Down56_Grow4(result: TestResult)
+    {
+        const stepIndex = 0;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForInitialState(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep1Result(gridExpected, bracketName);
+
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step1_Game13_Down52_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step2_Game12_Down50_Grow4(result: TestResult)
+    {
+        const stepIndex = 1;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep1Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep2Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step2_Game12_Down46_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step3_Game14_Grow4(result: TestResult)
+    {
+        const stepIndex = 2;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep2Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep3Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step3_Game14_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step4_Game10_Down42_Grow4(result: TestResult)
+    {
+        const stepIndex = 3;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep3Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep4Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step4_Game10_Down38_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step5_Game11_Down36_Grow4(result: TestResult)
+    {
+        const stepIndex = 4;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep4Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep5Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step5_Game11_Down32_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step6_Game9_Grow4(result: TestResult)
+    {
+        const stepIndex = 5;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep5Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep6Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step6_Game9_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step7_Game5_Down28_Grow4(result: TestResult)
+    {
+        const stepIndex = 6;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep6Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep7Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step7_Game5_Down26_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step8_Game4_Down22_Grow4(result: TestResult)
+    {
+        const stepIndex = 7;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep7Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep8Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step8_Game10_Down38_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step9_Game3_Down16_Grow4(result: TestResult)
+    {
+        const stepIndex = 8;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep8Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep9Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step9_Game3_Down14_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step10_Game7_Grow4(result: TestResult)
+    {
+        const stepIndex = 9;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep9Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep10Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step10_Game7_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step11_Game2_Down8_Grow4(result: TestResult)
+    {
+        const stepIndex = 10;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep10Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep11Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step11_Game2_Down8_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_Step12_Game1_Down2_Grow4(result: TestResult)
+    {
+        const stepIndex = 11;
+
+        const setup: SetupTestDelegate =
+            (grid, gridExpected, bracketName): [GridItem, GridItem] =>
+            {
+                this.SetupGridForStep11Result(grid, bracketName);
+
+                const itemOld: GridItem = grid.findGameItem(this.expanderStepsForT13[stepIndex].gameId);
+                const itemNew: GridItem =
+                    itemOld.clone()
+                        .shiftByRows(this.expanderStepsForT13[stepIndex].positionDelta)
+                        .growShrink(this.expanderStepsForT13[stepIndex].sizeDelta);
+
+                this.SetupGridForStep12Result(gridExpected, bracketName);
+                return [itemOld, itemNew];
+            };
+
+        this.doGameMoverTest(
+            "test_Step12_Game1_Down2_Grow4",
+            result,
+            "T13",
+            setup,
+            new RangeInfo(9, 1, 3, 1));
+    }
+
+    static test_gameExpanderGenerate(result: TestResult)
+    {
+        const grid = new Grid();
+        const bracketName = "T13";
+
+        this.SetupGridForInitialState(grid, bracketName);
+
+        const steps = GameExpander.generateStepsToExpandAndSpaceOutGames(null, bracketName, grid, 4, 2);
+
+        result.assertIsEqual(this.expanderStepsForT13, steps);
+    }
+}

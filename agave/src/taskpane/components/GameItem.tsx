@@ -3,7 +3,7 @@ import { FontIcon } from '@fluentui/react/lib/Icon';
 import { mergeStyles, mergeStyleSets } from '@fluentui/react/lib/Styling';
 import * as React from "react";
 import { IAppContext, TheAppContext } from "../../AppContext/AppContext";
-import { IBracketGame } from "../../BracketEditor/BracketGame";
+import { IBracketGame } from "../../BracketEditor/IBracketGame";
 import { StructureEditor } from "../../BracketEditor/StructureEditor/StructureEditor";
 import { Coachstate } from "../../Coaching/Coachstate";
 import { _TimerStack } from "../../PerfTimer";
@@ -52,6 +52,24 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
         return true; // we don't get an error back...
     }
 
+    static async DoRemoveDescendants(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        _TimerStack.pushTimer("DoRemoveDescendants", true);
+        appContext.Teaching.clearCoachmark();
+        await StructureEditor.findAndRemoveDescendantsClick(appContext, bracketGame);
+        _TimerStack.popTimer();
+        return true; // we don't get an error back...
+    }
+
+    static async DoRepairGame(appContext: IAppContext, bracketGame: IBracketGame): Promise<boolean>
+    {
+        _TimerStack.pushTimer("DoRepairGame", true);
+        appContext.Teaching.clearCoachmark();
+        await StructureEditor.repairThisGameClick(appContext, bracketGame);
+        _TimerStack.popTimer();
+        return true; // we don't get an error back...
+    }
+
     render()
     {
         const iconClass = mergeStyles(
@@ -69,7 +87,9 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
             });
     
         let background = {};
-        if (this.props.linkedToGrid)
+        const isPlaced = this.props.linkedToGrid;
+
+        if (isPlaced)
             background = { background: "#cccccc" };
 
         const gameTitle: string =
@@ -167,13 +187,59 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 </Teachable>
             );
 
+        const removeDescendantsButton = (
+            <ActionButton
+                tooltip="Remove Descendants"
+                tooltipId={`gid-${this.props.game.GameId.Value}`}
+                bracketGame={this.props.game}
+                delegate={GameItem.DoRemoveDescendants.bind(this)}
+                disabled={false}
+                icon="DependencyRemove"/>
+        );
+
+        const removeDescendantsWrapped = (
+            <Teachable
+                id={TeachableId.RemoveGame}
+                isWide={true}
+                isActiveEx={this.props.teachableRemove}
+                title="Start adding games"
+                text="Click on the X sign to remove this game and all its descendants"
+                visibleDelay={1000}
+                directionalHint={DirectionalHint.bottomRightEdge}>
+                {removeDescendantsButton}
+            </Teachable>
+        );
+
+        const repairButton = (
+            <ActionButton
+                tooltip="Repair Game"
+                tooltipId={`gid-${this.props.game.GameId.Value}`}
+                bracketGame={this.props.game}
+                delegate={GameItem.DoRepairGame.bind(this)}
+                disabled={false}
+                icon="Repair"/>
+        );
+
+        const repairWrapped = (
+            <Teachable
+                id={TeachableId.RemoveGame}
+                isWide={true}
+                isActiveEx={this.props.teachableRemove}
+                title="Start adding games"
+                text="Click on the - sign to add this game to the bracket"
+                visibleDelay={1000}
+                directionalHint={DirectionalHint.bottomRightEdge}>
+                {repairButton}
+            </Teachable>
+        );
+
         const gameNumber = this.props.game.IsChampionship
             ? (<span />)
             : (<>{ this.props.game.GameId.Value }</>);
 
         return (
             <div className="singleGameItem" style={background}>
-                <Stack horizontal tokens={{ childrenGap: 8 }}>
+                <Stack horizontal tokens={{ childrenGap: 16 }}>
                     <Stack.Item>
                         {dirty}{broken}
                     </Stack.Item>
@@ -186,10 +252,16 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                     <Stack.Item align="center" grow={0}>
                         <Stack horizontal horizontalAlign="end">
                             <Stack.Item grow={0}>
-                                {addWrapped}
+                                {this.props.game.IsBroken ? repairWrapped : (<span />)}
                             </Stack.Item>
                             <Stack.Item grow={0}>
-                                {removeWrapped}
+                                {!isPlaced && addWrapped}
+                            </Stack.Item>
+                            <Stack.Item grow={0}>
+                                {isPlaced && removeWrapped && removeWrapped}
+                            </Stack.Item>
+                            <Stack.Item grow={0}>
+                                {isPlaced && removeWrapped && removeDescendantsWrapped}
                             </Stack.Item>
                         </Stack>
                     </Stack.Item>

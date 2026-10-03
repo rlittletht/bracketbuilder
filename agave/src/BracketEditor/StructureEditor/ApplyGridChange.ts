@@ -7,7 +7,8 @@ import { Intentions } from "../../Interop/Intentions/Intentions";
 import { JsCtx } from "../../Interop/JsCtx";
 import { Ranges, RangeInfo } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
-import { BracketGame, IBracketGame } from "../BracketGame";
+import { BracketGame} from "../BracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { GameFormatting } from "../GameFormatting";
 import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
@@ -90,7 +91,7 @@ export class ApplyGridChange
                 return tns;
 
             AppContext.checkpoint("appc.8");
-            tns.push(...await StructureRemove.removeGame(appContext, context, null, change.Range, false, false));
+            tns.push(...await StructureRemove.removeGame(appContext, context, null, [change.Range], false, false));
             AppContext.checkpoint("appc.9");
         }
         else
@@ -101,7 +102,7 @@ export class ApplyGridChange
                 removedGameValues?.addGameValues(game.GameId, areas.getValuesForRangeInfo(game.FullGameRange));
 
             AppContext.checkpoint("appc.10");
-            tns.push(...await StructureRemove.removeGame(appContext, context, game, change.Range, false, change.ChangeOp == GridChangeOperation.RemoveLite));
+            tns.push(...await StructureRemove.removeGame(appContext, context, game, [change.Range], false, change.ChangeOp == GridChangeOperation.RemoveLite));
             AppContext.checkpoint("appc.11");
         }
 

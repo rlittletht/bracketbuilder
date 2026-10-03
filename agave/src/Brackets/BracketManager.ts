@@ -115,7 +115,7 @@ export class BracketManager
             values = defRange.values;
             header = defHeader.values;
             bracketNameValues = defBracketName.values;
-            }
+        }
 
         const bracketDefinition = BracketManager.loadBracketFromValues(bracketName, defTableName, header, values, bracketNameValues);
 
@@ -155,9 +155,7 @@ export class BracketManager
 
             if (bracketName.endsWith("BRACKET")
                 && bracketName.startsWith("T"))
-            {
                 brackets.push(bracketName.substring(0, bracketName.length - "BRACKET".length));
-            }
         }
 
         return brackets;
@@ -229,9 +227,7 @@ export class BracketManager
         const brackets = [];
 
         for (let key of this.m_bracketsMap.keys())
-        {
             brackets.push(this.m_bracketsMap.get(key));
-        }
 
         return brackets;
     }
@@ -248,6 +244,24 @@ export class BracketManager
     }
 
     /*----------------------------------------------------------------------------
+        %%Function: GetWinnerGameIdFromGameId
+    ----------------------------------------------------------------------------*/
+    static GetWinnerGameIdFromGameId(bracket: IBracketDefinitionData, gameId: GameId): GameId
+    {
+        const gameNum = gameId.GameNum;
+
+        if (gameNum.Value < 0 || gameNum.Value >= bracket.games.length)
+            throw new Error(`invalid game id ${gameId.Value} for bracket ${bracket.name}`);
+
+        const game: IBracketGameDefinition = bracket.games[gameNum.Value];
+
+        if (game.winner == "")
+            return null;
+
+        return BracketManager.GameIdFromTopBottom(game.winner);
+    }
+
+    /*----------------------------------------------------------------------------
         %%Function: BracketManager.GameIdFromWinnerLoser
 
         Get the GameId from the Winner or Loser string ("W1" or "L2", etc)
@@ -255,6 +269,15 @@ export class BracketManager
     static GameIdFromWinnerLoser(winnerLoser: string): GameId
     {
         return new GameId(Number(winnerLoser.substring(1)));
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: GameIdFromTopBottom
+        %%Qualified: BracketManager.GameIdFromTopBottom
+    ----------------------------------------------------------------------------*/
+    static GameIdFromTopBottom(topBottom: string): GameId
+    {
+        return new GameId(Number(topBottom.substring(1)));
     }
 
     /*----------------------------------------------------------------------------
@@ -269,10 +292,10 @@ export class BracketManager
 
         switch (placement.toUpperCase())
         {
-            case "T":
-                return TeamPlacement.Top;
-            case "B":
-                return TeamPlacement.Bottom;
+        case "T":
+            return TeamPlacement.Top;
+        case "B":
+            return TeamPlacement.Bottom;
         }
         throw new Error("bad team placement string - corrupt internal bracket");
     }
@@ -288,10 +311,10 @@ export class BracketManager
 
         switch (result.toUpperCase())
         {
-            case "W":
-                return GameResultType.Winner;
-            case "L":
-                return GameResultType.Loser;
+        case "W":
+            return GameResultType.Winner;
+        case "L":
+            return GameResultType.Loser;
         }
         throw new Error("bad game result type string - corrupt internal bracket");
     }

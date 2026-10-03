@@ -9,10 +9,11 @@ import { JsCtx } from "../../Interop/JsCtx";
 import { RangeInfo, RangeOverlapKind, Ranges } from "../../Interop/Ranges";
 import { _TimerStack } from "../../PerfTimer";
 import { s_staticConfig } from "../../StaticConfig";
-import { BracketGame, IBracketGame, IBracketGame as IBracketGame1 } from "../BracketGame";
+import { BracketGame } from "../BracketGame";
+import { IBracketGame } from "../IBracketGame";
 import { Dispatcher, DispatchWithCatchDelegate } from "../Dispatcher";
 import { GameFormatting } from "../GameFormatting";
-import { GameMover } from "../GameMover";
+import { GameMover } from "../GameMovers/GameMover";
 import { Grid } from "../Grid";
 import { GridChange, GridChangeOperation } from "../GridChange";
 import { GridItem } from "../GridItem";
@@ -24,7 +25,7 @@ import { StructureRemove } from "./StructureRemove";
 import { FastRangeAreas } from "../../Interop/FastRangeAreas";
 import { CacheObject, ObjectType } from "../../Interop/TrackingCache";
 import { BracketInfoBuilder } from "../../Brackets/BracketInfoBuilder";
-import { RangeCaches } from "../../Interop/RangeCaches";
+import { RangeCacheItemType, RangeCaches } from "../../Interop/RangeCaches";
 import { _bracketManager } from "../../Brackets/BracketManager";
 import { BracketManager } from "../../Brackets/BracketManager";
 import { SetupBook } from "../../Setup";
@@ -40,6 +41,13 @@ import { TourneyRanker } from "../../Tourney/TourneyRanker";
 import { TourneyRules } from "../../Tourney/TourneyRules";
 import { FastFormulaAreasItems } from "../../Interop/FastFormulaAreas/FastFormulaAreasItems";
 import { FormulaBuilder } from "../FormulaBuilder";
+import { TnSetValues } from "../../Interop/Intentions/TnSetValue";
+import { GameDataSources } from "../../Brackets/GameDataSources";
+import { Intentions } from "../../Interop/Intentions/Intentions";
+import { IIntention } from "../../Interop/Intentions/IIntention";
+import { TnMergeRange } from "../../Interop/Intentions/TnMergeRange";
+import { GameExpander } from "./GameExpander";
+import { GameMoverSimple } from "../GameMovers/GameMoverSimple";
 
 let _moveSelection: RangeInfo = null;
 
@@ -59,6 +67,34 @@ export class StructureEditor
 
             await this.copySelectionToClipboard(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async doExpandAndSpaceOutClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+            await StructureEditor.doExpandAndSpaceOut(appContext, context);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async doBracketRedrawClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+            await StructureEditor.doBracketRedraw(appContext, context);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -179,6 +215,9 @@ export class StructureEditor
         a.foo = 1;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: finalizeClick
+    ----------------------------------------------------------------------------*/
     static async finalizeClick(appContext: IAppContext)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
@@ -190,6 +229,43 @@ export class StructureEditor
 
             await this.applyFinalFormatting(appContext, context, appContext.SelectedBracket);
             appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: normalizeAllColumnsToCurrentColumnClick
+    ----------------------------------------------------------------------------*/
+    static async normalizeAllColumnsToCurrentColumnClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.normalizeAllColumnsToCurrentColumn(appContext, context, appContext.SelectedBracket);
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: autofitTeamColumnsClick
+    ----------------------------------------------------------------------------*/
+    static async autofitTeamColumnsClick(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await this.autofitTeamColumns(appContext, context, appContext.SelectedBracket);
         };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
@@ -310,6 +386,17 @@ export class StructureEditor
                 return;
             }
 
+            const insertRange = grid.getGridColumnRangeInfoOrNull(newGame.GameDate);
+
+            if (insertRange == null)
+            {
+                appContext.Messages.error(
+                    ["Could not determine the column to use for the game"],
+                    { topic: HelpTopic.Commands_LuckyOneGame });
+
+                return;
+            }
+
             const bracketGame: IBracketGame = appContext.getGames()[newGame.GameNum.Value];
             // and now place it
             await StructureInsert.insertGameAtSelection(
@@ -382,7 +469,14 @@ export class StructureEditor
                     context.pushTrackingBookmark(bookmark);
                 }
 
-                const insertRange = new RangeInfo(0, 1, grid.getGridColumnFromDate(date), 1);
+                const insertRange = grid.getGridColumnRangeInfoOrNull(date);
+
+                if (insertRange == null && bracketGame.IsChampionship)
+                {
+                    // this is OK, we'll just not place the championship
+                    succeeded = true;
+                    break;
+                }
 
                 const { gridNew, failReason, coachState, topic, selectRange } =
                     StructureInsert.buildNewGridForGameInsertAtSelection(insertRange, grid, bracketGame, time, field);
@@ -509,7 +603,7 @@ export class StructureEditor
 
         find the given game in the bracket grid and remove it.
     ----------------------------------------------------------------------------*/
-    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame1)
+    static async findAndRemoveGameClick(appContext: IAppContext, game: IBracketGame)
     {
         if (!Dispatcher.RequireBracketReady(appContext))
             return;
@@ -521,6 +615,63 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
 
             await StructureRemove.findAndRemoveGame(appContext, context, game, game.BracketName);
+            context.releaseCacheObjectsUntil(bookmark);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async findAndRemoveDescendantsClick(appContext: IAppContext, game: IBracketGame)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            const bookmark: string = "removeDescendantsAtSelectionClick";
+            context.pushTrackingBookmark(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            const bracketName = game.BracketName;
+
+            const bracketDefinition = _bracketManager.GetBracketDefinitionData(bracketName);
+
+            const grid = await Grid.createGridFromBracket(context, bracketName);
+            while (game)
+            {
+                const nextGameId = BracketManager.GetWinnerGameIdFromGameId(bracketDefinition, game.GameId);
+
+                if (game.IsLinkedToBracket)
+                    await StructureRemove.findAndRemoveGame(appContext, context, game, bracketName);
+
+                game = nextGameId ? await BracketGame.CreateFromGameId(context, bracketName, nextGameId) : null;
+            }
+
+            context.releaseCacheObjectsUntil(bookmark);
+            appContext.Teaching.transitionState(CoachTransition.RemoveGame);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+
+    static async repairThisGameClick(appContext: IAppContext, game: IBracketGame)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            const bookmark: string = "repairThisGameClick";
+            context.pushTrackingBookmark(bookmark);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            await StructureEditor.repairThisGame(appContext, context, game, game.BracketName);
             context.releaseCacheObjectsUntil(bookmark);
             appContext.Teaching.transitionState(CoachTransition.RemoveGame);
 
@@ -543,7 +694,11 @@ export class StructureEditor
         const gridSelection = grid.createFromRange(selection);
 
         const selString = gridSelection.logGridCondensedString();
-        navigator.clipboard.writeText(selString);
+        context.Ctx.workbook.load("name");
+        await context.sync();
+
+        const wbName = context.Ctx.workbook.name;
+        navigator.clipboard.writeText(`~${wbName}~ ${selString}`);
     }
 
     static async convertBracketToModifiedDoubleElimination(appContext: IAppContext, context: JsCtx)
@@ -564,20 +719,44 @@ export class StructureEditor
             return;
         }
 
-        const whatifGame: IBracketGameDefinition = bracketDef.games[bracketDef.games.length - 2];
+        const whatIfGameNumber = new GameNum(bracketDef.games.length - 2);
+        const championshipGameNumber = new GameNum(bracketDef.games.length - 1);
+
+        const whatifGame: IBracketGameDefinition = bracketDef.games[whatIfGameNumber.Value];
+        const championshipGame: IBracketGameDefinition = bracketDef.games[championshipGameNumber.Value];
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
 
-        if (grid.findGameItem(GameId.CreateFromGameNum(new GameNum(bracketDef.games.length - 2))) != null)
-        {
-            appContext.Messages.error(
-                [
-                    "The what-if game is still in the bracket.",
-                    "You cannot convert this bracket to a modified double elimination until the game is removed"
-                ],
-                { topic: HelpTopic.Commands_ConvertBracket });
+        const tns: Intentions = new Intentions();
 
-            return;
+        const championshipGameItem = grid.findGameItem(GameId.CreateFromGameNum(championshipGameNumber));
+        const games = appContext.getGames();
+
+        const championshipGameDef = games[championshipGameNumber.Value];
+        const whatIfGameDef = games[whatIfGameNumber.Value];
+
+        const whatIfGameItem = grid.findGameItem(GameId.CreateFromGameNum(whatIfGameNumber));
+        if (championshipGameItem != null)
+        {
+            if (whatIfGameItem == null)
+            {
+                appContext.Messages.error(
+                    [
+                        "The championship game is in the bracket, but there is no what-if game.",
+                        "This bracket is not consistent. You must repair this bracket manually."
+                    ],
+                    { topic: HelpTopic.Commands_ConvertBracket });
+
+                return;
+            }
+            // the championship is already on the bracket. remember where it was and remove it
+            tns.AddTns(await StructureRemove.removeBoundGame(appContext, context, grid, championshipGameDef));
+        }
+
+        if (whatIfGameItem != null)
+        {
+            // the what-if game is already on the bracket. remember where it was and remove it
+            tns.AddTns(await StructureRemove.removeBoundGame(appContext, context, grid, whatIfGameDef));
         }
 
         // ok, we want to modify the bracket on the sheet to be a modified double elimination
@@ -630,6 +809,85 @@ export class StructureEditor
         await FastFormulaAreas.populateAllCaches(context);
         await RangeCaches.PopulateIfNeeded(context, bracketName);
         await _bracketManager.populateBracketsIfNecessary(context);
+
+        // reload bracketDef since we just changed the bracket definition
+        bracketDef = _bracketManager.GetBracketDefinitionData(bracketName);
+
+        // and now, if we had a championship game already on the bracket, then let's place it again where the what-if was
+        if (championshipGameItem != null)
+        {
+            // reload the game definition since the bracket chagned
+            const newChampionshipGameDef = await BracketGame.CreateFromGameNumber(context, appContext, bracketName, new GameNum(bracketDef.games.length - 1));
+            const targetRange: RangeInfo = new RangeInfo(whatIfGameItem.Range.FirstRow, 3, whatIfGameItem.Range.FirstColumn, 3);
+
+            tns.AddTns(await StructureInsert.insertChampionshipGameAtRange(appContext, context, newChampionshipGameDef, targetRange));
+
+            // and now merge the ranges so the championship takes up both the what-if and championship ranges
+            const tnMerges: IIntention[] = [
+                TnMergeRange.Create(targetRange.offset(0, 1, 0, 6), true),
+                TnMergeRange.Create(targetRange.offset(1, 1, 0, 6), true),
+                TnMergeRange.Create(targetRange.offset(2, 1, 0, 6), true)
+            ];
+
+            tns.AddTns(tnMerges);
+        }
+
+        await tns.Execute(context);
+    }
+
+    static tournamentDraw<T>(teams: T[]): T[]
+    {
+        const result = [...teams];
+
+        for (let i = result.length - 1; i > 0; i--)
+        {
+            const j = Math.floor(Math.random() * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+
+        return result;
+    }
+
+    static async doBracketRedraw(appContext: IAppContext, context: JsCtx)
+    {
+        appContext;
+        // get the current team names
+        const tns = [];
+        const rangeTeamNames = RangeCaches.getCacheByType(RangeCacheItemType.TeamNamesBody);
+
+        if (rangeTeamNames)
+        {
+            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeTeamNames.formulaCacheType);
+            const dataRange = rangeTeamNames.rangeInfo;
+            const dataValues = areas.getValuesForRangeInfo(dataRange);
+
+            const teamNames = [];
+
+            for (let row = 0; row < dataRange.RowCount; row++)
+                teamNames.push(dataValues[row][1]);
+
+            // now sort the team names
+            const draw = StructureEditor.tournamentDraw(teamNames);
+
+            for (let row = 0; row < dataRange.RowCount; row++)
+            {
+                tns.push(
+                    TnSetValues.Create(
+                        dataRange.offset(row, 1, 0, 2),
+                        [
+                            [
+                                dataValues[row][0],
+                                draw[row]
+                            ]
+                        ],
+                        GameDataSources.SheetName));
+            }
+            const intentions: Intentions = new Intentions();
+
+            intentions.AddTns(tns);
+
+            await intentions.Execute(context);
+        }
     }
 
     /*----------------------------------------------------------------------------
@@ -941,6 +1199,104 @@ export class StructureEditor
         return grid;
     }
 
+ 
+    /*----------------------------------------------------------------------------
+        %%Function: doExpandAndSpaceOut
+        %%Qualified: StructureEditor.doExpandAndSpaceOut
+    ----------------------------------------------------------------------------*/
+    static async doExpandAndSpaceOut(appContext: IAppContext, context: JsCtx)
+    {
+        const bracketName = appContext.SelectedBracket;
+
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        const expandSteps = GameExpander.generateStepsToExpandAndSpaceOutGames(appContext, bracketName, grid, 4, 2);
+
+        let newGrid = grid;
+
+        const gameIdsBeingAdjusted = [];
+        for (const step of expandSteps)
+            gameIdsBeingAdjusted.push(step.gameId);
+
+        let stepNum = 0;
+
+        grid.logGridCondensed(`step${stepNum++}`);
+
+        // and now lets execute these steps
+        for (const step of expandSteps)
+{
+            const itemOld = newGrid.findGameItem(step.gameId);
+            const itemNew = itemOld.clone().shiftByRows(step.positionDelta).growShrink(step.sizeDelta);
+
+            const mover: GameMoverSimple = new GameMoverSimple(newGrid);
+            mover.removeOpenFeedRelativeMeasureForGameIds(gameIdsBeingAdjusted);
+
+            newGrid = mover.moveGame(itemOld.clone(), itemNew, bracketName);
+            newGrid.logGridCondensed(`step${stepNum++}`);
+        }
+
+        await ApplyGridChange.diffAndApplyChanges(appContext, context, grid, newGrid, bracketName);
+    }
+
+    static async repairThisGame(appContext: IAppContext, context: JsCtx, game: IBracketGame, bracketName: string)
+    {
+        let grid: Grid = await Grid.createGridFromBracket(context, bracketName, true /*buildGridForRepair*/);
+
+        if (!grid.canRepairGameNum(game.GameNum))
+        {
+            appContext.Messages.error(
+                [
+                    `Cannot repair Game ${game.GameId.Value} on this bracket. This bracket has overlapping games.`,
+                    `You must repair Game ${grid.MustRepairGameId.Value} first`
+                ],
+                { topic: HelpTopic.Commands_RepairGame });
+
+            return;
+        }
+
+        await game.Bind(context, appContext);
+
+        const tns: Intentions = new Intentions();
+
+        // the range we want to insert at will be the row for the original top team and bottom teams (if we have them)
+        // and then the column will be just before the game number column.
+
+        // if we can't find these ranges, then we have to fail
+        tns.AddTns(await StructureRemove.removeBoundGame(appContext, context, grid, game));
+        await tns.Execute(context);
+
+        RangeCaches.SetDirty(true);
+        // must invalidate all of our caches
+        context.releaseAllCacheObjects();
+
+        // and now do all the adds
+        await FastFormulaAreas.populateAllCaches(context);
+        await RangeCaches.PopulateIfNeeded(context, bracketName);
+
+
+        if (game.TopTeamRange == null || game.BottomTeamRange == null || game.GameIdRange == null)
+        {
+            appContext.Messages.error(
+                [
+                    `Could not find the top and bottom team ranges for game ${game.GameId.Value}.`,
+                    `The game will be removed cleanly, but you will need to manually add the game back`
+                ],
+                { topic: HelpTopic.Commands_RepairGame });
+        }
+        else
+        {
+            const targetRange = new RangeInfo(
+                game.TopTeamRange.FirstRow,
+                game.BottomTeamRange.FirstRow - game.TopTeamRange.FirstRow + 1,
+                game.GameIdRange.FirstColumn - 1,
+                1);
+
+            // reload the grid
+            grid = await Grid.createGridFromBracket(context, bracketName);
+            await StructureInsert.insertGameAtRequestedRange(appContext, context, grid, game, targetRange);
+        }
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.repairGameAtSelection
     ----------------------------------------------------------------------------*/
@@ -970,6 +1326,14 @@ export class StructureEditor
         await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: doGameMoveToSelection
+
+        move t he given game to the given selected game (previously "picked up")
+        and move it to the current selected location. This will try to reattach
+        incoming and outgoing connections and it will also try to make room
+        for the game/optimize the grid for this drop.
+    ----------------------------------------------------------------------------*/
     static async doGameMoveToSelection(appContext: IAppContext, context: JsCtx, selection: RangeInfo, bracketName: string)
     {
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
@@ -1027,6 +1391,129 @@ export class StructureEditor
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
+
+    /*----------------------------------------------------------------------------
+        %%Function: normalizeColumnsToWidth
+
+        Apply the given width to all the team name columns. This isn't async
+        because it doesn't await anything. caller is responsible for awaiting
+        the context sync
+    ----------------------------------------------------------------------------*/
+    static normalizeColumnsToWidth(appContext: IAppContext, context: JsCtx, width: number)
+    {
+        const columnsToSelect: Set<number> = new Set<number>();
+
+        for (const game of appContext.getGames())
+        {
+            if (game.IsLinkedToBracket)
+            {
+                const column = game.TopTeamRange.FirstColumn;
+
+                columnsToSelect.add(column);
+            }
+        }
+
+        for (const column of columnsToSelect)
+        {
+            const columns = `${Ranges.getColName(column)}:${Ranges.getColName(column)}`;
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+            const range: Excel.Range = sheet.getRange(columns);
+            range.format.columnWidth = width;
+        }
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: normalizeAllColumnsToCurrentColumn
+
+        take the width of the current team name column and apply it to all
+        the other team name columns so they are uniform
+    ----------------------------------------------------------------------------*/
+    static async normalizeAllColumnsToCurrentColumn(appContext: IAppContext, context: JsCtx, bracketName: string)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        const thisColumn = await Ranges.createRangeInfoForSelection(context);
+
+        if (!StructureInsert.adjustRangeInfoForGameInfoColumn(thisColumn, grid))
+            throw new Error("failed to adjust range for game info column");
+
+        const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+        const columns = `${Ranges.getColName(thisColumn.FirstColumn)}:${Ranges.getColName(thisColumn.FirstColumn)}`;
+        const range: Excel.Range = sheet.getRange(columns);
+
+        range.load("format/columnWidth");
+        await context.sync();
+
+        StructureEditor.normalizeColumnsToWidth(appContext, context, range.format.columnWidth);
+        await context.sync();
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: autofitTeamColumns
+
+        autofit every column that has a static team name in it, then take the
+        max width and apply it to all the team name columns so they are uniform
+        (and big enough for the longest team name)
+    ----------------------------------------------------------------------------*/
+    static async autofitTeamColumns(appContext: IAppContext, context: JsCtx, bracketName: string)
+    {
+        const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
+
+        // get all the columns that currently have team names in them (only care about
+        // the games with static team names -- other games will just have "W1", etc for th team name)
+
+        const columnsToAutofit: Set<number> = new Set<number>();
+
+        for (const game of appContext.getGames())
+        {
+            if (game.IsLinkedToBracket)
+            {
+                const column = game.TopTeamRange.FirstColumn;
+
+                if (BracketManager.IsTeamSourceStatic(game.TopTeamName)
+                    || BracketManager.IsTeamSourceStatic(game.BottomTeamName))
+                    columnsToAutofit.add(column);
+            }
+        }
+
+        for (const column of columnsToAutofit)
+        {
+            const columns = `${Ranges.getColName(column)}:${Ranges.getColName(column)}`;
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+            const range: Excel.Range = sheet.getRange(columns);
+
+            range.format.autofitColumns();
+        }
+
+        await context.sync();
+
+        const ranges: Excel.Range[] = [];
+
+        // now, collect the results and normalize all the columns to the max autofit width
+        for (const column of columnsToAutofit)
+        {
+            const columns = `${Ranges.getColName(column)}:${Ranges.getColName(column)}`;
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+            const range: Excel.Range = sheet.getRange(columns);
+            range.load("format/columnWidth");
+
+            ranges.push(range);
+        }
+
+        await context.sync();
+
+        let maxWidth: number = 0;
+        for (const range of ranges)
+        {
+            if (range.format.columnWidth > maxWidth)
+                maxWidth = range.format.columnWidth;
+        }
+
+        StructureEditor.normalizeColumnsToWidth(appContext, context, maxWidth);
+
+        await context.sync();
+    }
+
 
     static async applyFinalFormatting(appContext: IAppContext, context: JsCtx, bracketName: string)
     {

@@ -11,6 +11,7 @@ export class GlobalDataBuilder
     static DefaultField: string = "Ballfield";
     static DefaultStartTime: number = 0;
 
+
     static async addGlobalDataToSheet(context: JsCtx, sheet: Excel.Worksheet, rowStart: number)
     {
         let rng: Excel.Range = sheet.getRangeByIndexes(rowStart, 0, 15, 2);

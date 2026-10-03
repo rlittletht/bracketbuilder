@@ -1,14 +1,14 @@
-import { AppContext, IAppContext } from "../AppContext/AppContext";
-import { RangeInfo } from "../Interop/Ranges";
-import { StreamWriter } from "../Support/StreamWriter";
-import { TestResult } from "../Support/TestResult";
-import { TestRunner } from "../Support/TestRunner";
-import { GameId } from "./GameId";
+import {AppContext, IAppContext} from "../../AppContext/AppContext";
+import {RangeInfo} from "../../Interop/Ranges";
+import {StreamWriter} from "../../Support/StreamWriter";
+import {TestResult} from "../../Support/TestResult";
+import {TestRunner} from "../../Support/TestRunner";
+import { GameId } from "../GameId";
 import { GameMover } from "./GameMover";
-import { Grid } from "./Grid";
-import { GridChange } from "./GridChange";
-import { GridItem } from "./GridItem";
-import * as GridRanker from "./GridRanker";
+import { Grid } from "../Grid";
+import { GridChange } from "../GridChange";
+import { GridItem } from "../GridItem";
+import * as GridRanker from "../GridRanker";
 
 interface SetupTestDelegate
 {
