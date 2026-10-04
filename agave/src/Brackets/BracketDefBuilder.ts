@@ -18,6 +18,7 @@ import { GridBuilder } from "./GridBuilder";
 import { IBracketDefinitionData } from "./IBracketDefinitionData";
 import { IBracketGameDefinition } from "./IBracketGameDefinition";
 import { RulesBuilder } from "./RulesBuilder";
+import { FormattingRulesBuilder } from "./FormattingRulesBuilder";
 
 export interface BracketOption
 {
@@ -425,5 +426,6 @@ export class BracketDefBuilder
         await GridBuilder.buildGridSheet(context);
         await BracketInfoBuilder.buildBracketInfoSheet(context, bracketChoice, bracketDefinition);
         await GameDataSources.buildGameDataSourcesSheet(context, fastTables, bracketDefinition);
+        await FormattingRulesBuilder.buildFormattingRulesSheet(context, fastTables);
     }
 }
