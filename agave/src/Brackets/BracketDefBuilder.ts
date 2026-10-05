@@ -423,9 +423,9 @@ export class BracketDefBuilder
         }
 
         await RulesBuilder.buildRulesSheet(context, fastTables);
+        await FormattingRulesBuilder.buildFormattingRulesSheet(context, fastTables);
         await GridBuilder.buildGridSheet(context);
         await BracketInfoBuilder.buildBracketInfoSheet(context, bracketChoice, bracketDefinition);
         await GameDataSources.buildGameDataSourcesSheet(context, fastTables, bracketDefinition);
-        await FormattingRulesBuilder.buildFormattingRulesSheet(context, fastTables);
     }
 }

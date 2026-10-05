@@ -6,6 +6,7 @@ import { IFastTables } from "../Interop/FastTables";
 import { Ranges } from "../Interop/Ranges";
 import { Tables } from "../Interop/Tables";
 import { BracketDefBuilder } from "./BracketDefBuilder";
+import { RulesBuilder } from "./RulesBuilder";
 
 export class FormattingRulesBuilder
 {
@@ -46,7 +47,7 @@ export class FormattingRulesBuilder
         fastTables: IFastTables,
     )
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, FormattingRulesBuilder.SheetName, BracketDefBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, FormattingRulesBuilder.SheetName, RulesBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
 
         let row = 0;
 
