@@ -11,6 +11,11 @@ export class ColorRuleBase
             this.m_val = val;
     }
 
+    public get Value(): any
+    {
+        return this.m_val.str;
+    }
+
     public Parse(val: any): void
     {
         switch (typeof val)
@@ -29,6 +34,6 @@ export class ColorRuleBase
     public ToString(): string
     {
         // Assuming a function colorToString exists to convert IColor to string
-        return this.m_val.str
+        return this.m_val.str;
     }
 }

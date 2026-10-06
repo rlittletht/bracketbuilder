@@ -1,4 +1,5 @@
 import { IFormatRule } from "./IFormatRule";
+import { LoadRequestType } from "./loadRequests";
 
 export class FontRule implements IFormatRule
 {
@@ -55,5 +56,31 @@ export class FontRule implements IFormatRule
     public get Name(): string
     {
         return "Font";
+    }
+
+    public get Value(): any
+    {
+        return this.m_fontName;
+    }
+
+    public get IsTheme(): boolean
+    {
+        return this.m_isTheme;
+    }
+
+    public AdjustLoadRequests(loadRequests: Set<string>): void
+    {
+        loadRequests.add(LoadRequestType.Font);
+    }
+
+    public LoadFromExcelFormat(format: Excel.RangeFormat): void
+    {
+        this.m_fontName = format.font.name;
+        this.m_isTheme = false; // must be adjusted by the caller
+    }
+
+    public AdjustFontForTheme(themeFontName: string): void
+    {
+        this.m_isTheme = this.m_fontName.toLowerCase() === themeFontName.toLowerCase();
     }
 }
