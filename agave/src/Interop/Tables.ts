@@ -3,6 +3,11 @@ import { Arrays } from "./Arrays";
 import { IFastTables } from "./FastTables";
 import { JsCtx } from "./JsCtx";
 import { Ranges } from "./Ranges";
+import { RangeCaches, RangeCacheItemType} from "./RangeCaches";
+import { Intentions } from "./Intentions/Intentions";
+import { FastFormulaAreas } from "./FastFormulaAreas/FastFormulaAreas";
+import { TnSetValues } from "./Intentions/TnSetValue";
+import { IIntention } from "./Intentions/IIntention";
 
 export class Tables
 {

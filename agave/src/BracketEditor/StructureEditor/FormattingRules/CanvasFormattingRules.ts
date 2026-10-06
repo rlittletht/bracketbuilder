@@ -58,11 +58,11 @@ export function CreateDefaultCanvasFormattingRules(): CanvasFormattingRules
 {
     const rules: CanvasFormattingRules = new CanvasFormattingRules();
 
-    rules.addDefinition(CanvasItem.TeamRows, [SizeRule.CreateFromRule(15)]);
-    rules.addDefinition(CanvasItem.LineRows, [SizeRule.CreateFromRule(1)]);
-    rules.addDefinition(CanvasItem.TeamColumns, [SizeRule.CreateFromRule(113)]);
-    rules.addDefinition(CanvasItem.ScoreColumns, [SizeRule.CreateFromRule(17.5)]);
-    rules.addDefinition(CanvasItem.LineColumns, [SizeRule.CreateFromRule(1)]);
+    rules.addDefinition(CanvasItem.TeamRows, [SizeRule.CreateFromRule("rowHeight", 15)]);
+    rules.addDefinition(CanvasItem.LineRows, [SizeRule.CreateFromRule("rowHeight", 1)]);
+    rules.addDefinition(CanvasItem.TeamColumns, [SizeRule.CreateFromRule("columnWidth", 113)]);
+    rules.addDefinition(CanvasItem.ScoreColumns, [SizeRule.CreateFromRule("columnWidth", 17.5)]);
+    rules.addDefinition(CanvasItem.LineColumns, [SizeRule.CreateFromRule("columnWidth", 1)]);
 
     return rules;
 }

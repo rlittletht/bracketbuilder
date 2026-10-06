@@ -11,6 +11,7 @@ export class HelpTopic
     static Commands_LuckyRestGames = "faq#luckyRestGames";
     static Commands_RepairGame = "commands#repair";
     static Commands_ConvertBracket = "commands#convertBracket";
+    static FinishingTouches_LearnGameFormatting = "finishingTouches#learnGameFormatting";
     static FAQ = "faq";
     static FAQ_ManuallySelect = "faq#manualSelect";
     static FAQ_InsertLocation = "faq#InsertLocation";
@@ -42,6 +43,7 @@ export class HelpInfo
             [HelpTopic.Commands_PickupGame, "Commands.html#PickUpGame"],
             [HelpTopic.Commands_RepairGame, "Commands.html#RepairGame"],
             [HelpTopic.Commands_ConvertBracket, "Commands.html#RemoveWhatIf"],
+            [HelpTopic.FinishingTouches_LearnGameFormatting, "Commands.html#LearnGameFormatting"],
             [HelpTopic.FAQ, "FAQ.html"],
             [HelpTopic.FAQ_ManuallySelect, "FAQ.html#manuallySelect"],
             [HelpTopic.FAQ_GameDependencies, "FAQ.html#gameDependencies"],

@@ -4,10 +4,22 @@ import { FontSizeRule } from "./RuleTypes/FontSizeRule";
 import { BoldRule } from "./RuleTypes/BoldRule";
 import { ItalicRule } from "./RuleTypes/ItalicRule";
 import { ColorRule } from "./RuleTypes/ColorRule";
-import { HAlignmentRule } from "./RuleTypes/HAlignmentRule";
-import {VAlignmentRule} from "./RuleTypes/VAlignmentRule";
+import { HAlignmentRule, HAlignment } from "./RuleTypes/HAlignmentRule";
+import { VAlignmentRule, VAlignment } from "./RuleTypes/VAlignmentRule";
 import { ElementDefinition } from "./Elements/ElementDefinition";
 import { ElementItem } from "./Elements/ElementItem";
+import { IAppContext } from "../../../AppContext/AppContext";
+import { JsCtx } from "../../../Interop/JsCtx";
+import { GridItem } from "../../GridItem";
+import { Ranges } from "../../../Interop/Ranges";
+import { IBracketGame } from "../../IBracketGame";
+import { GameComponentRanges } from "./GameComponentRanges";
+import { IIntention } from "../../../Interop/Intentions/IIntention";
+import { RangeCaches, RangeCacheItemType } from "../../../Interop/RangeCaches";
+import { FastFormulaAreas } from "../../../Interop/FastFormulaAreas/FastFormulaAreas";
+import { TnSetValues } from "../../../Interop/Intentions/TnSetValue";
+import { Intentions } from "../../../Interop/Intentions/Intentions";
+import { FormattingRulesBuilder } from "../../../Brackets/FormattingRulesBuilder";
 
 
 export class ElementFormattingRules
@@ -50,6 +62,82 @@ export class ElementFormattingRules
             definitions.push(definition.getDefinitionArrayForNames(Array.from(names)));
         return definitions;
     }
+
+    collectLoadRequests(): string[]
+    {
+        const loadRequests: Set<string> = new Set<string>();
+        for (const definition of this.m_definitions)
+            definition.adjustLoadRequests(loadRequests);
+
+        return Array.from(loadRequests);
+    }
+
+    getElementDefinition(element: ElementItem): ElementDefinition
+    {
+        for (const definition of this.m_definitions)
+        {
+            if (definition.ElementType === element)
+                return definition;
+        }
+        throw new Error(`ElementDefinition not found for element: ${element}`);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: learnFormattingFromGridGame
+        %%Qualified: ElementFormattingRules.learnFormattingFromGridGame
+    ----------------------------------------------------------------------------*/
+    public async learnFormattingFromGridGame(appContext: IAppContext, context: JsCtx, gridGame: GridItem, rowDates: number): Promise<void>
+    {
+        appContext;
+        const sheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
+        const game = gridGame.BracketGameCache;
+        const loadRequests = this.collectLoadRequests();
+        const ranges = new GameComponentRanges(sheet, game, rowDates);
+
+        const loadString = loadRequests.join(", ");
+        ranges.enum((range: Excel.Range) => { range.format.load(loadString); });
+
+        await context.sync("learnFormattingFromGridGame");
+
+        // and now, query all of our elements for the formatting
+        for (const definition of this.m_definitions)
+        {
+            const componentRange = ranges.getRangeForElementType(definition.ElementType);
+            definition.loadFromExcelFormat(componentRange.format);
+        }
+
+        // TODO: adjust the font rule for theming. requires the theme to be loaded.
+
+        const tns: Intentions = new Intentions();
+
+        RangeCaches.enumerateCachedTableBody(
+            context,
+            RangeCacheItemType.ElementFormattingBody,
+            RangeCacheItemType.ElementFormattingHeader,
+            (headerValues, dataValues, row): any[] =>
+            {
+                row;
+                // get the element type for this row
+                const elementType = dataValues[0];
+                const definition = this.getElementDefinition(elementType);
+                const values: any[] = [];
+                values.push(elementType);
+
+                for (let col = 1; col < dataValues.length; col++)
+                {
+                    const value = definition.getValue(headerValues[col]);
+                    values.push(value);
+                }
+                return values;
+            },
+            (dataRange, updatedValues) =>
+            {
+                tns.AddTns([TnSetValues.Create(dataRange.offset(0, dataRange.RowCount, 0, dataRange.ColumnCount), updatedValues, FormattingRulesBuilder.SheetName)]);
+            });
+
+        // and now record this in the FormattingRules table
+        await tns.Execute(context);
+    }
 }
 
 export function CreateDefaultElementFormattingRules(): ElementFormattingRules
@@ -64,8 +152,8 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
-            HAlignmentRule.CreateFromRule("Center"),
-            VAlignmentRule.CreateFromRule("Center")
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
         ]);
 
     rules.addDefinition(
@@ -76,8 +164,8 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(true),
             ColorRule.CreateFromString("#FF0000"),
-            HAlignmentRule.CreateFromRule("Center"),
-            VAlignmentRule.CreateFromRule("Center")
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
         ]);
 
     rules.addDefinition(
@@ -88,7 +176,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
-            HAlignmentRule.CreateFromRule("Center")
+            HAlignmentRule.CreateFromRule(HAlignment.Center)
         ]);
 
     rules.addDefinition(
@@ -99,8 +187,8 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
-            HAlignmentRule.CreateFromRule("Center"),
-            VAlignmentRule.CreateFromRule("Center")
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
         ]);
 
     rules.addDefinition(
@@ -116,4 +204,4 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     return rules;
 }
 
-export let _formattingRules: FormattingRules = CreateDefaultFormattingRules();
+export let _elementFormattingRules: ElementFormattingRules = CreateDefaultElementFormattingRules();

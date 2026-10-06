@@ -48,6 +48,7 @@ import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnMergeRange } from "../../Interop/Intentions/TnMergeRange";
 import { GameExpander } from "./GameExpander";
 import { GameMoverSimple } from "../GameMovers/GameMoverSimple";
+import { _elementFormattingRules } from "./FormattingRules/ElementFormattingRules";
 
 let _moveSelection: RangeInfo = null;
 
@@ -509,6 +510,37 @@ export class StructureEditor
                 _undoManager.setUndoGrid(gridStart, undoGameDataItems);
             }
         }
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async recordFormattingForSelection(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            const range = await Ranges.createRangeInfoForSelection(context);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            // get the grid item for this selection
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
+            const [item, kind] = grid.getFirstOverlappingItem(range);
+
+            if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
+            {
+                appContext.Messages.error(
+                    ["You must select a game to learn its formatting."],
+                    {topic: HelpTopic.FinishingTouches_LearnGameFormatting});
+                return;
+            }
+            const rowDates = Grid.getRowForGameDates(context, grid.FirstGridPattern);
+
+            await _elementFormattingRules.learnFormattingFromGridGame(appContext, context, item, rowDates);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
 
         await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
     }
@@ -1199,7 +1231,7 @@ export class StructureEditor
         return grid;
     }
 
- 
+
     /*----------------------------------------------------------------------------
         %%Function: doExpandAndSpaceOut
         %%Qualified: StructureEditor.doExpandAndSpaceOut
@@ -1224,7 +1256,7 @@ export class StructureEditor
 
         // and now lets execute these steps
         for (const step of expandSteps)
-{
+        {
             const itemOld = newGrid.findGameItem(step.gameId);
             const itemNew = itemOld.clone().shiftByRows(step.positionDelta).growShrink(step.sizeDelta);
 

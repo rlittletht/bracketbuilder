@@ -12,6 +12,8 @@ import { RulesBuilder } from "../Brackets/RulesBuilder";
 import { s_staticConfig } from "../StaticConfig";
 import { FastFormulaAreasItems } from "./FastFormulaAreas/FastFormulaAreasItems";
 import { FormattingRulesBuilder } from "../Brackets/FormattingRulesBuilder";
+import { IIntention } from "./Intentions/IIntention";
+import { TnSetValues } from "./Intentions/TnSetValue";
 
 export class RangeCacheItemType
 {
@@ -360,6 +362,48 @@ export class RangeCaches
         {
             this.add(RangeCacheItemType.CanvasFormattingBody, FormattingRulesBuilder.SheetName, canvasFormattingBodyRange, FastFormulaAreasItems.FormattingRules);
             this.add(RangeCacheItemType.CanvasFormattingHeader, FormattingRulesBuilder.SheetName, canvasFormattingBodyRange.offset(-1, 1), FastFormulaAreasItems.FormattingRules);
+        }
+    }
+
+
+    public static enumerateCachedTableBody(
+        context: JsCtx,
+        bodyType: RangeCacheItemType,
+        headerType: RangeCacheItemType,
+        getUpdatedRowValues: (headerValues: any[], dataValues: any[], row: number) => any[],
+        processUpdatedValues: (dataRange: RangeInfo, updatedValues: any[][]) => void)
+    {
+        const rangeElementFormatting = RangeCaches.getCacheByType(bodyType);
+        const rangeElementFormattingHeader = RangeCaches.getCacheByType(headerType);
+
+        const tns: IIntention[] = [];
+        if (rangeElementFormatting && rangeElementFormattingHeader)
+        {
+            const areas = FastFormulaAreas.getFastFormulaAreaCacheForType(context, rangeElementFormatting.formulaCacheType);
+            if (areas)
+            {
+                const headerRange = rangeElementFormattingHeader.rangeInfo;
+                const headerValues = areas.getValuesForRangeInfo(headerRange);
+
+                const dataRange = rangeElementFormatting.rangeInfo;
+                const dataValues = areas.getValuesForRangeInfo(dataRange);
+
+                const values: any[][] = [];
+                for (let row = 0; row < dataRange.RowCount; row++)
+                {
+                    const newRowValues = getUpdatedRowValues(headerValues[0], dataValues[row], row);
+
+                    if (newRowValues.length != dataRange.ColumnCount)
+                        throw new Error(`getUpdatedRowValues returned ${newRowValues.length} values, but expected ${dataRange.ColumnCount}`);
+
+                    values.push(newRowValues);
+                }
+
+                if (values.length != dataRange.RowCount)
+                    throw new Error(`getUpdatedRowValues returned ${values.length} rows, but expected ${dataRange.RowCount}`);
+
+                processUpdatedValues(dataRange, values);
+            }
         }
     }
 }
