@@ -267,7 +267,7 @@ export class FastFormulaAreas
 
                 context.pushTrackingBookmark(bkmk);
 
-                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.GameData, FastFormulaAreasItems.BracketDefs, FastFormulaAreasItems.RulesData])
+                for (let type of [FastFormulaAreasItems.GameGrid, FastFormulaAreasItems.GameData, FastFormulaAreasItems.BracketDefs, FastFormulaAreasItems.RulesData, FastFormulaAreasItems.FormattingRules])
                 {
                     const sheetName = FastFormulaAreaDefinitions.getSheetNameFromType(type);
                     const range = FastFormulaAreaDefinitions.getRangeFromType(type);

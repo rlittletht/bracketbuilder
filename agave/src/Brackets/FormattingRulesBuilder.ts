@@ -10,10 +10,10 @@ import { RulesBuilder } from "./RulesBuilder";
 
 export class FormattingRulesBuilder
 {
-    static SheetName: string = "FormattingRules";
-    static ThemeTableName: string = "ThemeSettings";
-    static ElementFormattingTableName: string = "FormattingRules";
-    static ElementSizesTableName: string = "ElementSizes";
+    public static SheetName: string = "FormattingRules";
+    public static ThemeTableName: string = "ThemeSettings";
+    public static ElementFormattingTableName: string = "FormattingRules";
+    public static ElementSizesTableName: string = "ElementSizes";
 
     static insertContentAtRange(sheet: Excel.Worksheet, row: number, col: number, content: any[][]): Excel.Range
     {
@@ -77,7 +77,7 @@ export class FormattingRulesBuilder
             sheet,
             row,
             FormattingRulesBuilder.ElementFormattingTableName,
-            ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "Valignment"],
+            ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"],
             [
                 ["Game Title", "Theme", "11", "FALSE", "FALSE", "#000000", "CENTER", "CENTER"],
                 ["Advance To", "Theme", "8", "TRUE", "TRUE", "#FF0000", "CENTER", "CENTER"],

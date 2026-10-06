@@ -7,4 +7,5 @@ export class FastFormulaAreasItems
     static BracketInfo = "bracket-info";
     static RulesData = "rulesData";
     static GlobalNames = "workbookNamesItems";
+    static FormattingRules = "formattingRules";
 }

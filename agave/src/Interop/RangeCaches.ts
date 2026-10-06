@@ -11,6 +11,7 @@ import { RangeInfo, Ranges } from "./Ranges";
 import { RulesBuilder } from "../Brackets/RulesBuilder";
 import { s_staticConfig } from "../StaticConfig";
 import { FastFormulaAreasItems } from "./FastFormulaAreas/FastFormulaAreasItems";
+import { FormattingRulesBuilder } from "../Brackets/FormattingRulesBuilder";
 
 export class RangeCacheItemType
 {
@@ -24,6 +25,12 @@ export class RangeCacheItemType
     static FieldRulesHeader = "FR#Header";
     static DayRulesBody = "DR#Body";
     static DayRulesHeader = "DR#Header";
+    static ThemeSettingsBody = "THM#Body";
+    static ThemeSettingsHeader = "THM#Header";
+    static ElementFormattingHeader = "ELT#Header";
+    static ElementFormattingBody = "ELT#Body";
+    static CanvasFormattingHeader = "CNV#Header";
+    static CanvasFormattingBody = "CNV#Body";
 }
 
 export class RangeCacheItem
@@ -72,7 +79,7 @@ export class RangeCaches
     static get(name: string): RangeCachedItem | null
     {
         if (!this.m_items.has(name))
-            return { sheetName: null, rangeInfo: null, formulaCacheType: null};
+            return { sheetName: null, rangeInfo: null, formulaCacheType: null };
 
         const item = this.m_items.get(name);
 
@@ -139,10 +146,26 @@ export class RangeCaches
         return { fieldRulesBodyRange: fieldRulesRange, dayRulesBodyRange: dayRulesRange };
     }
 
+    static getFormattingRulesRanges(context: JsCtx): { themeSettingsBodyRange: Excel.Range, elementFormattingBodyRange: Excel.Range, canvasFormattingBodyRange: Excel.Range }
+    {
+        const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(FormattingRulesBuilder.SheetName);
+
+        const themeSettingsRange = Ranges.getTableDataBodyRangeFromTableName(sheetGet, FormattingRulesBuilder.ThemeTableName);
+        const elementFormattingRange = Ranges.getTableDataBodyRangeFromTableName(sheetGet, FormattingRulesBuilder.ElementFormattingTableName);
+        const canvasFormattingRange = Ranges.getTableDataBodyRangeFromTableName(sheetGet, FormattingRulesBuilder.ElementSizesTableName);
+
+        themeSettingsRange.load("rowCount, columnCount, rowIndex, columnIndex");
+        elementFormattingRange.load("rowCount, columnCount, rowIndex, columnIndex");
+        canvasFormattingRange.load("rowCount, columnCount, rowIndex, columnIndex");
+
+        // don't sync yet...we might have more to get
+        return { themeSettingsBodyRange: themeSettingsRange, elementFormattingBodyRange: elementFormattingRange, canvasFormattingBodyRange: canvasFormattingRange };
+    }
+
     static getBracketDefRange(context: JsCtx, bracketChoice: string): Excel.Range
     {
-//        if ((bracketChoice ?? "") === "")
-//            return null;
+        //        if ((bracketChoice ?? "") === "")
+        //            return null;
 
         const sheetGet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItemOrNullObject(BracketDefBuilder.SheetName);
         const defTableName: string = `${bracketChoice}Bracket`
@@ -176,7 +199,7 @@ export class RangeCaches
 
         return { range: dataRange, values: dataValues };
     }
-    
+
     static async PopulateIfNeeded(context: JsCtx, bracketChoice: string)
     {
         if (!this.s_isDirty && this.s_lastBracket == bracketChoice)
@@ -190,20 +213,35 @@ export class RangeCaches
         let bracketDefRange: RangeInfo = null;
         let fieldRulesBodyRange: RangeInfo = null;
         let dayRulesBodyRange: RangeInfo = null;
+        let themeSettingsBodyRange: RangeInfo = null;
+        let elementFormattingBodyRange: RangeInfo = null;
+        let canvasFormattingBodyRange: RangeInfo = null;
 
         // first, try to get all the ranges together (in one batch). if this throws an exception, then we'll
         // try to get them separately
         let allRanges =
-            await this.GetRange(context, async (context) =>
-            {
-                const { bracketBodyRange, teamNamesBodyRange } = this.getBracketBodyAndTeamNamesBodyRange(context);
-                const { fieldRulesBodyRange, dayRulesBodyRange } = this.getRulesRanges(context);
+            await this.GetRange(
+                context,
+                async (context) =>
+                {
+                    const { bracketBodyRange, teamNamesBodyRange } = this.getBracketBodyAndTeamNamesBodyRange(context);
+                    const { fieldRulesBodyRange, dayRulesBodyRange } = this.getRulesRanges(context);
+                    const { themeSettingsBodyRange, elementFormattingBodyRange, canvasFormattingBodyRange } = this.getFormattingRulesRanges(context);
 
-                const bracketDefRange = this.getBracketDefRange(context, bracketChoice);
-                await context.sync();
+                    const bracketDefRange = this.getBracketDefRange(context, bracketChoice);
+                    await context.sync();
 
-                return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: bracketDefRange, fieldRulesBodyRange: fieldRulesBodyRange, dayRulesBodyRange: dayRulesBodyRange };
-            });
+                    return {
+                        bracketBodyRange: bracketBodyRange,
+                        teamNamesBodyRange: teamNamesBodyRange,
+                        bracketDefRange: bracketDefRange,
+                        fieldRulesBodyRange: fieldRulesBodyRange,
+                        dayRulesBodyRange: dayRulesBodyRange,
+                        themeSettingsBodyRange: themeSettingsBodyRange,
+                        elementFormattingBodyRange: elementFormattingBodyRange,
+                        canvasFormattingBodyRange: canvasFormattingBodyRange
+                    };
+                });
 
         if (!allRanges)
         {
@@ -219,7 +257,13 @@ export class RangeCaches
 
                         await context.sync();
 
-                        return { bracketBodyRange: bracketBodyRange, teamNamesBodyRange: teamNamesBodyRange, bracketDefRange: null, fieldRulesBodyRange: fieldRulesBodyRange, dayRulesBodyRange: dayRulesBodyRange };
+                        return {
+                            bracketBodyRange: bracketBodyRange,
+                            teamNamesBodyRange: teamNamesBodyRange,
+                            bracketDefRange: null,
+                            fieldRulesBodyRange: fieldRulesBodyRange,
+                            dayRulesBodyRange: dayRulesBodyRange
+                        };
                     });
 
             allRanges.bracketBodyRange = rangesPart1?.bracketBodyRange ?? null;
@@ -239,6 +283,26 @@ export class RangeCaches
                     });
 
             allRanges.bracketDefRange = rangesPart2?.bracketDefRange ?? null;
+
+            const rangesPart3 = await this.GetRange(
+                context,
+                async (context) =>
+                {
+                    const { themeSettingsBodyRange, elementFormattingBodyRange, canvasFormattingBodyRange } = this.getFormattingRulesRanges(context);
+
+                    await context.sync();
+
+                    return {
+                        themeSettingsBodyRange: themeSettingsBodyRange,
+                        elementFormattingBodyRange: elementFormattingBodyRange,
+                        canvasFormattingBodyRange: canvasFormattingBodyRange
+
+                    };
+                });
+
+            allRanges.themeSettingsBodyRange = rangesPart3?.themeSettingsBodyRange ?? null;
+            allRanges.elementFormattingBodyRange = rangesPart3?.elementFormattingBodyRange ?? null;
+            allRanges.canvasFormattingBodyRange = rangesPart3?.canvasFormattingBodyRange ?? null;
         }
 
         bracketBodyRange = RangeInfo.createFromRange(allRanges.bracketBodyRange);
@@ -246,6 +310,9 @@ export class RangeCaches
         bracketDefRange = RangeInfo.createFromRange(allRanges.bracketDefRange);
         fieldRulesBodyRange = RangeInfo.createFromRange(allRanges.fieldRulesBodyRange);
         dayRulesBodyRange = RangeInfo.createFromRange(allRanges.dayRulesBodyRange);
+        themeSettingsBodyRange = RangeInfo.createFromRange(allRanges.themeSettingsBodyRange);
+        elementFormattingBodyRange = RangeInfo.createFromRange(allRanges.elementFormattingBodyRange);
+        canvasFormattingBodyRange = RangeInfo.createFromRange(allRanges.canvasFormattingBodyRange);
 
         if (bracketBodyRange)
         {
@@ -275,6 +342,24 @@ export class RangeCaches
         {
             this.add(RangeCacheItemType.DayRulesBody, RulesBuilder.SheetName, dayRulesBodyRange, FastFormulaAreasItems.RulesData);
             this.add(RangeCacheItemType.DayRulesHeader, RulesBuilder.SheetName, dayRulesBodyRange.offset(-1, 1), FastFormulaAreasItems.RulesData);
+        }
+
+        if (themeSettingsBodyRange)
+        {
+            this.add(RangeCacheItemType.ThemeSettingsBody, FormattingRulesBuilder.SheetName, themeSettingsBodyRange, FastFormulaAreasItems.FormattingRules);
+            this.add(RangeCacheItemType.ThemeSettingsHeader, FormattingRulesBuilder.SheetName, themeSettingsBodyRange.offset(-1, 1), FastFormulaAreasItems.FormattingRules);
+        }
+
+        if (elementFormattingBodyRange)
+        {
+            this.add(RangeCacheItemType.ElementFormattingBody, FormattingRulesBuilder.SheetName, elementFormattingBodyRange, FastFormulaAreasItems.FormattingRules);
+            this.add(RangeCacheItemType.ElementFormattingHeader, FormattingRulesBuilder.SheetName, elementFormattingBodyRange.offset(-1, 1), FastFormulaAreasItems.FormattingRules);
+        }
+
+        if (canvasFormattingBodyRange)
+        {
+            this.add(RangeCacheItemType.CanvasFormattingBody, FormattingRulesBuilder.SheetName, canvasFormattingBodyRange, FastFormulaAreasItems.FormattingRules);
+            this.add(RangeCacheItemType.CanvasFormattingHeader, FormattingRulesBuilder.SheetName, canvasFormattingBodyRange.offset(-1, 1), FastFormulaAreasItems.FormattingRules);
         }
     }
 }
