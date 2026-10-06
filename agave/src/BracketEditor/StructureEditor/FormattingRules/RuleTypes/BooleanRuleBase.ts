@@ -1,5 +1,5 @@
 
-class BooleanRuleBase
+export class BooleanRuleBase
 {
     m_val: boolean = false;
 
@@ -7,6 +7,11 @@ class BooleanRuleBase
     {
         if (val)
             this.m_val = true;
+    }
+
+    public get Value(): any
+    {
+        return this.m_val;
     }
 
     public Parse(val: any): void

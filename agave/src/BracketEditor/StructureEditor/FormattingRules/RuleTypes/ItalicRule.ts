@@ -1,4 +1,6 @@
 import { IFormatRule } from "./IFormatRule";
+import { LoadRequestType } from "./loadRequests";
+import { BooleanRuleBase } from "./BooleanRuleBase";
 
 export class ItalicRule extends BooleanRuleBase implements IFormatRule
 {
@@ -18,5 +20,15 @@ export class ItalicRule extends BooleanRuleBase implements IFormatRule
     public get Name(): string
     {
         return "Italic";
+    }
+
+    public AdjustLoadRequests(loadRequests: Set<string>): void
+    {
+        loadRequests.add(LoadRequestType.Italic);
+    }
+
+    public LoadFromExcelFormat(format: Excel.RangeFormat): void
+    {
+        this.m_val = format.font.italic;
     }
 }

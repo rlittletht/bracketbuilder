@@ -1,4 +1,6 @@
 import { IFormatRule } from "./IFormatRule";
+import { LoadRequestType } from "./loadRequests";
+import { BooleanRuleBase } from "./BooleanRuleBase";
 
 export class BoldRule extends BooleanRuleBase implements IFormatRule
 {
@@ -18,5 +20,15 @@ export class BoldRule extends BooleanRuleBase implements IFormatRule
     public get Name(): string
     {
         return "Bold";
+    }
+
+    public AdjustLoadRequests(loadRequests: Set<string>): void
+    {
+        loadRequests.add(LoadRequestType.Bold);
+    }
+
+    public LoadFromExcelFormat(format: Excel.RangeFormat): void
+    {
+        this.m_val = format.font.bold;
     }
 }

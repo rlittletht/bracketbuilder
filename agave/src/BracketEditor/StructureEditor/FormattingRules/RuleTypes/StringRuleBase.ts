@@ -11,6 +11,11 @@ export class StringRuleBase
             this.m_val = val;
     }
 
+    public get Value(): any
+    {
+        return this.m_val;
+    }
+
     public Parse(val: any): void
     {
         switch (typeof val)
