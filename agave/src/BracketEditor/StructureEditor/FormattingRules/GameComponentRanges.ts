@@ -1,6 +1,7 @@
 import { ElementItem } from "./Elements/ElementItem";
 import { IBracketGame } from "../../IBracketGame";
 import { RangeInfo, Ranges } from "../../../Interop/Ranges";
+import { CanvasItem } from "./CanvasItems/CanvasItem";
 
 export enum GameComponentRangeType
 {
@@ -10,7 +11,8 @@ export enum GameComponentRangeType
     FieldRange = 3,
     VLineRange = 4,
     HLineRange = 5,
-    DatesRange = 6
+    DatesRange = 6,
+    ScoreRange = 7
 }
 
 export const mapElementTypeToGameComponentRangeType: Map<ElementItem, GameComponentRangeType> = new Map<ElementItem, GameComponentRangeType>([
@@ -19,6 +21,14 @@ export const mapElementTypeToGameComponentRangeType: Map<ElementItem, GameCompon
     [ElementItem.AdvanceTo, GameComponentRangeType.AdvanceToRange],
     [ElementItem.GameBody, GameComponentRangeType.FieldRange],
     [ElementItem.Dates, GameComponentRangeType.DatesRange]
+]);
+
+export const mapCanvasItemToGameComponentRangeType: Map<CanvasItem, GameComponentRangeType> = new Map<CanvasItem, GameComponentRangeType>([
+    [CanvasItem.TeamRows, GameComponentRangeType.TeamRange],
+    [CanvasItem.LineRows, GameComponentRangeType.HLineRange],
+    [CanvasItem.TeamColumns, GameComponentRangeType.TeamRange],
+    [CanvasItem.ScoreColumns, GameComponentRangeType.ScoreRange],
+    [CanvasItem.LineColumns, GameComponentRangeType.VLineRange]
 ]);
 
 export class GameComponentRanges
@@ -31,6 +41,14 @@ export class GameComponentRanges
             throw new Error(`No range type mapping found for element type: ${elementType}`);
 
         return this.m_ranges[mapElementTypeToGameComponentRangeType.get(elementType)];
+    }
+
+    public getRangeForCanvasItem(canvasItem: CanvasItem): Excel.Range
+    {
+        if (!mapCanvasItemToGameComponentRangeType.has(canvasItem))
+            throw new Error(`No range type mapping found for canvas item: ${canvasItem}`);
+
+        return this.m_ranges[mapCanvasItemToGameComponentRangeType.get(canvasItem)];
     }
 
     get TeamRange(): Excel.Range
@@ -63,19 +81,27 @@ export class GameComponentRanges
         return this.m_ranges[GameComponentRangeType.HLineRange];
     }
 
-    constructor(sheet: Excel.Worksheet, game: IBracketGame, rowDates: number)
+    get ScoresRange(): Excel.Range
+    {
+        return this.m_ranges[GameComponentRangeType.ScoreRange];
+    }
+
+    constructor(sheet: Excel.Worksheet, game: IBracketGame, rowDates?: number)
     {
         this.m_ranges[GameComponentRangeType.TeamRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange);
         this.m_ranges[GameComponentRangeType.GameNumberRange] = Ranges.rangeFromRangeInfo(sheet, game.GameIdRange);
         this.m_ranges[GameComponentRangeType.AdvanceToRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(2, 1, 0, 1));
         this.m_ranges[GameComponentRangeType.FieldRange] = Ranges.rangeFromRangeInfo(sheet, game.GameIdRange.offset(0, 1, -1, 1));
-        this.m_ranges[GameComponentRangeType.VLineRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(1, 1, 0, 1));
-        this.m_ranges[GameComponentRangeType.HLineRange] = Ranges.rangeFromRangeInfo(sheet, game.GameIdRange.offset(0, 1, 1, 1));
+        this.m_ranges[GameComponentRangeType.VLineRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(0, 1, 2, 1));
+        this.m_ranges[GameComponentRangeType.HLineRange] = Ranges.rangeFromRangeInfo(sheet, game.GameIdRange.offset(1, 1, 0, 1));
+        this.m_ranges[GameComponentRangeType.ScoreRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(0, 1, 1, 1));
 
-        const dateRangeForThisGame: RangeInfo = new RangeInfo(rowDates, 1, game.TopTeamRange.FirstColumn, 1);
+        if (rowDates)
+        {
+            const dateRangeForThisGame: RangeInfo = new RangeInfo(rowDates, 1, game.TopTeamRange.FirstColumn, 1);
 
-        this.m_ranges[GameComponentRangeType.DatesRange] = Ranges.rangeFromRangeInfo(sheet, dateRangeForThisGame);
-
+            this.m_ranges[GameComponentRangeType.DatesRange] = Ranges.rangeFromRangeInfo(sheet, dateRangeForThisGame);
+        }
     }
 
     enum(callback: (range: Excel.Range) => void): void

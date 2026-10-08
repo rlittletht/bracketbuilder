@@ -12,6 +12,17 @@ export class CanvasItemDefinition
         this.m_rules.push(...rules);
     }
 
+    public get CanvasItem(): CanvasItem
+    {
+        return this.m_item;
+    }
+
+    public loadFromExcelFormat(format: Excel.RangeFormat): void
+    {
+        for (const rule of this.m_rules)
+            rule.LoadFromExcelFormat(format);
+    }
+
     public get ruleNames(): string[]
     {
         const names: string[] = [];
@@ -41,5 +52,11 @@ export class CanvasItemDefinition
                 definitions.push(null);
         }
         return definitions;
+    }
+
+    public adjustLoadRequests(loadRequests: Set<string>): void
+    {
+        for (const rule of this.m_rules)
+            rule.AdjustLoadRequests(loadRequests);
     }
 }

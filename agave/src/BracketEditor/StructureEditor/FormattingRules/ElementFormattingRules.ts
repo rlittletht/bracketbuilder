@@ -97,7 +97,7 @@ export class ElementFormattingRules
         const loadString = loadRequests.join(", ");
         ranges.enum((range: Excel.Range) => { range.format.load(loadString); });
 
-        await context.sync("learnFormattingFromGridGame");
+        await context.sync("ElementFormattingRules.learnFormattingFromGridGame");
 
         // and now, query all of our elements for the formatting
         for (const definition of this.m_definitions)
