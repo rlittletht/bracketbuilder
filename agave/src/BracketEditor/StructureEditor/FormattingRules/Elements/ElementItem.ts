@@ -9,6 +9,7 @@ export enum ElementItem
     Dates = "Dates",
     TourneyHeading = "Tournament Heading",
     TourneySubHeading = "Tournament SubHeading",
+    Champion = "Champion",
 }
 
 export const ElementItemToThemeItemMap: Map<ElementItem, ThemeItem> = new Map<ElementItem, ThemeItem>([
@@ -18,5 +19,6 @@ export const ElementItemToThemeItemMap: Map<ElementItem, ThemeItem> = new Map<El
     [ElementItem.GameNumber, ThemeItem.Body],
     [ElementItem.Dates, ThemeItem.Body],
     [ElementItem.TourneyHeading, ThemeItem.Header],
-    [ElementItem.TourneySubHeading, ThemeItem.Header]
+    [ElementItem.TourneySubHeading, ThemeItem.Header],
+    [ElementItem.Champion, ThemeItem.BodyHeading],
 ]);

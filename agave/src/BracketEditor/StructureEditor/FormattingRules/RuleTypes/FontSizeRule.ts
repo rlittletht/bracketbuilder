@@ -2,6 +2,8 @@ import { NumberRuleBase } from "./NumberRuleBase";
 import { IFormatRule } from "./IFormatRule";
 import { IColor } from "@fluentui/react";
 import { LoadRequestType } from "./loadRequests";
+import { RangeInfo } from "../../../../Interop/Ranges";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
 
 export class FontSizeRule extends NumberRuleBase implements IFormatRule
 {
@@ -31,5 +33,14 @@ export class FontSizeRule extends NumberRuleBase implements IFormatRule
     public LoadFromExcelFormat(format: Excel.RangeFormat): void
     {
         this.m_val = format.font.size;
+    }
+
+    // font and font size have to be aggregated manually
+    public GetTns(range?: RangeInfo): IIntention[]
+    {
+        range;
+        const tns: IIntention[] = [];
+
+        return tns;
     }
 }

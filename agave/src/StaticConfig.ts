@@ -16,9 +16,13 @@ export interface StaticConfig
     cdnRoot: string;
     bodyFont: string;
     bodySize: number;
+    headerFont: string;
+    headerSize: number;
+    subHeaderSize: number;
     gameNumSize: number;
     blackFont: string;
     blackSize: number;
+    datesSize: number;
     championSize: number;
     advanceSize: number;
     logMoveKeySetting: boolean;
@@ -50,8 +54,12 @@ export const s_staticConfig: StaticConfig =
     bodySize: 9,
     blackFont: "Aptos Black",
     blackSize: 10,
+    headerFont: "Aptos Display",
+    headerSize: 26,
+    subHeaderSize: 18,
     gameNumSize: 9,
     championSize: 12,
+    datesSize: 11,
     advanceSize: 8,
     logMoveKeySetting: false && isLocalHost,
     perfTimers: isLocalHost,

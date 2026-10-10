@@ -32,6 +32,18 @@ export class CanvasItemDefinition
         }
     }
 
+    public setValue(ruleName: string, value: any): void
+    {
+        for (const rule of this.m_rules)
+        {
+            if (rule.Name.toLowerCase() == ruleName.toLowerCase())
+            {
+                rule.Parse(value);
+                return;
+            }
+        }
+    }
+
     public get ruleNames(): string[]
     {
         const names: string[] = [];

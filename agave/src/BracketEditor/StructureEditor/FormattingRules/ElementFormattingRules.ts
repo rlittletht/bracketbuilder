@@ -21,6 +21,7 @@ import { TnSetValues } from "../../../Interop/Intentions/TnSetValue";
 import { Intentions } from "../../../Interop/Intentions/Intentions";
 import { FormattingRulesBuilder } from "../../../Brackets/FormattingRulesBuilder";
 import { ThemeItem } from "./Themes/ThemeItem";
+import { s_staticConfig } from "../../../StaticConfig";
 
 
 export class ElementFormattingRules
@@ -83,6 +84,12 @@ export class ElementFormattingRules
         throw new Error(`ElementDefinition not found for element: ${element}`);
     }
 
+    getElementRule(element: ElementItem, rule: string): IFormatRule
+    {
+        const definition = this.getElementDefinition(element);
+        return definition.getRule(rule);
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: learnFormattingFromGridGame
         %%Qualified: ElementFormattingRules.learnFormattingFromGridGame
@@ -96,7 +103,7 @@ export class ElementFormattingRules
         const ranges = new GameComponentRanges(sheet, game, rowDates, gridGameStart);
 
         const loadString = loadRequests.join(", ");
-        ranges.enum((range: Excel.Range) => { range.format.load(loadString); });
+        ranges.enum((range: Excel.Range | null) => { range?.format.load(loadString); });
 
         await context.sync("ElementFormattingRules.learnFormattingFromGridGame");
 
@@ -104,10 +111,9 @@ export class ElementFormattingRules
         for (const definition of this.m_definitions)
         {
             const componentRange = ranges.getRangeForElementType(definition.ElementType);
-            definition.loadFromExcelFormat(componentRange.format);
+            if (componentRange)
+                definition.loadFromExcelFormat(componentRange.format);
         }
-
-        // TODO: adjust the font rule for theming. requires the theme to be loaded.
 
         const tns: Intentions = new Intentions();
 
@@ -139,6 +145,25 @@ export class ElementFormattingRules
         // and now record this in the FormattingRules table
         await tns.Execute(context);
     }
+
+    loadFormattingFromExcelSheet(context: JsCtx): void
+    {
+        RangeCaches.enumerateCachedTableBody(
+            context,
+            RangeCacheItemType.ElementFormattingBody,
+            RangeCacheItemType.ElementFormattingHeader,
+            (headerValues, dataValues, row): any[] =>
+            {
+                row;
+                const elementType = dataValues[0];
+                const definition = this.getElementDefinition(elementType);
+
+                for (let col = 1; col < dataValues.length; col++)
+                    definition.setValue(headerValues[col], dataValues[col]);
+                return dataValues;
+            },
+            null);
+    }
 }
 
 export function CreateDefaultElementFormattingRules(): ElementFormattingRules
@@ -149,7 +174,18 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
         ElementItem.GameTitle,
         [
             FontRule.CreateFromRule("Theme", true, ThemeItem.BodyHeading),
-            FontSizeRule.CreateFromRule(11),
+            FontSizeRule.CreateFromRule(s_staticConfig.blackSize),
+            BoldRule.CreateFromRule(false),
+            ItalicRule.CreateFromRule(false),
+            ColorRule.CreateFromString("#000000"),
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
+        ]);
+    rules.addDefinition(
+        ElementItem.Champion,
+        [
+            FontRule.CreateFromRule("Theme", true, ThemeItem.BodyHeading),
+            FontSizeRule.CreateFromRule(s_staticConfig.championSize),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
@@ -161,7 +197,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
         ElementItem.AdvanceTo,
         [
             FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
-            FontSizeRule.CreateFromRule(8),
+            FontSizeRule.CreateFromRule(s_staticConfig.advanceSize),
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(true),
             ColorRule.CreateFromString("#FF0000"),
@@ -173,7 +209,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
         ElementItem.GameBody,
         [
             FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
-            FontSizeRule.CreateFromRule(9),
+            FontSizeRule.CreateFromRule(s_staticConfig.bodySize),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
@@ -184,7 +220,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
         ElementItem.GameNumber,
         [
             FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
-            FontSizeRule.CreateFromRule(9),
+            FontSizeRule.CreateFromRule(s_staticConfig.bodySize),
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
@@ -202,6 +238,29 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             ColorRule.CreateFromString("#000000")
         ]);
 
+    rules.addDefinition(
+        ElementItem.TourneyHeading,
+        [
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
+            FontSizeRule.CreateFromRule(s_staticConfig.headerSize),
+            BoldRule.CreateFromRule(false),
+            ItalicRule.CreateFromRule(false),
+            ColorRule.CreateFromString("#000000"),
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
+        ]);
+
+    rules.addDefinition(
+        ElementItem.TourneySubHeading,
+        [
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
+            FontSizeRule.CreateFromRule(s_staticConfig.subHeaderSize),
+            BoldRule.CreateFromRule(false),
+            ItalicRule.CreateFromRule(false),
+            ColorRule.CreateFromString("#000000"),
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
+        ]);
     return rules;
 }
 

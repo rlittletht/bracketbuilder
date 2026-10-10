@@ -14,6 +14,13 @@ import { TnSetFontItalic } from "../Interop/Intentions/TnSetFontItalic";
 import { TnSetFontBold } from "../Interop/Intentions/TnSetFontBold";
 import { TnSetNumberFormat } from "../Interop/Intentions/TnSetNumberFormat";
 import { TnMergeRange } from "../Interop/Intentions/TnMergeRange";
+import { GridItem } from "./GridItem";
+import { _ThemeFormattingRules } from "./StructureEditor/FormattingRules/ThemeRules";
+import { ThemeItem } from "./StructureEditor/FormattingRules/Themes/ThemeItem";
+import { _ElementFormattingRules } from "./StructureEditor/FormattingRules/ElementFormattingRules";
+import { ElementItem } from "./StructureEditor/FormattingRules/Elements/ElementItem";
+import { FontRule } from "./StructureEditor/FormattingRules/RuleTypes/FontRule";
+import { ElementDefinition } from "./StructureEditor/FormattingRules/Elements/ElementDefinition";
 
 export class GameFormatting
 {
@@ -24,9 +31,9 @@ export class GameFormatting
     static s_vLineLine = `${GameFormatting.s_vLinePrefix}l`; // a line in a horizontal line row
 
     static s_hLinePrefix = `h${GameFormatting.s_lineText}`;
-    static s_hLineTeam =  `${GameFormatting.s_hLinePrefix}t`; // a line in the TeamName column
+    static s_hLineTeam = `${GameFormatting.s_hLinePrefix}t`; // a line in the TeamName column
     static s_hLineScore = `${GameFormatting.s_hLinePrefix}s`; // a line in the Score column
-    static s_hLineLine =  `${GameFormatting.s_vLinePrefix}l`; // a line in the vertical line column -- same as vertical line in a line row
+    static s_hLineLine = `${GameFormatting.s_vLinePrefix}l`; // a line in the vertical line column -- same as vertical line in a line row
 
     static s_mapGridRowType = new Map<GridRowType, string>(
         [
@@ -50,7 +57,7 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static isLineFormula(fmla: string | any): boolean
     {
-        if (fmla == null || (fmla?.length ?? 0)< 5)
+        if (fmla == null || (fmla?.length ?? 0) < 5)
             return false;
 
         return fmla.toLowerCase().startsWith(GameFormatting.s_lineText, 1);
@@ -72,27 +79,50 @@ export class GameFormatting
         return fmla.toLowerCase() == GameFormatting.s_mapGridColumnType.get(rowType);
     }
 
+    static tnsFormatGridGame(item: GridItem): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        if (item.isLineRange)
+            return tns;
+
+        if (item.IsChampionshipGame)
+            tns.push(...this.tnsFormatChampionshipText(item.TopTeamRange));
+        else
+        {
+            const topTeamRange = item.TopTeamRange;
+            tns.push(...this.tnsFormatTeamNameRangeRequest(topTeamRange));
+
+            const bottomTeamRange = item.BottomTeamRange;
+            tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange));
+
+            tns.push(...this.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 3, -1, 1)));
+        }
+        return tns;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatTeamNameRange
     ----------------------------------------------------------------------------*/
-    static formatTeamNameRangeRequest(teamNameRange: Excel.Range)
-    {
-        teamNameRange.format.font.name = s_staticConfig.blackFont;
-        teamNameRange.format.font.size = s_staticConfig.blackSize;
-        teamNameRange.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        teamNameRange.format.verticalAlignment = Excel.VerticalAlignment.center;
-    }
-
     static tnsFormatTeamNameRangeRequest(teamNameRange: RangeInfo): IIntention[]
     {
         if (teamNameRange == null)
             return [];
 
+        const gameTitleFont = _ThemeFormattingRules().resolve(
+            ThemeItem.BodyHeading,
+            _ElementFormattingRules().getElementRule(
+                ElementItem.GameTitle,
+                "Font") as any as FontRule);
+
+        const gameTitleSize = _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getRule("FontSize")?.Value as number;
+        const hAlign = _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getRule("HAlignment")?.Value as Excel.HorizontalAlignment;
+        const vAlign = _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getRule("VAlignment")?.Value as Excel.VerticalAlignment;
+
         return [
-            TnSetFontInfo.Create(teamNameRange, s_staticConfig.blackFont, s_staticConfig.blackSize),
-            TnSetHorizontalAlignment.Create(teamNameRange, Excel.HorizontalAlignment.center),
-            TnSetVerticalAlignment.Create(teamNameRange, Excel.VerticalAlignment.center),
+            TnSetFontInfo.Create(teamNameRange, gameTitleFont, gameTitleSize),
+            TnSetHorizontalAlignment.Create(teamNameRange, hAlign),
+            TnSetVerticalAlignment.Create(teamNameRange, vAlign),
         ];
     }
 
@@ -118,13 +148,14 @@ export class GameFormatting
 
         return [
             TnSetFillAndFontColor.Create(range, "black", "black"),
-            TnSetNumberFormat.Create(range, [[";;;"]])];
+            TnSetNumberFormat.Create(range, [[";;;"]])
+        ];
     }
 
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatGameInfoBodyText
     ----------------------------------------------------------------------------*/
-    static formatGameInfoBodyTextRequest(range: Excel.Range)
+    static del_formatGameInfoBodyTextRequest(range: Excel.Range)
     {
         range.format.font.name = s_staticConfig.bodyFont;
         range.format.font.size = s_staticConfig.bodySize;
@@ -134,14 +165,12 @@ export class GameFormatting
 
     static tnsFormatGameInfoBodyTextRequest(rangeInfo: RangeInfo): IIntention[]
     {
-        return [
-            TnSetFontInfo.Create(rangeInfo, s_staticConfig.bodyFont, s_staticConfig.bodySize),
-            TnSetHorizontalAlignment.Create(rangeInfo, Excel.HorizontalAlignment.center),
-            TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom)
-        ];
+        return _ElementFormattingRules()
+            .getElementDefinition(ElementItem.GameBody)
+            .getTns(rangeInfo, ThemeItem.Body);
     }
 
-    static formatChampionshipText(range: Excel.Range)
+    static del_formatChampionshipText(range: Excel.Range)
     {
         range.format.font.name = s_staticConfig.bodyFont;
         range.format.font.size = s_staticConfig.championSize;
@@ -279,8 +308,8 @@ export class GameFormatting
     static isRangeFormatInLineColumn(format: Excel.RangeFormat): boolean
     {
         return format.columnWidth < 5;
-
     }
+
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.isCellInLineColumn
     ----------------------------------------------------------------------------*/

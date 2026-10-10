@@ -1,5 +1,12 @@
 import { IFormatRule } from "../RuleTypes/IFormatRule";
 import { ElementItem } from "./ElementItem";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
+import { RangeInfo } from "../../../../Interop/Ranges";
+import { ThemeItem } from "../Themes/ThemeItem";
+import { _ThemeFormattingRules } from "../ThemeRules";
+import { _ElementFormattingRules } from "../ElementFormattingRules";
+import { FontRule } from "../RuleTypes/FontRule";
+import { TnSetFontInfo } from "../../../../Interop/Intentions/TnSetFontInfo";
 
 export class ElementDefinition
 {
@@ -60,12 +67,51 @@ export class ElementDefinition
             rule.LoadFromExcelFormat(format);
     }
 
-    public getValue(ruleName: string): any
+    public getRule(ruleName: string): IFormatRule | null
     {
         for (const rule of this.m_rules)
         {
             if (rule.Name.toLowerCase() == ruleName.toLowerCase())
-                return rule.Value;
+                return rule;
         }
+        return null;
+    }
+
+    public getValue(ruleName: string): any
+    {
+        const rule = this.getRule(ruleName);
+
+        if (rule)
+            return rule.Value;
+        return null;
+    }
+
+    public setValue(ruleName: string, value: any): void
+    {
+        const rule = this.getRule(ruleName);
+        if (rule)
+            rule.Parse(value);
+    }
+
+    public getTns(range: RangeInfo | null, themeItem: ThemeItem | null): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        for (const rule of this.m_rules)
+            tns.push(...rule.GetTns(range));
+
+        if (themeItem != null)
+        {
+            // and get the font information together
+            const font = _ThemeFormattingRules().resolve(
+                themeItem,
+                this.getRule("Font") as any as FontRule);
+
+            const size = this.getValue("FontSize")?.Value as number;
+
+            tns.push(TnSetFontInfo.Create(range, font, size));
+        }
+
+        return tns;
     }
 }

@@ -2,6 +2,9 @@ import { _ThemeFormattingRules } from "../ThemeRules";
 import { ThemeItem } from "../Themes/ThemeItem";
 import { IFormatRule } from "./IFormatRule";
 import { LoadRequestType } from "./loadRequests";
+import { RangeInfo } from "../../../../Interop/Ranges";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
+import { TnSetFontItalic } from "../../../../Interop/Intentions/TnSetFontItalic";
 
 export class FontRule implements IFormatRule
 {
@@ -101,5 +104,14 @@ export class FontRule implements IFormatRule
         this.m_fontName = format.font.name;
         this.m_isTheme = false; // must be adjusted by the caller
         this.themify();
+    }
+
+    // font and font size have to be aggregated manually
+    public GetTns(range?: RangeInfo): IIntention[]
+    {
+        range;
+        const tns: IIntention[] = [];
+
+        return tns;
     }
 }

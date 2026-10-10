@@ -50,7 +50,7 @@ import { GameExpander } from "./GameExpander";
 import { GameMoverSimple } from "../GameMovers/GameMoverSimple";
 import { _ElementFormattingRules } from "./FormattingRules/ElementFormattingRules";
 import { _CanvasFormattingRules } from "./FormattingRules/CanvasFormattingRules";
-import { _ThemeFormattingRules } from "./FormattingRules/ThemeRules";
+import { _ThemeFormattingRules, RefreshFormattingRules } from "./FormattingRules/ThemeRules";
 
 let _moveSelection: RangeInfo = null;
 
@@ -322,6 +322,8 @@ export class StructureEditor
             await FastFormulaAreas.populateAllCaches(context);
             _TimerStack.popTimer();
 
+            RefreshFormattingRules(context);
+
             await StructureInsert.insertGameAtSelection(appContext, context, game);
             context.releaseCacheObjectsUntil(bookmark);
             _TimerStack.popTimer();
@@ -544,6 +546,40 @@ export class StructureEditor
             
             await _ElementFormattingRules().learnFormattingFromGridGame(appContext, context, item, rowDates, grid.FirstGridPattern);
             await _CanvasFormattingRules().learnFormattingFromGridGame(appContext, context, item);
+
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+    }
+
+    static async applyBracketStyles(appContext: IAppContext)
+    {
+        if (!Dispatcher.RequireBracketReady(appContext))
+            return;
+
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            const range = await Ranges.createRangeInfoForSelection(context);
+            await FastFormulaAreas.populateAllCaches(context);
+
+            // get the grid item for this selection
+            let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
+            const [item, kind] = grid.getFirstOverlappingItem(range);
+
+            if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
+            {
+                appContext.Messages.error(
+                    ["You must select a game to learn its formatting."],
+                    { topic: HelpTopic.FinishingTouches_LearnGameFormatting });
+                return;
+            }
+            const rowDates = Grid.getRowForGameDates(context, grid.FirstGridPattern);
+
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
+
+            await StructureEditor.DoApplyBracketStyles(appContext, context, grid);
 
             appContext.AppStateAccess.HeroListDirty = true;
         };
@@ -1362,6 +1398,15 @@ export class StructureEditor
         changes.push(new GridChange(GridChangeOperation.Insert, GridItem.createFromItem(item)));
 
         await ApplyGridChange.applyChanges(appContext, context, grid, changes, bracketName);
+    }
+
+    static async DoApplyBracketStyles(appContext: IAppContext, context: JsCtx, grid: Grid): Promise<void>
+{
+        const intentions: Intentions = new Intentions();
+        appContext;
+        context;
+        grid;
+        
     }
 
     /*----------------------------------------------------------------------------

@@ -1,11 +1,15 @@
 import { IFormatRule } from "./IFormatRule";
 import { LoadRequestType } from "./loadRequests";
+import { RangeInfo } from "../../../../Interop/Ranges";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
+import { TnSetHorizontalAlignment } from "../../../../Interop/Intentions/TnSetHorizontalAlignment";
+import { TnSetVerticalAlignment } from "../../../../Interop/Intentions/TnSetVerticalAlignment";
 
 export enum VAlignment
 {
-    Top = "TOP",
-    Center = "CENTER",
-    Bottom = "BOTTOM"
+    Top = "Top",
+    Center = "Center",
+    Bottom = "Bottom"
 }
 
 export class VAlignmentRule implements IFormatRule
@@ -68,5 +72,17 @@ export class VAlignmentRule implements IFormatRule
     public LoadFromExcelFormat(format: Excel.RangeFormat): void
     {
         this.Parse(format.verticalAlignment);
+    }
+
+    public GetTns(range?: RangeInfo): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        if (!range)
+            return [];
+
+        tns.push(
+            TnSetVerticalAlignment.Create(range, this.Value as Excel.VerticalAlignment));
+        return tns;
     }
 }

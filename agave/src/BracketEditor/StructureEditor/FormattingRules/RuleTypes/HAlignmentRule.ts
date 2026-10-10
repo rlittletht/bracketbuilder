@@ -1,11 +1,14 @@
+import { RangeInfo } from "../../../../Interop/Ranges";
 import { IFormatRule } from "./IFormatRule";
 import { LoadRequestType } from "./loadRequests";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
+import { TnSetHorizontalAlignment } from "../../../../Interop/Intentions/TnSetHorizontalAlignment";
 
 export enum HAlignment
 {
-    Left = "LEFT",
-    Center = "CENTER",
-    Right = "RIGHT"
+    Left = "Left",
+    Center = "Center",
+    Right = "Right"
 }
 
 export class HAlignmentRule implements IFormatRule
@@ -57,7 +60,8 @@ export class HAlignmentRule implements IFormatRule
 
     public set Value(val: any)
     {
-        this.Parse(val);    }
+        this.Parse(val);
+    }
 
     public AdjustLoadRequests(loadRequests: Set<string>): void
     {
@@ -67,5 +71,17 @@ export class HAlignmentRule implements IFormatRule
     public LoadFromExcelFormat(format: Excel.RangeFormat): void
     {
         this.Parse(format.horizontalAlignment);
+    }
+
+    public GetTns(range?: RangeInfo): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        if (!range)
+            return [];
+
+        tns.push(
+            TnSetHorizontalAlignment.Create(range, this.Value as Excel.HorizontalAlignment));
+        return tns;
     }
 }

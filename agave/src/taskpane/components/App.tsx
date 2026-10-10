@@ -417,6 +417,15 @@ export default class App extends React.Component<AppProps, AppState> implements 
                             return true;
                         }
                     },
+                    {
+                        icon: "Padding",
+                        text: "(Re)apply bracket styles",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.applyBracketStyles(appContext);
+                            return true;
+                        }
+                    },
                 ]
             });
 

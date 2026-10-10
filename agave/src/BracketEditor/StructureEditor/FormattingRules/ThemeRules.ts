@@ -10,6 +10,8 @@ import { TnSetValues } from "../../../Interop/Intentions/TnSetValue";
 import { IAppContext } from "../../../AppContext/AppContext";
 import { GridItem } from "../../GridItem";
 import { JsCtx } from "../../../Interop/JsCtx";
+import { _ElementFormattingRules } from "./ElementFormattingRules";
+import { _CanvasFormattingRules } from "./CanvasFormattingRules";
 
 
 export class ThemeRules
@@ -102,6 +104,15 @@ export class ThemeRules
             },
             null);
     }
+
+    resolve(themeItem: ThemeItem, font: FontRule): string
+    {
+        if (!font.IsTheme)
+            return font.Value;
+
+        const definition = this.getThemeItemDefinition(themeItem);
+        return definition.getValue("Font");
+    }
 }
 
 export function CreateDefaultThemeRules(): ThemeRules
@@ -122,4 +133,11 @@ export function _ThemeFormattingRules(): ThemeRules
     _themeFormattingRules = _themeFormattingRules || CreateDefaultThemeRules();
 
     return _themeFormattingRules;
+}
+
+export function RefreshFormattingRules(context: JsCtx): void
+{
+    _ThemeFormattingRules().loadThemeFromExcelSheet(context);
+    _ElementFormattingRules().loadFormattingFromExcelSheet(context);
+    _CanvasFormattingRules().loadFormattingFromExcelSheet(context);
 }

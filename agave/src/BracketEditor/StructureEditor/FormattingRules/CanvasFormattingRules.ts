@@ -131,6 +131,26 @@ export class CanvasFormattingRules
         await tns.Execute(context);
     }
 
+    loadFormattingFromExcelSheet(context: JsCtx): void
+    {
+        RangeCaches.enumerateCachedTableBody(
+            context,
+            RangeCacheItemType.CanvasFormattingBody,
+            RangeCacheItemType.CanvasFormattingHeader,
+            (headerValues, dataValues, row): any[] =>
+            {
+                row;
+                const canvasItem = dataValues[0];
+                const definition = this.getCanvasItemDefinition(canvasItem);
+
+                for (let col = 1; col < dataValues.length; col++)
+                {
+                    definition.setValue(headerValues[col], dataValues[col]);
+                }
+                return dataValues;
+            },
+            null);
+    }
 }
 
 export function CreateDefaultCanvasFormattingRules(): CanvasFormattingRules

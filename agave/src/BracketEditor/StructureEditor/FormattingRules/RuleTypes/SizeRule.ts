@@ -1,5 +1,7 @@
 import { NumberRuleBase } from "./NumberRuleBase";
 import { IFormatRule } from "./IFormatRule";
+import { RangeInfo } from "../../../../Interop/Ranges";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
 
 export interface GetFormatValueDelegate
 {
@@ -42,5 +44,15 @@ export class SizeRule extends NumberRuleBase implements IFormatRule
     public LoadFromExcelFormat(format: Excel.RangeFormat): void
     {
         this.m_getFormatValue(this, format);
+    }
+
+    public GetTns(range?: RangeInfo): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        if (!range)
+            return [];
+
+        return tns;
     }
 }

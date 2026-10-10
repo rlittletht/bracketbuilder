@@ -7,6 +7,7 @@ import { Ranges } from "../Interop/Ranges";
 import { Tables } from "../Interop/Tables";
 import { BracketDefBuilder } from "./BracketDefBuilder";
 import { RulesBuilder } from "./RulesBuilder";
+import { s_staticConfig } from "../StaticConfig";
 
 export class FormattingRulesBuilder
 {
@@ -64,9 +65,9 @@ export class FormattingRulesBuilder
             FormattingRulesBuilder.ThemeTableName,
             ["Element", "Font"],
             [
-                ["Header", "Aptos Display"],
-                ["BodyHeading", "Aptos Black"],
-                ["Body", "Aptos Narrow"]
+                ["Header", s_staticConfig.headerFont],
+                ["BodyHeading", s_staticConfig.blackFont],
+                ["Body", s_staticConfig.bodyFont]
             ]);
 
         row += 5;
@@ -79,13 +80,14 @@ export class FormattingRulesBuilder
             FormattingRulesBuilder.ElementFormattingTableName,
             ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"],
             [
-                ["Tournament Heading", "Theme", "26", "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
-                ["Tournament SubHeading", "Theme", "18", "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
-                ["Game Title", "Theme", "11", "FALSE", "TRUE", "#000000", "CENTER", "CENTER"],
-                ["Advance To", "Theme", "8", "TRUE", "TRUE", "#FF0000", "CENTER", "CENTER"],
-                ["Game Body", "Theme", "9", "FALSE", "FALSE", "#000000", "CENTER", ""],
-                ["Game Number", "Theme", "9", "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
-                ["Dates", "Theme", "11", "FALSE", "FALSE", "#000000", "", ""]
+                ["Tournament Heading", "Theme", s_staticConfig.headerSize, "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
+                ["Tournament SubHeading", "Theme", s_staticConfig.subHeaderSize, "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
+                ["Game Title", "Theme", s_staticConfig.blackSize, "FALSE", "TRUE", "#000000", "CENTER", "CENTER"],
+                ["Advance To", "Theme", s_staticConfig.advanceSize, "TRUE", "TRUE", "#FF0000", "CENTER", "CENTER"],
+                ["Game Body", "Theme", s_staticConfig.bodySize, "FALSE", "FALSE", "#000000", "CENTER", ""],
+                ["Game Number", "Theme", s_staticConfig.gameNumSize, "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
+                ["Dates", "Theme", s_staticConfig.datesSize, "FALSE", "FALSE", "#000000", "", ""],
+                ["Champion", "Theme", s_staticConfig.championSize, "FALSE", "FALSE", "#000000", "CENTER", "CENTER"]
             ]);
 
         row += 10;

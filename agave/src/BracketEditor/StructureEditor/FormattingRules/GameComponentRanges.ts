@@ -1,7 +1,7 @@
-import {ElementItem} from "./Elements/ElementItem";
-import {IBracketGame} from "../../IBracketGame";
-import {RangeInfo, Ranges} from "../../../Interop/Ranges";
-import {CanvasItem} from "./CanvasItems/CanvasItem";
+import { ElementItem } from "./Elements/ElementItem";
+import { IBracketGame } from "../../IBracketGame";
+import { RangeInfo, Ranges } from "../../../Interop/Ranges";
+import { CanvasItem } from "./CanvasItems/CanvasItem";
 
 export enum GameComponentRangeType
 {
@@ -14,7 +14,8 @@ export enum GameComponentRangeType
     DatesRange = 6,
     TourneyHeadingRange = 7,
     ScoreRange = 8,
-    Last = ScoreRange
+    ChampionRange = 9,
+    Last = ChampionRange
 }
 
 export const mapElementTypeToGameComponentRangeType: Map<ElementItem, GameComponentRangeType> = new Map<ElementItem, GameComponentRangeType>(
@@ -97,6 +98,11 @@ export class GameComponentRanges
         return this.m_ranges[GameComponentRangeType.TourneyHeadingRange];
     }
 
+    get ChampionRange(): Excel.Range
+    {
+        return this.m_ranges[GameComponentRangeType.ChampionRange];
+    }
+
     constructor(sheet: Excel.Worksheet, game: IBracketGame, rowDates?: number, gridGameStart?: RangeInfo)
     {
         this.m_ranges = [];
@@ -122,6 +128,11 @@ export class GameComponentRanges
             const dateRangeForThisGame: RangeInfo = new RangeInfo(rowDates, 1, game.TopTeamRange.FirstColumn, 1);
 
             this.m_ranges[GameComponentRangeType.DatesRange] = Ranges.rangeFromRangeInfo(sheet, dateRangeForThisGame);
+        }
+
+        if (game.IsChampionship)
+        {
+            this.m_ranges[GameComponentRangeType.ChampionRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange);
         }
     }
 
