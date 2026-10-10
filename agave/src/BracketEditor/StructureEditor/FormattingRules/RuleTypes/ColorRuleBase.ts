@@ -16,6 +16,11 @@ export class ColorRuleBase
         return this.m_val.str;
     }
 
+    public set Value(val: any)
+    {
+        this.Parse(val);
+    }
+
     public Parse(val: any): void
     {
         switch (typeof val)

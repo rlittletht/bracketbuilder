@@ -402,7 +402,8 @@ export class RangeCaches
                 if (values.length != dataRange.RowCount)
                     throw new Error(`getUpdatedRowValues returned ${values.length} rows, but expected ${dataRange.RowCount}`);
 
-                processUpdatedValues(dataRange, values);
+                if (processUpdatedValues)
+                    processUpdatedValues(dataRange, values);
             }
         }
     }

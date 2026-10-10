@@ -11,7 +11,7 @@ import { ElementItem } from "./Elements/ElementItem";
 import { IAppContext } from "../../../AppContext/AppContext";
 import { JsCtx } from "../../../Interop/JsCtx";
 import { GridItem } from "../../GridItem";
-import { Ranges } from "../../../Interop/Ranges";
+import { Ranges, RangeInfo } from "../../../Interop/Ranges";
 import { IBracketGame } from "../../IBracketGame";
 import { GameComponentRanges } from "./GameComponentRanges";
 import { IIntention } from "../../../Interop/Intentions/IIntention";
@@ -20,6 +20,7 @@ import { FastFormulaAreas } from "../../../Interop/FastFormulaAreas/FastFormulaA
 import { TnSetValues } from "../../../Interop/Intentions/TnSetValue";
 import { Intentions } from "../../../Interop/Intentions/Intentions";
 import { FormattingRulesBuilder } from "../../../Brackets/FormattingRulesBuilder";
+import { ThemeItem } from "./Themes/ThemeItem";
 
 
 export class ElementFormattingRules
@@ -86,13 +87,13 @@ export class ElementFormattingRules
         %%Function: learnFormattingFromGridGame
         %%Qualified: ElementFormattingRules.learnFormattingFromGridGame
     ----------------------------------------------------------------------------*/
-    public async learnFormattingFromGridGame(appContext: IAppContext, context: JsCtx, gridGame: GridItem, rowDates: number): Promise<void>
+    public async learnFormattingFromGridGame(appContext: IAppContext, context: JsCtx, gridGame: GridItem, rowDates: number, gridGameStart: RangeInfo): Promise<void>
     {
         appContext;
         const sheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         const game = gridGame.BracketGameCache;
         const loadRequests = this.collectLoadRequests();
-        const ranges = new GameComponentRanges(sheet, game, rowDates);
+        const ranges = new GameComponentRanges(sheet, game, rowDates, gridGameStart);
 
         const loadString = loadRequests.join(", ");
         ranges.enum((range: Excel.Range) => { range.format.load(loadString); });
@@ -147,7 +148,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.GameTitle,
         [
-            FontRule.CreateFromRule("Theme", true),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.BodyHeading),
             FontSizeRule.CreateFromRule(11),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
@@ -159,7 +160,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.AdvanceTo,
         [
-            FontRule.CreateFromRule("Theme", true),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
             FontSizeRule.CreateFromRule(8),
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(true),
@@ -171,7 +172,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.GameBody,
         [
-            FontRule.CreateFromRule("Theme", true),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
             FontSizeRule.CreateFromRule(9),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
@@ -182,7 +183,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.GameNumber,
         [
-            FontRule.CreateFromRule("Theme", true),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
             FontSizeRule.CreateFromRule(9),
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(false),
@@ -194,7 +195,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.Dates,
         [
-            FontRule.CreateFromRule("Theme", true),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
             FontSizeRule.CreateFromRule(11),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
@@ -204,4 +205,10 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     return rules;
 }
 
-export let _elementFormattingRules: ElementFormattingRules = CreateDefaultElementFormattingRules();
+let _elementFormattingRules: ElementFormattingRules | null = null;
+
+export function _ElementFormattingRules(): ElementFormattingRules
+{
+    _elementFormattingRules = _elementFormattingRules || CreateDefaultElementFormattingRules();
+    return _elementFormattingRules;
+}

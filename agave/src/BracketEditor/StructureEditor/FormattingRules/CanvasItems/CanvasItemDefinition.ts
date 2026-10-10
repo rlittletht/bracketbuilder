@@ -23,6 +23,15 @@ export class CanvasItemDefinition
             rule.LoadFromExcelFormat(format);
     }
 
+    public getValue(ruleName: string): any
+    {
+        for (const rule of this.m_rules)
+        {
+            if (rule.Name.toLowerCase() == ruleName.toLowerCase())
+                return rule.Value;
+        }
+    }
+
     public get ruleNames(): string[]
     {
         const names: string[] = [];

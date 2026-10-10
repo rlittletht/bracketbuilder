@@ -21,10 +21,11 @@ export class SizeRule extends NumberRuleBase implements IFormatRule
         return rule;
     }
 
-    public static CreateFromRule(loadRequest: string, val: number): IFormatRule
+    public static CreateFromRule(loadRequest: string, getFormatValue: GetFormatValueDelegate, val: number): IFormatRule
     {
         const rule = new SizeRule(val);
         rule.m_loadRequest = loadRequest;
+        rule.m_getFormatValue = getFormatValue;
         return rule;
     }
 

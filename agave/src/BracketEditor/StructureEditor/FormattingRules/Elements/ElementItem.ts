@@ -1,3 +1,4 @@
+import { ThemeItem } from "../Themes/ThemeItem";
 
 export enum ElementItem
 {
@@ -5,6 +6,17 @@ export enum ElementItem
     AdvanceTo = "Advance To",
     GameBody = "Game Body",
     GameNumber = "Game Number",
-    Dates = "Dates"
+    Dates = "Dates",
+    TourneyHeading = "Tournament Heading",
+    TourneySubHeading = "Tournament SubHeading",
 }
 
+export const ElementItemToThemeItemMap: Map<ElementItem, ThemeItem> = new Map<ElementItem, ThemeItem>([
+    [ElementItem.GameTitle, ThemeItem.BodyHeading],
+    [ElementItem.AdvanceTo, ThemeItem.Body],
+    [ElementItem.GameBody, ThemeItem.Body],
+    [ElementItem.GameNumber, ThemeItem.Body],
+    [ElementItem.Dates, ThemeItem.Body],
+    [ElementItem.TourneyHeading, ThemeItem.Header],
+    [ElementItem.TourneySubHeading, ThemeItem.Header]
+]);

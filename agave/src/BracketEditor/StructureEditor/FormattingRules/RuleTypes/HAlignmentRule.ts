@@ -55,6 +55,10 @@ export class HAlignmentRule implements IFormatRule
         return this.m_val;
     }
 
+    public set Value(val: any)
+    {
+        this.Parse(val);    }
+
     public AdjustLoadRequests(loadRequests: Set<string>): void
     {
         loadRequests.add(LoadRequestType.HorizontalAlignment);

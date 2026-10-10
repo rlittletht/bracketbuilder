@@ -48,7 +48,9 @@ import { IIntention } from "../../Interop/Intentions/IIntention";
 import { TnMergeRange } from "../../Interop/Intentions/TnMergeRange";
 import { GameExpander } from "./GameExpander";
 import { GameMoverSimple } from "../GameMovers/GameMoverSimple";
-import { _elementFormattingRules } from "./FormattingRules/ElementFormattingRules";
+import { _ElementFormattingRules } from "./FormattingRules/ElementFormattingRules";
+import { _CanvasFormattingRules } from "./FormattingRules/CanvasFormattingRules";
+import { _ThemeFormattingRules } from "./FormattingRules/ThemeRules";
 
 let _moveSelection: RangeInfo = null;
 
@@ -537,7 +539,11 @@ export class StructureEditor
             }
             const rowDates = Grid.getRowForGameDates(context, grid.FirstGridPattern);
 
-            await _elementFormattingRules.learnFormattingFromGridGame(appContext, context, item, rowDates);
+            // make sure we have the latest theme values
+            _ThemeFormattingRules().loadThemeFromExcelSheet(context);
+            
+            await _ElementFormattingRules().learnFormattingFromGridGame(appContext, context, item, rowDates, grid.FirstGridPattern);
+            await _CanvasFormattingRules().learnFormattingFromGridGame(appContext, context, item);
 
             appContext.AppStateAccess.HeroListDirty = true;
         };

@@ -1,3 +1,5 @@
+import { _ThemeFormattingRules } from "../ThemeRules";
+import { ThemeItem } from "../Themes/ThemeItem";
 import { IFormatRule } from "./IFormatRule";
 import { LoadRequestType } from "./loadRequests";
 
@@ -5,11 +7,25 @@ export class FontRule implements IFormatRule
 {
     m_fontName: string;
     m_isTheme: boolean;
+    m_themeItem: ThemeItem | null = null;
 
     public constructor(val?: string)
     {
         if (val)
             this.m_fontName = val;
+    }
+
+    themify(): void
+    {
+        if (this.m_isTheme)
+            return;
+
+        if (this.m_themeItem != null)
+        {
+            const definition = _ThemeFormattingRules().getThemeItemDefinition(this.m_themeItem);
+            if (definition.getValue("Font").toLowerCase() == this.m_fontName.toLowerCase())
+                this.m_isTheme = true;
+        }
     }
 
     public Parse(val: any): void
@@ -28,6 +44,7 @@ export class FontRule implements IFormatRule
         default:
             throw new Error(`Invalid value type for FontRule: ${typeof val}`);
         }
+        this.themify();
     }
 
     public static CreateFromString(fontName: string): IFormatRule
@@ -38,11 +55,12 @@ export class FontRule implements IFormatRule
         return rule;
     }
 
-    public static CreateFromRule(fontName: string, isTheme: boolean): IFormatRule
+    public static CreateFromRule(fontName: string, isTheme: boolean, themeItem: ThemeItem | null): IFormatRule
     {
         const rule = new FontRule();
         rule.m_fontName = fontName;
         rule.m_isTheme = isTheme;
+        rule.m_themeItem = themeItem;
         return rule;
     }
 
@@ -60,7 +78,12 @@ export class FontRule implements IFormatRule
 
     public get Value(): any
     {
-        return this.m_fontName;
+        return this.m_isTheme ? "Theme" : this.m_fontName;
+    }
+
+    public set Value(val: any)
+    {
+        this.Parse(val);
     }
 
     public get IsTheme(): boolean
@@ -77,10 +100,6 @@ export class FontRule implements IFormatRule
     {
         this.m_fontName = format.font.name;
         this.m_isTheme = false; // must be adjusted by the caller
-    }
-
-    public AdjustFontForTheme(themeFontName: string): void
-    {
-        this.m_isTheme = this.m_fontName.toLowerCase() === themeFontName.toLowerCase();
+        this.themify();
     }
 }

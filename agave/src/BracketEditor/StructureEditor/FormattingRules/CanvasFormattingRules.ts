@@ -70,7 +70,7 @@ export class CanvasFormattingRules
         return Array.from(loadRequests);
     }
 
-    getCanvasItemtDefinition(item: CanvasItem): CanvasItemDefinition
+    getCanvasItemDefinition(item: CanvasItem): CanvasItemDefinition
     {
         for (const definition of this.m_definitions)
         {
@@ -79,6 +79,7 @@ export class CanvasFormattingRules
         }
         throw new Error(`CanvasItemDefinition not found for element: ${item}`);
     }
+
     public async learnFormattingFromGridGame(appContext: IAppContext, context: JsCtx, gridGame: GridItem): Promise<void>
     {
         appContext;
@@ -88,7 +89,7 @@ export class CanvasFormattingRules
         const ranges = new GameComponentRanges(sheet, game);
 
         const loadString = loadRequests.join(", ");
-        ranges.enum((range: Excel.Range) => {range.format.load(loadString);});
+        ranges.enum((range: Excel.Range) => {range?.format.load(loadString);});
 
         await context.sync("CanvasFormattingRules.learnFormattingFromGridGame");
 
@@ -110,7 +111,7 @@ export class CanvasFormattingRules
                 row;
                 // get the element type for this row
                 const canvasItem = dataValues[0];
-                const definition = this.getElementDefinition(canvasItem);
+                const definition = this.getCanvasItemDefinition(canvasItem);
                 const values: any[] = [];
                 values.push(canvasItem);
 
@@ -136,13 +137,19 @@ export function CreateDefaultCanvasFormattingRules(): CanvasFormattingRules
 {
     const rules: CanvasFormattingRules = new CanvasFormattingRules();
 
-    rules.addDefinition(CanvasItem.TeamRows, [SizeRule.CreateFromRule("rowHeight", 15)]);
-    rules.addDefinition(CanvasItem.LineRows, [SizeRule.CreateFromRule("rowHeight", 1)]);
-    rules.addDefinition(CanvasItem.TeamColumns, [SizeRule.CreateFromRule("columnWidth", 113)]);
-    rules.addDefinition(CanvasItem.ScoreColumns, [SizeRule.CreateFromRule("columnWidth", 17.5)]);
-    rules.addDefinition(CanvasItem.LineColumns, [SizeRule.CreateFromRule("columnWidth", 1)]);
+    rules.addDefinition(CanvasItem.TeamRows, [SizeRule.CreateFromRule("rowHeight", (rule, format) => { rule.m_val = format.rowHeight; }, 15)]);
+    rules.addDefinition(CanvasItem.LineRows, [SizeRule.CreateFromRule("rowHeight", (rule, format) => { rule.m_val = format.rowHeight; }, 1)]);
+    rules.addDefinition(CanvasItem.TeamColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, 113)]);
+    rules.addDefinition(CanvasItem.ScoreColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, 17.5)]);
+    rules.addDefinition(CanvasItem.LineColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, 1)]);
 
     return rules;
 }
 
-export let _canvasFormattingRules: CanvasFormattingRules = CreateDefaultCanvasFormattingRules();
+let _canvasFormattingRules: CanvasFormattingRules | null = null;
+
+export function _CanvasFormattingRules(): CanvasFormattingRules
+{
+    _canvasFormattingRules = _canvasFormattingRules || CreateDefaultCanvasFormattingRules();
+    return _canvasFormattingRules;
+}

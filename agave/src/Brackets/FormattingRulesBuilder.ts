@@ -79,14 +79,16 @@ export class FormattingRulesBuilder
             FormattingRulesBuilder.ElementFormattingTableName,
             ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"],
             [
-                ["Game Title", "Theme", "11", "FALSE", "FALSE", "#000000", "CENTER", "CENTER"],
+                ["Tournament Heading", "Theme", "26", "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
+                ["Tournament SubHeading", "Theme", "18", "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
+                ["Game Title", "Theme", "11", "FALSE", "TRUE", "#000000", "CENTER", "CENTER"],
                 ["Advance To", "Theme", "8", "TRUE", "TRUE", "#FF0000", "CENTER", "CENTER"],
                 ["Game Body", "Theme", "9", "FALSE", "FALSE", "#000000", "CENTER", ""],
                 ["Game Number", "Theme", "9", "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
                 ["Dates", "Theme", "11", "FALSE", "FALSE", "#000000", "", ""]
             ]);
 
-        row += 8;
+        row += 10;
 
         await this.insertTableAt(
             context,

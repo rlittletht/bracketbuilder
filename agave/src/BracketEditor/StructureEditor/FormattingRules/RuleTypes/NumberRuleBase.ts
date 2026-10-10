@@ -15,6 +15,11 @@ export class NumberRuleBase
         return this.m_val;
     }
 
+    public set Value(val: any)
+    {
+        this.Parse(val);
+    }
+
     public Parse(val: any): void
     {
         switch (typeof val)
