@@ -190,7 +190,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
             HAlignmentRule.CreateFromRule(HAlignment.Center),
-            VAlignmentRule.CreateFromRule(VAlignment.Center)
+            VAlignmentRule.CreateFromRule(VAlignment.Bottom)
         ]);
 
     rules.addDefinition(

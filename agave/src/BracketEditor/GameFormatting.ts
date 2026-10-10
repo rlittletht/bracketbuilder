@@ -109,21 +109,7 @@ export class GameFormatting
         if (teamNameRange == null)
             return [];
 
-        const gameTitleFont = _ThemeFormattingRules().resolve(
-            ThemeItem.BodyHeading,
-            _ElementFormattingRules().getElementRule(
-                ElementItem.GameTitle,
-                "Font") as any as FontRule);
-
-        const gameTitleSize = _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getRule("FontSize")?.Value as number;
-        const hAlign = _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getRule("HAlignment")?.Value as Excel.HorizontalAlignment;
-        const vAlign = _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getRule("VAlignment")?.Value as Excel.VerticalAlignment;
-
-        return [
-            TnSetFontInfo.Create(teamNameRange, gameTitleFont, gameTitleSize),
-            TnSetHorizontalAlignment.Create(teamNameRange, hAlign),
-            TnSetVerticalAlignment.Create(teamNameRange, vAlign),
-        ];
+        return _ElementFormattingRules().getElementDefinition(ElementItem.GameNumber).getTns(teamNameRange, ThemeItem.Body);
     }
 
     /*----------------------------------------------------------------------------
@@ -165,9 +151,14 @@ export class GameFormatting
 
     static tnsFormatGameInfoBodyTextRequest(rangeInfo: RangeInfo): IIntention[]
     {
-        return _ElementFormattingRules()
-            .getElementDefinition(ElementItem.GameBody)
-            .getTns(rangeInfo, ThemeItem.Body);
+        const tns: IIntention[] =
+            _ElementFormattingRules()
+                .getElementDefinition(ElementItem.GameBody)
+                .getTns(rangeInfo, ThemeItem.Body);
+
+        tns.push(TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom));
+
+        return tns;
     }
 
     static del_formatChampionshipText(range: Excel.Range)
@@ -183,14 +174,9 @@ export class GameFormatting
 
     static tnsFormatChampionshipText(rangeInfo: RangeInfo): IIntention[]
     {
-        return [
-            TnSetFontInfo.Create(rangeInfo, s_staticConfig.bodyFont, s_staticConfig.championSize),
-            TnSetFontBold.Create(rangeInfo, true),
-            TnSetFontItalic.Create(rangeInfo, true),
-            TnSetFontColor.Create(rangeInfo, "#ff0000"),
-            TnSetHorizontalAlignment.Create(rangeInfo, Excel.HorizontalAlignment.center),
-            TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom)
-        ];
+        return _ElementFormattingRules()
+            .getElementDefinition(ElementItem.Champion)
+            .getTns(rangeInfo, ThemeItem.BodyHeading);
     }
 
     /*----------------------------------------------------------------------------
@@ -207,12 +193,15 @@ export class GameFormatting
 
     static tnsFormatGameInfoTimeTextRequest(rangeInfo: RangeInfo): IIntention[]
     {
-        return [
-            TnSetFontInfo.Create(rangeInfo, s_staticConfig.bodyFont, s_staticConfig.bodySize),
-            TnSetHorizontalAlignment.Create(rangeInfo, Excel.HorizontalAlignment.center),
-            TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.top),
-            TnSetNumberFormat.Create(rangeInfo, [["h:mm AM/PM"]])
-        ];
+        const tns: IIntention[] =
+            _ElementFormattingRules()
+                .getElementDefinition(ElementItem.GameBody)
+                .getTns(rangeInfo, ThemeItem.Body);
+
+        tns.push(TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.top));
+        tns.push(TnSetNumberFormat.Create(rangeInfo, [["h:mm AM/PM"]]));
+
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
