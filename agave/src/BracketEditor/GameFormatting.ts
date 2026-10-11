@@ -109,7 +109,7 @@ export class GameFormatting
         if (teamNameRange == null)
             return [];
 
-        return _ElementFormattingRules().getElementDefinition(ElementItem.GameNumber).getTns(teamNameRange, ThemeItem.Body);
+        return _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getTns(teamNameRange);
     }
 
     /*----------------------------------------------------------------------------
@@ -154,7 +154,7 @@ export class GameFormatting
         const tns: IIntention[] =
             _ElementFormattingRules()
                 .getElementDefinition(ElementItem.GameBody)
-                .getTns(rangeInfo, ThemeItem.Body);
+                .getTns(rangeInfo);
 
         tns.push(TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom));
 
@@ -176,7 +176,7 @@ export class GameFormatting
     {
         return _ElementFormattingRules()
             .getElementDefinition(ElementItem.Champion)
-            .getTns(rangeInfo, ThemeItem.BodyHeading);
+            .getTns(rangeInfo);
     }
 
     /*----------------------------------------------------------------------------
@@ -196,7 +196,7 @@ export class GameFormatting
         const tns: IIntention[] =
             _ElementFormattingRules()
                 .getElementDefinition(ElementItem.GameBody)
-                .getTns(rangeInfo, ThemeItem.Body);
+                .getTns(rangeInfo);
 
         tns.push(TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.top));
         tns.push(TnSetNumberFormat.Create(rangeInfo, [["h:mm AM/PM"]]));
@@ -205,53 +205,31 @@ export class GameFormatting
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameFormatting.formatGameInfoAdvanceToText
+        %%Function: GameFormatting.tnsFormatGameInfoAdvanceToTextRequest
     ----------------------------------------------------------------------------*/
-    static formatGameInfoAdvanceToTextRequest(range: Excel.Range, align: Excel.VerticalAlignment)
-    {
-        range.format.font.name = s_staticConfig.bodyFont;
-        range.format.font.size = s_staticConfig.advanceSize;
-        range.format.font.bold = true;
-        range.format.font.italic = true;
-        range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        range.format.verticalAlignment = align;
-        range.format.font.color = "#ff0000";
-    }
-
     static tnsFormatGameInfoAdvanceToTextRequest(range: RangeInfo, align: Excel.VerticalAlignment): IIntention[]
     {
-        return [
-            TnSetFontInfo.Create(range, s_staticConfig.bodyFont, s_staticConfig.advanceSize),
-            TnSetFontBold.Create(range, true),
-            TnSetFontItalic.Create(range, true),
-            TnSetHorizontalAlignment.Create(range, Excel.HorizontalAlignment.center),
-            TnSetVerticalAlignment.Create(range, align),
-            TnSetFontColor.Create(range, "#ff0000")
-        ];
+        const tns: IIntention[] =
+            _ElementFormattingRules()
+                .getElementDefinition(ElementItem.AdvanceTo)
+                .getTns(range);
+
+        tns.push(TnSetVerticalAlignment.Create(range, align));
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameFormatting.formatGameInfoGameNumber
+        %%Function: GameFormatting.tnsFormatGameInfoGameNumberRequest
     ----------------------------------------------------------------------------*/
-    static formatGameInfoGameNumberRequest(range: Excel.Range)
-    {
-        range.format.font.name = s_staticConfig.bodyFont;
-        range.format.font.size = s_staticConfig.gameNumSize;
-        range.format.font.bold = true;
-        range.format.horizontalAlignment = Excel.HorizontalAlignment.right;
-        range.format.verticalAlignment = Excel.VerticalAlignment.center;
-        range.merge(false);
-    }
-
     static tnsFormatGameInfoGameNumberRequest(range: RangeInfo): IIntention[]
     {
-        return [
-            TnSetFontInfo.Create(range, s_staticConfig.bodyFont, s_staticConfig.gameNumSize),
-            TnSetFontBold.Create(range, true),
-            TnSetHorizontalAlignment.Create(range, Excel.HorizontalAlignment.right),
-            TnSetVerticalAlignment.Create(range, Excel.VerticalAlignment.center),
-            TnMergeRange.Create(range, false)
-        ];
+        const tns: IIntention[] =
+            _ElementFormattingRules()
+                .getElementDefinition(ElementItem.GameNumber)
+                .getTns(range);
+
+        tns.push(TnMergeRange.Create(range, false));
+        return tns;
     }
 
 

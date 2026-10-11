@@ -93,24 +93,20 @@ export class ElementDefinition
             rule.Parse(value);
     }
 
-    public getTns(range: RangeInfo | null, themeItem: ThemeItem | null): IIntention[]
+    public getTns(range: RangeInfo | null): IIntention[]
     {
         const tns: IIntention[] = [];
 
         for (const rule of this.m_rules)
             tns.push(...rule.GetTns(range));
 
-        if (themeItem != null)
-        {
-            // and get the font information together
-            const font = _ThemeFormattingRules().resolve(
-                themeItem,
-                this.getRule("Font") as any as FontRule);
+        const iFontFornmatRule = this.getRule("Font");
+        const fontRule = iFontFornmatRule as any as FontRule;
 
-            const size = this.getValue("FontSize")?.Value as number;
+        const font = fontRule.Resolve();
+        const size = this.getValue("FontSize") as number;
 
-            tns.push(TnSetFontInfo.Create(range, font, size));
-        }
+        tns.push(TnSetFontInfo.Create(range, font, size));
 
         return tns;
     }

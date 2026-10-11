@@ -166,6 +166,8 @@ export class ElementFormattingRules
     }
 }
 
+// TODO : need to make empty formatting cells mean "no change" (i.e. no tns
+// record)
 export function CreateDefaultElementFormattingRules(): ElementFormattingRules
 {
     const rules: ElementFormattingRules = new ElementFormattingRules();
@@ -201,8 +203,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(true),
             ColorRule.CreateFromString("#FF0000"),
-            HAlignmentRule.CreateFromRule(HAlignment.Center),
-            VAlignmentRule.CreateFromRule(VAlignment.Center)
+            HAlignmentRule.CreateFromRule(HAlignment.Center)
         ]);
 
     rules.addDefinition(
@@ -224,7 +225,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
-            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            HAlignmentRule.CreateFromRule(HAlignment.Right),
             VAlignmentRule.CreateFromRule(VAlignment.Center)
         ]);
 

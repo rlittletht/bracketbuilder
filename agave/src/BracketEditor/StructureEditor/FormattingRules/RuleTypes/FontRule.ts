@@ -114,4 +114,9 @@ export class FontRule implements IFormatRule
 
         return tns;
     }
+
+    public Resolve(): string
+    {
+        return _ThemeFormattingRules().resolve(this.m_themeItem, this);
+    }
 }
