@@ -539,14 +539,14 @@ export class StructureEditor
             {
                 appContext.Messages.error(
                     ["You must select a game to learn its formatting."],
-                    {topic: HelpTopic.FinishingTouches_LearnGameFormatting});
+                    { topic: HelpTopic.FinishingTouches_LearnGameFormatting });
                 return;
             }
             const rowDates = Grid.getRowForGameDates(context, grid.FirstGridPattern);
 
             // make sure we have the latest theme values
             _ThemeFormattingRules().loadThemeFromExcelSheet(context);
-            
+
             await _ElementFormattingRules().learnFormattingFromGridGame(appContext, context, item, rowDates, grid.FirstGridPattern);
             await _CanvasFormattingRules().learnFormattingFromGridGame(appContext, context, item);
 
@@ -1404,12 +1404,26 @@ export class StructureEditor
     }
 
     static async DoApplyBracketStyles(appContext: IAppContext, context: JsCtx, grid: Grid): Promise<void>
-{
+    {
         const intentions: Intentions = new Intentions();
         appContext;
         context;
         grid;
-        
+
+        // walk through every game on the grid
+
+        const tns: IIntention[] = [];
+
+        grid.enumerate(
+            (item: GridItem): boolean =>
+            {
+                if (!item.isLineRange)
+                    tns.push(...GameFormatting.tnsFormatGridGame(item));
+                return true;
+            });
+
+        intentions.AddTns(tns);
+        await intentions.Execute(context);
     }
 
     /*----------------------------------------------------------------------------

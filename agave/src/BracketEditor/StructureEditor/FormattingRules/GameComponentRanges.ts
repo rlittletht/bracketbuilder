@@ -13,8 +13,9 @@ export enum GameComponentRangeType
     HLineRange = 5,
     DatesRange = 6,
     TourneyHeadingRange = 7,
-    ScoreRange = 8,
-    ChampionRange = 9,
+    TourneySubHeadingRange = 8,
+    ScoreRange = 9,
+    ChampionRange = 10,
     Last = ChampionRange
 }
 
@@ -26,6 +27,8 @@ export const mapElementTypeToGameComponentRangeType: Map<ElementItem, GameCompon
         [ElementItem.GameBody, GameComponentRangeType.FieldRange],
         [ElementItem.Dates, GameComponentRangeType.DatesRange],
         [ElementItem.TourneyHeading, GameComponentRangeType.TourneyHeadingRange],
+        [ElementItem.Champion, GameComponentRangeType.ChampionRange],
+        [ElementItem.TourneySubHeading, GameComponentRangeType.TourneySubHeadingRange]
     ]);
 
 export const mapCanvasItemToGameComponentRangeType: Map<CanvasItem, GameComponentRangeType> = new Map<CanvasItem, GameComponentRangeType>(
@@ -98,6 +101,11 @@ export class GameComponentRanges
         return this.m_ranges[GameComponentRangeType.TourneyHeadingRange];
     }
 
+    get TourneySubHeadingRange(): Excel.Range
+    {
+        return this.m_ranges[GameComponentRangeType.TourneySubHeadingRange];
+    }
+
     get ChampionRange(): Excel.Range
     {
         return this.m_ranges[GameComponentRangeType.ChampionRange];
@@ -121,6 +129,7 @@ export class GameComponentRanges
         {
             const tourneyHeadingRange: RangeInfo = new RangeInfo(0, 1, gridGameStart.FirstColumn, 1);
             this.m_ranges[GameComponentRangeType.TourneyHeadingRange] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange);
+            this.m_ranges[GameComponentRangeType.TourneySubHeadingRange] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange.offset(3, 1, 0, 1));
         }
 
         if (rowDates)

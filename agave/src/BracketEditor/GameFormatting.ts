@@ -83,6 +83,7 @@ export class GameFormatting
     {
         const tns: IIntention[] = [];
 
+
         if (item.isLineRange)
             return tns;
 
@@ -93,14 +94,21 @@ export class GameFormatting
             tns.push(...this.tnsFormatChampionshipText(topTeamRange.offset(2, 1, 0, 1)));
         else
         {
+            const fCompressedGame = item.GameNumberRange.FirstRow - item.Range.FirstRow - 1 < 0;
+
             const bottomTeamRange = item.BottomTeamRange;
             tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange));
 
             tns.push(...this.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 3, -1, 1)));
 
-            tns.push(...this.tnsFormatGameInfoAdvanceToTextRequest(topTeamRange.offset(2, 1, 0, 1), Excel.VerticalAlignment.top));
+            tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 1, -1, 1)));
+            tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(item.GameNumberRange.offset(2, 1, -1, 1)));
+
+            if (!fCompressedGame)
+                tns.push(...this.tnsFormatGameInfoAdvanceToTextRequest(topTeamRange.offset(2, 1, 0, 1), Excel.VerticalAlignment.top));
             tns.push(...this.tnsFormatGameInfoAdvanceToTextRequest(bottomTeamRange.offset(-2, 1, 0, 1), Excel.VerticalAlignment.bottom));
         }
+
         return tns;
     }
 

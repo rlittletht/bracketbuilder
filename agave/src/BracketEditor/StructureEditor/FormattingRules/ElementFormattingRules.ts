@@ -141,7 +141,7 @@ export class ElementFormattingRules
             context,
             RangeCacheItemType.ElementFormattingBody,
             RangeCacheItemType.ElementFormattingHeader,
-            this.getDefinitionValuesForElementRow,
+            (headerValues, dataValues, row) => this.getDefinitionValuesForElementRow(headerValues, dataValues, row),
             (dataRange, updatedValues) =>
             {
                 tns.AddTns([TnSetValues.Create(dataRange.offset(0, dataRange.RowCount, 0, dataRange.ColumnCount), updatedValues, FormattingRulesBuilder.SheetName)]);
