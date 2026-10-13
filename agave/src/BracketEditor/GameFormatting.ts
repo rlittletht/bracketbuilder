@@ -86,17 +86,20 @@ export class GameFormatting
         if (item.isLineRange)
             return tns;
 
+        const topTeamRange = item.TopTeamRange;
+        tns.push(...this.tnsFormatTeamNameRangeRequest(topTeamRange));
+
         if (item.IsChampionshipGame)
-            tns.push(...this.tnsFormatChampionshipText(item.TopTeamRange));
+            tns.push(...this.tnsFormatChampionshipText(topTeamRange.offset(2, 1, 0, 1)));
         else
         {
-            const topTeamRange = item.TopTeamRange;
-            tns.push(...this.tnsFormatTeamNameRangeRequest(topTeamRange));
-
             const bottomTeamRange = item.BottomTeamRange;
             tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange));
 
             tns.push(...this.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 3, -1, 1)));
+
+            tns.push(...this.tnsFormatGameInfoAdvanceToTextRequest(topTeamRange.offset(2, 1, 0, 1), Excel.VerticalAlignment.top));
+            tns.push(...this.tnsFormatGameInfoAdvanceToTextRequest(bottomTeamRange.offset(-2, 1, 0, 1), Excel.VerticalAlignment.bottom));
         }
         return tns;
     }
