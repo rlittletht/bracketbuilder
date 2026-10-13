@@ -8,6 +8,7 @@ import { Tables } from "../Interop/Tables";
 import { BracketDefBuilder } from "./BracketDefBuilder";
 import { RulesBuilder } from "./RulesBuilder";
 import { s_staticConfig } from "../StaticConfig";
+import { _ElementFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/ElementFormattingRules";
 
 export class FormattingRulesBuilder
 {
@@ -72,6 +73,15 @@ export class FormattingRulesBuilder
 
         row += 5;
 
+        const elementRules: any[][] = [];
+        const elementHeader: string[] = ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"];
+
+        ["Tournament Heading", "Tournament SubHeading", "Game Title", "Advance To", "Game Body", "Game Number", "Dates", "Champion"].forEach(
+            (element) =>
+            {
+                elementRules.push(_ElementFormattingRules().getDefinitionValuesForElementRow(elementHeader, [element], 0));
+            });
+
         await this.insertTableAt(
             context,
             fastTables,
@@ -79,18 +89,9 @@ export class FormattingRulesBuilder
             row,
             FormattingRulesBuilder.ElementFormattingTableName,
             ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"],
-            [
-                ["Tournament Heading", "Theme", s_staticConfig.headerSize, "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
-                ["Tournament SubHeading", "Theme", s_staticConfig.subHeaderSize, "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
-                ["Game Title", "Theme", s_staticConfig.blackSize, "FALSE", "TRUE", "#000000", "CENTER", "CENTER"],
-                ["Advance To", "Theme", s_staticConfig.advanceSize, "TRUE", "TRUE", "#FF0000", "CENTER", "CENTER"],
-                ["Game Body", "Theme", s_staticConfig.bodySize, "FALSE", "FALSE", "#000000", "CENTER", ""],
-                ["Game Number", "Theme", s_staticConfig.gameNumSize, "TRUE", "FALSE", "#000000", "CENTER", "CENTER"],
-                ["Dates", "Theme", s_staticConfig.datesSize, "FALSE", "FALSE", "#000000", "", ""],
-                ["Champion", "Theme", s_staticConfig.championSize, "FALSE", "FALSE", "#000000", "CENTER", "CENTER"]
-            ]);
+            elementRules);
 
-        row += 10;
+        row += elementRules.length + 4;
 
         await this.insertTableAt(
             context,
@@ -100,11 +101,11 @@ export class FormattingRulesBuilder
             FormattingRulesBuilder.ElementSizesTableName,
             ["Element", "Size"],
             [
-                ["TeamRows",15],
-                ["LineRows",1],
-                ["TeamColumns",113],
-                ["ScoreColumns",17.5],
-                ["LineColumns",1]
+                ["TeamRows", 15],
+                ["LineRows", 1],
+                ["TeamColumns", 113],
+                ["ScoreColumns", 17.5],
+                ["LineColumns", 1]
             ]);
     }
 }

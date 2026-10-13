@@ -39,7 +39,7 @@ export class VAlignmentRule implements IFormatRule
         }
     }
 
-    public static CreateFromRule(val: VAlignment): VAlignmentRule
+    public static CreateFromRule(val: VAlignment): IFormatRule
     {
         return new VAlignmentRule(val);
     }

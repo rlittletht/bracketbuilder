@@ -132,7 +132,7 @@ export class GameComponentRanges
 
         if (game.IsChampionship)
         {
-            this.m_ranges[GameComponentRangeType.ChampionRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange);
+            this.m_ranges[GameComponentRangeType.ChampionRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(2, 1, 0, 1));
         }
     }
 

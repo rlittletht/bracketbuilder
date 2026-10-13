@@ -90,6 +90,23 @@ export class ElementFormattingRules
         return definition.getRule(rule);
     }
 
+    public getDefinitionValuesForElementRow(headerValues: string[], dataValues: any[], row: number): any[]
+    {
+        row;
+        // get the element type for this row
+        const elementType = dataValues[0];
+        const definition = this.getElementDefinition(elementType);
+        const values: any[] = [];
+        values.push(elementType);
+        for (let col = 1; col < headerValues.length; col++)
+        {
+            const value = definition.getValue(headerValues[col]);
+            values.push(value);
+        }
+
+        return values;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: learnFormattingFromGridGame
         %%Qualified: ElementFormattingRules.learnFormattingFromGridGame
@@ -115,28 +132,16 @@ export class ElementFormattingRules
                 definition.loadFromExcelFormat(componentRange.format);
         }
 
+        // TODO: determine if we have more definitions than we have rows in our table. if so, we need
+        // to grow the table and insert the missing items!
+
         const tns: Intentions = new Intentions();
 
         RangeCaches.enumerateCachedTableBody(
             context,
             RangeCacheItemType.ElementFormattingBody,
             RangeCacheItemType.ElementFormattingHeader,
-            (headerValues, dataValues, row): any[] =>
-            {
-                row;
-                // get the element type for this row
-                const elementType = dataValues[0];
-                const definition = this.getElementDefinition(elementType);
-                const values: any[] = [];
-                values.push(elementType);
-
-                for (let col = 1; col < dataValues.length; col++)
-                {
-                    const value = definition.getValue(headerValues[col]);
-                    values.push(value);
-                }
-                return values;
-            },
+            this.getDefinitionValuesForElementRow,
             (dataRange, updatedValues) =>
             {
                 tns.AddTns([TnSetValues.Create(dataRange.offset(0, dataRange.RowCount, 0, dataRange.ColumnCount), updatedValues, FormattingRulesBuilder.SheetName)]);
@@ -189,8 +194,8 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             FontRule.CreateFromRule("Theme", true, ThemeItem.BodyHeading),
             FontSizeRule.CreateFromRule(s_staticConfig.championSize),
             BoldRule.CreateFromRule(false),
-            ItalicRule.CreateFromRule(false),
-            ColorRule.CreateFromString("#000000"),
+            ItalicRule.CreateFromRule(true),
+            ColorRule.CreateFromString("#FF0000"),
             HAlignmentRule.CreateFromRule(HAlignment.Center),
             VAlignmentRule.CreateFromRule(VAlignment.Bottom)
         ]);

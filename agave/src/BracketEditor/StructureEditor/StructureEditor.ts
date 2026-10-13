@@ -354,6 +354,7 @@ export class StructureEditor
             const bookmark: string = "repairGameAtSelectionClick";
             context.pushTrackingBookmark(bookmark);
             await FastFormulaAreas.populateAllCaches(context);
+            RefreshFormattingRules(context);
             await this.repairGameAtSelection(appContext, context, appContext.SelectedBracket);
             context.releaseCacheObjectsUntil(bookmark);
 
@@ -373,6 +374,7 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await FastFormulaAreas.populateAllCaches(context);
+            RefreshFormattingRules(context);
 
             // try to extend the selection
             let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
@@ -426,6 +428,7 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await FastFormulaAreas.populateAllCaches(context);
+            RefreshFormattingRules(context);
             const bracketName = appContext.SelectedBracket;
 
             const gridStart: Grid = await this.gridBuildFromBracket(context, bracketName);
