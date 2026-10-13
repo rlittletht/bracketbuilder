@@ -63,6 +63,10 @@ export class GameFormatting
         return fmla.toLowerCase().startsWith(GameFormatting.s_lineText, 1);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: isLineColumnTypeMatch
+        %%Qualified: GameFormatting.isLineColumnTypeMatch
+    ----------------------------------------------------------------------------*/
     static isLineColumnTypeMatch(fmla: string | any, colType: GridColumnType): boolean
     {
         if (fmla == null || (fmla?.length ?? 0) < 5)
@@ -71,6 +75,10 @@ export class GameFormatting
         return fmla.toLowerCase() == GameFormatting.s_mapGridColumnType.get(colType);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: isLineRowTypeMatch
+        %%Qualified: GameFormatting.isLineRowTypeMatch
+    ----------------------------------------------------------------------------*/
     static isLineRowTypeMatch(fmla: string | any, rowType: GridRowType): boolean
     {
         if (fmla == null || (fmla?.length ?? 0) < 5)
@@ -79,10 +87,13 @@ export class GameFormatting
         return fmla.toLowerCase() == GameFormatting.s_mapGridColumnType.get(rowType);
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: tnsFormatGridGame
+        %%Qualified: GameFormatting.tnsFormatGridGame
+    ----------------------------------------------------------------------------*/
     static tnsFormatGridGame(item: GridItem): IIntention[]
     {
         const tns: IIntention[] = [];
-
 
         if (item.isLineRange)
             return tns;
@@ -112,6 +123,10 @@ export class GameFormatting
         return tns;
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: tnsFormatTourneyHeadings
+        %%Qualified: GameFormatting.tnsFormatTourneyHeadings
+    ----------------------------------------------------------------------------*/
     static tnsFormatTourneyHeadings(grid: Grid): IIntention[]
     {
         const headings = new RangeInfo(0, 3, grid.FirstGridPattern.FirstColumn, 1);
@@ -128,6 +143,10 @@ export class GameFormatting
     }
 
 
+    /*----------------------------------------------------------------------------
+        %%Function: tnsFormatDates
+        %%Qualified: GameFormatting.tnsFormatDates
+    ----------------------------------------------------------------------------*/
     static tnsFormatDates(grid: Grid): IIntention[]
     {
         // our day names are 1 row above our dates
@@ -174,16 +193,9 @@ export class GameFormatting
     }
 
     /*----------------------------------------------------------------------------
-        %%Function: GameFormatting.formatGameInfoBodyText
+        %%Function: tnsFormatGameInfoBodyTextRequest
+        %%Qualified: GameFormatting.tnsFormatGameInfoBodyTextRequest
     ----------------------------------------------------------------------------*/
-    static del_formatGameInfoBodyTextRequest(range: Excel.Range)
-    {
-        range.format.font.name = s_staticConfig.bodyFont;
-        range.format.font.size = s_staticConfig.bodySize;
-        range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
-    }
-
     static tnsFormatGameInfoBodyTextRequest(rangeInfo: RangeInfo, verticalAlignment: Excel.VerticalAlignment): IIntention[]
     {
         const tns: IIntention[] =
@@ -196,17 +208,10 @@ export class GameFormatting
         return tns;
     }
 
-    static del_formatChampionshipText(range: Excel.Range)
-    {
-        range.format.font.name = s_staticConfig.bodyFont;
-        range.format.font.size = s_staticConfig.championSize;
-        range.format.font.bold = true;
-        range.format.font.italic = true;
-        range.format.font.color = "#ff0000";
-        range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
-        range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
-    }
-
+    /*----------------------------------------------------------------------------
+        %%Function: tnsFormatChampionshipText
+        %%Qualified: GameFormatting.tnsFormatChampionshipText
+    ----------------------------------------------------------------------------*/
     static tnsFormatChampionshipText(rangeInfo: RangeInfo): IIntention[]
     {
         return _ElementFormattingRules()
@@ -226,6 +231,10 @@ export class GameFormatting
         range.numberFormat = [["h:mm AM/PM"]];
     }
 
+    /*----------------------------------------------------------------------------
+        %%Function: tnsFormatGameInfoTimeTextRequest
+        %%Qualified: GameFormatting.tnsFormatGameInfoTimeTextRequest
+    ----------------------------------------------------------------------------*/
     static tnsFormatGameInfoTimeTextRequest(rangeInfo: RangeInfo): IIntention[]
     {
         const tns: IIntention[] =
