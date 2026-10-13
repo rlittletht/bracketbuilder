@@ -568,16 +568,6 @@ export class StructureEditor
 
             // get the grid item for this selection
             let grid: Grid = await this.gridBuildFromBracket(context, appContext.SelectedBracket);
-            const [item, kind] = grid.getFirstOverlappingItem(range);
-
-            if (kind == RangeOverlapKind.None || item == null || item.isLineRange)
-            {
-                appContext.Messages.error(
-                    ["You must select a game to learn its formatting."],
-                    { topic: HelpTopic.FinishingTouches_LearnGameFormatting });
-                return;
-            }
-            const rowDates = Grid.getRowForGameDates(context, grid.FirstGridPattern);
 
             // make sure we have the latest theme values
             RefreshFormattingRules(context);
@@ -1421,6 +1411,9 @@ export class StructureEditor
                     tns.push(...GameFormatting.tnsFormatGridGame(item));
                 return true;
             });
+
+        tns.push(...GameFormatting.tnsFormatDates(grid));
+        tns.push(...GameFormatting.tnsFormatTourneyHeadings(grid));
 
         intentions.AddTns(tns);
         await intentions.Execute(context);

@@ -153,7 +153,7 @@ export class StructureInsert
         formulas.push([bottomString]);
 
         tns.push(TnSetFormulas.Create(gameInfoRange, formulas));
-        tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(gameInfoRangeInfo.offset(0, 1, 0, 1)));
+        tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(gameInfoRangeInfo.offset(0, 1, 0, 1), Excel.VerticalAlignment.bottom));
         tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(gameInfoRangeInfo.offset(2, 1, 0, 1)));
 
         if (!fCompressGame)

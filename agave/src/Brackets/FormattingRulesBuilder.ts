@@ -49,7 +49,11 @@ export class FormattingRulesBuilder
         fastTables: IFastTables,
     )
     {
-        let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, FormattingRulesBuilder.SheetName, RulesBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+        const sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, FormattingRulesBuilder.SheetName, RulesBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+
+        const colB_C = sheet.getRange("B:C");
+
+        colB_C.format.columnWidth = 128;
 
         let row = 0;
 

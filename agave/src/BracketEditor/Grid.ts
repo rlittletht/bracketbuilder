@@ -108,6 +108,7 @@ export class Grid
     m_disableOtherRepairs: boolean = false;
     m_mustRepairGameNum: GameNum = null;
 
+    m_rowDates: number = -1;
     m_gridItems: GridItem[] = [];
     m_firstGridPattern: RangeInfo;
     m_datesForGrid: DateWithoutTime[];
@@ -124,6 +125,14 @@ export class Grid
         grid.m_firstGridPattern = base.m_firstGridPattern.clone();
 
         return grid;
+    }
+
+    get RowForDates(): number
+    {
+        if (this.m_rowDates == -1)
+            throw new Error("row for dates not yet loaded");
+
+        return this.m_rowDates;
     }
 
     canRepairGameNum(gameNum: GameNum): boolean
@@ -1020,9 +1029,9 @@ export class Grid
         }
 
         // walk backwards up the column to find the first non-empty cell. This is the date row
-        let rowDates = Grid.getRowForGameDates(context, this.m_firstGridPattern);
+        this.m_rowDates = Grid.getRowForGameDates(context, this.m_firstGridPattern);
 
-        if (rowDates == -1)
+        if (this.m_rowDates == -1)
         {
             if (sheet)
                 context.Ctx.trackedObjects.remove(sheet);
@@ -1030,7 +1039,7 @@ export class Grid
             throw new Error("couldn't find row for dates");
         }
 
-        let range: RangeInfo = new RangeInfo(rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
+        let range: RangeInfo = new RangeInfo(this.m_rowDates, 1, this.m_firstGridPattern.FirstColumn, 18 * 3);
         if (areas)
         {
             dateValues = areas.getValuesForRangeInfo(range);
@@ -1057,7 +1066,7 @@ export class Grid
                 const rangeAreas: Excel.RangeCollection = areasMerges.areas;
                 const rangeArea: Excel.Range = rangeAreas.items[i];
 
-                if (rangeArea.rowIndex != rowDates)
+                if (rangeArea.rowIndex != this.m_rowDates)
                     continue;
 
                 let iMerge = rangeArea.columnIndex - range.FirstColumn;

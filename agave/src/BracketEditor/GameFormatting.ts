@@ -5,7 +5,7 @@ import { TnSetFillAndFontColor } from "../Interop/Intentions/TnSetFillAndFontCol
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo } from "../Interop/Ranges";
 import { s_staticConfig } from "../StaticConfig";
-import { GridColumnType, GridRowType } from "./Grid";
+import { GridColumnType, GridRowType, Grid } from "./Grid";
 import { TnSetFontInfo } from "../Interop/Intentions/TnSetFontInfo";
 import { TnSetVerticalAlignment } from "../Interop/Intentions/TnSetVerticalAlignment";
 import { TnSetHorizontalAlignment } from "../Interop/Intentions/TnSetHorizontalAlignment";
@@ -99,9 +99,9 @@ export class GameFormatting
             const bottomTeamRange = item.BottomTeamRange;
             tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange));
 
-            tns.push(...this.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 3, -1, 1)));
+            tns.push(...this.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange, Excel.VerticalAlignment.center));
 
-            tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 1, -1, 1)));
+            tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 1, -1, 1), Excel.VerticalAlignment.center));
             tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(item.GameNumberRange.offset(2, 1, -1, 1)));
 
             if (!fCompressedGame)
@@ -110,6 +110,30 @@ export class GameFormatting
         }
 
         return tns;
+    }
+
+    static tnsFormatTourneyHeadings(grid: Grid): IIntention[]
+    {
+        const headings = new RangeInfo(0, 3, grid.FirstGridPattern.FirstColumn, 1);
+
+        const tns: IIntention[] = [];
+
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneyHeading).getTns(headings));
+
+        const subHeadings = headings.offset(3, 1, 0, 1);
+
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneySubHeading).getTns(subHeadings));
+
+        return tns;
+    }
+
+
+    static tnsFormatDates(grid: Grid): IIntention[]
+    {
+        // our day names are 1 row above our dates
+        const datesRange = new RangeInfo(grid.RowForDates - 1, 2, grid.FirstGridPattern.FirstColumn, 56);
+
+        return _ElementFormattingRules().getElementDefinition(ElementItem.Dates).getTns(datesRange);
     }
 
     /*----------------------------------------------------------------------------
@@ -160,14 +184,14 @@ export class GameFormatting
         range.format.verticalAlignment = Excel.VerticalAlignment.bottom;
     }
 
-    static tnsFormatGameInfoBodyTextRequest(rangeInfo: RangeInfo): IIntention[]
+    static tnsFormatGameInfoBodyTextRequest(rangeInfo: RangeInfo, verticalAlignment: Excel.VerticalAlignment): IIntention[]
     {
         const tns: IIntention[] =
             _ElementFormattingRules()
                 .getElementDefinition(ElementItem.GameBody)
                 .getTns(rangeInfo);
 
-        tns.push(TnSetVerticalAlignment.Create(rangeInfo, Excel.VerticalAlignment.bottom));
+        tns.push(TnSetVerticalAlignment.Create(rangeInfo, verticalAlignment));
 
         return tns;
     }

@@ -247,7 +247,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.TourneyHeading,
         [
-            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Header),
             FontSizeRule.CreateFromRule(s_staticConfig.headerSize),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
@@ -259,7 +259,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
     rules.addDefinition(
         ElementItem.TourneySubHeading,
         [
-            FontRule.CreateFromRule("Theme", true, ThemeItem.Body),
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Header),
             FontSizeRule.CreateFromRule(s_staticConfig.subHeaderSize),
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
