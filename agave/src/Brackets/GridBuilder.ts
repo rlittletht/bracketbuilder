@@ -1,9 +1,11 @@
 import { Sheets, EnsureSheetPlacement } from "../Interop/Sheets";
-import { Ranges } from "../Interop/Ranges";
+import { RangeInfo, Ranges } from "../Interop/Ranges";
 import { OADate } from "../Interop/Dates";
 import { GameFormatting } from "../BracketEditor/GameFormatting";
 import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { JsCtx } from "../Interop/JsCtx";
+import { TnSetColumnWidth } from "../Interop/Intentions/TnSetColumnWidth";
+import { TnSetRowHeight } from "../Interop/Intentions/TnSetRowHeight";
 
 export class GridBuilder
 {
@@ -135,20 +137,12 @@ export class GridBuilder
     ----------------------------------------------------------------------------*/
     static formatRepeatingColumns(
         sheet: Excel.Worksheet,
-        colStart: number,
+        columnRange: RangeInfo,
         colSkip: number,
-        colOffset: number,
         width: number,
         cols: number)
     {
-        let rangeAddresses: string[] = [];
-        let col: number = colStart + colOffset;
-
-        while (col < colStart + cols * colSkip + colOffset)
-        {
-            rangeAddresses.push(`${Ranges.getColName(col)}:${Ranges.getColName(col)}`);
-            col += colSkip;
-        }
+        let rangeAddresses: string[] = TnSetColumnWidth.GetRepeatingColumns(columnRange, cols, colSkip);
 
         this.formatColumns(sheet, rangeAddresses, width);
     }
@@ -170,20 +164,12 @@ export class GridBuilder
     ----------------------------------------------------------------------------*/
     static formatRepeatingRows(
         sheet: Excel.Worksheet,
-        rowStart: number,
+        range: RangeInfo,
         rowSkip: number,
-        rowOffset: number,
         height: number,
         rowGroups: number)
     {
-        let rangeAddresses: string[] = [];
-        let row: number = rowStart + rowOffset;
-
-        while (row < rowStart + rowGroups * rowSkip + rowOffset)
-        {
-            rangeAddresses.push(`${row + 1}:${row + 1}`);
-            row += rowSkip;
-        }
+        let rangeAddresses: string[] = TnSetRowHeight.GetRepeatingRows(range, rowGroups, rowSkip);
 
         this.formatRows(sheet, rangeAddresses, height);
     }
@@ -193,12 +179,14 @@ export class GridBuilder
     ----------------------------------------------------------------------------*/
     static formatGridSheetDays(sheet: Excel.Worksheet, colStart: number, days: number)
     {
-        this.formatRepeatingColumns(sheet, colStart, 3, 0, 113, days);
-        this.formatRepeatingColumns(sheet, colStart, 3, 1, 17.28, days);
-        this.formatRepeatingColumns(sheet, colStart, 3, 2, 0.9, days);
+        const columnRange = new RangeInfo(0, 1, colStart, 1);
+        this.formatRepeatingColumns(sheet, columnRange, 2, 113, days);
+        this.formatRepeatingColumns(sheet, columnRange.offset(0, 1, 1, 1), 2, 17.28, days);
+        this.formatRepeatingColumns(sheet, columnRange.offset(0, 1, 2, 1), 2, 0.9, days);
 
-        this.formatRepeatingRows(sheet, 9, 2, 0, 15, 300);
-        this.formatRepeatingRows(sheet, 9, 2, 1, 1, 300);
+        const rowRange = new RangeInfo(9, 1, 0, 1);
+        this.formatRepeatingRows(sheet, rowRange, 1, 15, 300);
+        this.formatRepeatingRows(sheet, rowRange.offset(1, 1, 0, 1), 1, 1, 300);
     }
 
     /*----------------------------------------------------------------------------

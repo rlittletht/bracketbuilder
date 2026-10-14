@@ -52,6 +52,18 @@ export class Sheets
         return sheet;
     }
 
+    static async ensureSheetDoesNotExist(context: JsCtx, sSheetName: string): Promise<void>
+    {
+        let worksheets: Excel.WorksheetCollection = context.Ctx.workbook.worksheets;
+        let sheet: Excel.Worksheet = worksheets.getItemOrNullObject(sSheetName);
+        await context.sync();
+        if (!sheet.isNullObject)
+        {
+            sheet.delete();
+            await context.sync();
+        }
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: Sheets.findFirstEmptyRowAfterAllData
 

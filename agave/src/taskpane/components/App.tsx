@@ -480,6 +480,18 @@ export default class App extends React.Component<AppProps, AppState> implements 
 
         listItems.push(
             {
+                icon: "Bug",
+                primaryText: "Reset workbook",
+                cursor: "cursorPointer",
+                stateChecker: null,
+                delegate: async (appContext: IAppContext): Promise<boolean> =>
+                {
+                    await SetupBook.resetWorkbook(appContext);
+                    return true;
+                }
+            });
+        listItems.push(
+            {
                 icon: "Copy",
                 primaryText: "Copy selected area",
                 cursor: "cursorPointer",

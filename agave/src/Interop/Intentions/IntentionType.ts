@@ -18,4 +18,6 @@ export class IntentionType
     static SetVerticalAlignment = "SVA";
     static SetNumberFormat = "SNF";
     static Select = "SEL";
+    static SetColumnWidth = "SCW";
+    static SetRowHeight = "SRH";
 }

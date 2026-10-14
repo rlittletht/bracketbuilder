@@ -17,6 +17,9 @@ import { GridBuilder } from "./Brackets/GridBuilder";
 import { IBracketDefinitionData } from "./Brackets/IBracketDefinitionData";
 import { RulesBuilder } from "./Brackets/RulesBuilder";
 import { FastFormulaAreasItems } from "./Interop/FastFormulaAreas/FastFormulaAreasItems";
+import { Sheets } from "./Interop/Sheets";
+import { FormattingRulesBuilder } from "./Brackets/FormattingRulesBuilder";
+import { GlobalDataBuilder } from "./Brackets/GlobalDataBuilder";
 
 export class SetupState
 {
@@ -139,7 +142,7 @@ export class SetupBook
         // any bracket workbook has to have a BracketStructure sheet
         const bracketStructureSheet: Excel.Worksheet = await this.getBracketsStructureSheetOrNull(context);
 
-        if (bracketStructureSheet ==  null)
+        if (bracketStructureSheet == null)
             return [SetupState.NoBracketStructure, null]
 
         const bracketChoice: string = await this.getBracketChoiceOrNull(context);
@@ -154,19 +157,19 @@ export class SetupBook
             return [SetupState.Ready, bracketChoice];
         }
 
-/* We don't support prepopulating brackets into the workbook and choosing from them -- it was too confusing of a paradigm
+        /* We don't support prepopulating brackets into the workbook and choosing from them -- it was too confusing of a paradigm
 
-        // we don't have a bracket choice. figure out what brackets we have data for
-        var brackets: string[] = [];
-        bracketStructureSheet.tables.load("items");
-        await context.sync();
+                // we don't have a bracket choice. figure out what brackets we have data for
+                var brackets: string[] = [];
+                bracketStructureSheet.tables.load("items");
+                await context.sync();
 
-        for (let bracketTable of bracketStructureSheet.tables.items)
-            brackets.push(bracketTable.name);
+                for (let bracketTable of bracketStructureSheet.tables.items)
+                    brackets.push(bracketTable.name);
 
-        if (brackets.length > 0)
-            return SetupState.NoBracketChoice;
-*/
+                if (brackets.length > 0)
+                    return SetupState.NoBracketChoice;
+        */
         return [SetupState.NoBracketStructure, bracketChoice];
     }
 
@@ -177,14 +180,15 @@ export class SetupBook
     {
         try
         {
-            await Excel.run(async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
+            await Excel.run(
+                async (ctx) =>
+                {
+                    const context: JsCtx = new JsCtx(ctx);
 
-                await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
-                appContext.AppStateAccess.HeroListDirty = true;
-                context.releaseAllCacheObjects();
-            });
+                    await BracketDefBuilder.buildBracketsSheet(context, fastTables, appContext);
+                    appContext.AppStateAccess.HeroListDirty = true;
+                    context.releaseAllCacheObjects();
+                });
         }
         catch (error)
         {
@@ -241,9 +245,7 @@ export class SetupBook
         catch (error)
         {
             if (error instanceof TrError)
-            {
                 appContext.Messages.error(error._Messages, { topic: error._HelpInfo });
-            }
             else if (reportMissingBrackets)
             {
                 appContext.Messages.error(
@@ -291,31 +293,32 @@ export class SetupBook
 
         try
         {
-            await Excel.run(async (ctx) =>
-            {
-                const context: JsCtx = new JsCtx(ctx);
+            await Excel.run(
+                async (ctx) =>
+                {
+                    const context: JsCtx = new JsCtx(ctx);
 
-                await _bracketManager.populateBracketsIfNecessary(context, appContext.SelectedBracket);
-                await BracketDefBuilder.buildSpecificBracketCore(context, appContext, fastTables);
+                    await _bracketManager.populateBracketsIfNecessary(context, appContext.SelectedBracket);
+                    await BracketDefBuilder.buildSpecificBracketCore(context, appContext, fastTables);
 
-                // now update the workbook setup state
-                const [setupState, bracketChoice] = await (SetupBook.getSetupState(context));
+                    // now update the workbook setup state
+                    const [setupState, bracketChoice] = await (SetupBook.getSetupState(context));
 
-                if (appContext.SelectedBracket != bracketChoice)
-                    throw new Error(`selectedBracket != bracketChoice (${appContext.SelectedBracket} != {bracketChoice})`);
+                    if (appContext.SelectedBracket != bracketChoice)
+                        throw new Error(`selectedBracket != bracketChoice (${appContext.SelectedBracket} != {bracketChoice})`);
 
-                appContext.WorkbookSetupState = setupState;
+                    appContext.WorkbookSetupState = setupState;
 
-                appContext.AppStateAccess.HeroListDirty = true;
-                RangeCaches.SetDirty(true);
+                    appContext.AppStateAccess.HeroListDirty = true;
+                    RangeCaches.SetDirty(true);
 
-                await SetupBook.registerBindingsForEdits(context, appContext);
-                context.releaseAllCacheObjects();
+                    await SetupBook.registerBindingsForEdits(context, appContext);
+                    context.releaseAllCacheObjects();
 
-                // lastly, make sure the grid is activated
-                const gridSheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
-                gridSheet.activate();
-            });
+                    // lastly, make sure the grid is activated
+                    const gridSheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+                    gridSheet.activate();
+                });
         }
         catch (error)
         {
@@ -329,6 +332,24 @@ export class SetupBook
         return false;
     }
 
+    static async resetWorkbook(appContext: IAppContext): Promise<boolean>
+    {
+        let delegate: DispatchWithCatchDelegate = async (context) =>
+        {
+            await Sheets.ensureSheetDoesNotExist(context, BracketDefBuilder.SheetName);
+            await Sheets.ensureSheetDoesNotExist(context, GridBuilder.SheetName);
+            await Sheets.ensureSheetDoesNotExist(context, RulesBuilder.SheetName);
+            await Sheets.ensureSheetDoesNotExist(context, FormattingRulesBuilder.SheetName);
+            await Sheets.ensureSheetDoesNotExist(context, BracketInfoBuilder.SheetName);
+            await Sheets.ensureSheetDoesNotExist(context, GlobalDataBuilder.SheetName);
+            appContext.AppStateAccess.HeroListDirty = true;
+        };
+
+        await Dispatcher.ExclusiveDispatchWithCatch(delegate, appContext);
+
+        return false;
+    }
+
     static async registerBindingsForEdits(context: JsCtx, appContext: IAppContext)
     {
         if (appContext.WorkbookSetupState != SetupState.Ready)
@@ -336,8 +357,10 @@ export class SetupBook
 
         const gridSheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
         context.Ctx.workbook.bindings.add(
-            gridSheet.getRangeByIndexes(7, 3, 200, 100), Excel.BindingType.range, "gameGrid").onDataChanged.add(
-                () => { appContext.AppStateAccess.BracketDirtyForBracketEdit = true; });
+            gridSheet.getRangeByIndexes(7, 3, 200, 100),
+            Excel.BindingType.range,
+            "gameGrid").onDataChanged.add(
+            () => { appContext.AppStateAccess.BracketDirtyForBracketEdit = true; });
 
         const rulesSheet = context.Ctx.workbook.worksheets.getItem(RulesBuilder.SheetName);
         context.Ctx.workbook.bindings.add(
@@ -349,4 +372,3 @@ export class SetupBook
         await context.sync();
     }
 }
-
