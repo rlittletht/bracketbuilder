@@ -24,6 +24,7 @@ import { FormulaBuilderTests } from "../BracketEditor/FormulaBuilder";
 import { GameMoverSimpleTests } from "../BracketEditor/GameMovers/GameMoverSimpleTests";
 import { TnSetColumnWidthTests } from "../Interop/Intentions/TnSetColumnWidth";
 import { TnSetRowHeightTests } from "../Interop/Intentions/TnSetRowHeight";
+import { RangeInfoTests } from "../Interop/RangeInfoTests";
 
 export class UnitTests
 {
@@ -50,6 +51,7 @@ export class UnitTests
                     context.releaseAllCacheObjects();
                 });
 
+            RangeInfoTests.runAllTests(appContext, outStream);
             TnSetColumnWidthTests.runAllTests(appContext, outStream);
             TnSetRowHeightTests.runAllTests(appContext, outStream);
             FormulaBuilderTests.runAllTests(appContext, outStream);

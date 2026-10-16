@@ -16,7 +16,7 @@ export class Intentions
         this.m_intentions.push(...tns);
     }
 
-    async Execute(context: JsCtx)
+    async Execute(context: JsCtx, deferSync?: boolean)
     {
         // first, compose anything that needs to compose
 
@@ -48,7 +48,8 @@ export class Intentions
 
         _TimerStack.pushTimer("context.sync() after executing intentions");
 
-        await context.sync("tnsX");
+        if (!deferSync)
+            await context.sync("tnsX");
         _TimerStack.popTimer();
     }
 }

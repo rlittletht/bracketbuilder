@@ -6,40 +6,53 @@ import { GlobalDataBuilder } from "./GlobalDataBuilder";
 import { JsCtx } from "../Interop/JsCtx";
 import { TnSetColumnWidth } from "../Interop/Intentions/TnSetColumnWidth";
 import { TnSetRowHeight } from "../Interop/Intentions/TnSetRowHeight";
+import { Intentions } from "../Interop/Intentions/Intentions";
+import { IIntention } from "../Interop/Intentions/IIntention";
+import { TnSetFormulas } from "../Interop/Intentions/TnSetFormula";
+import { TnSetFontBold } from "../Interop/Intentions/TnSetFontBold";
+import { TnSetFontInfo } from "../Interop/Intentions/TnSetFontInfo";
+import { TnSetFontItalic } from "../Interop/Intentions/TnSetFontItalic";
+import { TnSetNumberFormat } from "../Interop/Intentions/TnSetNumberFormat";
+import { TnMergeRange } from "../Interop/Intentions/TnMergeRange";
+import { TnSetHorizontalAlignment } from "../Interop/Intentions/TnSetHorizontalAlignment";
 
 export class GridBuilder
 {
     static SheetName: string = "Games";
     static maxDays: number = 18;
+    static maxGameRowGroups: number = 300;
 
     /*----------------------------------------------------------------------------
         %%Function: GridBuilder.mergeAndFormatDay
     ----------------------------------------------------------------------------*/
-    static mergeAndFormatDayRequest(sheet: Excel.Worksheet, row: number, col: number)
+    static tnsMergeAndFormatDayRequest(row: number, col: number): IIntention[]
     {
+        const tns: IIntention[] = [];
+
         // don't merge the vertical line ranges into the day cells
-        const range: Excel.Range = sheet.getRangeByIndexes(row, col, 2, 2);
-        range.merge(true);
+        const range = new RangeInfo(row, 2, col, 2);
+        tns.push(TnMergeRange.Create(range, true));
 
-        const rangeJustDays = sheet.getRangeByIndexes(row, col, 2, 3);
+        const rangeJustDays = new RangeInfo(row, 2, col, 3);
 
-        rangeJustDays.format.horizontalAlignment = Excel.HorizontalAlignment.center;
+        tns.push(TnSetHorizontalAlignment.Create(rangeJustDays, Excel.HorizontalAlignment.center));
 
-        rangeJustDays.format.borders.getItem('EdgeTop').style = Excel.BorderLineStyle.continuous;
-        rangeJustDays.format.borders.getItem('EdgeTop').weight = Excel.BorderWeight.thick;
+//        rangeJustDays.format.borders.getItem('EdgeTop').style = Excel.BorderLineStyle.continuous;
+//        rangeJustDays.format.borders.getItem('EdgeTop').weight = Excel.BorderWeight.thick;
 
-        rangeJustDays.format.borders.getItem('EdgeBottom').style = Excel.BorderLineStyle.continuous;
-        rangeJustDays.format.borders.getItem('EdgeBottom').weight = Excel.BorderWeight.thick;
+//        rangeJustDays.format.borders.getItem('EdgeBottom').style = Excel.BorderLineStyle.continuous;
+//        rangeJustDays.format.borders.getItem('EdgeBottom').weight = Excel.BorderWeight.thick;
 
-        const rangeVerticalLine = sheet.getRangeByIndexes(row, col + 2, 2, 1);
+        const rangeVerticalLine = new RangeInfo(row, 2, col + 2, 1);
 
-        const rangeJustDay = sheet.getRangeByIndexes(row, col, 1, 1);
-        rangeJustDay.numberFormat = [["General"]];
+        const rangeJustDay = new RangeInfo(row, 1, col, 1);
+        tns.push(TnSetNumberFormat.Create(rangeJustDay, [["General"]]));
 
-        const rangeJustDate = sheet.getRangeByIndexes(row + 1, col, 1, 1);
-        rangeJustDate.numberFormat = [["mmmm d"]];
+        const rangeJustDate = new RangeInfo(row + 1, 1, col, 1);
+        tns.push(TnSetNumberFormat.Create(rangeJustDate, [["mmmm d"]]));
 
-        GameFormatting.formatConnectingLineRangeRequest(rangeVerticalLine);
+        tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(rangeVerticalLine));
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -72,14 +85,16 @@ export class GridBuilder
 
         each day is 3 columns (the team, the score, and the vertical line)
     ----------------------------------------------------------------------------*/
-    static async addDayGridStaticAndFormulas(sheet: Excel.Worksheet, firstRowIndex: number, firstColumnIndex: number, days: number)
+    static tnsAddDayGridStaticAndFormulas(sheet: string, firstRowIndex: number, firstColumnIndex: number, days: number): IIntention[]
     {
+        const tns: IIntention[] = [];
+
         if (days <= 1)
             throw new Error("days must be > 1");
 
         const daysSpan: number = days * 3;
 
-        let rng: Excel.Range = sheet.getRangeByIndexes(firstRowIndex, firstColumnIndex, 2, daysSpan);
+        const range = new RangeInfo(firstRowIndex, 2, firstColumnIndex, daysSpan);
         let ary: any[][] = [];
 
         let col: number = firstColumnIndex;
@@ -100,24 +115,20 @@ export class GridBuilder
         ary.push(aryFirstRow);
         ary.push(arySecondRow);
 
-        rng.formulas = ary;
+        tns.push(TnSetFormulas.Create(range, ary, sheet));
 
-        rng = sheet.getRangeByIndexes(firstRowIndex + 1, firstColumnIndex, 1, daysSpan - 1);
-        rng.numberFormat = [["mmmm d"]];
+        const rangeDates = new RangeInfo(firstRowIndex + 1, 1, firstColumnIndex, daysSpan - 1);
+        tns.push(TnSetNumberFormat.Create(rangeDates, [["mmmm d"]], sheet));
 
         // now merge and format the cells
         col = firstColumnIndex;
-        // and add a left border just for our first day
-        const rangeJustDays = sheet.getRangeByIndexes(firstRowIndex, firstColumnIndex, 2, 1);
-
-        rangeJustDays.format.borders.getItem('EdgeLeft').style = Excel.BorderLineStyle.continuous;
-        rangeJustDays.format.borders.getItem('EdgeLeft').weight = Excel.BorderWeight.thick;
 
         while (col < firstColumnIndex + daysSpan)
         {
-            this.mergeAndFormatDayRequest(sheet, firstRowIndex, col);
+            tns.push(...this.tnsMergeAndFormatDayRequest(firstRowIndex, col));
             col += 3;
         }
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -132,61 +143,21 @@ export class GridBuilder
         ranges.format.columnWidth = width;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: GridBuilder.formatRepeatingColumns
-    ----------------------------------------------------------------------------*/
-    static formatRepeatingColumns(
-        sheet: Excel.Worksheet,
-        columnRange: RangeInfo,
-        colSkip: number,
-        width: number,
-        cols: number)
+    static tnsFormatGridSheetDays(colStart: number, days: number, rowStart: number, rows: number): IIntention[]
     {
-        let rangeAddresses: string[] = TnSetColumnWidth.GetRepeatingColumns(columnRange, cols, colSkip);
+        const tns: IIntention[] = [];
 
-        this.formatColumns(sheet, rangeAddresses, width);
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: GridBuilder.formatRows
-    ----------------------------------------------------------------------------*/
-    static formatRows(
-        sheet: Excel.Worksheet,
-        columns: string[],
-        height: number)
-    {
-        let ranges = sheet.getRanges(columns.join(","));
-        ranges.format.rowHeight = height;
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: GridBuilder.formatRepeatingRows
-    ----------------------------------------------------------------------------*/
-    static formatRepeatingRows(
-        sheet: Excel.Worksheet,
-        range: RangeInfo,
-        rowSkip: number,
-        height: number,
-        rowGroups: number)
-    {
-        let rangeAddresses: string[] = TnSetRowHeight.GetRepeatingRows(range, rowGroups, rowSkip);
-
-        this.formatRows(sheet, rangeAddresses, height);
-    }
-
-    /*----------------------------------------------------------------------------
-        %%Function: GridBuilder.formatGridSheetDays
-    ----------------------------------------------------------------------------*/
-    static formatGridSheetDays(sheet: Excel.Worksheet, colStart: number, days: number)
-    {
         const columnRange = new RangeInfo(0, 1, colStart, 1);
-        this.formatRepeatingColumns(sheet, columnRange, 2, 113, days);
-        this.formatRepeatingColumns(sheet, columnRange.offset(0, 1, 1, 1), 2, 17.28, days);
-        this.formatRepeatingColumns(sheet, columnRange.offset(0, 1, 2, 1), 2, 0.9, days);
 
-        const rowRange = new RangeInfo(9, 1, 0, 1);
-        this.formatRepeatingRows(sheet, rowRange, 1, 15, 300);
-        this.formatRepeatingRows(sheet, rowRange.offset(1, 1, 0, 1), 1, 1, 300);
+        tns.push(TnSetColumnWidth.Create(columnRange, 113, days, 2));
+        tns.push(TnSetColumnWidth.Create(columnRange.offset(0,1,1,1), 17.28, days, 2));
+        tns.push(TnSetColumnWidth.Create(columnRange.offset(0, 1, 2, 1), 0.9, days, 2));
+
+        const rowRange = new RangeInfo(rowStart, 1, 0, 1);
+        tns.push(TnSetRowHeight.Create(rowRange, 15, rows, 1));
+        tns.push(TnSetRowHeight.Create(rowRange.offset(1, 1, 0, 1), 1, rows, 1));
+
+        return tns;
     }
 
     /*----------------------------------------------------------------------------
@@ -196,32 +167,42 @@ export class GridBuilder
     ----------------------------------------------------------------------------*/
     static async buildGridSheet(context: JsCtx)
     {
+        const intentions: Intentions = new Intentions();
         const colFirstGridColumn: number = 3;
+        let row = 0;
 
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
-        let rngHeader: Excel.Range = sheet.getRangeByIndexes(0, colFirstGridColumn, 3, 1);
+        const header = new RangeInfo(row, 3, colFirstGridColumn, 1);
 
-        rngHeader.formulas = [["=IF(LEN(TournamentTitle)>0,TournamentTitle,\"\")"], ["=IF(LEN(TournamentSubTitle)>0,TournamentSubTitle,\"\")"], ["=IF(LEN(TournamentLocation)>0,TournamentLocation,\"\")"]];
-        rngHeader.format.font.bold = true;
-        rngHeader.format.font.size = 26;
+        const headerFormulas: any[][] = [["=IF(LEN(TournamentTitle)>0,TournamentTitle,\"\")"], ["=IF(LEN(TournamentSubTitle)>0,TournamentSubTitle,\"\")"], ["=IF(LEN(TournamentLocation)>0,TournamentLocation,\"\")"]];
 
-        let rngAddress: Excel.Range = sheet.getRangeByIndexes(3, colFirstGridColumn, 1, 1);
-        rngAddress.formulas = [["=TournamentAddress"]];
-        rngAddress.format.font.italic = true;
-        rngAddress.format.font.size = 18;
+        intentions.Add(TnSetFormulas.Create(header, headerFormulas, GridBuilder.SheetName));
 
-        let rngBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
-        rngBuilding.values = [["BUILDING"]];
+        intentions.Add(TnSetFontBold.Create(header, true, GridBuilder.SheetName));
+        intentions.Add(TnSetFontInfo.Create(header, null, 26, GridBuilder.SheetName));
 
-        this.formatGridSheetDays(sheet, 3, GridBuilder.maxDays);
-        this.formatColumns(sheet, ["A:A"], 60);
-        this.formatColumns(sheet, ["B:B"], 256);
-        this.formatColumns(sheet, ["C:C"], 32);
-        this.addDayGridStaticAndFormulas(sheet, 4, 3, GridBuilder.maxDays);
+        row += 3;
+        const address = new RangeInfo(row, 1, colFirstGridColumn, 1);
+        intentions.Add(TnSetFormulas.Create(address, [["=TournamentAddress"]], GridBuilder.SheetName));
+        intentions.Add(TnSetFontInfo.Create(address, null, 18, GridBuilder.SheetName));
+        intentions.Add(TnSetFontItalic.Create(address, true, GridBuilder.SheetName));
 
-        await GlobalDataBuilder.addGlobalDataToSheet(context, sheet, 11);
+        const building = new RangeInfo(0, 1, 0, 1);
+        intentions.Add(TnSetFormulas.Create(building, [["BUILDING"]], GridBuilder.SheetName));
+
+        intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 0, 1), 60));
+        intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 1, 1), 256));
+        intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 2, 1), 32));
+
+        intentions.AddTns(this.tnsAddDayGridStaticAndFormulas(GridBuilder.SheetName, 4, 3, GridBuilder.maxDays));
+
+        intentions.AddTns(await GlobalDataBuilder.tnsAddGlobalDataToSheet(context, GridBuilder.SheetName, 11));
 //        await this.addTipsAndDirections(context, sheet);
 
+
+        intentions.AddTns(this.tnsFormatGridSheetDays(colFirstGridColumn, GridBuilder.maxDays, 9, GridBuilder.maxGameRowGroups));
+
+        await intentions.Execute(context);
         sheet.showGridlines = false;
         sheet.activate();
         await context.sync();

@@ -8,8 +8,8 @@ export class TnSetFontInfo implements IIntention
     m_rangeInfo: RangeInfo;
     m_sheetName: string;
 
-    m_fontName: string;
-    m_fontSize: number;
+    m_fontName: string | null;
+    m_fontSize: number | null;
 
     get Type(): IntentionType
     {
@@ -25,12 +25,14 @@ export class TnSetFontInfo implements IIntention
 
         const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, this.m_rangeInfo);
 
-        range.format.font.name = this.m_fontName;
-        range.format.font.size = this.m_fontSize;
+        if (this.m_fontName != null)
+            range.format.font.name = this.m_fontName;
+        if (this.m_fontSize != null)
+            range.format.font.size = this.m_fontSize;
 
     }
 
-    static Create(range: RangeInfo, fontName: string, fontSize: number, sheet?: string): IIntention
+    static Create(range: RangeInfo, fontName: string | null, fontSize: number | null, sheet?: string): IIntention
     {
         const tn = new TnSetFontInfo();
 

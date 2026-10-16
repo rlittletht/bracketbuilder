@@ -31,6 +31,7 @@ Office.initialize = () => { };
 Office.onReady(() =>
 {
     isOfficeInitialized = true;
+    OfficeExtension.config.extendedErrorLogging = true;
     render(App);
 });
 

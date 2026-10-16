@@ -1,7 +1,7 @@
 import { FastRangeAreas } from "../Interop/FastRangeAreas";
 import { IIntention } from "../Interop/Intentions/IIntention";
 import { TnClearRange } from "../Interop/Intentions/TnClearRange";
-import { TnSetFillAndFontColor } from "../Interop/Intentions/TnSetFillAndFontColor";
+import { TnSetFillColor } from "../Interop/Intentions/TnSetFillColor";
 import { JsCtx } from "../Interop/JsCtx";
 import { RangeInfo } from "../Interop/Ranges";
 import { s_staticConfig } from "../StaticConfig";
@@ -187,7 +187,8 @@ export class GameFormatting
             return [];
 
         return [
-            TnSetFillAndFontColor.Create(range, "black", "black"),
+            TnSetFillColor.Create(range, "black"),
+            TnSetFontColor.Create(range, "black"),
             TnSetNumberFormat.Create(range, [[";;;"]])
         ];
     }

@@ -20,4 +20,5 @@ export class IntentionType
     static Select = "SEL";
     static SetColumnWidth = "SCW";
     static SetRowHeight = "SRH";
+    static SetFontUnderline = "SFUL";
 }

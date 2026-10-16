@@ -12,14 +12,30 @@ export enum RangeOverlapKind
     Equal
 }
 
+export enum RepeatType
+{
+    None,
+    Column,
+    Row
+}
 
 export class RangeInfo
 {
+    static MagicColsForRowRange: number = -99;
+    static MagicRowsForColRange: number = -98;
+
     m_rowStart: number;
     m_rowCount: number;
     m_columnStart: number;
     m_columnCount: number;
 
+    // for repeating columns
+    m_groupCount: number;
+    m_groupPadding: number;
+    m_repeatType: RepeatType;
+
+    // @formatter:off
+    get RepeatType(): RepeatType {return this.m_repeatType;}    
     get FirstRow(): number { return this.m_rowStart; }
     get RowCount(): number { return this.m_rowCount; }
     get FirstColumn(): number { return this.m_columnStart; }
@@ -29,23 +45,68 @@ export class RangeInfo
     get LastColumn(): number { return this.m_columnStart + this.m_columnCount - 1; }
     get LastColumnNotBackwards(): number { return this.m_columnStart + this.m_columnCount - 1 + (this.m_columnCount == 0 ? 1 : 0); }
     get Area(): number { return this.m_rowCount * this.m_columnCount; }
+    get IsRepeating(): boolean {return this.m_groupCount > 1;}
+    get GroupCount(): number {return this.m_groupCount;}
+    get GroupPadding(): number {return this.m_groupPadding;}
+    get IsRowRange(): boolean {return this.m_rowCount > 0 && this.m_columnCount == RangeInfo.MagicColsForRowRange;}
+    get IsColumnRange(): boolean {return this.m_rowCount == RangeInfo.MagicRowsForColRange && this.m_columnCount > 0;}
+    //   @formatter:on
 
-    constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number)
+    constructor(rowStart: number, rowCount: number, columnStart: number, columnCount: number, groupCount?: number, groupPadding?: number, repeatType?: RepeatType)
     {
-        if (rowCount < 0)
-            throw new Error("negative row count");
-        this.m_rowStart = rowStart;
-        this.m_rowCount = rowCount;
+        if (rowCount == RangeInfo.MagicRowsForColRange)
+        {
+            if (repeatType == RepeatType.Row)
+                throw new Error("cannot have a row repeat type for a column range");
 
-        if (columnCount < 0)
+            this.m_rowStart = RangeInfo.MagicRowsForColRange;
+            this.m_rowCount = rowCount;
+        }
+        else if (rowCount < 0)
+            throw new Error("negative row count");
+        else
+        {
+            this.m_rowStart = rowStart;
+            this.m_rowCount = rowCount;
+        }
+
+        if (columnCount == RangeInfo.MagicColsForRowRange)
+        {
+            if (repeatType == RepeatType.Column)
+                throw new Error("cannot have a column repeat type for a row range");
+
+            this.m_columnStart = RangeInfo.MagicColsForRowRange;
+            this.m_columnCount = columnCount;
+        }
+        else if (columnCount < 0)
             throw new Error("negative column count");
-        this.m_columnStart = columnStart;
-        this.m_columnCount = columnCount;
+        else
+        {
+            this.m_columnStart = columnStart;
+            this.m_columnCount = columnCount;
+        }
+
+        this.m_groupCount = groupCount ?? 1;
+        this.m_groupPadding = groupPadding ?? 0;
+        this.m_repeatType = repeatType ?? RepeatType.None;
     }
 
     clone(): RangeInfo
     {
-        return new RangeInfo(this.m_rowStart, this.RowCount, this.m_columnStart, this.ColumnCount);
+        return new RangeInfo(this.m_rowStart, this.RowCount, this.m_columnStart, this.ColumnCount, this.m_groupCount, this.m_groupPadding, this.m_repeatType);
+    }
+
+    static createRowRange(rowStart: number, rowCount: number, groupCount?: number, groupPadding?: number): RangeInfo
+    {
+        groupCount = groupCount ?? 1;
+        groupPadding = groupPadding ?? 0;
+
+        return new RangeInfo(rowStart, rowCount, RangeInfo.MagicColsForRowRange, RangeInfo.MagicColsForRowRange, groupCount, groupPadding, groupCount <= 1 ? RepeatType.None : RepeatType.Row);
+    }
+
+    static createColumnRange(columnStart: number, columnCount: number, groupCount?: number, groupPadding?: number): RangeInfo
+    {
+        return new RangeInfo(RangeInfo.MagicRowsForColRange, RangeInfo.MagicRowsForColRange, columnStart, columnCount, groupCount, groupPadding, groupCount <= 1 ? RepeatType.None : RepeatType.Column);
     }
 
     static createFromRangeInfo(range: RangeInfo): RangeInfo
@@ -53,7 +114,7 @@ export class RangeInfo
         if (range == null)
             return null;
 
-        return new RangeInfo(range.FirstRow, range.RowCount, range.FirstColumn, range.ColumnCount);
+        return new RangeInfo(range.FirstRow, range.RowCount, range.FirstColumn, range.ColumnCount, range.m_groupCount, range.m_groupPadding, range.m_repeatType);
     }
 
     static createForArrayOfValues(firstRow: number, firstColumn: number, ary: any[][]): RangeInfo
@@ -126,6 +187,68 @@ export class RangeInfo
             newColumnCount = this.ColumnCount;
 
         return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: getNewIndexForRepeating
+        %%Qualified: RangeInfo.getNewIndexForRepeating
+
+        get the next starting index for a repeating range given the groupSize
+        and the padding.  This will advance by groupCount groups.
+
+        (if you just want the next group, groupCount should be 1)
+    ----------------------------------------------------------------------------*/
+    static getNewIndexForRepeating(index: number, groupSize: number, groupCount: number, groupPadding: number): number
+    {
+        return index + (groupSize * groupCount) + (groupCount * groupPadding);
+    }
+
+    offsetGroup(groups: number)
+    {
+        if (this.RepeatType == RepeatType.None)
+            throw new Error("cannot offset a non-repeating range");
+
+        let newColumn = this.FirstColumn;
+        let newRow = this.FirstRow;
+
+        if (this.RepeatType == RepeatType.Column)
+        {
+            newColumn = RangeInfo.getNewIndexForRepeating(this.FirstColumn, this.ColumnCount, groups, this.GroupPadding);
+        }
+        else {
+            if (this.RepeatType != RepeatType.Row)
+                throw new Error("unexpected repeat type");
+
+            newRow = RangeInfo.getNewIndexForRepeating(this.FirstRow, this.RowCount, groups, this.GroupPadding);
+        }
+
+        return new RangeInfo(newRow, this.RowCount, newColumn, this.ColumnCount, this.GroupCount, this.GroupPadding, this.RepeatType);
+    }
+
+    /*----------------------------------------------------------------------------
+        %%Function: getNextRepeatedRange
+        %%Qualified: RangeInfo.getNextRepeatedRange
+
+        get the next range in a repeating range. the returned range will have 1
+        less group in the repetition, eventually getting to a single range.
+    ----------------------------------------------------------------------------*/
+    getNextRepeatedRange(): RangeInfo | null
+    {
+        if (this.RepeatType == RepeatType.None || this.GroupCount <= 1)
+            return null;
+
+        if (this.RepeatType == RepeatType.Column)
+        {
+            const nextFirstCol = RangeInfo.getNewIndexForRepeating(this.FirstColumn, this.ColumnCount, 1, this.GroupPadding);
+            return new RangeInfo(this.FirstRow, this.RowCount, nextFirstCol, this.ColumnCount, this.GroupCount - 1, this.GroupPadding, RepeatType.Column);
+        }
+        else if (this.RepeatType == RepeatType.Row)
+        {
+            const nextFirstRow = RangeInfo.getNewIndexForRepeating(this.FirstRow, this.RowCount, 1, this.GroupPadding);
+            return new RangeInfo(nextFirstRow, this.RowCount, this.FirstColumn, this.ColumnCount, this.GroupCount - 1, this.GroupPadding, RepeatType.Row);
+        }
+        else
+            throw new Error("unexpected repeat type");
     }
 
     shiftByColumns(dColumns: number): RangeInfo
@@ -258,14 +381,87 @@ export class RangeInfo
         return (Math.abs(this.FirstColumn - column) <= columnTolerance);
     }
 
+    get FirstRowString(): string
+    {
+        if (this.IsColumnRange)
+            return "";
+        else
+            return `${this.FirstRow}`;
+    }
+
+    get LastRowString(): string
+    {
+        if (this.IsColumnRange)
+            return "";
+        else
+            return `${this.LastRow}`;
+    }
+
+    get FirstColumnString(): string
+    {
+        if (this.IsRowRange)
+            return "";
+        else
+            return `${this.FirstColumn}`;
+    }
+
+    get LastColumnString(): string
+    {
+        if (this.IsRowRange)
+            return "";
+        else
+            return `${this.LastColumn}`;
+    }
+
+    get RepeatTypeString(): string
+    {
+        if (this.RepeatType == RepeatType.None)
+            return "";
+        else if (this.RepeatType == RepeatType.Column)
+            return "C";
+        else if (this.RepeatType == RepeatType.Row)
+            return "R";
+        else
+            throw new Error("unexpected repeat type");
+    }
+
     toString(): string
     {
-        return `[${this.FirstRow},${this.FirstColumn}]-[${this.LastRow},${this.LastColumn}]`;
+        const coords = `[${this.FirstRowString},${this.FirstColumnString}]-[${this.LastRowString},${this.LastColumnString}]`;
+
+        if (this.RepeatType != RepeatType.None)
+            return `${coords} ${this.RepeatTypeString}*{${this.GroupCount},${this.GroupPadding}}`;
+        else
+            return coords;
+    }
+
+    toExcelRangeString(): string
+    {
+        if (this.IsRowRange)
+            return `${this.FirstRow + 1}:${this.LastRow + 1}`;
+        if (this.IsColumnRange)
+            return `${Ranges.getColName(this.FirstColumn)}:${Ranges.getColName(this.LastColumn)}`;
+
+        return `${Ranges.addressFromCoordinates([this.FirstRow, this.FirstColumn], [this.LastRow, this.LastColumn])}`;
+    }
+
+    toExcelRangesString(): string
+    {
+        const ranges: string[] = [];
+
+        ranges.push(this.toExcelRangeString());
+        let nextRange: RangeInfo = this.getNextRepeatedRange();
+        while (nextRange != null)
+        {
+            ranges.push(nextRange.toExcelRangeString());
+            nextRange = nextRange.getNextRepeatedRange();
+        }
+        return ranges.join(",");
     }
 
     toFriendlyString(): string
     {
-        return `${Ranges.addressFromCoordinates([this.FirstRow, this.FirstColumn], [this.LastRow, this.LastColumn])}`;
+        return this.toExcelRangeString();
     }
 
     rebase(oldTopRow: number, newTopRow: number)
@@ -563,7 +759,7 @@ export class Ranges
         If the workbookNamesItems cache is populated, then this will not roundtrip
         to Excel.
     ----------------------------------------------------------------------------*/
-    static async tnsDeleteGlobalName(context: JsCtx, name: string): Promise<IIntention[]>
+    public static async tnsDeleteGlobalName(context: JsCtx, name: string): Promise<IIntention[]>
     {
         const tns: IIntention[] = [];
 
@@ -662,10 +858,9 @@ export class Ranges
         if (rangeInfo == null)
             return null;
 
-        return sheet.getRangeByIndexes(rangeInfo.FirstRow,
-            rangeInfo.FirstColumn,
-            rangeInfo.RowCount,
-            rangeInfo.ColumnCount);
+        const rangeString = rangeInfo.toExcelRangesString();
+
+        return sheet.getRange(rangeString);
     }
 
     /*----------------------------------------------------------------------------

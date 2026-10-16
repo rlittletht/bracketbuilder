@@ -1006,7 +1006,9 @@ export class StructureEditor
         const days: Excel.Range = sheet.getRangeByIndexes(4, selection.FirstColumn, 2, 6);
         days.formulas = aryData;
 
-        GridBuilder.mergeAndFormatDayRequest(sheet, 4, selection.FirstColumn);
+        const intentions: Intentions = new Intentions();
+        intentions.AddTns(GridBuilder.tnsMergeAndFormatDayRequest(4, selection.FirstColumn));
+        await intentions.Execute(context, true/*deferSync*/);
 
         // commit all these changes...
         await context.sync();

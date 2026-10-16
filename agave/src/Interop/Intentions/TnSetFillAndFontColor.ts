@@ -3,7 +3,7 @@ import { RangeInfo, Ranges } from "../Ranges";
 import { IIntention } from "./IIntention";
 import { IntentionType } from "./IntentionType";
 
-export class TnSetFillAndFontColor implements IIntention
+export class del_TnSetFillAndFontColor implements IIntention
 {
     m_rangeInfo: RangeInfo;
     m_sheetName: string;
@@ -32,7 +32,7 @@ export class TnSetFillAndFontColor implements IIntention
 
     static Create(range: RangeInfo, fillColor: string, fontColor: string, sheet?: string): IIntention
     {
-        const tn = new TnSetFillAndFontColor();
+        const tn = new del_TnSetFillAndFontColor();
 
         tn.m_rangeInfo = range;
         tn.m_fillColor = fillColor;
