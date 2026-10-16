@@ -8,7 +8,7 @@ export class TnSetFillColor implements IIntention
     m_rangeInfo: RangeInfo;
     m_sheetName: string;
 
-    m_fillColor: string;
+    m_fillColor: string | null;
 
     get Type(): IntentionType
     {
@@ -24,11 +24,14 @@ export class TnSetFillColor implements IIntention
 
         const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, this.m_rangeInfo);
 
-        range.format.fill.color = this.m_fillColor
+        if (this.m_fillColor == null)
+            range.format.fill.clear();
+        else
+            range.format.fill.color = this.m_fillColor;
 
     }
 
-    static Create(range: RangeInfo, fillColor: string, sheet?: string): IIntention
+    static Create(range: RangeInfo, fillColor: string | null, sheet?: string): IIntention
     {
         const tn = new TnSetFillColor();
 

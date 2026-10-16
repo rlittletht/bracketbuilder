@@ -52,6 +52,9 @@ import { _ElementFormattingRules } from "./FormattingRules/ElementFormattingRule
 import { _CanvasFormattingRules } from "./FormattingRules/CanvasFormattingRules";
 import { _ThemeFormattingRules, RefreshFormattingRules } from "./FormattingRules/ThemeRules";
 import { ElementItem } from "./FormattingRules/Elements/ElementItem";
+import { TnSetFontColor } from "../../Interop/Intentions/TnSetFontColor";
+import { TnSetFillColor } from "../../Interop/Intentions/TnSetFillColor";
+import { CanvasItem } from "./FormattingRules/CanvasItems/CanvasItem";
 
 let _moveSelection: RangeInfo = null;
 
@@ -115,6 +118,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await FastFormulaAreas.populateAllCaches(context);
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
 
             await this.insertGameDayForSchedulePush(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
@@ -141,6 +146,9 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await FastFormulaAreas.populateAllCaches(context);
+
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
 
             await this.convertBracketToModifiedDoubleElimination(appContext, context);
             appContext.AppStateAccess.HeroListDirty = true;
@@ -250,6 +258,8 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await FastFormulaAreas.populateAllCaches(context);
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
 
             await this.normalizeAllColumnsToCurrentColumn(appContext, context, appContext.SelectedBracket);
         };
@@ -268,6 +278,9 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             await FastFormulaAreas.populateAllCaches(context);
+
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
 
             await this.autofitTeamColumns(appContext, context, appContext.SelectedBracket);
         };
@@ -629,6 +642,9 @@ export class StructureEditor
 
             context.pushTrackingBookmark(bookmark);
 
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
+
             await this.doGameMoveToSelection(appContext, context, _moveSelection, appContext.SelectedBracket);
             context.releaseCacheObjectsUntil(bookmark);
 
@@ -738,6 +754,9 @@ export class StructureEditor
             const bookmark: string = "repairThisGameClick";
             context.pushTrackingBookmark(bookmark);
             await FastFormulaAreas.populateAllCaches(context);
+
+            // make sure we have the latest theme values
+            RefreshFormattingRules(context);
 
             await StructureEditor.repairThisGame(appContext, context, game, game.BracketName);
             context.releaseCacheObjectsUntil(bookmark);
@@ -958,6 +977,15 @@ export class StructureEditor
         }
     }
 
+    static tnsResetFontAndFill(range: RangeInfo): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        tns.push(TnSetFontColor.Create(range, "black"));
+        tns.push(TnSetFillColor.Create(range, null));
+        return tns;
+    }
+
     /*----------------------------------------------------------------------------
         %%Function: StructureEditor.insertGameDayForSchedulePush
 
@@ -977,22 +1005,15 @@ export class StructureEditor
         const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getActiveWorksheet();
         const colReference: string = `${Ranges.getColName(selection.FirstColumn)}:${Ranges.getColName(selection.FirstColumn)}`;
 
+        const rangeNewTeamColumn = RangeInfo.createColumnRange(selection.FirstColumn, 1);
+        const rangeNewScoreColumn = RangeInfo.createColumnRange(selection.FirstColumn + 1, 1);
+        const rangeNewLineColumn = RangeInfo.createColumnRange(selection.FirstColumn + 2, 1);
+
+        const rangeNewDayLineRow = new RangeInfo(grid.RowForDates - 2, 1, selection.FirstColumn, 3);
+
         const rangeLine: Excel.Range = sheet.getRange(colReference).insert(Excel.InsertShiftDirection.right);
-
-        rangeLine.format.columnWidth = 0.9;
-        rangeLine.format.font.color = "black";
-        rangeLine.format.fill.clear();
         const rangeScore: Excel.Range = sheet.getRange(colReference).insert(Excel.InsertShiftDirection.right);
-
-        rangeScore.format.columnWidth = 17.28;
-        rangeScore.format.font.color = "black";
-        rangeScore.format.fill.clear();
-
         const rangeDay: Excel.Range = sheet.getRange(colReference).insert(Excel.InsertShiftDirection.right);
-
-        rangeDay.format.columnWidth = 113;
-        rangeDay.format.font.color = "black";
-        rangeDay.format.fill.clear();
 
         // now fixup the formulas for this day and the next day
         const aryData: any[] = [];
@@ -1008,9 +1029,17 @@ export class StructureEditor
         days.formulas = aryData;
 
         const intentions: Intentions = new Intentions();
+
+        intentions.AddTns(StructureEditor.tnsResetFontAndFill(rangeNewTeamColumn));
+        intentions.AddTns(StructureEditor.tnsResetFontAndFill(rangeNewLineColumn));
+        intentions.AddTns(StructureEditor.tnsResetFontAndFill(rangeNewScoreColumn));
+
+        intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.TeamColumns).getTns(rangeNewTeamColumn));
+        intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.ScoreColumns).getTns(rangeNewScoreColumn));
+        intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineColumns).getTns(rangeNewLineColumn));
+
         intentions.AddTns(GridBuilder.tnsMergeAndFormatDayRequest(grid.RowForDates - 1, selection.FirstColumn));
 
-        const rangeNewDayLineRow = new RangeInfo(grid.RowForDates - 2, 1, selection.FirstColumn, 3);
         intentions.AddTns(GameFormatting.tnsFormatConnectingLineRangeRequest(rangeNewDayLineRow));
         intentions.AddTns(GameFormatting.tnsFormatConnectingLineRangeRequest(rangeNewDayLineRow.offset(3, 1, 0, 3)));
 
