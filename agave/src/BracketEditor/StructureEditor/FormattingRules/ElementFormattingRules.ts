@@ -249,7 +249,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
         [
             FontRule.CreateFromRule("Theme", true, ThemeItem.Header),
             FontSizeRule.CreateFromRule(s_staticConfig.headerSize),
-            BoldRule.CreateFromRule(false),
+            BoldRule.CreateFromRule(true),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
             HAlignmentRule.CreateFromRule(HAlignment.Center),

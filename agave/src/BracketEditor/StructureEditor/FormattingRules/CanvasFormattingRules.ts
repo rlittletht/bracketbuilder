@@ -18,6 +18,8 @@ import { Intentions } from "../../../Interop/Intentions/Intentions";
 import { RangeCaches, RangeCacheItemType } from "../../../Interop/RangeCaches";
 import { TnSetValues } from "../../../Interop/Intentions/TnSetValue";
 import { FormattingRulesBuilder } from "../../../Brackets/FormattingRulesBuilder";
+import { TnSetRowHeight } from "../../../Interop/Intentions/TnSetRowHeight";
+import { TnSetColumnWidth } from "../../../Interop/Intentions/TnSetColumnWidth";
 
 
 export class CanvasFormattingRules
@@ -157,11 +159,11 @@ export function CreateDefaultCanvasFormattingRules(): CanvasFormattingRules
 {
     const rules: CanvasFormattingRules = new CanvasFormattingRules();
 
-    rules.addDefinition(CanvasItem.TeamRows, [SizeRule.CreateFromRule("rowHeight", (rule, format) => { rule.m_val = format.rowHeight; }, 15)]);
-    rules.addDefinition(CanvasItem.LineRows, [SizeRule.CreateFromRule("rowHeight", (rule, format) => { rule.m_val = format.rowHeight; }, 1)]);
-    rules.addDefinition(CanvasItem.TeamColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, 113)]);
-    rules.addDefinition(CanvasItem.ScoreColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, 17.5)]);
-    rules.addDefinition(CanvasItem.LineColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, 1)]);
+    rules.addDefinition(CanvasItem.TeamRows, [SizeRule.CreateFromRule("rowHeight", (rule, format) => {rule.m_val = format.rowHeight;}, (rule, range) => [TnSetRowHeight.Create(range, rule.m_val)], 15)]);
+    rules.addDefinition(CanvasItem.LineRows, [SizeRule.CreateFromRule("rowHeight", (rule, format) => { rule.m_val = format.rowHeight; }, (rule, range) => [TnSetRowHeight.Create(range, rule.m_val)], 1)]);
+    rules.addDefinition(CanvasItem.TeamColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, (rule, range) => [TnSetColumnWidth.Create(range, rule.m_val)], 113)]);
+    rules.addDefinition(CanvasItem.ScoreColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, (rule, range) => [TnSetColumnWidth.Create(range, rule.m_val)], 17.5)]);
+    rules.addDefinition(CanvasItem.LineColumns, [SizeRule.CreateFromRule("columnWidth", (rule, format) => { rule.m_val = format.columnWidth; }, (rule, range) => [TnSetColumnWidth.Create(range, rule.m_val)], 1)]);
 
     return rules;
 }

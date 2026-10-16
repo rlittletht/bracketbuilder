@@ -307,7 +307,7 @@ export class GameFormatting
 
     static isRangeFormatInLineRow(format: Excel.RangeFormat): boolean
     {
-        return format.rowHeight <= 1;
+        return format.rowHeight <= 3;
     }
 
     static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean
@@ -319,7 +319,7 @@ export class GameFormatting
 
     static isRangeFormatInLineColumn(format: Excel.RangeFormat): boolean
     {
-        return format.columnWidth < 5;
+        return format.columnWidth < 7;
     }
 
     /*----------------------------------------------------------------------------

@@ -2333,7 +2333,8 @@ export class Grid
 
     getPrintArea(blankRowsAtBottom: number): RangeInfo
     {
-        let printArea: RangeInfo = this.FirstGridPattern.offset(0, 1, 0, 1);
+        // go back one column to include the line column next to the dates
+        let printArea: RangeInfo = this.FirstGridPattern.offset(0, 1, -1, 1);
 
         this.enumerate(
             (item: GridItem) =>
@@ -2346,6 +2347,20 @@ export class Grid
 
                 return true;
             });
+
+        if (this.getColumnType(printArea.LastColumn) == GridColumnType.Score)
+        {
+            // expand to include one more column so we capture the line column
+            // after the dates
+            printArea.setLastColumn(printArea.LastColumn + 1);
+        }
+        else if (this.getColumnType(printArea.LastColumn) == GridColumnType.Team)
+        {
+            // expand to include one more column so we capture the line column
+            // after the dates
+            printArea.setLastColumn(printArea.LastColumn + 2);
+        }
+
 
         if (blankRowsAtBottom > 0)
             printArea.setLastRow(printArea.LastRow + blankRowsAtBottom);

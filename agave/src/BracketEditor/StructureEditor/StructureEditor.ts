@@ -51,6 +51,7 @@ import { GameMoverSimple } from "../GameMovers/GameMoverSimple";
 import { _ElementFormattingRules } from "./FormattingRules/ElementFormattingRules";
 import { _CanvasFormattingRules } from "./FormattingRules/CanvasFormattingRules";
 import { _ThemeFormattingRules, RefreshFormattingRules } from "./FormattingRules/ThemeRules";
+import { ElementItem } from "./FormattingRules/Elements/ElementItem";
 
 let _moveSelection: RangeInfo = null;
 
@@ -1616,6 +1617,7 @@ export class StructureEditor
 
         const grid: Grid = await Grid.createGridFromBracket(context, bracketName);
         const gridArea: RangeInfo = grid.getPrintArea(6);
+        const daysRow = 5;
 
         const printArea: RangeInfo = RangeInfo.createFromCorners(
             gridArea.topLeft().newSetRow(0),
@@ -1637,30 +1639,30 @@ export class StructureEditor
         sheet.pageLayout.setPrintArea(range);
 
         // and merge the main tournament rows...
+        const intentions: Intentions = new Intentions();
+
         for (let row: number = 0; row < 4; row++)
         {
+            // don't include the line columns
             const toMerge: RangeInfo = new RangeInfo(
                 row,
                 1,
-                printArea.FirstColumn,
-                printArea.ColumnCount);
+                printArea.FirstColumn + 1,
+                printArea.ColumnCount - 2);
 
             const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, toMerge);
             range.merge(true);
-            range.format.horizontalAlignment = Excel.HorizontalAlignment.center;
+
+            const elementItem: ElementItem = row == 3 ? ElementItem.TourneySubHeading : ElementItem.TourneyHeading;
+            intentions.AddTns(_ElementFormattingRules().getElementDefinition(elementItem).getTns(toMerge));
         }
 
+        const rangeInfoHosted = new RangeInfo(printArea.LastRow - 2, 1, printArea.FirstColumn + 1, printArea.ColumnCount - 2);
+        const rangeInfoHosted1 = new RangeInfo(printArea.LastRow - 2, 1, printArea.FirstColumn + 1, 1);
+
         // and place the hosted and last updated merge regions
-        const rangeHosted: Excel.Range = sheet.getRangeByIndexes(
-            printArea.LastRow - 2,
-            printArea.FirstColumn,
-            1,
-            printArea.ColumnCount);
-        const rangeHosted1: Excel.Range = sheet.getRangeByIndexes(
-            printArea.LastRow - 2,
-            printArea.FirstColumn,
-            1,
-            1);
+        const rangeHosted: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoHosted);
+        const rangeHosted1: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoHosted1);
 
         rangeHosted1.formulas = [["=IF(LEN(TournamentHost)>0, \"HOSTED BY \" & TournamentHost, \"\")"]];
         rangeHosted.format.horizontalAlignment = Excel.HorizontalAlignment.center;
@@ -1669,63 +1671,47 @@ export class StructureEditor
 
         rangeHosted.merge(true);
 
-        const rangeBuilding: Excel.Range = sheet.getRangeByIndexes(0, 0, 1, 1);
+        const rangeInfoBuilding = new RangeInfo(0, 1, 0, 1);
+        const rangeBuilding: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoBuilding);
+
         rangeBuilding.values = [[""]];
 
-        const rangeLastUpdate: Excel.Range = sheet.getRangeByIndexes(
-            printArea.LastRow,
-            printArea.FirstColumn,
-            1,
-            printArea.ColumnCount);
-        const rangeLastUpdate1: Excel.Range = sheet.getRangeByIndexes(
-            printArea.LastRow,
-            printArea.FirstColumn,
-            1,
-            1);
+        const rangeInfoLastUpdate = new RangeInfo(printArea.LastRow, 1, printArea.FirstColumn + 1, printArea.ColumnCount - 2);
+        const rangeInfoLastUpdate1 = new RangeInfo(printArea.LastRow, 1, printArea.FirstColumn + 1, 1);
+
+        const rangeLastUpdate: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoLastUpdate);
+        const rangeLastUpdate1: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoLastUpdate1);
 
         rangeLastUpdate1.formulas = [["=\"LAST UPDATED: \" & TEXT(LastUpdate, \"mm/dd/YYYY hh:MM AM/PM\")"]];
         rangeLastUpdate.format.horizontalAlignment = Excel.HorizontalAlignment.right;
         rangeLastUpdate.merge(true);
 
         // now merge the last day on the title
-        const rangeChampionDayTop: Excel.Range = sheet.getRangeByIndexes(
-            4,
-            printArea.LastColumn - 2,
-            1,
-            1);
-        const rangeChampionDayBottom: Excel.Range = sheet.getRangeByIndexes(
-            5,
-            printArea.LastColumn - 2,
-            1,
-            1);
+        const rangeInfoChampionDayTop = new RangeInfo(daysRow, 1, printArea.LastColumn - 2, 1);
+        const rangeInfoChampionDayBottom = rangeInfoChampionDayTop.offset(1, 1, 0, 1);
+        const rangeChampionDayTop: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoChampionDayTop);
+        const rangeChampionDayBottom: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoChampionDayBottom);
 
         rangeChampionDayTop.formulas = [[""]];
         rangeChampionDayBottom.formulas = [[""]];
 
-        const rangeWholeChampionDayTop: Excel.Range = sheet.getRangeByIndexes(
-            4,
-            printArea.LastColumn - 5,
-            1,
-            5);
-        const rangeWholeChampionDayBottom: Excel.Range = sheet.getRangeByIndexes(
-            5,
-            printArea.LastColumn - 5,
-            1,
-            5);
+        const rangeInfoWholeChampionDayTop = rangeInfoChampionDayTop.offset(0, 1, -3, 5);
+        const rangeInfoWholeChampionDayBottom = rangeInfoWholeChampionDayTop.offset(1, 1, 0, 5);
+        const rangeWholeChampionDayTop: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoWholeChampionDayTop);
+        const rangeWholeChampionDayBottom: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoWholeChampionDayBottom);
 
         rangeWholeChampionDayTop.merge(true);
         rangeWholeChampionDayBottom.merge(true);
-        rangeWholeChampionDayTop.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.thick;
-        rangeWholeChampionDayBottom.format.borders.getItem('EdgeRight').weight = Excel.BorderWeight.thick;
 
-        const rangeUnformat: Excel.Range = sheet.getRangeByIndexes(
-            3,
-            printArea.LastColumn + 1,
-            3,
-            printArea.FirstColumn + GridBuilder.maxDays * 3 - printArea.LastColumn);
+        const rangeInfoUnformat = new RangeInfo(daysRow - 1, 5, printArea.LastColumn + 1, (printArea.FirstColumn + 1) + GridBuilder.maxDays * 3 - (printArea.LastColumn - 1));
+
+        const rangeUnformat: Excel.Range = Ranges.rangeFromRangeInfo(sheet, rangeInfoUnformat);
 
         rangeUnformat.clear();
         rangeUnformat.unmerge();
+
+        await intentions.Execute(context, true /*deferSync*/);
+
         sheet.pageLayout.zoom = {
             horizontalFitToPages: 1,
             verticalFitToPages: 1,

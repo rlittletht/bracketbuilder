@@ -15,6 +15,8 @@ import { TnSetFontItalic } from "../Interop/Intentions/TnSetFontItalic";
 import { TnSetNumberFormat } from "../Interop/Intentions/TnSetNumberFormat";
 import { TnMergeRange } from "../Interop/Intentions/TnMergeRange";
 import { TnSetHorizontalAlignment } from "../Interop/Intentions/TnSetHorizontalAlignment";
+import { _CanvasFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/CanvasFormattingRules";
+import { CanvasItem } from "../BracketEditor/StructureEditor/FormattingRules/CanvasItems/CanvasItem";
 
 export class GridBuilder
 {
@@ -151,15 +153,19 @@ export class GridBuilder
     {
         const tns: IIntention[] = [];
 
-        const columnRange = new RangeInfo(0, 1, colStart, 1);
+        const teamColumns = RangeInfo.createColumnRange(colStart, 1, days, 2);
+        const scoreColumns = RangeInfo.createColumnRange(colStart + 1, 1, days, 2);
+        const lineColumns = RangeInfo.createColumnRange(colStart + 2, 1, days, 2);
 
-        tns.push(TnSetColumnWidth.Create(columnRange, 113, days, 2));
-        tns.push(TnSetColumnWidth.Create(columnRange.offset(0,1,1,1), 17.28, days, 2));
-        tns.push(TnSetColumnWidth.Create(columnRange.offset(0, 1, 2, 1), 0.9, days, 2));
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.TeamColumns).getTns(teamColumns));
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.ScoreColumns).getTns(scoreColumns));
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineColumns).getTns(lineColumns));
 
-        const rowRange = new RangeInfo(rowStart, 1, 0, 1);
-        tns.push(TnSetRowHeight.Create(rowRange, 15, rows, 1));
-        tns.push(TnSetRowHeight.Create(rowRange.offset(1, 1, 0, 1), 1, rows, 1));
+        const teamRows = RangeInfo.createRowRange(rowStart, 1, rows, 1);
+        const lineRows = RangeInfo.createRowRange(rowStart + 1, 1, rows, 1);
+
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.TeamRows).getTns(teamRows));
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(lineRows));
 
         return tns;
     }
@@ -197,11 +203,11 @@ export class GridBuilder
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 0, 1), 60));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 1, 1), 256));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 2, 1), 32));
-        intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 3, 1), 1));
+        intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineColumns).getTns(new RangeInfo(0, 1, 3, 1)));
 
         // format the row before and after the day grid as a line rows
         row++;
-        intentions.Add(TnSetRowHeight.Create(RangeInfo.createRowRange(row, 1), 1));
+        intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(RangeInfo.createRowRange(row, 1)));
 
         const rangeVerticalLineBeforeDays = new RangeInfo(row, 4, colFirstGridColumn - 1, 1);
         intentions.AddTns(GameFormatting.tnsFormatConnectingLineRangeRequest(rangeVerticalLineBeforeDays));
@@ -210,7 +216,7 @@ export class GridBuilder
         intentions.AddTns(this.tnsAddDayGridStaticAndFormulas(row, colFirstGridColumn, GridBuilder.maxDays));
         row += 2;
 
-        intentions.Add(TnSetRowHeight.Create(RangeInfo.createRowRange(row, 1), 1));
+        intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(RangeInfo.createRowRange(row, 1)));
         row++;
 
         intentions.AddTns(await GlobalDataBuilder.tnsAddGlobalDataToSheet(context, GridBuilder.SheetName, 13));

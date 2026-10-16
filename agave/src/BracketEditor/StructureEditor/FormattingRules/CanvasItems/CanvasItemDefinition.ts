@@ -1,5 +1,9 @@
 import { IFormatRule } from "../RuleTypes/IFormatRule";
 import { CanvasItem } from "./CanvasItem";
+import { RangeInfo } from "../../../../Interop/Ranges";
+import { IIntention } from "../../../../Interop/Intentions/IIntention";
+import { FontRule } from "../RuleTypes/FontRule";
+import { TnSetFontInfo } from "../../../../Interop/Intentions/TnSetFontInfo";
 
 export class CanvasItemDefinition
 {
@@ -79,5 +83,15 @@ export class CanvasItemDefinition
     {
         for (const rule of this.m_rules)
             rule.AdjustLoadRequests(loadRequests);
+    }
+
+    public getTns(range: RangeInfo | null): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        for (const rule of this.m_rules)
+            tns.push(...rule.GetTns(range));
+
+        return tns;
     }
 }
