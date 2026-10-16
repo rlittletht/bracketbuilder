@@ -85,7 +85,7 @@ export class GridBuilder
 
         each day is 3 columns (the team, the score, and the vertical line)
     ----------------------------------------------------------------------------*/
-    static tnsAddDayGridStaticAndFormulas(sheet: string, firstRowIndex: number, firstColumnIndex: number, days: number): IIntention[]
+    static tnsAddDayGridStaticAndFormulas(firstRowIndex: number, firstColumnIndex: number, days: number): IIntention[]
     {
         const tns: IIntention[] = [];
 
@@ -93,6 +93,10 @@ export class GridBuilder
             throw new Error("days must be > 1");
 
         const daysSpan: number = days * 3;
+
+        const horizLineBefore = new RangeInfo(firstRowIndex - 1, 1, firstColumnIndex - 1, daysSpan + 1);
+        tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(horizLineBefore));
+        tns.push(...GameFormatting.tnsFormatConnectingLineRangeRequest(horizLineBefore.offset(3, 1, 0, daysSpan + 1)));
 
         const range = new RangeInfo(firstRowIndex, 2, firstColumnIndex, daysSpan);
         let ary: any[][] = [];
@@ -115,10 +119,10 @@ export class GridBuilder
         ary.push(aryFirstRow);
         ary.push(arySecondRow);
 
-        tns.push(TnSetFormulas.Create(range, ary, sheet));
+        tns.push(TnSetFormulas.Create(range, ary));
 
         const rangeDates = new RangeInfo(firstRowIndex + 1, 1, firstColumnIndex, daysSpan - 1);
-        tns.push(TnSetNumberFormat.Create(rangeDates, [["mmmm d"]], sheet));
+        tns.push(TnSetNumberFormat.Create(rangeDates, [["mmmm d"]]));
 
         // now merge and format the cells
         col = firstColumnIndex;
@@ -168,7 +172,7 @@ export class GridBuilder
     static async buildGridSheet(context: JsCtx)
     {
         const intentions: Intentions = new Intentions();
-        const colFirstGridColumn: number = 3;
+        const colFirstGridColumn: number = 4;
         let row = 0;
 
         let sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, GridBuilder.SheetName, null, EnsureSheetPlacement.First);
@@ -193,14 +197,26 @@ export class GridBuilder
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 0, 1), 60));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 1, 1), 256));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 2, 1), 32));
+        intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 3, 1), 1));
 
-        intentions.AddTns(this.tnsAddDayGridStaticAndFormulas(GridBuilder.SheetName, 4, 3, GridBuilder.maxDays));
+        // format the row before and after the day grid as a line rows
+        row++;
+        intentions.Add(TnSetRowHeight.Create(RangeInfo.createRowRange(row, 1), 1));
 
-        intentions.AddTns(await GlobalDataBuilder.tnsAddGlobalDataToSheet(context, GridBuilder.SheetName, 11));
+        const rangeVerticalLineBeforeDays = new RangeInfo(row, 4, colFirstGridColumn - 1, 1);
+        intentions.AddTns(GameFormatting.tnsFormatConnectingLineRangeRequest(rangeVerticalLineBeforeDays));
+
+        row++;
+        intentions.AddTns(this.tnsAddDayGridStaticAndFormulas(row, colFirstGridColumn, GridBuilder.maxDays));
+        row += 2;
+
+        intentions.Add(TnSetRowHeight.Create(RangeInfo.createRowRange(row, 1), 1));
+        row++;
+
+        intentions.AddTns(await GlobalDataBuilder.tnsAddGlobalDataToSheet(context, GridBuilder.SheetName, 13));
 //        await this.addTipsAndDirections(context, sheet);
 
-
-        intentions.AddTns(this.tnsFormatGridSheetDays(colFirstGridColumn, GridBuilder.maxDays, 9, GridBuilder.maxGameRowGroups));
+        intentions.AddTns(this.tnsFormatGridSheetDays(colFirstGridColumn, GridBuilder.maxDays, 11, GridBuilder.maxGameRowGroups));
 
         await intentions.Execute(context);
         sheet.showGridlines = false;
