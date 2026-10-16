@@ -1002,13 +1002,18 @@ export class StructureEditor
         aryData.push(aryFirstRow);
         aryData.push(arySecondRow);
 
-        GridBuilder.pushDayGridFormulas(aryFirstRow, arySecondRow, 4, selection.FirstColumn, 2);
+        GridBuilder.pushDayGridFormulas(aryFirstRow, arySecondRow, grid.RowForDates - 1, selection.FirstColumn, 2);
 
-        const days: Excel.Range = sheet.getRangeByIndexes(4, selection.FirstColumn, 2, 6);
+        const days: Excel.Range = sheet.getRangeByIndexes(grid.RowForDates - 1, selection.FirstColumn, 2, 6);
         days.formulas = aryData;
 
         const intentions: Intentions = new Intentions();
-        intentions.AddTns(GridBuilder.tnsMergeAndFormatDayRequest(4, selection.FirstColumn));
+        intentions.AddTns(GridBuilder.tnsMergeAndFormatDayRequest(grid.RowForDates - 1, selection.FirstColumn));
+
+        const rangeNewDayLineRow = new RangeInfo(grid.RowForDates - 2, 1, selection.FirstColumn, 3);
+        intentions.AddTns(GameFormatting.tnsFormatConnectingLineRangeRequest(rangeNewDayLineRow));
+        intentions.AddTns(GameFormatting.tnsFormatConnectingLineRangeRequest(rangeNewDayLineRow.offset(3, 1, 0, 3)));
+
         await intentions.Execute(context, true/*deferSync*/);
 
         // commit all these changes...
