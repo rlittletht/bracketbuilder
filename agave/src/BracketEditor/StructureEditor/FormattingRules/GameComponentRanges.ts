@@ -123,7 +123,7 @@ export class GameComponentRanges
         this.m_ranges[GameComponentRangeType.AdvanceToRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(2, 1, 0, 1));
         this.m_ranges[GameComponentRangeType.FieldRange] = Ranges.rangeFromRangeInfo(sheet, game.GameIdRange.offset(0, 1, -1, 1));
         this.m_ranges[GameComponentRangeType.VLineRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(0, 1, 2, 1));
-        this.m_ranges[GameComponentRangeType.HLineRange] = Ranges.rangeFromRangeInfo(sheet, game.GameIdRange.offset(1, 1, 0, 1));
+        this.m_ranges[GameComponentRangeType.HLineRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(1, 1, 0, 1));
         this.m_ranges[GameComponentRangeType.ScoreRange] = Ranges.rangeFromRangeInfo(sheet, game.TopTeamRange.offset(0, 1, 1, 1));
         if (gridGameStart)
         {

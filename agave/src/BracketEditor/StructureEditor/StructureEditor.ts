@@ -1451,6 +1451,7 @@ export class StructureEditor
 
         tns.push(...GameFormatting.tnsFormatDates(grid));
         tns.push(...GameFormatting.tnsFormatTourneyHeadings(grid));
+        tns.push(...GameFormatting.tnsFormatCanvasItems(grid));
 
         intentions.AddTns(tns);
         await intentions.Execute(context);

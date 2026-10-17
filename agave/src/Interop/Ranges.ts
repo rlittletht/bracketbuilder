@@ -181,12 +181,31 @@ export class RangeInfo
     ----------------------------------------------------------------------------*/
     offset(dRows: number, newRowCount: number, dColumns?: number, newColumnCount?: number)
     {
+        if (this.IsColumnRange)
+        {
+            if (dRows != 0)
+                throw new Error("cannot offset a column range by rows");
+
+            if (dColumns == undefined)
+                throw new Error("must specify dColumns for a column range");
+
+            return new RangeInfo(this.FirstRow, this.RowCount, this.FirstColumn + dColumns, newColumnCount ?? this.ColumnCount, this.GroupCount, this.GroupPadding, this.RepeatType);
+        }
+
+        if (this.IsRowRange)
+        {
+            if (dColumns != undefined && dColumns != 0)
+                throw new Error("cannot offset a row range by columns");
+
+            return new RangeInfo(this.FirstRow + dRows, newRowCount ?? this.RowCount, this.FirstColumn, this.ColumnCount, this.GroupCount, this.GroupPadding, this.RepeatType);
+        }
+
         if (dColumns == undefined)
             dColumns = 0;
         if (newColumnCount == undefined)
             newColumnCount = this.ColumnCount;
 
-        return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount);
+        return new RangeInfo(this.FirstRow + dRows, newRowCount, this.FirstColumn + dColumns, newColumnCount, this.GroupCount, this.GroupPadding, this.RepeatType);
     }
 
     /*----------------------------------------------------------------------------

@@ -21,6 +21,9 @@ import { _ElementFormattingRules } from "./StructureEditor/FormattingRules/Eleme
 import { ElementItem } from "./StructureEditor/FormattingRules/Elements/ElementItem";
 import { FontRule } from "./StructureEditor/FormattingRules/RuleTypes/FontRule";
 import { ElementDefinition } from "./StructureEditor/FormattingRules/Elements/ElementDefinition";
+import { _CanvasFormattingRules } from "./StructureEditor/FormattingRules/CanvasFormattingRules";
+import { CanvasItem } from "./StructureEditor/FormattingRules/CanvasItems/CanvasItem";
+import { GridBuilder } from "../Brackets/GridBuilder";
 
 export class GameFormatting
 {
@@ -110,7 +113,7 @@ export class GameFormatting
             const bottomTeamRange = item.BottomTeamRange;
             tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange));
 
-            tns.push(...this.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange, Excel.VerticalAlignment.center));
+            tns.push(...this.tnsFormatGameInfoGameNumberRequest(item.GameNumberRange));
 
             tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 1, -1, 1), Excel.VerticalAlignment.center));
             tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(item.GameNumberRange.offset(2, 1, -1, 1)));
@@ -142,6 +145,26 @@ export class GameFormatting
         return tns;
     }
 
+    static tnsFormatCanvasItems(grid: Grid): IIntention[]
+    {
+        const tns: IIntention[] = [];
+
+        // format the rows around the dates
+        const dateRow = RangeInfo.createRowRange(grid.RowForDates, 1);
+
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(dateRow.offset(1, 1)));
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(dateRow.offset(-2, 1)));
+
+        // now format all the repeating line rows
+        const lineRows = RangeInfo.createRowRange(grid.FirstGridPattern.FirstRow + 1, 1, GridBuilder.maxGameRowGroups, 1);
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(lineRows));
+
+        // and format all the repeating line columns
+        const lineColumns = RangeInfo.createColumnRange(grid.FirstGridPattern.FirstColumn -1, 1, GridBuilder.maxDays + 1, 2);
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineColumns).getTns(lineColumns));
+
+        return tns;
+    }
 
     /*----------------------------------------------------------------------------
         %%Function: tnsFormatDates
