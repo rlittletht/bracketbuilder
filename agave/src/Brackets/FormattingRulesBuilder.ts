@@ -9,6 +9,7 @@ import { BracketDefBuilder } from "./BracketDefBuilder";
 import { RulesBuilder } from "./RulesBuilder";
 import { s_staticConfig } from "../StaticConfig";
 import { _ElementFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/ElementFormattingRules";
+import { ElementDefinition } from "../BracketEditor/StructureEditor/FormattingRules/Elements/ElementDefinition";
 
 export class FormattingRulesBuilder
 {
@@ -75,16 +76,13 @@ export class FormattingRulesBuilder
                 ["Body", s_staticConfig.bodyFont]
             ]);
 
-        row += 5;
+        row += 15;
 
-        const elementRules: any[][] = [];
-        const elementHeader: string[] = ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"];
+        const elementDefinitions = _ElementFormattingRules().getDefinitionsArray();
 
-        ["Tournament Heading", "Tournament SubHeading", "Game Title", "Advance To", "Game Body", "Game Number", "Dates", "Champion"].forEach(
-            (element) =>
-            {
-                elementRules.push(_ElementFormattingRules().getDefinitionValuesForElementRow(elementHeader, [element], 0));
-            });
+        const elementHeader = [...elementDefinitions[0]];
+        elementDefinitions.splice(0, 1);
+        const elementRules = elementDefinitions;
 
         await this.insertTableAt(
             context,
@@ -92,10 +90,10 @@ export class FormattingRulesBuilder
             sheet,
             row,
             FormattingRulesBuilder.ElementFormattingTableName,
-            ["Element", "Font", "FontSize", "Bold", "Italic", "Color", "HAlignment", "VAlignment"],
+            elementHeader,
             elementRules);
 
-        row += elementRules.length + 4;
+        row += elementRules.length + 20
 
         await this.insertTableAt(
             context,

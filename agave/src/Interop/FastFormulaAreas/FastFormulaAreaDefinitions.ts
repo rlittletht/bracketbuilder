@@ -48,7 +48,7 @@ export class FastFormulaAreaDefinitions
                 [FastFormulaAreasItems.BracketDefs, new FastFormulaAreaDefinition(FastFormulaAreaDefinitions.s_bracketDefCacheName, "BracketDefs", new RangeInfo(0, 200, 0, 15), "Defs")],
                 [FastFormulaAreasItems.BracketInfo, new FastFormulaAreaDefinition(FastFormulaAreaDefinitions.s_bracketInfoCacheName, "BracketInfo", new RangeInfo(0, 100, 0, 15), "Info")],
                 [FastFormulaAreasItems.RulesData, new FastFormulaAreaDefinition(FastFormulaAreaDefinitions.s_rulesSheetCacheName, "Rules", new RangeInfo(0, 50, 0, 10), "Rules")],
-                [FastFormulaAreasItems.FormattingRules, new FastFormulaAreaDefinition(FastFormulaAreaDefinitions.s_formattingRulesCacheName, "FormattingRules", new RangeInfo(0, 50, 0, 10), "FormattingRules")]
+                [FastFormulaAreasItems.FormattingRules, new FastFormulaAreaDefinition(FastFormulaAreaDefinitions.s_formattingRulesCacheName, "FormattingRules", new RangeInfo(0, 100, 0, 10), "FormattingRules")]
             ]);
 
     static getCacheNameFromType(type: FastFormulaAreasItems, cacheName: string): string

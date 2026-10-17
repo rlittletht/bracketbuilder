@@ -132,11 +132,13 @@ export class GameFormatting
     ----------------------------------------------------------------------------*/
     static tnsFormatTourneyHeadings(grid: Grid): IIntention[]
     {
-        const headings = new RangeInfo(0, 3, grid.FirstGridPattern.FirstColumn, 1);
+        const headings = new RangeInfo(0, 1, grid.FirstGridPattern.FirstColumn, 1);
 
         const tns: IIntention[] = [];
 
-        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneyHeading).getTns(headings));
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneyHeading1).getTns(headings));
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneyHeading2).getTns(headings.offset(1, 1, 0, 1)));
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneyHeading3).getTns(headings.offset(2, 1, 0, 1)));
 
         const subHeadings = headings.offset(3, 1, 0, 1);
 

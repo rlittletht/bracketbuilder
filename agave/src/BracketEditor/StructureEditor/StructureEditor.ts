@@ -1676,6 +1676,7 @@ export class StructureEditor
         // and merge the main tournament rows...
         const intentions: Intentions = new Intentions();
 
+        const items = [ElementItem.TourneyHeading1, ElementItem.TourneyHeading2, ElementItem.TourneyHeading3, ElementItem.TourneySubHeading];
         for (let row: number = 0; row < 4; row++)
         {
             // don't include the line columns
@@ -1688,7 +1689,7 @@ export class StructureEditor
             const range: Excel.Range = Ranges.rangeFromRangeInfo(sheet, toMerge);
             range.merge(true);
 
-            const elementItem: ElementItem = row == 3 ? ElementItem.TourneySubHeading : ElementItem.TourneyHeading;
+            const elementItem: ElementItem = items[row]
             intentions.AddTns(_ElementFormattingRules().getElementDefinition(elementItem).getTns(toMerge));
         }
 

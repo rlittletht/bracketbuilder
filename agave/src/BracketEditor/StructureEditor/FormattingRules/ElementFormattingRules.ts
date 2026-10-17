@@ -22,6 +22,7 @@ import { Intentions } from "../../../Interop/Intentions/Intentions";
 import { FormattingRulesBuilder } from "../../../Brackets/FormattingRulesBuilder";
 import { ThemeItem } from "./Themes/ThemeItem";
 import { s_staticConfig } from "../../../StaticConfig";
+import { FastTables } from "../../../Interop/FastTables";
 
 
 export class ElementFormattingRules
@@ -61,7 +62,8 @@ export class ElementFormattingRules
 
         // and now push all the definitions
         for (const definition of this.m_definitions)
-            definitions.push(definition.getDefinitionArrayForNames(Array.from(names)));
+            definitions.push([definition.ElementType, ...definition.getDefinitionArrayForNames(Array.from(names))]);
+
         return definitions;
     }
 
@@ -74,14 +76,24 @@ export class ElementFormattingRules
         return Array.from(loadRequests);
     }
 
-    getElementDefinition(element: ElementItem): ElementDefinition
+    getElementDefinitionOrNull(element: ElementItem): ElementDefinition | null
     {
         for (const definition of this.m_definitions)
         {
             if (definition.ElementType === element)
                 return definition;
         }
-        throw new Error(`ElementDefinition not found for element: ${element}`);
+        return null;
+    }
+
+    getElementDefinition(element: ElementItem): ElementDefinition
+    {
+        const definition = this.getElementDefinitionOrNull(element);
+
+        if (!definition)
+            throw new Error(`ElementDefinition not found for element: ${element}`);
+
+        return definition;
     }
 
     getElementRule(element: ElementItem, rule: string): IFormatRule
@@ -95,7 +107,11 @@ export class ElementFormattingRules
         row;
         // get the element type for this row
         const elementType = dataValues[0];
-        const definition = this.getElementDefinition(elementType);
+        const definition = this.getElementDefinitionOrNull(elementType);
+
+        if (!definition)
+            return [...dataValues];
+
         const values: any[] = [];
         values.push(elementType);
         for (let col = 1; col < headerValues.length; col++)
@@ -132,23 +148,52 @@ export class ElementFormattingRules
                 definition.loadFromExcelFormat(componentRange.format);
         }
 
-        // TODO: determine if we have more definitions than we have rows in our table. if so, we need
-        // to grow the table and insert the missing items!
+        const updated = new Map<string, boolean>();
 
         const tns: Intentions = new Intentions();
+        let headerRow: string[] | null = null;
 
         RangeCaches.enumerateCachedTableBody(
             context,
             RangeCacheItemType.ElementFormattingBody,
             RangeCacheItemType.ElementFormattingHeader,
-            (headerValues, dataValues, row) => this.getDefinitionValuesForElementRow(headerValues, dataValues, row),
+            (headerValues, dataValues, row) =>
+            {
+                headerRow = headerRow || headerValues;
+                return this.getDefinitionValuesForElementRow(headerValues, dataValues, row);
+            },
             (dataRange, updatedValues) =>
             {
+                for (const updatedRow of updatedValues)
+                    updated.set((updatedRow[0] as string).toLowerCase(), true);
+
                 tns.AddTns([TnSetValues.Create(dataRange.offset(0, dataRange.RowCount, 0, dataRange.ColumnCount), updatedValues, FormattingRulesBuilder.SheetName)]);
             });
 
+        const newRows: any[][] = [];
+
+        if (headerRow)
+        {
+            // see if there are any missing
+            for (const definition of this.m_definitions)
+            {
+                if (!updated.has(definition.ElementType.toLowerCase()))
+                {
+                    newRows.push(this.getDefinitionValuesForElementRow(headerRow, [definition.ElementType], -1));
+                }
+            }
+        }
+
         // and now record this in the FormattingRules table
         await tns.Execute(context);
+
+        if (newRows.length > 0)
+        {
+            const fastTables = new FastTables();
+
+            // we have to expand the table. there better be room under it!
+            await fastTables.appendTableFast(FormattingRulesBuilder.ElementFormattingTableName, newRows);
+        }
     }
 
     loadFormattingFromExcelSheet(context: JsCtx): void
@@ -161,7 +206,10 @@ export class ElementFormattingRules
             {
                 row;
                 const elementType = dataValues[0];
-                const definition = this.getElementDefinition(elementType);
+                const definition = this.getElementDefinitionOrNull(elementType);
+
+                if (!definition)
+                    return [...dataValues];
 
                 for (let col = 1; col < dataValues.length; col++)
                     definition.setValue(headerValues[col], dataValues[col]);
@@ -245,7 +293,31 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
         ]);
 
     rules.addDefinition(
-        ElementItem.TourneyHeading,
+        ElementItem.TourneyHeading1,
+        [
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Header),
+            FontSizeRule.CreateFromRule(s_staticConfig.headerSize),
+            BoldRule.CreateFromRule(true),
+            ItalicRule.CreateFromRule(false),
+            ColorRule.CreateFromString("#000000"),
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
+        ]);
+
+    rules.addDefinition(
+        ElementItem.TourneyHeading2,
+        [
+            FontRule.CreateFromRule("Theme", true, ThemeItem.Header),
+            FontSizeRule.CreateFromRule(s_staticConfig.headerSize),
+            BoldRule.CreateFromRule(true),
+            ItalicRule.CreateFromRule(false),
+            ColorRule.CreateFromString("#000000"),
+            HAlignmentRule.CreateFromRule(HAlignment.Center),
+            VAlignmentRule.CreateFromRule(VAlignment.Center)
+        ]);
+
+    rules.addDefinition(
+        ElementItem.TourneyHeading3,
         [
             FontRule.CreateFromRule("Theme", true, ThemeItem.Header),
             FontSizeRule.CreateFromRule(s_staticConfig.headerSize),

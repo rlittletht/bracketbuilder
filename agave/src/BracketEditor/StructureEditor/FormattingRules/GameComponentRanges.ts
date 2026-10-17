@@ -12,10 +12,12 @@ export enum GameComponentRangeType
     VLineRange = 4,
     HLineRange = 5,
     DatesRange = 6,
-    TourneyHeadingRange = 7,
-    TourneySubHeadingRange = 8,
-    ScoreRange = 9,
-    ChampionRange = 10,
+    TourneyHeading1Range = 7,
+    TourneyHeading2Range = 8,
+    TourneyHeading3Range = 9,
+    TourneySubHeadingRange = 10,
+    ScoreRange = 11,
+    ChampionRange = 12,
     Last = ChampionRange
 }
 
@@ -26,7 +28,9 @@ export const mapElementTypeToGameComponentRangeType: Map<ElementItem, GameCompon
         [ElementItem.AdvanceTo, GameComponentRangeType.AdvanceToRange],
         [ElementItem.GameBody, GameComponentRangeType.FieldRange],
         [ElementItem.Dates, GameComponentRangeType.DatesRange],
-        [ElementItem.TourneyHeading, GameComponentRangeType.TourneyHeadingRange],
+        [ElementItem.TourneyHeading1, GameComponentRangeType.TourneyHeading1Range],
+        [ElementItem.TourneyHeading2, GameComponentRangeType.TourneyHeading2Range],
+        [ElementItem.TourneyHeading3, GameComponentRangeType.TourneyHeading3Range],
         [ElementItem.Champion, GameComponentRangeType.ChampionRange],
         [ElementItem.TourneySubHeading, GameComponentRangeType.TourneySubHeadingRange]
     ]);
@@ -96,9 +100,19 @@ export class GameComponentRanges
         return this.m_ranges[GameComponentRangeType.ScoreRange];
     }
 
-    get TourneyHeadingRange(): Excel.Range
+    get TourneyHeading1Range(): Excel.Range
     {
-        return this.m_ranges[GameComponentRangeType.TourneyHeadingRange];
+        return this.m_ranges[GameComponentRangeType.TourneyHeading1Range];
+    }
+
+    get TourneyHeading2Range(): Excel.Range
+    {
+        return this.m_ranges[GameComponentRangeType.TourneyHeading2Range];
+    }
+
+    get TourneyHeading3Range(): Excel.Range
+    {
+        return this.m_ranges[GameComponentRangeType.TourneyHeading3Range];
     }
 
     get TourneySubHeadingRange(): Excel.Range
@@ -128,7 +142,9 @@ export class GameComponentRanges
         if (gridGameStart)
         {
             const tourneyHeadingRange: RangeInfo = new RangeInfo(0, 1, gridGameStart.FirstColumn, 1);
-            this.m_ranges[GameComponentRangeType.TourneyHeadingRange] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange);
+            this.m_ranges[GameComponentRangeType.TourneyHeading1Range] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange);
+            this.m_ranges[GameComponentRangeType.TourneyHeading2Range] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange.offset(1, 1, 0, 1));
+            this.m_ranges[GameComponentRangeType.TourneyHeading3Range] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange.offset(2, 1, 0, 1));
             this.m_ranges[GameComponentRangeType.TourneySubHeadingRange] = Ranges.rangeFromRangeInfo(sheet, tourneyHeadingRange.offset(3, 1, 0, 1));
         }
 
