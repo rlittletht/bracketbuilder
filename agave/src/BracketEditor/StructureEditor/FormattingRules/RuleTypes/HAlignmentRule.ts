@@ -26,11 +26,11 @@ export class HAlignmentRule implements IFormatRule
         switch (typeof val)
         {
         case "string":
-            if (val.toUpperCase() === HAlignment.Left)
+            if (val.toUpperCase() === (HAlignment.Left as string).toUpperCase())
                 this.m_val = HAlignment.Left;
-            else if (val.toUpperCase() === HAlignment.Center)
+            else if (val.toUpperCase() === (HAlignment.Center as string).toUpperCase())
                 this.m_val = HAlignment.Center;
-            else if (val.toUpperCase() === HAlignment.Right)
+            else if (val.toUpperCase() === (HAlignment.Right as string).toUpperCase())
                 this.m_val = HAlignment.Right;
             break;
         default:

@@ -27,11 +27,11 @@ export class VAlignmentRule implements IFormatRule
         switch (typeof val)
         {
         case "string":
-            if (val.toUpperCase() === VAlignment.Top)
+            if (val.toUpperCase() === (VAlignment.Top as string).toUpperCase())
                 this.m_val = VAlignment.Top;
-            else if (val.toUpperCase() === VAlignment.Center)
+            else if (val.toUpperCase() === (VAlignment.Center as string).toUpperCase())
                 this.m_val = VAlignment.Center;
-            else if (val.toUpperCase() === VAlignment.Bottom)
+            else if (val.toUpperCase() === (VAlignment.Bottom as string).toUpperCase())
                 this.m_val = VAlignment.Bottom;
             break;
         default:
