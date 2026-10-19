@@ -126,14 +126,9 @@ export class GameFormatting
         return tns;
     }
 
-    /*----------------------------------------------------------------------------
-        %%Function: tnsFormatTourneyHeadings
-        %%Qualified: GameFormatting.tnsFormatTourneyHeadings
-    ----------------------------------------------------------------------------*/
-    static tnsFormatTourneyHeadings(grid: Grid): IIntention[]
-    {
-        const headings = new RangeInfo(0, 1, grid.FirstGridPattern.FirstColumn, 1);
 
+    static tnsFormatTourneyHeadingsForRanges(headings: RangeInfo): IIntention[]
+    {
         const tns: IIntention[] = [];
 
         tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneyHeading1).getTns(headings));
@@ -145,6 +140,18 @@ export class GameFormatting
         tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.TourneySubHeading).getTns(subHeadings));
 
         return tns;
+    }
+
+
+    /*----------------------------------------------------------------------------
+        %%Function: tnsFormatTourneyHeadings
+        %%Qualified: GameFormatting.tnsFormatTourneyHeadings
+    ----------------------------------------------------------------------------*/
+    static tnsFormatTourneyHeadings(grid: Grid): IIntention[]
+    {
+        const headings = new RangeInfo(0, 1, grid.FirstGridPattern.FirstColumn, 1);
+
+        return this.tnsFormatTourneyHeadingsForRanges(headings);
     }
 
     static tnsFormatCanvasItems(grid: Grid): IIntention[]
@@ -332,7 +339,7 @@ export class GameFormatting
 
     static isRangeFormatInLineRow(format: Excel.RangeFormat): boolean
     {
-        return format.rowHeight <= 3;
+        return format.rowHeight <= 6;
     }
 
     static isCellInLineRowFaster(areas: FastRangeAreas, range: RangeInfo): boolean
@@ -344,7 +351,7 @@ export class GameFormatting
 
     static isRangeFormatInLineColumn(format: Excel.RangeFormat): boolean
     {
-        return format.columnWidth < 7;
+        return format.columnWidth < 10;
     }
 
     /*----------------------------------------------------------------------------

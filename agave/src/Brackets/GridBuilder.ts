@@ -17,6 +17,7 @@ import { TnMergeRange } from "../Interop/Intentions/TnMergeRange";
 import { TnSetHorizontalAlignment } from "../Interop/Intentions/TnSetHorizontalAlignment";
 import { _CanvasFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/CanvasFormattingRules";
 import { CanvasItem } from "../BracketEditor/StructureEditor/FormattingRules/CanvasItems/CanvasItem";
+import { TnSetActiveSheet } from "../Interop/Intentions/TnSetActiveSheet";
 
 export class GridBuilder
 {
@@ -186,19 +187,17 @@ export class GridBuilder
 
         const headerFormulas: any[][] = [["=IF(LEN(TournamentTitle)>0,TournamentTitle,\"\")"], ["=IF(LEN(TournamentSubTitle)>0,TournamentSubTitle,\"\")"], ["=IF(LEN(TournamentLocation)>0,TournamentLocation,\"\")"]];
 
-        intentions.Add(TnSetFormulas.Create(header, headerFormulas, GridBuilder.SheetName));
-
-        intentions.Add(TnSetFontBold.Create(header, true, GridBuilder.SheetName));
-        intentions.Add(TnSetFontInfo.Create(header, null, 26, GridBuilder.SheetName));
+        intentions.Add(TnSetActiveSheet.Create(GridBuilder.SheetName));
+        intentions.Add(TnSetFormulas.Create(header, headerFormulas));
 
         row += 3;
         const address = new RangeInfo(row, 1, colFirstGridColumn, 1);
-        intentions.Add(TnSetFormulas.Create(address, [["=TournamentAddress"]], GridBuilder.SheetName));
-        intentions.Add(TnSetFontInfo.Create(address, null, 18, GridBuilder.SheetName));
-        intentions.Add(TnSetFontItalic.Create(address, true, GridBuilder.SheetName));
+        intentions.Add(TnSetFormulas.Create(address, [["=TournamentAddress"]]));
+
+        intentions.AddTns(GameFormatting.tnsFormatTourneyHeadingsForRanges(header.offset(0, 1, 0, 1)));
 
         const building = new RangeInfo(0, 1, 0, 1);
-        intentions.Add(TnSetFormulas.Create(building, [["BUILDING"]], GridBuilder.SheetName));
+        intentions.Add(TnSetFormulas.Create(building, [["BUILDING"]]));
 
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 0, 1), 60));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 1, 1), 256));
