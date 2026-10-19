@@ -51,7 +51,7 @@ export class ThemeRules
 
         // and now push all the definitions
         for (const definition of this.m_definitions)
-            definitions.push(definition.getDefinitionArrayForNames(Array.from(names)));
+            definitions.push([definition.ThemeItem, ...definition.getDefinitionArrayForNames(Array.from(names))]);
         return definitions;
     }
 

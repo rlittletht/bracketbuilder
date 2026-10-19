@@ -10,6 +10,10 @@ import { RulesBuilder } from "./RulesBuilder";
 import { s_staticConfig } from "../StaticConfig";
 import { _ElementFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/ElementFormattingRules";
 import { ElementDefinition } from "../BracketEditor/StructureEditor/FormattingRules/Elements/ElementDefinition";
+import { FastFormulaAreas } from "../Interop/FastFormulaAreas/FastFormulaAreas";
+import { _ThemeFormattingRules, RefreshFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/ThemeRules";
+import { FastFormulaAreasItems } from "../Interop/FastFormulaAreas/FastFormulaAreasItems";
+import { _CanvasFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/CanvasFormattingRules";
 
 export class FormattingRulesBuilder
 {
@@ -45,12 +49,36 @@ export class FormattingRulesBuilder
         return table;
     }
 
-    public static async buildFormattingRulesSheet(
-        context: JsCtx,
-        fastTables: IFastTables,
-    )
+    public static async InsertDefinitionsIntoTableAtRow(context: JsCtx, fastTables: IFastTables, sheet: Excel.Worksheet, row: number, elementDefinitions: any[][], tableName: string): Promise<number>
     {
+        const elementHeader = [...elementDefinitions[0]];
+        elementDefinitions.splice(0, 1);
+        const elementRules = elementDefinitions;
+
+        await this.insertTableAt(
+            context,
+            fastTables,
+            sheet,
+            row,
+            tableName,
+            elementHeader,
+            elementRules);
+
+        return elementRules.length;
+    }
+
+    public static async buildFormattingRulesSheet(context: JsCtx, fastTables: IFastTables)
+    {
+        await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.FormattingRules);
+
+        // load whatever settings they already had...
+        RefreshFormattingRules(context);
+
+        // and now make sure we get a fresh new sheet
+        await Sheets.ensureSheetDoesNotExist(context, FormattingRulesBuilder.SheetName);
+
         const sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, FormattingRulesBuilder.SheetName, RulesBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
+
 
         const colB_C = sheet.getRange("B:C");
 
@@ -63,51 +91,10 @@ export class FormattingRulesBuilder
 
         row += 2;
 
-        await this.insertTableAt(
-            context,
-            fastTables,
-            sheet,
-            row,
-            FormattingRulesBuilder.ThemeTableName,
-            ["Element", "Font"],
-            [
-                ["Header", s_staticConfig.headerFont],
-                ["BodyHeading", s_staticConfig.blackFont],
-                ["Body", s_staticConfig.bodyFont]
-            ]);
+        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row, _ThemeFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ThemeTableName) + 15;
 
-        row += 15;
+        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row, _ElementFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ElementFormattingTableName) + 20;
 
-        const elementDefinitions = _ElementFormattingRules().getDefinitionsArray();
-
-        const elementHeader = [...elementDefinitions[0]];
-        elementDefinitions.splice(0, 1);
-        const elementRules = elementDefinitions;
-
-        await this.insertTableAt(
-            context,
-            fastTables,
-            sheet,
-            row,
-            FormattingRulesBuilder.ElementFormattingTableName,
-            elementHeader,
-            elementRules);
-
-        row += elementRules.length + 20
-
-        await this.insertTableAt(
-            context,
-            fastTables,
-            sheet,
-            row,
-            FormattingRulesBuilder.ElementSizesTableName,
-            ["Element", "Size"],
-            [
-                ["TeamRows", 15],
-                ["LineRows", 1],
-                ["TeamColumns", 113],
-                ["ScoreColumns", 17.5],
-                ["LineColumns", 1]
-            ]);
+        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row + 20, _CanvasFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ElementSizesTableName) + 20;
     }
 }
