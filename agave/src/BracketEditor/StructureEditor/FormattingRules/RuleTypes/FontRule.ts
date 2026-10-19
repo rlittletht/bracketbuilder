@@ -40,6 +40,7 @@ export class FontRule implements IFormatRule
             break;
         case "string":
             this.m_fontName = val;
+            this.m_isTheme = val.toLowerCase() === "theme";
             break;
         case "boolean":
             this.m_fontName = val ? "TRUE" : "FALSE";
