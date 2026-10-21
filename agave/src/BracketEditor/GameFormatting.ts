@@ -102,7 +102,7 @@ export class GameFormatting
             return tns;
 
         const topTeamRange = item.TopTeamRange;
-        tns.push(...this.tnsFormatTeamNameRangeRequest(topTeamRange));
+        tns.push(...this.tnsFormatTeamNameRangeRequest(topTeamRange, Excel.VerticalAlignment.bottom));
 
         if (item.IsChampionshipGame)
             tns.push(...this.tnsFormatChampionshipText(topTeamRange.offset(2, 1, 0, 1)));
@@ -111,11 +111,11 @@ export class GameFormatting
             const fCompressedGame = item.GameNumberRange.FirstRow - item.Range.FirstRow - 1 < 0;
 
             const bottomTeamRange = item.BottomTeamRange;
-            tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange));
+            tns.push(...this.tnsFormatTeamNameRangeRequest(bottomTeamRange, Excel.VerticalAlignment.top));
 
             tns.push(...this.tnsFormatGameInfoGameNumberRequest(item.GameNumberRange));
 
-            tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 1, -1, 1), Excel.VerticalAlignment.center));
+            tns.push(...GameFormatting.tnsFormatGameInfoBodyTextRequest(item.GameNumberRange.offset(0, 1, -1, 1), Excel.VerticalAlignment.bottom));
             tns.push(...GameFormatting.tnsFormatGameInfoTimeTextRequest(item.GameNumberRange.offset(2, 1, -1, 1)));
 
             if (!fCompressedGame)
@@ -168,9 +168,18 @@ export class GameFormatting
         const lineRows = RangeInfo.createRowRange(grid.FirstGridPattern.FirstRow + 1, 1, GridBuilder.maxGameRowGroups, 1);
         tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineRows).getTns(lineRows));
 
-        // and format all the repeating line columns
+        const teamRows = RangeInfo.createRowRange(grid.FirstGridPattern.FirstRow, 1, GridBuilder.maxGameRowGroups, 1);
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.TeamRows).getTns(teamRows));
+
+        // and format all the repeating columns
         const lineColumns = RangeInfo.createColumnRange(grid.FirstGridPattern.FirstColumn -1, 1, GridBuilder.maxDays + 1, 2);
         tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineColumns).getTns(lineColumns));
+
+        const teamColumns = RangeInfo.createColumnRange(grid.FirstGridPattern.FirstColumn, 1, GridBuilder.maxDays + 1, 2);
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.TeamColumns).getTns(teamColumns));
+
+        const scoreColumns = RangeInfo.createColumnRange(grid.FirstGridPattern.FirstColumn + 1, 1, GridBuilder.maxDays + 1, 2);
+        tns.push(..._CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.ScoreColumns).getTns(scoreColumns));
 
         return tns;
     }
@@ -190,12 +199,16 @@ export class GameFormatting
     /*----------------------------------------------------------------------------
         %%Function: GameFormatting.formatTeamNameRange
     ----------------------------------------------------------------------------*/
-    static tnsFormatTeamNameRangeRequest(teamNameRange: RangeInfo): IIntention[]
+    static tnsFormatTeamNameRangeRequest(teamNameRange: RangeInfo, verticalAlignment: Excel.VerticalAlignment): IIntention[]
     {
         if (teamNameRange == null)
             return [];
 
-        return _ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getTns(teamNameRange);
+        const tns: IIntention[] = [];
+
+        tns.push(TnSetVerticalAlignment.Create(teamNameRange, verticalAlignment));
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.GameTitle).getTns(teamNameRange));
+        return tns;
     }
 
     /*----------------------------------------------------------------------------

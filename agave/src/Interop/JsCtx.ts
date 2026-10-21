@@ -17,6 +17,11 @@ export class JsCtx
 
     get Ctx(): any { return this.m_ctx; }
 
+    suspendScreenUpdatingUntilNextSync()
+    {
+       this.m_ctx.application.suspendScreenUpdatingUntilNextSync();
+    }
+
     async sync(name?: string)
     {
         // this is an explicit if to allow easier breakpoints

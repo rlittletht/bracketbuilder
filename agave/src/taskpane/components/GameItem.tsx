@@ -89,6 +89,8 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
         let background = {};
         const isPlaced = this.props.linkedToGrid;
 
+        const isChampionship = isPlaced && this.props.game.IsChampionship;
+
         if (isPlaced)
             background = { background: "#cccccc" };
 
@@ -194,7 +196,7 @@ export class GameItem extends React.Component<GameItemProps, GameItemState>
                 bracketGame={this.props.game}
                 delegate={GameItem.DoRemoveDescendants.bind(this)}
                 disabled={false}
-                icon="DependencyRemove"/>
+                icon="RemoveLink"/>
         );
 
         const removeDescendantsWrapped = (

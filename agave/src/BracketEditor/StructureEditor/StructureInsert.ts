@@ -69,7 +69,7 @@ export class StructureInsert
         // by now, we are committed to this game going in this spot
 
         // now we have to format the game and assign global names
-        tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2)));
+        tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2), Excel.VerticalAlignment.bottom));
 
         // delete any existing named ranges
         tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
@@ -249,11 +249,11 @@ export class StructureInsert
             // by now, we are committed to this game going in this spot
 
             // now we have to format the game and assign global names
-            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2)));
+            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.offset(0, 1, 0, 2), Excel.VerticalAlignment.bottom));
             tns.push(...await Ranges.tnsDeleteGlobalName(context, game.TopTeamCellName));
             tns.push(TnCreateGlobalName.Create(game.TopTeamCellName, insertRangeInfo.offset(0, 1, 0, 1)));
 
-            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.bottomLeft().offset(0, 1, 0, 2)));
+            tns.push(...GameFormatting.tnsFormatTeamNameRangeRequest(insertRangeInfo.bottomLeft().offset(0, 1, 0, 2), Excel.VerticalAlignment.top));
             tns.push(...await Ranges.tnsDeleteGlobalName(context, game.BottomTeamCellName));
             tns.push(TnCreateGlobalName.Create(game.BottomTeamCellName, insertRangeInfo.bottomLeft().offset(0, 1, 0, 1)));
 

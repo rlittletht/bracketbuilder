@@ -18,6 +18,8 @@ import { TnSetHorizontalAlignment } from "../Interop/Intentions/TnSetHorizontalA
 import { _CanvasFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/CanvasFormattingRules";
 import { CanvasItem } from "../BracketEditor/StructureEditor/FormattingRules/CanvasItems/CanvasItem";
 import { TnSetActiveSheet } from "../Interop/Intentions/TnSetActiveSheet";
+import { _ElementFormattingRules } from "../BracketEditor/StructureEditor/FormattingRules/ElementFormattingRules";
+import { ElementItem } from "../BracketEditor/StructureEditor/FormattingRules/Elements/ElementItem";
 
 export class GridBuilder
 {
@@ -124,8 +126,12 @@ export class GridBuilder
 
         tns.push(TnSetFormulas.Create(range, ary));
 
+        const rangeDays = new RangeInfo(firstRowIndex, 1, firstColumnIndex, daysSpan - 1);
         const rangeDates = new RangeInfo(firstRowIndex + 1, 1, firstColumnIndex, daysSpan - 1);
         tns.push(TnSetNumberFormat.Create(rangeDates, [["mmmm d"]]));
+
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.Dates).getTns(rangeDates));
+        tns.push(..._ElementFormattingRules().getElementDefinition(ElementItem.Dates).getTns(rangeDays));
 
         // now merge and format the cells
         col = firstColumnIndex;
@@ -202,6 +208,9 @@ export class GridBuilder
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 0, 1), 60));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 1, 1), 256));
         intentions.Add(TnSetColumnWidth.Create(new RangeInfo(0, 1, 2, 1), 32));
+
+        intentions.AddTns(this.tnsFormatGridSheetDays(colFirstGridColumn, GridBuilder.maxDays, 11, GridBuilder.maxGameRowGroups));
+
         intentions.AddTns(_CanvasFormattingRules().getCanvasItemDefinition(CanvasItem.LineColumns).getTns(new RangeInfo(0, 1, 3, 1)));
 
         // format the row before and after the day grid as a line rows
@@ -220,8 +229,6 @@ export class GridBuilder
 
         intentions.AddTns(await GlobalDataBuilder.tnsAddGlobalDataToSheet(context, GridBuilder.SheetName, 13));
 //        await this.addTipsAndDirections(context, sheet);
-
-        intentions.AddTns(this.tnsFormatGridSheetDays(colFirstGridColumn, GridBuilder.maxDays, 11, GridBuilder.maxGameRowGroups));
 
         await intentions.Execute(context);
         sheet.showGridlines = false;

@@ -400,16 +400,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                         },
                     },
                     {
-                        icon: "VerticalDistributeCenter",
-                        text: "Normalize all team columns to current column",
-                        delegate: async (appContext: IAppContext): Promise<boolean> =>
-                        {
-                            await StructureEditor.normalizeAllColumnsToCurrentColumnClick(appContext);
-                            return true;
-                        },
-                    }, 
-                    {
-                        icon: "Padding",
+                        icon: "D365TalentLearn",
                         text: "Learn game formatting",
                         delegate: async (appContext: IAppContext): Promise<boolean> =>
                         {
@@ -418,7 +409,7 @@ export default class App extends React.Component<AppProps, AppState> implements 
                         }
                     },
                     {
-                        icon: "Padding",
+                        icon: "Brush",
                         text: "(Re)apply bracket styles",
                         delegate: async (appContext: IAppContext): Promise<boolean> =>
                         {
@@ -426,6 +417,15 @@ export default class App extends React.Component<AppProps, AppState> implements 
                             return true;
                         }
                     },
+                    {
+                        icon: "VerticalDistributeCenter",
+                        text: "Apply selected column width",
+                        delegate: async (appContext: IAppContext): Promise<boolean> =>
+                        {
+                            await StructureEditor.normalizeAllColumnsToCurrentColumnClick(appContext);
+                            return true;
+                        },
+                    }, 
                 ]
             });
 

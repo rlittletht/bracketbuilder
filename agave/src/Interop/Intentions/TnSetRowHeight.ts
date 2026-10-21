@@ -24,7 +24,7 @@ export class TnSetRowHeight implements IIntention
     Execute(context: JsCtx)
     {
         const sheet: Excel.Worksheet =
-            this.m_sheetName == null
+            this.m_sheetName == null || this.m_sheetName == undefined
                 ? context.Ctx.workbook.worksheets.getActiveWorksheet()
                 : context.Ctx.workbook.worksheets.getItem(this.m_sheetName);
 

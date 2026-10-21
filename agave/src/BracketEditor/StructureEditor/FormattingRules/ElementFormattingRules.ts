@@ -233,8 +233,7 @@ export function CreateDefaultElementFormattingRules(): ElementFormattingRules
             BoldRule.CreateFromRule(false),
             ItalicRule.CreateFromRule(false),
             ColorRule.CreateFromString("#000000"),
-            HAlignmentRule.CreateFromRule(HAlignment.Center),
-            VAlignmentRule.CreateFromRule(VAlignment.Center)
+            HAlignmentRule.CreateFromRule(HAlignment.Center)
         ]);
     rules.addDefinition(
         ElementItem.Champion,

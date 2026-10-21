@@ -55,6 +55,7 @@ import { ElementItem } from "./FormattingRules/Elements/ElementItem";
 import { TnSetFontColor } from "../../Interop/Intentions/TnSetFontColor";
 import { TnSetFillColor } from "../../Interop/Intentions/TnSetFillColor";
 import { CanvasItem } from "./FormattingRules/CanvasItems/CanvasItem";
+import { TnSetActiveSheet } from "../../Interop/Intentions/TnSetActiveSheet";
 
 let _moveSelection: RangeInfo = null;
 
@@ -578,6 +579,10 @@ export class StructureEditor
         let delegate: DispatchWithCatchDelegate = async (context) =>
         {
             const range = await Ranges.createRangeInfoForSelection(context);
+            const sheet: Excel.Worksheet = context.Ctx.workbook.worksheets.getItem(GridBuilder.SheetName);
+
+            await sheet.activate();
+
             await FastFormulaAreas.populateAllCaches(context);
 
             // get the grid item for this selection

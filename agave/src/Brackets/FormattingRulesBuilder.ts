@@ -69,12 +69,18 @@ export class FormattingRulesBuilder
 
     public static async buildFormattingRulesSheet(context: JsCtx, fastTables: IFastTables)
     {
-        await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.FormattingRules);
+        try
+        {
+            await FastFormulaAreas.populateFastFormulaAreaCacheForType(context, FastFormulaAreasItems.FormattingRules);
 
-        // load whatever settings they already had...
-        RefreshFormattingRules(context);
-
+            // load whatever settings they already had...
+            RefreshFormattingRules(context);
+        }
+        catch (e)
+        {
+        }
         // and now make sure we get a fresh new sheet
+
         await Sheets.ensureSheetDoesNotExist(context, FormattingRulesBuilder.SheetName);
 
         const sheet: Excel.Worksheet = await Sheets.ensureSheetExists(context, FormattingRulesBuilder.SheetName, RulesBuilder.SheetName, EnsureSheetPlacement.AfterGiven);
@@ -83,7 +89,7 @@ export class FormattingRulesBuilder
         const colB_C = sheet.getRange("B:C");
 
         colB_C.format.columnWidth = 128;
-
+        
         let row = 0;
 
         let rng: Excel.Range = FormattingRulesBuilder.insertContentAtRange(sheet, row, 0, [["Theme Settings"]]);
@@ -93,8 +99,16 @@ export class FormattingRulesBuilder
 
         row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row, _ThemeFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ThemeTableName) + 15;
 
-        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row, _ElementFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ElementFormattingTableName) + 20;
+        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row, _ElementFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ElementFormattingTableName)
+            + 20;
 
-        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(context, fastTables, sheet, row + 20, _CanvasFormattingRules().getDefinitionsArray(), FormattingRulesBuilder.ElementSizesTableName) + 20;
+        row += await FormattingRulesBuilder.InsertDefinitionsIntoTableAtRow(
+                context,
+                fastTables,
+                sheet,
+                row + 20,
+                _CanvasFormattingRules().getDefinitionsArray(),
+                FormattingRulesBuilder.ElementSizesTableName)
+            + 20;
     }
 }
